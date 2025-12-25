@@ -25,15 +25,13 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
 
-    console.log("fsdkhgfsdjhfgashf");
-
     loginMutation.mutate(
       { email, password },
       {
         onSuccess: (response) => {
           if (response.data.success && response.data.user) {
             login(response.data.user);
-            router.push("/admin");
+            router.push("/");
           } else {
             setError("Invalid credentials");
           }

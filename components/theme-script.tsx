@@ -5,10 +5,10 @@ async function getTheme() {
     const headersList = await headers();
     const host = headersList.get("host") || "";
 
+    
     const response = await fetch(
-      `${
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"
-      }/public/settings`,
+      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/public/settings`,
+
       {
         headers: {
           "x-whitelabel-domain": host,
@@ -17,11 +17,11 @@ async function getTheme() {
         next: { revalidate: 0 },
       }
     );
-
+    
     const result = await response.json();
     const data = result?.data;
     const themeData = data?.whitelabelTheme || data?.theme;
-
+  
     if (themeData) {
       return typeof themeData === "string" ? JSON.parse(themeData) : themeData;
     }
@@ -34,14 +34,14 @@ async function getTheme() {
 export async function ThemeScript() {
   const headersList = await headers();
   const pathname = headersList.get("x-pathname") || "";
-
   // Don't apply whitelabel theme on admin routes
   if (pathname.startsWith("/admin")) {
     return null;
   }
 
+  
   const theme = await getTheme();
-
+  
   if (!theme) return null;
 
   const themeVars = Object.entries(theme)
