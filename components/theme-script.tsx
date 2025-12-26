@@ -57,17 +57,33 @@ export async function ThemeScript() {
       // Don't apply theme on admin routes
       if (window.location.pathname.startsWith('/admin')) return;
       
-      const root = document.documentElement;
-      const theme = ${JSON.stringify(theme)};
-      Object.entries(theme).forEach(([key, value]) => {
-        if (key === "fontFamily") {
-          document.body.style.fontFamily = value;
-        } else if (key !== "radius") {
-          const cssVar = "--" + key.replace(/([A-Z])/g, "-$1").toLowerCase();
-          root.style.setProperty(cssVar, value);
+      const applyTheme = () => {
+        const root = document.documentElement;
+        const theme = ${JSON.stringify(theme)};
+        Object.entries(theme).forEach(([key, value]) => {
+          if (key === "fontFamily") {
+            if (document.body) {
+              document.body.style.fontFamily = value;
+            }
+          } else if (key !== "radius") {
+            const cssVar = "--" + key.replace(/([A-Z])/g, "-$1").toLowerCase();
+            root.style.setProperty(cssVar, value);
+          }
+        });
+        if (theme.radius) root.style.setProperty("--radius", theme.radius);
+      };
+      
+      // Apply theme immediately if body exists, otherwise wait for DOM
+      if (document.body) {
+        applyTheme();
+      } else {
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', applyTheme);
+        } else {
+          // DOM already loaded, but body might not be ready yet
+          setTimeout(applyTheme, 0);
         }
-      });
-      if (theme.radius) root.style.setProperty("--radius", theme.radius);
+      }
     })();
   `;
 
