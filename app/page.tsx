@@ -6,10 +6,10 @@ import DynamicHomeSections from "@/components/dynamic-home-sections";
 import QuickLinksSection from "@/components/quick-links-section";
 import Footer from "@/components/layout/footer";
 import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { toast } from "sonner";
 
-const Homepage = () => {
+const ErrorHandler = () => {
   const searchParams = useSearchParams();
   const errorCode = searchParams.get("error");
 
@@ -29,12 +29,19 @@ const Homepage = () => {
         default:
           message = "An unknown error occurred.";
       }
-      toast.error(message); // Replace with your preferred notification method
+      toast.error(message);
     }
-  }, []);
+  }, [errorCode]);
 
+  return null;
+};
+
+const Homepage = () => {
   return (
     <div className="">
+      <Suspense fallback={null}>
+        <ErrorHandler />
+      </Suspense>
       <HomeBanner />
       <HomePromotionsSection />
       <QuickLinksSection />
