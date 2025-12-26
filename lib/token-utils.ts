@@ -1,4 +1,5 @@
 import { jwtVerify } from "jose";
+import jwt from "jsonwebtoken";
 export const isTokenExpired = (token: string): boolean => {
   if (!token) return true;
 
@@ -37,8 +38,11 @@ export const shouldRefreshToken = (token: string): boolean => {
   }
 };
 
-export async function verifyToken(token: string) {
-  const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-  const { payload } = await jwtVerify(token, secret);
-  return payload;
-}
+export const decode_payload_from_token = (token: string) => {
+  try {
+    const decoded = jwt.decode(token) as any;
+    return { success: true, message: "Token decoded", payload: decoded };
+  } catch (error) {
+    return { success: false, message: "Coudn't decode token" };
+  }
+};

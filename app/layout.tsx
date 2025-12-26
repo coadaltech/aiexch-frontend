@@ -46,6 +46,7 @@ export default function RootLayout({
         className={`${inter.variable} ${cinzel.variable} min-h-screen overflow-x-hidden `}
         suppressHydrationWarning={true}
       >
+        <Toaster closeButton position="top-right" />
         <NextTopLoader />
         {/* <ThemeLoader /> */}
         <MetadataLoader />
@@ -62,7 +63,6 @@ export default function RootLayout({
                 </MaintenanceWrapper>
               </SportsProvider>
             </BetSlipProvider>
-            <Toaster closeButton position="top-right" />
           </AuthProvider>
         </QueryProvider>
       </body>
