@@ -30,7 +30,11 @@ export function BetSlip() {
 
     const userBalance = parseFloat(user?.balance || "0");
     if (userBalance < totalStake) {
-      toast.error(`Insufficient balance. You have ₹${userBalance.toFixed(2)} but need ₹${totalStake.toFixed(2)}`);
+      toast.error(
+        `Insufficient balance. You have ₹${userBalance.toFixed(
+          2
+        )} but need ₹${totalStake.toFixed(2)}`
+      );
       return;
     }
 
@@ -70,7 +74,10 @@ export function BetSlip() {
     }
   };
 
-  const totalStake = bets.reduce((sum, bet) => sum + parseFloat(bet.stake || "0"), 0);
+  const totalStake = bets.reduce(
+    (sum, bet) => sum + parseFloat(bet.stake || "0"),
+    0
+  );
   const totalWin = bets.reduce(
     (sum, bet) => sum + parseFloat(bet.potentialWin || "0"),
     0
@@ -141,13 +148,18 @@ export function BetSlip() {
 
                   {hasInsufficientBalance && (
                     <div className="text-xs text-destructive text-center p-2 bg-destructive/10 rounded">
-                      Insufficient balance: ₹{userBalance.toFixed(2)} / ₹{totalStake.toFixed(2)}
+                      Insufficient balance: ₹{userBalance.toFixed(2)} / ₹
+                      {totalStake.toFixed(2)}
                     </div>
                   )}
                   <Button
                     className="w-full"
                     onClick={handlePlaceAllBets}
-                    disabled={isPlacingBet || bets.length === 0 || hasInsufficientBalance}
+                    disabled={
+                      isPlacingBet ||
+                      bets.length === 0 ||
+                      hasInsufficientBalance
+                    }
                   >
                     {isPlacingBet ? "Placing..." : "Place Bet"}
                   </Button>
@@ -187,13 +199,18 @@ export function BetSlip() {
                   <BetSummary totalStake={totalStake} totalWin={totalWin} />
                   {hasInsufficientBalance && (
                     <div className="text-xs text-destructive text-center p-2 bg-destructive/10 rounded">
-                      Insufficient balance: ₹{userBalance.toFixed(2)} / ₹{totalStake.toFixed(2)}
+                      Insufficient balance: ₹{userBalance.toFixed(2)} / ₹
+                      {totalStake.toFixed(2)}
                     </div>
                   )}
                   <Button
                     className="w-full"
                     onClick={handlePlaceAllBets}
-                    disabled={isPlacingBet || bets.length === 0 || hasInsufficientBalance}
+                    disabled={
+                      isPlacingBet ||
+                      bets.length === 0 ||
+                      hasInsufficientBalance
+                    }
                   >
                     {isPlacingBet ? "Placing..." : "Place All Bets"}
                   </Button>

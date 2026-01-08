@@ -13,14 +13,11 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { X, Calculator, Loader2 } from "lucide-react";
 import { useBetting } from "@/hooks/useBetting";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
 import { BettingModalProps } from "./types";
 
 export function BettingModal({ open, onClose, match }: BettingModalProps) {
   const [stake, setStake] = useState("");
   const { placeBetAsync, isPlacingBet } = useBetting();
-  const { isLoggedIn } = useAuth();
 
   const validateNumericInput = (value: string): number | null => {
     const num = parseFloat(value);
@@ -34,13 +31,6 @@ export function BettingModal({ open, onClose, match }: BettingModalProps) {
   }, [stake, match.odds]);
 
   const handlePlaceBet = async () => {
-    if (!isLoggedIn) {
-      toast.error("Please login to place bets");
-      onClose();
-      window.dispatchEvent(new CustomEvent("openAuthModal"));
-      return;
-    }
-
     if (!match.marketData) return;
 
     const stakeAmount = validateNumericInput(stake);
