@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 
 interface OtpFormProps {
   email: string;
@@ -11,6 +11,7 @@ interface OtpFormProps {
   onSubmit: (e: React.FormEvent) => void;
   error: string;
   isLoading: boolean;
+  onBack?: () => void;
 }
 
 export function OtpForm({
@@ -20,9 +21,20 @@ export function OtpForm({
   onSubmit,
   error,
   isLoading,
+  onBack,
 }: OtpFormProps) {
   return (
     <div>
+      {onBack && (
+        <button
+          type="button"
+          onClick={onBack}
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4 text-sm"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Sign Up
+        </button>
+      )}
       <h2 className="text-2xl font-bold text-foreground mb-4">Verify Email</h2>
       
       {error && (

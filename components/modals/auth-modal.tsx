@@ -84,6 +84,17 @@ export function AuthModal({
         }
       );
     } else {
+      // Validation 
+      if (!formData.password || formData.password.length < 6) {
+        setError("Password must be at least 6 characters long");
+        return;
+      }
+
+      if (!formData.name || formData.name.length <= 3) {
+        setError("Name must be more than 3 characters");
+        return;
+      }
+
       if (!formData.agreeTerms) {
         setError("You must agree to the terms and conditions");
         return;
@@ -221,6 +232,7 @@ export function AuthModal({
                 onSubmit={handleOtpSubmit}
                 error={error}
                 isLoading={isLoading}
+                onBack={() => setMode("signup")}
               />
             )}
 
