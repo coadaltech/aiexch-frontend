@@ -83,11 +83,11 @@ export function WithdrawalDetails({
             {withdrawalMethod.currency}
             {(parseFloat(amount) < parseFloat(withdrawalMethod.minAmount) ||
               parseFloat(amount) > parseFloat(withdrawalMethod.maxAmount)) && (
-              <span className="text-destructive block">
-                Amount must be between {withdrawalMethod.minAmount} and{" "}
-                {withdrawalMethod.maxAmount}
-              </span>
-            )}
+                <span className="text-destructive block">
+                  Amount must be between {withdrawalMethod.minAmount} and{" "}
+                  {withdrawalMethod.maxAmount}
+                </span>
+              )}
           </div>
         )}
         {amount && parseFloat(amount) > 0 && (

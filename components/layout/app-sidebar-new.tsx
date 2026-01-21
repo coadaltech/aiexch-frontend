@@ -137,7 +137,7 @@ export function AppSidebar() {
 
   const handleItemClick = (item: MenuItem) => {
     if (item.subItems) {
-      if (item.title === "Sport") return;
+      if (item.title === "Sport") router.push("/sports/all");
       setExpandedItems((prev) =>
         prev.includes(item.title)
           ? prev.filter((title) => title !== item.title)
@@ -193,19 +193,17 @@ export function AppSidebar() {
                   return (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
-                        className={`w-full justify-start px-3 py-6 transition-all duration-200 group ${
-                          isActive
-                            ? "bg-primary text-primary-foreground"
-                            : "text-foreground bg-secondary"
-                        }`}
+                        className={`w-full justify-start px-3 py-6 transition-all duration-200 group ${isActive
+                          ? "bg-primary text-primary-foreground"
+                          : "text-foreground bg-secondary"
+                          }`}
                         onClick={() => handleItemClick(item)}
                       >
                         <item.icon
-                          className={`h-7 w-7 mr-3 transition-transform group-hover:scale-110 ${
-                            isActive
-                              ? "text-primary-foreground"
-                              : getIconColor(item.title)
-                          }`}
+                          className={`h-7 w-7 mr-3 transition-transform group-hover:scale-110 ${isActive
+                            ? "text-primary-foreground"
+                            : getIconColor(item.title)
+                            }`}
                         />
                         <span className="font-medium flex-1">{item.title}</span>
                         {item.subItems && item.title !== "Sport" &&
@@ -220,11 +218,10 @@ export function AppSidebar() {
                           {item.subItems.map((subItem) => (
                             <SidebarMenuButton
                               key={subItem.title}
-                              className={`w-full justify-start px-3 py-2 text-sm transition-all duration-200 ${
-                                pathname === subItem.link
-                                  ? "bg-primary/20 text-primary"
-                                  : "text-muted-foreground"
-                              }`}
+                              className={`w-full justify-start px-3 py-2 text-sm transition-all duration-200 ${pathname === subItem.link
+                                ? "bg-primary/20 text-primary"
+                                : "text-muted-foreground"
+                                }`}
                               onClick={() => router.push(subItem.link)}
                             >
                               {subItem.title}
