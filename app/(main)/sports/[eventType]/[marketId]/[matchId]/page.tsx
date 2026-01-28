@@ -30,9 +30,11 @@ export default function MatchPage({
   }>;
 }) {
   const { eventType, matchId, marketId } = use(params);
+  console.log("eye",eventType,matchId,marketId)
 
   // Use WebSocket for match details instead of API
   const matchDetailsData = useSportsMatchDetails(eventType, matchId, true);
+  console.log("matchDetailsData",matchDetailsData)
   const matchData = matchDetailsData;
 
   // For cricket matches, find which series this match belongs to

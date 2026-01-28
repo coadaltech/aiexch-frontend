@@ -1,0 +1,13 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run frontend with bun",
+			"type": "shell",
+			"command": "bun dev",
+			"args": [],
+			"isBackground": false,
+			"group": "build"
+		}
+	]
+}

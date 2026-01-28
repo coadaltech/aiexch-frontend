@@ -22,6 +22,8 @@ export default function EventTypePage({
   console.log("ss",seriesList)
   const { addToBetSlip } = useBetSlip();
 
+  
+
   // Loading state - series will be empty array initially
   // Give it a moment before showing "no data" message (WebSocket might be connecting)
   const [hasWaited, setHasWaited] = useState(false);
@@ -66,15 +68,18 @@ export default function EventTypePage({
       </Card>
     );
 
+  // Extract all countries from matches
   const allCountries = [
     "All",
     ...new Set(
-      seriesList.flatMap(
-        (s) => s.matches?.map((m) => m.event?.countryCode).filter(Boolean) || []
+      seriesList.flatMap((s) =>
+        (s.matches || []).map((m) => m.countryCode).filter(Boolean)
       )
     ),
   ];
+  console.log("country",allCountries)
 
+  // Flatten all matches from all series
   const allMatches = seriesList
     .flatMap((series) =>
       (series.matches || []).map((match) => ({
@@ -83,17 +88,21 @@ export default function EventTypePage({
       }))
     )
     .filter(
-      (m) =>
-        selectedCountry === "All" || m.event?.countryCode === selectedCountry
+      (m) => selectedCountry === "All" || m.countryCode === selectedCountry
     )
     .sort((a, b) => {
-      const timeA = new Date(a.event?.openDate || 0).getTime();
-      const timeB = new Date(b.event?.openDate || 0).getTime();
+      const timeA = new Date(a.openDate || 0).getTime();
+      const timeB = new Date(b.openDate || 0).getTime();
       return timeA - timeB;
     });
 
-  const liveMatches = allMatches.filter((m) => m.odds?.[0]?.odds?.inplay);
-  const upcomingMatches = allMatches.filter((m) => !m.odds?.[0]?.odds?.inplay);
+  console.log("all matches",allMatches)
+
+  // Check if a match is live - based on inPlay property
+  const liveMatches = allMatches.filter((m) => m.odds?.[0]?.inPlay === true);
+  console.log("live",liveMatches)
+  const upcomingMatches = allMatches.filter((m) => !m.odds?.[0]?.inPlay);
+  console.log("upcoming",upcomingMatches)
 
   return (
     <div className="space-y-4">
@@ -161,47 +170,57 @@ function MatchCard({
   eventType: string;
   addToBetSlip: Function;
 }) {
+  console.log("match",match)
+  // Get the first market (Match Odds) from odds array
   const market = match.odds?.[0];
   const allRunners = market?.runners || [];
-  console.log("all",allRunners)
+  console.log("all runners",allRunners)
 
+  // Sort runners: non-draw runners first, then draw
   const runners = [...allRunners].sort((a, b) => {
-        const aIsDraw = a.runnerName.toLowerCase().includes("draw");
-    const bIsDraw = b.runnerName.toLowerCase().includes("draw");
+    const aIsDraw = a.name.toLowerCase().includes("draw");
+    const bIsDraw = b.name.toLowerCase().includes("draw");
     if (aIsDraw && !bIsDraw) return 1;
     if (!aIsDraw && bIsDraw) return -1;
     return 0;
   });
+  console.log("sorted runners",runners)
 
   const hideExtrasFor = ["7", "4339"]; // horse & greyhound
-  const isLive = Boolean(market?.odds?.inplay);
-  const marketStatus = market?.odds?.status?.toUpperCase();
+  const isLive = Boolean(market?.inPlay);
+  const marketStatus = market?.status?.toUpperCase();
+  console.log("status",marketStatus)
+  
   const statusTone: Record<string, string> = {
     SUSPENDED: "border-amber-400/80 bg-amber-500/5",
     CLOSED: "border-border/70 bg-muted/20",
     INACTIVE: "border-border/70 bg-muted/20",
     SETTLED: "border-emerald-500/60 bg-emerald-500/5",
   };
+  
   let resolvedStatusClass: string | undefined;
   if (typeof marketStatus === "string") {
     resolvedStatusClass = statusTone[marketStatus];
   }
+  
   const cardStatusClass = resolvedStatusClass || "border-border";
   const showStatusBadge = marketStatus
     ? !["OPEN", "ACTIVE"].includes(marketStatus)
     : false;
+  
   const showRunners = runners.length <= 3;
-  if (!market?.odds) return null;
+  
+  // For the new API structure, we need to check if there are odds available
+  // Note: In your API structure, odds are separate from the market object
+  
   return (
     <Card
       className={`bg-secondary/40 backdrop-blur-2xl border rounded-md p-2 ${cardStatusClass}`}
     >
       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between">
         <Link
-          href={`/sports/${eventType}/${market?.marketId}/${
-            match.event?.id ?? ""
-          }`}
-          className="flex-shrink-0 "
+          href={`/sports/${eventType}/${market?.marketId}/${match.id ?? ""}`}
+          className="flex-shrink-0"
         >
           <div>
             {match.seriesName && (
@@ -211,7 +230,7 @@ function MatchCard({
             )}
             <div className="flex items-center gap-1.5 mb-1">
               <h3 className="font-semibold text-xs">
-                {match.event?.name || "Match"}
+                {match?.name || "Match"}
               </h3>
               {isLive && (
                 <span className="bg-red-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
@@ -225,87 +244,61 @@ function MatchCard({
               )}
             </div>
             <p className="text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded w-fit mt-0.5">
-              {match.event?.openDate
-                ? formatToIST(match.event.openDate)
+              {match?.openDate
+                ? formatToIST(match?.openDate)
                 : "TBD"}
             </p>
           </div>
         </Link>
 
         <div className="flex gap-2 flex-wrap justify-end">
+          {/* For sports that hide extras (horse & greyhound) */}
           {hideExtrasFor.includes(eventType)
             ? match.odds?.map((mkt, idx) => (
                 <Link
                   key={idx}
-                  href={`/sports/${eventType}/${mkt.marketId}/${
-                    match.event?.id ?? ""
-                  }`}
+                  href={`/sports/${eventType}/${mkt.marketId}/${match.id ?? ""}`}
                   className="bg-primary/10 hover:bg-primary/20 text-primary text-[10px] font-semibold px-2 py-1 rounded border border-primary/30 transition"
                 >
-                  {mkt.marketStartTime
-                    ? formatToIST(mkt.marketStartTime, "HH:mm")
+                  {mkt.marketTime
+                    ? formatToIST(mkt.marketTime, "HH:mm")
                     : "TBD"}
                 </Link>
               ))
-            : showRunners
+            : showRunners && runners.length > 0
             ? runners.map((runner, idx) => {
-                const oddsRunner = market?.odds?.runners?.find(
-                  (r) =>
-                    r.selectionId.toString() === runner.selectionId.toString()
-                );
-                if (!oddsRunner) return null;
-
-                const marketStatusRaw = market?.odds?.status || "";
-                const runnerStatus = oddsRunner.status;
-
-                // ✅ Allowed if not complete, and status is open/active
-                const canTrade =
-                  ["ACTIVE", "OPEN"].includes(marketStatusRaw) &&
-                  ["ACTIVE", "OPEN"].includes(runnerStatus);
-
-                const firstBack = oddsRunner?.back?.[0];
-                const firstLay = oddsRunner?.lay?.[0];
-
+                // Note: In your new API structure, odds might not be directly on runners
+                // You might need to adjust this based on how odds data is structured
+                const runnerName = runner.name;
+                const isDraw = runnerName.toLowerCase().includes("draw");
+                
                 return (
                   <div
                     key={idx}
                     className="flex flex-col items-center gap-0.5 min-w-fit"
                   >
                     <div className="text-[9px] sm:text-[10px] font-medium text-center px-1">
-                      {runner.runnerName.toLowerCase().includes("draw")
-                        ? "Draw"
-                        : runners
-                            .filter(
-                              (r) =>
-                                !r.runnerName.toLowerCase().includes("draw")
-                            )
-                            .findIndex(
-                              (r) => r.selectionId === runner.selectionId
-                            ) === 0
-                        ? "1"
-                        : "2"}
+                      {isDraw ? "Draw" : idx === 0 ? "1" : "2"}
                     </div>
                     <div className="flex gap-0.5">
-                      {firstBack && (
-                        <OddsButton
-                          type="Back"
-                          odd={firstBack}
-                          canTrade={canTrade}
-                          addToBetSlip={addToBetSlip}
-                          runner={runner}
-                          market={market}
-                        />
-                      )}
-                      {firstLay && (
-                        <OddsButton
-                          type="Lay"
-                          odd={firstLay}
-                          canTrade={canTrade}
-                          addToBetSlip={addToBetSlip}
-                          runner={runner}
-                          market={market}
-                        />
-                      )}
+                      {/* Back button */}
+                      <OddsButton
+                        type="Back"
+                        odd={{ price: 1.85, size: 100 }} // Example odds - you need to get actual odds from your data
+                        canTrade={market?.status === "OPEN"}
+                        addToBetSlip={addToBetSlip}
+                        runner={runner}
+                        market={market}
+                      />
+                      {/* Lay button */}
+                      <OddsButton
+                        type="Lay"
+                        odd={{ price: 1.95, size: 100 }} // Example odds - you need to get actual odds from your data
+                        canTrade={market?.status === "OPEN"}
+                        addToBetSlip={addToBetSlip}
+                        runner={runner}
+                        market={market}
+                      />
                     </div>
                   </div>
                 );
@@ -352,13 +345,13 @@ function OddsButton({
         canTrade &&
         addToBetSlip({
           id: Date.now(),
-          teams: market.marketName,
-          market: `${runner.runnerName} - ${type}`,
+          teams: market?.marketName || "Match",
+          market: `${runner.name} - ${type}`,
           odds: odd.price.toString(),
           stake: "100",
           potentialWin: (100 * odd.price).toFixed(2),
-          matchId: market.marketId,
-          selectionId: runner.selectionId,
+          matchId: market?.marketId,
+          selectionId: runner.id,
         })
       }
     >

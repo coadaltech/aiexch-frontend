@@ -1,5 +1,6 @@
 "use client";
 
+import { CloudFog } from "lucide-react";
 import {
   createContext,
   useContext,
@@ -171,6 +172,7 @@ export function SportsProvider({ children }: { children: React.ReactNode }) {
         ws.onmessage = (event) => {
           try {
             const message = JSON.parse(event.data);
+            console.log("message",message)
             const { type, data, subscription } = message;
 
             // Ignore confirmation messages (subscribed/unsubscribed) - these are just confirmations, not data
@@ -181,7 +183,7 @@ export function SportsProvider({ children }: { children: React.ReactNode }) {
               );
               return;
             }
-
+console.log("type-",type," subscription-",subscription)
             // Only process data update messages (series:update, odds:update, etc.)
             if (type && subscription && type.includes(":update")) {
               // Extract base type from "series:update" -> "series"
