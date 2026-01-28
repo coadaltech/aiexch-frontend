@@ -166,8 +166,8 @@ function MatchCard({
   console.log("all",allRunners)
 
   const runners = [...allRunners].sort((a, b) => {
-    const aIsDraw = a.name.toLowerCase().includes("draw");
-    const bIsDraw = b.name.toLowerCase().includes("draw");
+        const aIsDraw = a.runnerName.toLowerCase().includes("draw");
+    const bIsDraw = b.runnerName.toLowerCase().includes("draw");
     if (aIsDraw && !bIsDraw) return 1;
     if (!aIsDraw && bIsDraw) return -1;
     return 0;
