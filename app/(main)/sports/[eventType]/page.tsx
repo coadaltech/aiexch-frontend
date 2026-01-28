@@ -19,6 +19,7 @@ export default function EventTypePage({
   const { eventType } = use(params);
   // Use WebSocket instead of API call
   const seriesList = useSportsSeries(eventType, true) as Series[];
+  console.log("ss",seriesList)
   const { addToBetSlip } = useBetSlip();
 
   // Loading state - series will be empty array initially
@@ -162,10 +163,11 @@ function MatchCard({
 }) {
   const market = match.odds?.[0];
   const allRunners = market?.runners || [];
+  console.log("all",allRunners)
 
   const runners = [...allRunners].sort((a, b) => {
-    const aIsDraw = a.runnerName.toLowerCase().includes("draw");
-    const bIsDraw = b.runnerName.toLowerCase().includes("draw");
+    const aIsDraw = a.name.toLowerCase().includes("draw");
+    const bIsDraw = b.name.toLowerCase().includes("draw");
     if (aIsDraw && !bIsDraw) return 1;
     if (!aIsDraw && bIsDraw) return -1;
     return 0;
