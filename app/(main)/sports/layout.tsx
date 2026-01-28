@@ -41,9 +41,9 @@ export default function SportsLayout({
   return (
     <div className="min-h-screen ">
       <div className="flex">
-        <div className="flex-1 lg:p-6 lg:pt-0 pb-20 lg:pb-6 w-full  lg:max-w-[calc(100vw-20rem-320px)]">
+        <div className="flex-1 lg:p-6 lg:pt-0 pb-20 lg:pb-6 w-full lg:ml-10 lg:px-0 px-4 my-10 lg:max-w-[calc(100vw-20rem-320px)]">
           {/* Sports Navigation */}
-          <div className="mb-6">
+          {/* <div className="mb-6">
             <div className="border-border">
               <div className="flex items-center gap-4 sm:gap-4 overflow-x-auto scrollbar-hide -mr-4 pr-4">
                 <Link
@@ -87,7 +87,7 @@ export default function SportsLayout({
                 ))}
               </div>
             </div>
-          </div>
+          </div> */}
 
           {children}
         </div>

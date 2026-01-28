@@ -106,7 +106,7 @@ export function NewPromotionCard({
 
   if (variant === "featured") {
     return (
-      <>
+      <>  
         <div
           className="group relative overflow-hidden rounded-md bg-card/40 backdrop-blur-2xl border border-border hover:border-primary/50 transition-all duration-300 cursor-pointer w-full h-[320px] sm:h-[400px]"
           onClick={() => setIsModalOpen(true)}

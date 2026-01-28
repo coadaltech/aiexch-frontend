@@ -19,7 +19,7 @@ export default function TermsAndConditions() {
   const router = useRouter();
   return (
     <div className="min-h-screen">
-      <div className="md:px-6 py-6 md:py-8">
+      <div className="lg:px-6 px-4 lg:ml-6 py-6 md:py-8">
         <div className="flex items-center gap-4 mb-6">
           <Button
             onClick={() => router.back()}

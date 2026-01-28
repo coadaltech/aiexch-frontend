@@ -30,7 +30,7 @@ const benefits = [
 export default function VIPClub() {
   return (
     <div className="min-h-screen">
-      <div className="md:px-6 py-6 md:py-8">
+      <div className="lg:px-6 px-4 lg:ml-6 py-6 md:py-8">
         <div className="flex items-center gap-4 mb-6">
           <Button
             onClick={() => window.history.back()}
@@ -39,10 +39,12 @@ export default function VIPClub() {
           >
             <ArrowLeft className="w-4 h-4 text-primary" />
           </Button>
+          <div className="sm:flex items-center gap-3">
           <div className="flex items-center gap-3">
             <Crown className="w-8 h-8 text-primary" />
             <h1 className="text-3xl font-bold text-primary">VIP Club</h1>
-            <Badge className="bg-primary/20 text-primary border-primary/30">
+          </div>
+            <Badge className="bg-primary/20 text-primary border-primary/30 sm:mt-0 mt-2">
               Exclusive
             </Badge>
           </div>

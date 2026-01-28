@@ -16,7 +16,9 @@ import {
   useSportsScore,
   useSportsPremium,
   useSportsMatchDetails,
+  useSportsSeries,
 } from "@/contexts/SportsContext";
+import { Series } from "@/components/sports/types";
 
 export default function MatchPage({
   params,
@@ -32,6 +34,55 @@ export default function MatchPage({
   // Use WebSocket for match details instead of API
   const matchDetailsData = useSportsMatchDetails(eventType, matchId, true);
   const matchData = matchDetailsData;
+
+  // For cricket matches, find which series this match belongs to
+  const cricketSeries = useSportsSeries("4", eventType === "4") as Series[];
+  const currentSeries = useMemo(() => {
+    if (eventType !== "4" || !cricketSeries.length) return null;
+
+    // Try to find the series containing this match
+    // Match ID might be URL encoded, so we decode it for comparison
+    const decodedMatchId = decodeURIComponent(matchId);
+
+    const foundSeries = cricketSeries.find((series) =>
+      series.matches?.some((match) => {
+        const matchEventId = match.event?.id;
+        if (!matchEventId) return false;
+        // Compare both as strings to handle any type mismatches
+        return (
+          matchEventId.toString() === matchId ||
+          matchEventId.toString() === decodedMatchId
+        );
+      })
+    );
+
+    return foundSeries || null;
+  }, [cricketSeries, matchId, eventType]);
+
+  // Store series ID in sessionStorage when navigating from series page
+  useEffect(() => {
+    if (eventType === "4" && currentSeries) {
+      sessionStorage.setItem("lastCricketSeriesId", currentSeries.id);
+    }
+  }, [eventType, currentSeries]);
+
+  // Determine back button URL
+  const backUrl = useMemo(() => {
+    if (eventType === "4") {
+      // First try to use the found series
+      if (currentSeries) {
+        return `/sports/cricket/${currentSeries.id}`;
+      }
+      // Fallback to sessionStorage if series lookup failed
+      if (typeof window !== "undefined") {
+        const lastSeriesId = sessionStorage.getItem("lastCricketSeriesId");
+        if (lastSeriesId) {
+          return `/sports/cricket/${lastSeriesId}`;
+        }
+      }
+    }
+    return `/sports/${eventType}`;
+  }, [eventType, currentSeries]);
 
   // Memoize data from WebSocket match details
   const initialMarketsData = useMemo(
@@ -199,7 +250,7 @@ export default function MatchPage({
       <div className="min-h-screen pb-20 lg:pb-6">
         <div className="p-3">
           <div className="flex flex-col gap-1 mb-3">
-            <Link href={`/sports/${eventType}`}>
+            <Link href={backUrl}>
               <Button
                 size="sm"
                 variant="ghost"
@@ -228,7 +279,7 @@ export default function MatchPage({
     <div className="min-h-screen pb-20 lg:pb-6">
       <div className="p-3">
         <div className="flex flex-col gap-1 mb-3">
-          <Link href={`/sports/${eventType}`}>
+          <Link href={backUrl}>
             <Button
               size="sm"
               variant="ghost"

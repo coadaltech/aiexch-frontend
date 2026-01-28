@@ -15,23 +15,23 @@ export function CasinoGameCard({ game }: CasinoGameCardProps) {
   return (
     <Link
       href={`/casino/${game.uuid}`}
-      className="flex-shrink-0 w-44 md:w-64 group"
+      className="flex-shrink-0 w-64 md:w-74 group"
     >
       <div className="relative overflow-hidden rounded-lg border bg-card hover:border-primary transition-all">
-        <div className="aspect-[4/3] relative">
+        <div className="aspect-[4/3] relative h-[400px]">
           <Image
             src={game.image}
             alt={game.name}
             fill
-            className="object-cover"
+            className="object-cover  "
             unoptimized
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <div className="absolute bottom-0 left-0 right-0 p-2 translate-y-full group-hover:translate-y-0 transition-transform">
-            <h3 className="text-white font-semibold text-xs truncate">
+            <h3 className="text-white font-semibold text-[18px] truncate">
               {game.name}
             </h3>
-            <p className="text-white/80 text-[10px] truncate">
+            <p className="text-white/80 text-[14px] truncate">
               {game.provider}
             </p>
           </div>

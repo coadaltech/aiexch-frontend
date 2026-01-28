@@ -171,68 +171,81 @@ export function BetSlip() {
       )}
 
       {/* Desktop: Right Panel */}
-      <div className="hidden lg:block w-full">
-        <Tabs defaultValue="betslip" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="betslip" className="text-xs">
-              Bet Slip ({bets.length})
-            </TabsTrigger>
-            <TabsTrigger value="current" className="text-xs">
-              Current ({currentBets.length})
-            </TabsTrigger>
-          </TabsList>
+      <div className="hidden lg:block fixed right-0 top-28 bottom-0 w-80 p-4 z-40">
+        <div className="h-full flex flex-col">
+          <Card className="h-full flex flex-col overflow-hidden ">
+            <Tabs
+              defaultValue="betslip"
+              className="w-full h-full flex flex-col "
+            >
+              <TabsList className="grid w-full grid-cols-2 flex-shrink-0 bg-transparent px-4 pb-4 h-auto rounded-none border-b border-border">
+                <TabsTrigger value="betslip" className="text-xs">
+                  Bet Slip ({bets.length})
+                </TabsTrigger>
+                <TabsTrigger value="current" className="text-xs">
+                  Current ({currentBets.length})
+                </TabsTrigger>
+              </TabsList>
 
-          <TabsContent value="betslip" className="mt-4">
-            <Card className="p-4">
-              {bets.length === 0 ? (
-                <EmptyState message="No selections yet" />
-              ) : (
-                <div className="space-y-3 max-h-[calc(100vh-12rem)] overflow-y-auto">
-                  {bets.map((bet) => (
-                    <BetItem
-                      key={bet.id}
-                      bet={bet}
-                      onUpdateStake={updateStake}
-                      onRemove={removeBet}
-                    />
-                  ))}
-                  <BetSummary totalStake={totalStake} totalWin={totalWin} />
-                  {hasInsufficientBalance && (
-                    <div className="text-xs text-destructive text-center p-2 bg-destructive/10 rounded">
-                      Insufficient balance: ₹{userBalance.toFixed(2)} / ₹
-                      {totalStake.toFixed(2)}
+              <TabsContent
+                value="betslip"
+                className="mt-0 flex-1 flex flex-col min-h-0"
+              >
+                <div className="p-4 h-full flex flex-col">
+                  {bets.length === 0 ? (
+                    <EmptyState message="No selections yet" />
+                  ) : (
+                    <div className="space-y-3 flex-1 overflow-y-auto min-h-0">
+                      {bets.map((bet) => (
+                        <BetItem
+                          key={bet.id}
+                          bet={bet}
+                          onUpdateStake={updateStake}
+                          onRemove={removeBet}
+                        />
+                      ))}
+                      <BetSummary totalStake={totalStake} totalWin={totalWin} />
+                      {hasInsufficientBalance && (
+                        <div className="text-xs text-destructive text-center p-2 bg-destructive/10 rounded">
+                          Insufficient balance: ₹{userBalance.toFixed(2)} / ₹
+                          {totalStake.toFixed(2)}
+                        </div>
+                      )}
+                      <Button
+                        className="w-full flex-shrink-0"
+                        onClick={handlePlaceAllBets}
+                        disabled={
+                          isPlacingBet ||
+                          bets.length === 0 ||
+                          hasInsufficientBalance
+                        }
+                      >
+                        {isPlacingBet ? "Placing..." : "Place All Bets"}
+                      </Button>
                     </div>
                   )}
-                  <Button
-                    className="w-full"
-                    onClick={handlePlaceAllBets}
-                    disabled={
-                      isPlacingBet ||
-                      bets.length === 0 ||
-                      hasInsufficientBalance
-                    }
-                  >
-                    {isPlacingBet ? "Placing..." : "Place All Bets"}
-                  </Button>
                 </div>
-              )}
-            </Card>
-          </TabsContent>
+              </TabsContent>
 
-          <TabsContent value="current" className="mt-4">
-            <Card className="p-4">
-              {currentBets.length === 0 ? (
-                <EmptyState message="No current bets" />
-              ) : (
-                <div className="space-y-3 max-h-[calc(100vh-12rem)] overflow-y-auto">
-                  {currentBets.map((bet: any) => (
-                    <CurrentBetItem key={bet.id} bet={bet} />
-                  ))}
+              <TabsContent
+                value="current"
+                className="mt-0 flex-1 flex flex-col min-h-0"
+              >
+                <div className="p-4 h-full flex flex-col">
+                  {currentBets.length === 0 ? (
+                    <EmptyState message="No current bets" />
+                  ) : (
+                    <div className="space-y-3 flex-1 overflow-y-auto min-h-0">
+                      {currentBets.map((bet: any) => (
+                        <CurrentBetItem key={bet.id} bet={bet} />
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
-            </Card>
-          </TabsContent>
-        </Tabs>
+              </TabsContent>
+            </Tabs>
+          </Card>
+        </div>
       </div>
     </>
   );

@@ -5,9 +5,10 @@ import { Promotion } from "@/types";
 
 export default async function PromotionsPage() {
   const response = await getPromotions();
+  console.log(response.data);
   const promotions = response.data || [];
   return (
-    <div className="min-h-screen  md:p-6">
+    <div className="min-h-screen  md:p-6 m-10">
       {/* Header */}
       <div className=" mb-8">
         <div className="text-center mb-8">
@@ -42,7 +43,7 @@ export default async function PromotionsPage() {
                 Featured Promotions
               </h2> */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                {promotions.slice(0, 3).map((promotion: Promotion) => (
+                {promotions.map((promotion: Promotion) => (
                   <NewPromotionCard
                     key={promotion.id}
                     promotion={promotion}

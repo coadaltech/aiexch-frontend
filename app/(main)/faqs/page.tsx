@@ -44,7 +44,7 @@ function FAQCategory({ category }: { category: any }) {
 export default function FAQPage() {
   return (
     <div className="min-h-screen">
-      <div className="md:px-6 py-6 md:py-12">
+      <div className="lg:px-6 px-4 lg:ml-6 py-6 md:py-12 ">
         {/* Header */}
         <div className="text-center mb-8 md:mb-12">
           <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-4 text-primary">

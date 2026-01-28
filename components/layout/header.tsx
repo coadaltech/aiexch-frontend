@@ -3,7 +3,20 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Wallet, LogIn, Search, LogOut, User } from "lucide-react";
+import {
+  Plus,
+  Wallet,
+  LogIn,
+  Search,
+  LogOut,
+  User,
+  Gift,
+  Settings,
+  Globe,
+  Clock,
+  ChevronDown,
+  Bell,
+} from "lucide-react";
 import { Game, HomeSection } from "@/types";
 import { GameCard } from "../cards/game-card";
 import { AuthModal } from "../modals/auth-modal";
@@ -15,6 +28,22 @@ import { formatBalance } from "@/lib/format-balance";
 import Logo from "./logo";
 import { useSettings } from "@/hooks/usePublic";
 import { publicApi } from "@/lib/api";
+import Dropheader from "./dropheader";
+
+const leftMenu = [
+  { label: "Home", link: "/" },
+  { label: "Cricket", link: "/sports/4" },
+  { label: "Live Casino", link: "/casino" },
+  { label: "Sports", link: "/sports" },
+  { label: "Live", link: "/live" },
+  { label: "Promotions", link: "/promotions" },
+];
+
+const rightMenu = [
+  { label: "Profile", link: "/profile" },
+  { label: "Bet History", link: "/profile/bet-history" },
+  { label: "Account Statement", link: "/profile/account-statement" },
+];
 
 export default function Header() {
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -44,108 +73,209 @@ export default function Header() {
     setIsSearchActive(true);
   };
 
+  const getCurrentTime = () => {
+    const now = new Date();
+    return now.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  };
+
+  const [currentTime, setCurrentTime] = useState(getCurrentTime());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(getCurrentTime());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   if (pathname.includes("/admin")) return null;
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-border bg-card">
-        <div className="flex  flex-wrap items-center justify-between h-16 px-4 lg:px-6">
-          {/* Left Section: Logo & Menu */}
-          <Logo onClick={() => router.push("/")} settings={settings} />
-
-          {/* <div className="hidden md:flex items-center flex-1 max-w-md mx-6">
-            <div
-              className="relative w-full cursor-pointer"
-              onClick={handleSearchClick}
-            >
-              <Input
-                type="text"
-                placeholder="Search games..."
-                className="pl-10"
-                readOnly
-              />
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <header className="fixed w-full pb-2 top-0 z-50 shadow-lg bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700/50">
+        {/* Top Header Bar - Modern Dark Theme */}
+        <div className="">
+          <div className="flex items-center justify-between h-11 sm:h-12 px-2 sm:px-4 lg:px-6">
+            {/* Left: Logo */}
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-shrink-0">
+              <Logo onClick={() => router.push("/")} settings={settings} />
             </div>
-          </div> */}
 
-          {/* Right Section */}
-          <div className="flex items-center gap-3 sm:gap-4 order-2 sm:order-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              onClick={handleSearchClick}
-            >
-              <Search size={20} />
-            </Button>
+            {/* Right: Action Buttons */}
+            <div className="flex items-center gap-1 sm:gap-2 md:gap-3 flex-shrink-0">
+              {isLoading ? (
+                <div className="flex items-center gap-1.5 sm:gap-2 animate-pulse">
+                  <div className="hidden xs:block w-16 sm:w-20 h-6 sm:h-7 bg-slate-700 rounded"></div>
+                  <div className="w-12 sm:w-16 h-6 sm:h-7 bg-slate-700 rounded"></div>
+                </div>
+              ) : isLoggedIn ? (
+                <>
+                  {/* Gift Icon with Badge - Always visible */}
+                  {/* <Button
+                    variant="ghost"
+                    size="icon"
+                    className="relative h-8 w-8 sm:h-9 sm:w-9 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg touch-manipulation"
+                    aria-label="Gifts"
+                  >
+                    <Gift className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 h-3.5 w-3.5 sm:h-4 sm:w-4 bg-emerald-500 rounded-full flex items-center justify-center text-[9px] sm:text-[10px] text-white font-bold">
+                      1
+                    </span>
+                  </Button> */}
 
-            {isLoading ? (
-              /* Header Skeleton */
-              <div className="flex items-center gap-2 animate-pulse">
-                <div className="hidden md:block w-20 h-8 bg-primary/20 rounded"></div>
-                <div className="w-16 h-8 bg-primary/20 rounded"></div>
-                <div className="w-8 h-8 bg-primary/20 rounded-full"></div>
-                <div className="w-8 h-8 bg-primary/20 rounded"></div>
-              </div>
-            ) : isLoggedIn ? (
-              <>
-                {/* Balance (hidden on small screens) */}
-                <div className="hidden md:flex items-center gap-3">
+                  {/* Add Funds Button - Hidden on very small screens */}
+                  <div className="md:block hidden">
                   <Button
                     onClick={() => setIsTransactionModalOpen(true)}
                     size="sm"
+                    className="  xs:flex h-7 sm:h-8 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold px-2 sm:px-3 md:px-4 rounded-lg shadow-md text-xs sm:text-sm touch-manipulation"
                   >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Funds
+                    <Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5" />
+                    <span className="hidden sm:inline">Add Funds</span>
+                    <span className="sm:hidden">Add</span>
                   </Button>
-                </div>
+                  </div>
 
-                {/* User Menu */}
-                <div className="flex items-center gap-2">
-                  <Button size="sm" onClick={() => router.push("/profile")}>
-                    <Wallet className="h-4 w-4" />
+                  {/* Balance Display - Always visible but compact on mobile */}
+                  <Button
+                    size="sm"
+                    onClick={() => router.push("/profile")}
+                    className="h-7 sm:h-8 bg-slate-700/50 hover:bg-slate-700 text-white font-medium px-2 sm:px-3 rounded-lg text-xs sm:text-sm touch-manipulation min-w-0"
+                  >
+                    <Wallet className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5 flex-shrink-0" />
                     {isLoading || balanceLoading ? (
                       <span className="animate-pulse">...</span>
                     ) : (
-                      <span>
+                      <span className="truncate max-w-[60px] sm:max-w-none">
                         ₹{formatBalance(balance || user?.balance || "0.00").inr}
                       </span>
                     )}
                   </Button>
 
+                  {/* User Info - Hidden on mobile, visible on tablet+ */}
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={() => router.push("/profile")}
-                    className="hidden md:flex gap-2"
+                    className="hidden md:flex h-7 sm:h-8 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg px-2 sm:px-3 text-xs sm:text-sm touch-manipulation"
                   >
-                    <User className="h-4 w-4" />
-                    <span className="ml-1">{user?.username}</span>
+                    <User className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5" />
+                    <span className="truncate max-w-[80px] lg:max-w-none">
+                      {user?.username}
+                    </span>
                   </Button>
 
+                  {/* Settings - Hidden on very small screens */}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="hidden xs:flex h-7 w-7 sm:h-8 sm:w-8 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg p-0 touch-manipulation"
+                    aria-label="Settings"
+                  >
+                    <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  </Button>
+
+                  {/* Logout - Hidden on mobile */}
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={logout}
-                    className="hidden md:block"
+                    className="hidden md:flex h-7 sm:h-8 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg touch-manipulation"
+                    aria-label="Logout"
                   >
-                    <LogOut className="h-4 w-4" />
+                    <LogOut className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                   </Button>
-                </div>
-              </>
-            ) : (
-              /* Fixed login button background and text contrast */
+                </>
+              ) : (
+                <>
+                  {/* Gift Icon - Always visible */}
+                  {/* <Button
+                    variant="ghost"
+                    size="icon"
+                    className="relative h-8 w-8 sm:h-9 sm:w-9 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg touch-manipulation"
+                    aria-label="Gifts"
+                  >
+                    <Gift className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 h-3.5 w-3.5 sm:h-4 sm:w-4 bg-emerald-500 rounded-full flex items-center justify-center text-[9px] sm:text-[10px] text-white font-bold">
+                      1
+                    </span>
+                  </Button> */}
+
+                  {/* Registration Button - Compact on mobile */}
+                  {/* <Button
+                    size="sm"
+                    onClick={() => {
+                      setAuthModal(true);
+                    }}
+                    className="h-7 sm:h-8 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold px-2 sm:px-3 md:px-4 rounded-lg shadow-md text-xs sm:text-sm touch-manipulation"
+                  >
+                    <span className="hidden sm:inline">Registration</span>
+                    <span className="sm:hidden">Reg</span>
+                  </Button> */}
+
+                  {/* Login Button - Compact on mobile */}
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setAuthModal(true);
+                    }}
+                    className="h-7 sm:h-8 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-semibold px-2 sm:px-3 md:px-4 rounded-lg shadow-md text-xs sm:text-sm touch-manipulation"
+                  >
+                    <LogIn className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5" />
+                    <span className="hidden sm:inline">Log In</span>
+                    <span className="sm:hidden">Login</span>
+                  </Button>
+
+                  {/* Settings - Hidden on very small screens */}
+                  {/* <Button
+                    size="sm"
+                    variant="ghost"
+                    className="hidden xs:flex h-7 w-7 sm:h-8 sm:w-8 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg p-0 touch-manipulation"
+                    aria-label="Settings"
+                  >
+                    <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    <ChevronDown className="h-2.5 w-2.5 sm:h-3 sm:w-3 ml-0.5 hidden sm:block" />
+                  </Button> */}
+
+                  {/* Language & Time - Hidden on mobile and tablet */}
+                  {/* <Button
+                    size="sm"
+                    variant="ghost"
+                    className="hidden xl:flex h-7 sm:h-8 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg px-2 sm:px-3 gap-1.5 sm:gap-2 touch-manipulation"
+                    aria-label="Language and Time"
+                  >
+                    <Globe className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                    <span className="text-[10px] sm:text-xs font-medium">
+                      EN
+                    </span>
+                    <span className="text-[10px] sm:text-xs">/</span>
+                    <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                    <span className="text-[10px] sm:text-xs">
+                      {currentTime}
+                    </span>
+                    <ChevronDown className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                  </Button> */}
+                </>
+              )}
+
+              {/* Search Button - Mobile only */}
               <Button
-                size="sm"
-                onClick={() => {
-                  setAuthModal(true);
-                }}
+                variant="ghost"
+                size="icon"
+                className="md:hidden h-8 w-8 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg touch-manipulation"
+                onClick={handleSearchClick}
+                aria-label="Search"
               >
-                <LogIn className="h-4 w-4 mr-2" />
-                <span className="sm:inline">Login</span>
+                <Search className="h-4 w-4" />
               </Button>
-            )}
+            </div>
           </div>
         </div>
+
+        {/* Navigation Menu Bar */}
+        <Dropheader leftMenu={leftMenu} rightMenu={rightMenu} />
       </header>
 
       <SearchOverlay

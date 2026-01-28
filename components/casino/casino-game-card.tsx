@@ -43,22 +43,24 @@ export function CasinoGameCard({ game }: CasinoGameCardProps) {
           loading="lazy"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-          <h3 className="text-white font-semibold text-sm mb-1 line-clamp-1">
+        <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+          <h3 className="text-white font-semibold text-xs sm:text-sm mb-1 line-clamp-1">
             {game.name}
           </h3>
           {game.provider && (
-            <p className="text-white/80 text-xs">{game.provider}</p>
+            <p className="text-white/80 text-[10px] sm:text-xs line-clamp-1">
+              {game.provider}
+            </p>
           )}
           {game.type && (
-            <span className="inline-block mt-1 px-2 py-0.5 bg-primary/20 text-primary text-xs rounded">
+            <span className="inline-block mt-1 px-1.5 sm:px-2 py-0.5 bg-primary/20 text-primary text-[10px] sm:text-xs rounded">
               {game.type}
             </span>
           )}
         </div>
       </div>
-      <div className="p-2">
-        <p className="text-xs text-muted-foreground line-clamp-1">
+      <div className="p-1.5 sm:p-2">
+        <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-1">
           {game.name}
         </p>
       </div>

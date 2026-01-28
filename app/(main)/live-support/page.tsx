@@ -19,7 +19,7 @@ import {
 export default function LiveSupport() {
   return (
     <div className="min-h-screen">
-      <div className="md:px-6 py-6 md:py-8">
+      <div className=" py-6 md:py-8 md:pl-8  lg:px-18 px-4">
         <div className="flex items-center gap-4 mb-6">
           <Button
             onClick={() => window.history.back()}
