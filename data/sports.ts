@@ -146,9 +146,9 @@ export const featuredMatches: Match[] = [
 ];
 
 export const sportsList = [
+  { eventType: "4", name: "Cricket" },
   { eventType: "-4", name: "KABADDI" },
   // { eventType: "-5", name: "Election" },
-  { eventType: "4", name: "Cricket" },
   { eventType: "-17", name: "Virtual T10" },
   { eventType: "4339", name: "Greyhound Racing" },
   { eventType: "7", name: "Horse Racing" },

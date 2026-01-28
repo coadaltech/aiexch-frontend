@@ -15,7 +15,7 @@ export const GameCard = ({
 }) => {
   let containerClass = `
     flex-shrink-0 group cursor-pointer relative ${
-      width === "fixed" ? "md:w-64 w-44" : "w-full"
+      width === "fixed" ? "md:w-74 w-64" : "w-full"
     } 
     rounded-xl overflow-hidden transform transition-all duration-300  bg-card border border-primary/20 hover:border-primary/50
   `;
@@ -24,7 +24,7 @@ export const GameCard = ({
 
   return (
     <Link href={href} key={game.id} className={containerClass}>
-      <div className={`relative aspect-[4/3] overflow-hidden`}>
+      <div className={`relative aspect-[3/4] h-[400px] overflow-hidden`}>
         <Image
           height={500}
           width={300}

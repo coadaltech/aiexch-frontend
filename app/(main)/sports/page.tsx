@@ -1,14 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { AllSportsContent } from "@/components/sports/all-sports-content";
 
 export default function SportsPage() {
-  const router = useRouter();
-
-  useEffect(() => {
-    router.replace('/sports/all');
-  }, [router]);
-
-  return null;
+  return <AllSportsContent />;
 }

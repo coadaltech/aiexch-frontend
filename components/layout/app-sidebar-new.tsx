@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Sidebar,
@@ -30,26 +30,29 @@ import {
 } from "lucide-react";
 import { MenuGroup, MenuItem } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSportsSeries } from "@/contexts/SportsContext";
+import { Series } from "@/components/sports/types";
+import { sportsList } from "@/data";
 
 const getIconColor = (title: string) => {
   const colors: Record<string, string> = {
-    Home: "text-blue-400",
-    Casino: "text-amber-400",
-    Sport: "text-green-400",
-    Promotions: "text-purple-400",
-    "Live Support": "text-yellow-400",
-    Faqs: "text-cyan-400",
-    "Game Rules": "text-orange-400",
-    "Terms & Conditions": "text-red-400",
-    "Privacy Policy": "text-indigo-400",
-    "Responsible Gaming": "text-pink-400",
-    Profile: "text-emerald-400",
-    Transactions: "text-amber-400",
-    "Bet History": "text-violet-400",
-    "Account Statement": "text-teal-400",
-    Logout: "text-rose-400",
+    Home: "text-white",
+    Casino: "text-white",
+    Sport: "text-white",
+    Promotions: "text-white",
+    "Live Support": "text-white",
+    Faqs: "text-white",
+    "Game Rules": "text-white",
+    "Terms & Conditions": "text-white",
+    "Privacy Policy": "text-white",
+    "Responsible Gaming": "text-white",
+    Profile: "text-white",
+    Transactions: "text-white",
+    "Bet History": "text-white",
+    "Account Statement": "text-white",
+    Logout: "text-white",
   };
-  return colors[title] || "text-primary";
+  return colors[title] || "text-white";
 };
 
 const getMenuGroups = (isLoggedIn: boolean): MenuGroup[] => {
@@ -64,7 +67,7 @@ const getMenuGroups = (isLoggedIn: boolean): MenuGroup[] => {
           icon: Trophy,
           link: "/sports",
           subItems: [
-            { title: "Cricket", link: "/sports/4" },
+            { title: "Cricket", link: "/sports/cricket" },
             { title: "Kabaddi", link: "/sports/-4" },
             { title: "Virtual T10", link: "/sports/-17" },
             { title: "Greyhound Racing", link: "/sports/4339" },
@@ -121,12 +124,59 @@ const getMenuGroups = (isLoggedIn: boolean): MenuGroup[] => {
 };
 
 export function AppSidebar() {
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, logout } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>(["Sport"]);
   const router = useRouter();
   const pathname = usePathname();
   console.log("path", pathname);
+
+  // Check if we're on the cricket route (including match detail pages)
+  const isCricketRoute =
+    pathname === "/sports/cricket" ||
+    pathname.startsWith("/sports/cricket/") ||
+    pathname.startsWith("/sports/4/");
+
+  // Check if we're on sports or live route (show sport types)
+  // Exclude cricket route, all route, and match detail pages
+  const pathSegments = pathname.split("/").filter(Boolean);
+  const isSportsOrLiveRoute =
+    pathname === "/sports" ||
+    pathname === "/sports/all" ||
+    pathname === "/live" ||
+    (pathname.startsWith("/sports/") &&
+      !pathname.startsWith("/sports/cricket") &&
+      pathSegments.length === 2 &&
+      pathSegments[0] === "sports"); // /sports/[eventType] only, not deeper routes
+
+  // Fetch series data for cricket
+  const cricketSeries = useSportsSeries("4", isCricketRoute) as Series[];
+
+  // Filter live and upcoming series
+  const filteredSeries = useMemo(() => {
+    if (!isCricketRoute || !cricketSeries.length) return [];
+
+
+    return cricketSeries.filter((series) => {
+      if (!series.matches || series.matches.length === 0) return false;
+
+      // Check if series has live matches
+      const hasLiveMatches = series.matches.some(
+        (match) => match.odds?.[0]?.odds?.inplay === true
+      );
+
+      // Check if series has upcoming matches (not live but has future date)
+      const hasUpcomingMatches = series.matches.some((match) => {
+        if (match.odds?.[0]?.odds?.inplay === true) return false;
+        if (!match.event?.openDate) return false;
+        const matchDate = new Date(match.event.openDate);
+        const now = new Date();
+        return matchDate > now;
+      });
+
+      return hasLiveMatches || hasUpcomingMatches;
+    });
+  }, [cricketSeries, isCricketRoute]);
 
   useEffect(() => {
     setMounted(true);
@@ -136,8 +186,13 @@ export function AppSidebar() {
   const menuGroups = getMenuGroups(mounted ? isLoggedIn : false);
 
   const handleItemClick = (item: MenuItem) => {
+    if (item.title === "Logout") {
+      logout();
+      return;
+    }
+
     if (item.subItems) {
-      if (item.title === "Sport") router.push("/sports/all");
+      if (item.title === "Sport") router.push("/sports");
       setExpandedItems((prev) =>
         prev.includes(item.title)
           ? prev.filter((title) => title !== item.title)
@@ -153,20 +208,20 @@ export function AppSidebar() {
   // Show loading skeleton during auth check
   if (!mounted) {
     return (
-      <Sidebar className="w-64 md:hidden lg:block border-r border-primary/20">
-        <SidebarContent className="p-4 pt-6 md:pt-24 lg:pt-6 bg-card">
+      <Sidebar className="w-64 h-full border-r border-blue-700/30 bg-[#1a2b47]">
+        <SidebarContent className="p-4 pt-4 h-full overflow-y-auto overflow-x-hidden sidebar-scrollbar">
           <div className="space-y-8 animate-pulse">
             {[1, 2, 3].map((section) => (
               <div key={section}>
-                <div className="h-3 bg-primary/30 rounded w-20 mb-4 px-2"></div>
+                <div className="h-3 bg-blue-400/30 rounded w-20 mb-4 px-2"></div>
                 <div className="space-y-2">
                   {[1, 2, 3, 4].map((i) => (
                     <div
                       key={i}
-                      className="flex items-center gap-3 px-3 py-3 rounded-xl"
+                      className="flex items-center gap-3 px-3 py-3 rounded-lg bg-blue-600/20"
                     >
-                      <div className="w-5 h-5 bg-primary/20 rounded"></div>
-                      <div className="h-4 bg-primary/20 rounded flex-1"></div>
+                      <div className="w-5 h-5 bg-blue-400/20 rounded"></div>
+                      <div className="h-4 bg-blue-400/20 rounded flex-1"></div>
                     </div>
                   ))}
                 </div>
@@ -178,55 +233,283 @@ export function AppSidebar() {
     );
   }
 
+  // Show sport types when on /sports or /live route
+  if (isSportsOrLiveRoute) {
+    const isAllActive = pathname === "/sports" || pathname === "/sports/all";
+    const headerTitle =
+      pathname === "/live" || pathname === "/sports/all"
+        ? "Live Sports"
+        : "Sports";
+
+    return (
+      <Sidebar className="w-64 h-[calc(100vh-5rem)] sm:h-[calc(100vh-6rem)] rounded-2xl md:h-[calc(100vh-7rem)] border-r border-blue-700/30 bg-[#1a2b47] relative overflow-hidden">
+        <SidebarContent className="p-3 pt-4 h-full overflow-y-auto overflow-x-hidden sidebar-scrollbar bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 pb-6">
+          <div className="mb-3 px-2">
+            <h3 className="text-xs font-semibold text-blue-300 uppercase tracking-wider">
+              {headerTitle}
+            </h3>
+          </div>
+          <SidebarMenu className="space-y-1">
+            <SidebarMenuItem key="all">
+              <SidebarMenuButton
+                className={`group relative w-full h-full justify-start px-3 py-3 rounded-lg transition-all duration-200 cursor-pointer ${
+                  isAllActive
+                    ? "bg-[#3730a3] hover:bg-[#3730a3]/80 text-white shadow-md"
+                    : "bg-transparent text-white hover:bg-[#3730a3]/20 border border-transparent"
+                }`}
+                onClick={() => router.push("/sports")}
+              >
+                <div className="relative flex items-center w-full gap-3">
+                  <Trophy
+                    className={`h-5 w-5 transition-all duration-200 flex-shrink-0 ${
+                      isAllActive
+                        ? "text-white"
+                        : "text-white/80 group-hover:text-white"
+                    }`}
+                  />
+                  <span
+                    className={`flex-1 text-sm font-medium transition-colors duration-200 ${
+                      isAllActive
+                        ? "text-white"
+                        : "text-white/90 group-hover:text-white"
+                    }`}
+                  >
+                    All
+                  </span>
+                </div>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            {sportsList.map((sport) => {
+              const isActive =
+                pathname === `/sports/${sport.eventType}` ||
+                (pathname.startsWith("/sports/") &&
+                  pathname.split("/")[2] === sport.eventType);
+
+              // Special handling for Cricket - navigate to /sports/cricket
+              const sportLink =
+                sport.eventType === "4"
+                  ? "/sports/cricket"
+                  : `/sports/${sport.eventType}`;
+
+              return (
+                <SidebarMenuItem key={sport.eventType}>
+                  <SidebarMenuButton
+                    className={`group relative w-full h-full justify-start px-3 py-3 rounded-lg transition-all duration-200 cursor-pointer ${
+                      isActive
+                        ? "bg-[#3730a3] hover:bg-[#3730a3]/80 text-white shadow-md"
+                        : "bg-transparent text-white hover:bg-[#3730a3]/20 border border-transparent"
+                    }`}
+                    onClick={() => router.push(sportLink)}
+                  >
+                    <div className="relative flex items-center w-full gap-3">
+                      <Trophy
+                        className={`h-5 w-5 transition-all duration-200 flex-shrink-0 ${
+                          isActive
+                            ? "text-white"
+                            : "text-white/80 group-hover:text-white"
+                        }`}
+                      />
+                      <span
+                        className={`flex-1 text-sm font-medium transition-colors duration-200 ${
+                          isActive
+                            ? "text-white"
+                            : "text-white/90 group-hover:text-white"
+                        }`}
+                      >
+                        {sport.name}
+                      </span>
+                    </div>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
+          </SidebarMenu>
+        </SidebarContent>
+      </Sidebar>
+    );
+  }
+
+  // Show series list when on cricket route
+  if (isCricketRoute) {
+    return (
+      <Sidebar className="w-64 h-[calc(100vh-5rem)] sm:h-[calc(100vh-6rem)] rounded-2xl md:h-[calc(100vh-7rem)] border-r border-blue-700/30 bg-[#1a2b47] relative overflow-hidden">
+        <SidebarContent className="p-3 pt-4 h-full overflow-y-auto overflow-x-hidden sidebar-scrollbar bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 pb-6">
+          <div className="mb-3 px-2">
+            <h3 className="text-xs font-semibold text-blue-300 uppercase tracking-wider">
+              Cricket Series
+            </h3>
+          </div>
+          <SidebarMenu className="space-y-1">
+            {filteredSeries.length === 0 ? (
+              <div className="px-3 py-2 text-sm text-white/60">
+                No live or upcoming series available
+              </div>
+            ) : (
+              filteredSeries.map((series) => {
+                // Check if this series is active
+                // 1. On series page: /sports/cricket/[seriesId]
+                // 2. On match detail page: /sports/4/[marketId]/[matchId] - check if matchId matches
+                const pathSegments = pathname.split("/").filter(Boolean);
+                const isOnMatchDetailPage =
+                  pathSegments.length === 4 &&
+                  pathSegments[0] === "sports" &&
+                  pathSegments[1] === "4";
+                const matchIdFromPath = isOnMatchDetailPage
+                  ? pathSegments[3]
+                  : null;
+
+                const isActive =
+                  pathname === `/sports/cricket/${series.id}` ||
+                  (matchIdFromPath &&
+                    series.matches?.some(
+                      (match) => match.event?.id === matchIdFromPath
+                    ));
+                const hasLiveMatches = series.matches?.some(
+                  (match) => match.odds?.[0]?.odds?.inplay === true
+                );
+
+                return (
+                  <SidebarMenuItem key={series.id}>
+                    <SidebarMenuButton
+                      className={`group relative w-full h-full justify-start px-3 py-3 rounded-lg transition-all duration-200 cursor-pointer ${
+                        isActive
+                          ? "bg-[#3730a3] hover:bg-[#3730a3]/80 text-white shadow-md"
+                          : "bg-transparent text-white hover:bg-[#3730a3]/20 border border-transparent"
+                      }`}
+                      onClick={() =>
+                        router.push(`/sports/cricket/${series.id}`)
+                      }
+                    >
+                      <div className="relative flex items-center w-full gap-3">
+                        <Trophy
+                          className={`h-5 w-5 transition-all duration-200 flex-shrink-0 ${
+                            isActive
+                              ? "text-white"
+                              : "text-white/80 group-hover:text-white"
+                          }`}
+                        />
+                        <span
+                          className={`flex-1 text-sm font-medium transition-colors duration-200 ${
+                            isActive
+                              ? "text-white"
+                              : "text-white/90 group-hover:text-white"
+                          }`}
+                        >
+                          {series.name}
+                        </span>
+                        {hasLiveMatches && (
+                          <span className="bg-red-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
+                            LIVE
+                          </span>
+                        )}
+                      </div>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })
+            )}
+          </SidebarMenu>
+        </SidebarContent>
+      </Sidebar>
+    );
+  }
+
   return (
-    <Sidebar className="w-64 md:hidden lg:block border-r border-primary/20">
-      <SidebarContent className="p-4 pt-6 lg:pt-0 bg-card/50">
-        <div className="space-y-8">
+    <Sidebar className="w-64 h-[calc(100vh-5rem)] sm:h-[calc(100vh-6rem)] rounded-2xl md:h-[calc(100vh-7rem)] border-r border-blue-700/30 bg-[#1a2b47] relative overflow-hidden">
+      <SidebarContent className="p-3 pt-4 h-full overflow-y-auto overflow-x-hidden sidebar-scrollbar bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 pb-6">
+        <div className="space-y-1">
           {menuGroups.map((group) => (
-            <div key={group.title}>
-              <h3 className="text-xs font-bold text-primary uppercase tracking-widest mb-4 px-2">
-                {group.title}
-              </h3>
-              <SidebarMenu className="space-y-2">
+            <div key={group.title} className="mb-6">
+              {group.title && (
+                <div className="mb-3 px-2">
+                  <h3 className="text-xs font-semibold text-blue-300 uppercase tracking-wider">
+                    {group.title}
+                  </h3>
+                </div>
+              )}
+              <SidebarMenu className="space-y-1">
                 {group.items.map((item) => {
-                  const isActive = item.link && pathname == item.link;
+                  const isActive =
+                    item.link &&
+                    (pathname === item.link ||
+                      pathname.startsWith(item.link + "/"));
+                  const isLogout = item.title === "Logout";
+                  const hasSubItems = item.subItems && item.subItems.length > 0;
+                  const isExpanded =
+                    hasSubItems && expandedItems.includes(item.title);
+
                   return (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
-                        className={`w-full justify-start px-3 py-6 transition-all duration-200 group ${isActive
-                          ? "bg-primary text-primary-foreground"
-                          : "text-foreground bg-secondary"
-                          }`}
+                        className={`group relative w-full justify-start px-3 py-3 rounded-lg transition-all duration-200 cursor-pointer ${
+                          isLogout
+                            ? "bg-[#3730a3]/20 text-white hover:bg-[#3730a3]/30 border border-[#3730a3]/30"
+                            : isActive
+                            ? "bg-[#3730a3] hover:bg-[#3730a3]/80 text-white shadow-md"
+                            : "bg-transparent text-white hover:bg-[#3730a3]/20 border border-transparent"
+                        }`}
                         onClick={() => handleItemClick(item)}
                       >
-                        <item.icon
-                          className={`h-7 w-7 mr-3 transition-transform group-hover:scale-110 ${isActive
-                            ? "text-primary-foreground"
-                            : getIconColor(item.title)
+                        <div className="relative flex items-center w-full gap-3">
+                          <item.icon
+                            className={`h-5 w-5 transition-all duration-200 flex-shrink-0 ${
+                              isActive || isLogout
+                                ? "text-white"
+                                : "text-white/80 group-hover:text-white"
                             }`}
-                        />
-                        <span className="font-medium flex-1">{item.title}</span>
-                        {item.subItems && item.title !== "Sport" &&
-                          (expandedItems.includes(item.title) ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          ))}
-                      </SidebarMenuButton>
-                      {item.subItems && expandedItems.includes(item.title) && (
-                        <div className="mt-2 space-y-1">
-                          {item.subItems.map((subItem) => (
-                            <SidebarMenuButton
-                              key={subItem.title}
-                              className={`w-full justify-start px-3 py-2 text-sm transition-all duration-200 ${pathname === subItem.link
-                                ? "bg-primary/20 text-primary"
-                                : "text-muted-foreground"
+                          />
+                          <span
+                            className={`flex-1 text-sm font-medium transition-colors duration-200 ${
+                              isActive || isLogout
+                                ? "text-white"
+                                : "text-white/90 group-hover:text-white"
+                            }`}
+                          >
+                            {item.title}
+                          </span>
+                          {hasSubItems &&
+                            item.title !== "Sport" &&
+                            (isExpanded ? (
+                              <ChevronDown
+                                className={`h-4 w-4 transition-transform duration-200 flex-shrink-0 ${
+                                  isActive
+                                    ? "text-white"
+                                    : "text-white/60 group-hover:text-white"
                                 }`}
-                              onClick={() => router.push(subItem.link)}
-                            >
-                              {subItem.title}
-                            </SidebarMenuButton>
-                          ))}
+                              />
+                            ) : (
+                              <ChevronRight
+                                className={`h-4 w-4 transition-transform duration-200 flex-shrink-0 ${
+                                  isActive
+                                    ? "text-white"
+                                    : "text-white/60 group-hover:text-white"
+                                }`}
+                              />
+                            ))}
+                        </div>
+                      </SidebarMenuButton>
+                      {hasSubItems && isExpanded && (
+                        <div className="mt-1 ml-4 space-y-0.5 border-l-2 border-[#3730a3]/30 pl-3 py-1">
+                          {item.subItems.map((subItem) => {
+                            const isSubActive =
+                              pathname === subItem.link ||
+                              pathname.startsWith(subItem.link + "/");
+                            return (
+                              <SidebarMenuButton
+                                key={subItem.title}
+                                className={`group relative w-full justify-start px-3 py-2 text-sm rounded-md transition-all duration-200 cursor-pointer ${
+                                  isSubActive
+                                    ? "bg-[#3730a3]/30 text-white border-l-2 border-[#3730a3]"
+                                    : "text-white/70 hover:text-white hover:bg-[#3730a3]/10"
+                                }`}
+                                onClick={() => router.push(subItem.link)}
+                              >
+                                <span className="relative font-normal">
+                                  {subItem.title}
+                                </span>
+                              </SidebarMenuButton>
+                            );
+                          })}
                         </div>
                       )}
                     </SidebarMenuItem>

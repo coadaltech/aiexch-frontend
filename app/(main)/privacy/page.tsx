@@ -11,12 +11,12 @@ export default function PrivacyPolicy() {
   const router = useRouter();
   return (
     <div className="min-h-screen">
-      <div className="md:px-6 py-6 md:py-8">
+      <div className="lg:px-6 px-4 lg:ml-6 py-6 md:py-8">
         <div className="flex items-center gap-4 mb-6">
           <Button onClick={() => router.back()} variant="ghost" size="sm">
             <ArrowLeft className="w-4 h-4 text-primary" />
           </Button>
-          <div className="flex items-center gap-3">
+          <div className="sm:flex items-center gap-3">
             <h1 className="text-3xl font-bold text-primary">Privacy Policy</h1>
             <Badge variant="secondary">Updated 2024</Badge>
           </div>

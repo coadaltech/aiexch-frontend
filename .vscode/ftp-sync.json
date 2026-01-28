@@ -1,0 +1,20 @@
+{
+  "remotePath": "/home/ubuntu/aiexch-backend",
+  "host": "100.30.62.142",
+  "username": "ubuntu",
+  "port": 22,
+  "secure": true,
+  "protocol": "sftp",
+  "uploadOnSave": true,
+  "passive": false,
+  "debug": false,
+  "privateKeyPath": null,
+  "passphrase": null,
+  "agent": "SSH_AGENT",
+  "allow": [],
+  "ignore": ["\\.vscode", "\\.git", "\\.DS_Store"],
+  "generatedFiles": {
+    "extensionsToInclude": [""],
+    "path": ""
+  }
+}

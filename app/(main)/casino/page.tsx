@@ -198,11 +198,11 @@ export default function CasinoPage() {
   );
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-screen-2xl mx-auto  ">
+    <div className="min-h-screen pt-4 sm:pt-6 md:pt-10">
+      <div className="max-w-screen-2xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
         {/* Search */}
-        <div className="mb-6">
-          <div className="relative max-w-md">
+        <div className="mb-4 sm:mb-6">
+          <div className="relative w-full max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="text"
@@ -211,17 +211,17 @@ export default function CasinoPage() {
               onChange={(e) =>
                 setFiltersState((prev) => ({ ...prev, search: e.target.value }))
               }
-              className="pl-10"
+              className="pl-10 w-full"
             />
           </div>
         </div>
 
         {/* Filters Section */}
-        <div className="mb-6 space-y-2">
+        <div className="mb-4 sm:mb-6 space-y-3 sm:space-y-4">
           {/* Provider Categories Slider */}
           <div className="w-full">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-semibold text-muted-foreground">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <span className="text-xs sm:text-sm font-semibold text-muted-foreground">
                 Provider
               </span>
               <div className="hidden sm:flex gap-1">
@@ -245,7 +245,7 @@ export default function CasinoPage() {
             </div>
             <div
               ref={providerScrollRef}
-              className="flex items-center gap-2 overflow-x-auto scrollbar-hide -mr-4 pr-4 pb-2 min-w-0 w-full"
+              className="flex items-center gap-2 overflow-x-auto scrollbar-hide -mr-3 sm:-mr-4 pr-3 sm:pr-4 pb-2 min-w-0 w-full"
             >
               {isLoadingProvidersTypes ? (
                 <div className="flex gap-2 flex-shrink-0">
@@ -262,7 +262,7 @@ export default function CasinoPage() {
                     onClick={() =>
                       setFiltersState((prev) => ({ ...prev, provider: "all" }))
                     }
-                    className={`px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
+                    className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
                       provider === "all"
                         ? "bg-primary text-primary-foreground shadow-sm"
                         : "bg-muted hover:bg-muted/80 text-foreground"
@@ -279,7 +279,7 @@ export default function CasinoPage() {
                           provider: providerName,
                         }))
                       }
-                      className={`px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
+                      className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
                         provider === providerName
                           ? "bg-primary text-primary-foreground shadow-sm"
                           : "bg-muted hover:bg-muted/80 text-foreground"
@@ -294,50 +294,52 @@ export default function CasinoPage() {
           </div>
           {/* Type Categories Slider */}
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-semibold text-muted-foreground">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <span className="text-xs sm:text-sm font-semibold text-muted-foreground">
                 Game Type
               </span>
-              <div className="hidden sm:flex gap-1 items-center">
+              <div className="flex gap-1 sm:gap-2 items-center">
                 {hasActiveFilters && (
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={clearFilters}
-                    className="h-7 text-xs"
+                    className="h-7 sm:h-8 text-xs px-2 sm:px-3"
                   >
-                    <X className="h-3 w-3 mr-1" />
-                    Clear All
+                    <X className="h-3 w-3 sm:mr-1" />
+                    <span className="hidden sm:inline">Clear All</span>
                   </Button>
                 )}
-                <button
-                  type="button"
-                  aria-label="Scroll types left"
-                  onClick={() => scrollHorizontal(typeScrollRef, "left")}
-                  className="p-1.5 rounded-md bg-muted hover:bg-muted/80 text-muted-foreground"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Scroll types right"
-                  onClick={() => scrollHorizontal(typeScrollRef, "right")}
-                  className="p-1.5 rounded-md bg-muted hover:bg-muted/80 text-muted-foreground"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
+                <div className="hidden sm:flex gap-1">
+                  <button
+                    type="button"
+                    aria-label="Scroll types left"
+                    onClick={() => scrollHorizontal(typeScrollRef, "left")}
+                    className="p-1.5 rounded-md bg-muted hover:bg-muted/80 text-muted-foreground"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Scroll types right"
+                    onClick={() => scrollHorizontal(typeScrollRef, "right")}
+                    className="p-1.5 rounded-md bg-muted hover:bg-muted/80 text-muted-foreground"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
             <div
               ref={typeScrollRef}
-              className="flex items-center gap-3 overflow-x-auto scrollbar-hide -mr-4 pr-4 pb-2 min-w-0"
+              className="flex items-center gap-2 sm:gap-3 overflow-x-auto scrollbar-hide -mr-3 sm:-mr-4 pr-3 sm:pr-4 pb-2 min-w-0"
             >
               {isLoadingProvidersTypes ? (
-                <div className="flex gap-3 flex-shrink-0">
+                <div className="flex gap-2 sm:gap-3 flex-shrink-0">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Skeleton
                       key={i}
-                      className="h-14 w-20 rounded-lg flex-shrink-0"
+                      className="h-12 sm:h-14 w-16 sm:w-20 rounded-lg flex-shrink-0"
                     />
                   ))}
                 </div>
@@ -353,14 +355,14 @@ export default function CasinoPage() {
                           type: typeOption.value,
                         }))
                       }
-                      className={`flex flex-col items-center justify-center gap-1.5 px-4 py-3 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 min-w-[80px] ${
+                      className={`flex flex-col items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-4 py-2 sm:py-3 rounded-lg text-[10px] sm:text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 min-w-[64px] sm:min-w-[80px] ${
                         type === typeOption.value
                           ? "bg-primary text-primary-foreground shadow-md"
                           : "bg-card border border-border text-foreground"
                       }`}
                     >
                       <Icon
-                        className={`h-5 w-5 ${
+                        className={`h-4 w-4 sm:h-5 sm:w-5 ${
                           type === typeOption.value
                             ? "text-primary-foreground"
                             : "text-muted-foreground"
@@ -379,7 +381,7 @@ export default function CasinoPage() {
 
         {/* Results Count */}
         {!isLoading && (
-          <div className="mb-4 text-sm text-muted-foreground">
+          <div className="mb-3 sm:mb-4 text-xs sm:text-sm text-muted-foreground px-1">
             {allGames.length > 0
               ? `Showing ${allGames.length} game${
                   allGames.length !== 1 ? "s" : ""
@@ -390,27 +392,29 @@ export default function CasinoPage() {
 
         {/* Games Grid */}
         {isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
             {Array.from({ length: 24 }).map((_, i) => (
               <Skeleton key={i} className="aspect-[4/3] rounded-lg" />
             ))}
           </div>
         ) : isError ? (
-          <div className="text-center py-12">
-            <p className="text-destructive">
+          <div className="text-center py-8 sm:py-12 px-4">
+            <p className="text-sm sm:text-base text-destructive">
               Failed to load games. Please try again.
             </p>
           </div>
         ) : allGames.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground text-lg mb-2">No games found</p>
-            <p className="text-sm text-muted-foreground">
+          <div className="text-center py-8 sm:py-12 px-4">
+            <p className="text-muted-foreground text-base sm:text-lg mb-2">
+              No games found
+            </p>
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Try adjusting your filters or search query
             </p>
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4 mb-6 sm:mb-8">
               {allGames.map((game: any) => (
                 <CasinoGameCard key={game.id || game.uuid} game={game} />
               ))}
@@ -418,11 +422,16 @@ export default function CasinoPage() {
 
             {/* Infinite Scroll Trigger */}
             {hasNextPage && (
-              <div ref={loadMoreRef} className="flex justify-center py-8">
+              <div
+                ref={loadMoreRef}
+                className="flex justify-center py-6 sm:py-8"
+              >
                 {isFetchingNextPage && (
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-sm">Loading more games...</span>
+                    <span className="text-xs sm:text-sm">
+                      Loading more games...
+                    </span>
                   </div>
                 )}
               </div>
@@ -430,7 +439,7 @@ export default function CasinoPage() {
 
             {/* End of Results */}
             {!hasNextPage && allGames.length > 0 && (
-              <div className="text-center py-8 text-muted-foreground text-sm">
+              <div className="text-center py-6 sm:py-8 text-muted-foreground text-xs sm:text-sm px-4">
                 You've reached the end of the list
               </div>
             )}

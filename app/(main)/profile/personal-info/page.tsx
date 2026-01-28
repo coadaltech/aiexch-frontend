@@ -126,7 +126,7 @@ export default function PersonalInfoScreen() {
     <div className="min-h-screen max-w-md mx-auto lg:max-w-6xl ">
       <div className="  min-h-screen  lg:bg-transparent md:pb-6">
         {/* Header */}
-        <div className="flex items-center gap-4  md:p-6 lg:p-0 lg:mb-6  lg:border-0">
+        <div className="flex items-center gap-4  md:p-6 lg:p-0 lg:mb-6 mt-8 lg:border-0">
           <Button
             onClick={() => router.back()}
             variant="ghost"

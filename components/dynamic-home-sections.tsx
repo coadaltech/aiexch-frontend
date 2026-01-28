@@ -135,33 +135,41 @@ function CasinoDbCarousel({
   };
 
   return (
-    <div className="w-full pt-4">
-      <div className="mb-2">
+    <div className="w-full pt-6">
+      <div className="mb-4">
         <div className="flex items-center justify-between">
-          <div className="relative">
-            <h2 className="text-md font-semibold text-primary">
-              {section.title.toUpperCase()}
-            </h2>
-            {/* {section.subtitle && (
-              <p className="text-muted-foreground mt-2 text-lg font-medium">
-                {section.subtitle}
-              </p>
-            )} */}
+          <div className="relative group">
+            <div className="absolute -inset-1  opacity-20 group-hover:opacity-30 transition duration-500"></div>
+            <div className="relative flex items-center gap-3">
+              <div className="w-1 h-8 bg-gradient-to-b from-primary to-amber-500 rounded-full animate-pulse"></div>
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-primary via-amber-400 to-primary bg-clip-text text-transparent animate-gradient">
+                  {section.title.toUpperCase()}
+                </h2>
+                {section.subtitle && (
+                  <p className="text-slate-400 text-sm mt-1">
+                    {section.subtitle}
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
           <div className="flex gap-2">
             <button
               aria-label="Scroll left"
               onClick={() => scrollBy(-1)}
-              className="bg-primary/20 text-primary hover:bg-primary hover:text-primary-foreground p-2 rounded-full transition-colors disabled:opacity-50"
+              className="group relative bg-gradient-to-br from-slate-800 to-slate-900 text-primary hover:text-amber-400 p-2.5 rounded-full border border-primary/30 hover:border-primary/60 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-primary/20 active:scale-95"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-5 h-5 transition-transform group-hover:-translate-x-0.5" />
+              <div className="absolute inset-0 rounded-full bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity blur-sm"></div>
             </button>
             <button
               aria-label="Scroll right"
               onClick={() => scrollBy(1)}
-              className="bg-primary/20 text-primary hover:bg-primary hover:text-primary-foreground p-2 rounded-full transition-colors disabled:opacity-50"
+              className="group relative bg-gradient-to-br from-slate-800 to-slate-900 text-primary hover:text-amber-400 p-2.5 rounded-full border border-primary/30 hover:border-primary/60 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-primary/20 active:scale-95"
             >
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
+              <div className="absolute inset-0 rounded-full bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity blur-sm"></div>
             </button>
           </div>
         </div>
@@ -169,7 +177,7 @@ function CasinoDbCarousel({
 
       <div
         ref={scrollRef}
-        className="flex gap-3 overflow-x-auto scrollbar-hide -mr-4 pr-4 scroll-smooth pb-4"
+        className="flex gap-4 overflow-x-auto scrollbar-hide -mr-4 pr-4 scroll-smooth pb-6"
       >
         {games.map((game: any) => (
           <CasinoGameCard key={game.id || game.uuid} game={game} />
@@ -220,33 +228,41 @@ function SectionCarousel({
   };
 
   return (
-    <div className="w-full pt-4">
-      <div className="mb-2">
+    <div className="w-full pt-6">
+      <div className="mb-4">
         <div className="flex items-center justify-between">
-          <div className="relative">
-            <h2 className="text-md font-semibold text-primary">
-              {title.toUpperCase()}
-            </h2>
-            {/* {subtitle && (
-              <p className="text-muted-foreground mt-2 text-lg font-medium">
-                {subtitle}
-              </p>
-            )} */}
+          <div className="relative group">
+            <div className="absolute -inset-1  opacity-20 group-hover:opacity-30 transition duration-500"></div>
+            <div className="relative flex items-center gap-3">
+              <div className="w-1 h-8 bg-gradient-to-b from-primary to-amber-500 rounded-full animate-pulse"></div>
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-primary via-amber-400 to-primary bg-clip-text text-transparent animate-gradient">
+                  {title.toUpperCase()}
+                </h2>
+                {subtitle && (
+                  <p className="text-slate-400 text-sm mt-1">
+                    {subtitle}
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
           <div className="flex gap-2">
             <button
               aria-label="Scroll left"
               onClick={() => scrollBy(-1)}
-              className="bg-primary/20 text-primary hover:bg-primary hover:text-primary-foreground p-2 rounded-full transition-colors"
+              className="group relative bg-gradient-to-br from-slate-800 to-slate-900 text-primary hover:text-amber-400 p-2.5 rounded-full border border-primary/30 hover:border-primary/60 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-primary/20 active:scale-95"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-5 h-5 transition-transform group-hover:-translate-x-0.5" />
+              <div className="absolute inset-0 rounded-full bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity blur-sm"></div>
             </button>
             <button
               aria-label="Scroll right"
               onClick={() => scrollBy(1)}
-              className="bg-primary/20 text-primary hover:bg-primary hover:text-primary-foreground p-2 rounded-full transition-colors"
+              className="group relative bg-gradient-to-br from-slate-800 to-slate-900 text-primary hover:text-amber-400 p-2.5 rounded-full border border-primary/30 hover:border-primary/60 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-primary/20 active:scale-95"
             >
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
+              <div className="absolute inset-0 rounded-full bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity blur-sm"></div>
             </button>
           </div>
         </div>
@@ -254,7 +270,7 @@ function SectionCarousel({
 
       <div
         ref={scrollRef}
-        className="flex gap-3 overflow-x-auto scrollbar-hide -mr-4 pr-4 scroll-smooth pb-4"
+        className="flex gap-4 overflow-x-auto scrollbar-hide -mr-4 pr-4 scroll-smooth pb-6"
       >
         {games.map((game) => (
           <GameCard key={game.id} type={type} game={game} />

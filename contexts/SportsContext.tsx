@@ -84,6 +84,7 @@ export function SportsProvider({ children }: { children: React.ReactNode }) {
         return `${type}:${subscription.eventTypeId}:${subscription.matchId}`;
       }
       if (type === "series") {
+        
         return `${type}:${subscription.eventTypeId}`;
       }
       return `${type}:${subscription.eventTypeId}`;

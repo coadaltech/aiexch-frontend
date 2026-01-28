@@ -41,7 +41,7 @@ export default function AccountStatement() {
   const [selectedPeriod, setSelectedPeriod] = useState("all");
 
   return (
-    <div className="min-h-screen max-w-md mx-auto lg:max-w-6xl">
+    <div className="min-h-screen max-w-md mx-auto mt-8 lg:max-w-6xl">
       <div className="md:pb-6">
         <div className="flex items-center gap-4 lg:p-0 lg:mb-6">
           <Button

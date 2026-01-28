@@ -82,7 +82,7 @@ export default function BetHistoryPage() {
   };
 
   return (
-    <div className="min-h-screen max-w-md mx-auto lg:max-w-6xl ">
+    <div className="min-h-screen max-w-md mx-auto mt-8 lg:max-w-6xl ">
       <div className=" min-h-screen md:pb-8">
         {/* Header */}
         <div className="flex items-center gap-4  md:p-6 lg:p-0 lg:mb-6">

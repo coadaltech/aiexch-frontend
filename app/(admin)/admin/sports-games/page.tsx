@@ -5,8 +5,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Plus, Edit, Trash2, Upload, Image } from "lucide-react";
 import { useSportsGames } from "@/hooks/useAdmin";
 import { useConfirm } from "@/hooks/useConfirm";
@@ -25,7 +37,13 @@ interface SportsGame {
 }
 
 export default function SportsGamesPage() {
-  const { data: games = [], isLoading, createGame, updateGame, deleteGame } = useSportsGames();
+  const {
+    data: games = [],
+    isLoading,
+    createGame,
+    updateGame,
+    deleteGame,
+  } = useSportsGames();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingGame, setEditingGame] = useState<SportsGame | null>(null);
   const confirmDialog = useConfirm();
@@ -43,7 +61,7 @@ export default function SportsGamesPage() {
     try {
       const submitData = {
         ...formData,
-        marketCount: Number(formData.marketCount)
+        marketCount: Number(formData.marketCount),
       };
       if (editingGame) {
         await updateGame.mutateAsync({ id: editingGame.id, ...submitData });
@@ -112,7 +130,9 @@ export default function SportsGamesPage() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold">Sports Games</h1>
-          <p className="text-muted-foreground">Manage sports games and events</p>
+          <p className="text-muted-foreground">
+            Manage sports games and events
+          </p>
         </div>
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogTrigger asChild>
@@ -133,7 +153,9 @@ export default function SportsGamesPage() {
                 <Input
                   id="eventType"
                   value={formData.eventType}
-                  onChange={(e) => setFormData({ ...formData, eventType: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, eventType: e.target.value })
+                  }
                   required
                 />
               </div>
@@ -142,7 +164,9 @@ export default function SportsGamesPage() {
                 <Input
                   id="name"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   required
                 />
               </div>
@@ -152,7 +176,9 @@ export default function SportsGamesPage() {
                   id="linkPath"
                   placeholder="/sports/cricket"
                   value={formData.linkPath}
-                  onChange={(e) => setFormData({ ...formData, linkPath: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, linkPath: e.target.value })
+                  }
                 />
               </div>
               <div>
@@ -161,7 +187,12 @@ export default function SportsGamesPage() {
                   id="marketCount"
                   type="number"
                   value={formData.marketCount}
-                  onChange={(e) => setFormData({ ...formData, marketCount: parseInt(e.target.value) || 0 })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      marketCount: parseInt(e.target.value) || 0,
+                    })
+                  }
                 />
               </div>
               <div>
@@ -178,7 +209,9 @@ export default function SportsGamesPage() {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => document.getElementById("imageUpload")?.click()}
+                      onClick={() =>
+                        document.getElementById("imageUpload")?.click()
+                      }
                     >
                       <Upload className="h-4 w-4 mr-2" />
                       Upload Image
@@ -197,7 +230,12 @@ export default function SportsGamesPage() {
               </div>
               <div>
                 <Label htmlFor="status">Status</Label>
-                <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, status: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -208,10 +246,17 @@ export default function SportsGamesPage() {
                 </Select>
               </div>
               <div className="flex gap-2">
-                <Button type="submit" disabled={createGame.isPending || updateGame.isPending}>
+                <Button
+                  type="submit"
+                  disabled={createGame.isPending || updateGame.isPending}
+                >
                   {editingGame ? "Update" : "Create"}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsModalOpen(false)}
+                >
                   Cancel
                 </Button>
               </div>
@@ -222,33 +267,63 @@ export default function SportsGamesPage() {
 
       <Card className="bg-card border">
         <CardHeader>
-          <CardTitle className="text-foreground">Sports Games Management</CardTitle>
+          <CardTitle className="text-foreground">
+            Sports Games Management
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto -mx-6 px-6 sm:mx-0 sm:px-0">
             <table className="w-full min-w-[600px]">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left py-3 px-2 text-muted-foreground text-sm">Image</th>
-                  <th className="text-left py-3 px-2 text-muted-foreground text-sm">Name</th>
-                  <th className="text-left py-3 px-2 text-muted-foreground text-sm">Event Type</th>
-                  <th className="text-left py-3 px-2 text-muted-foreground text-sm">Link Path</th>
-                  <th className="text-left py-3 px-2 text-muted-foreground text-sm">Markets</th>
-                  <th className="text-left py-3 px-2 text-muted-foreground text-sm">Status</th>
-                  <th className="text-left py-3 px-2 text-muted-foreground text-sm">Actions</th>
+                  <th className="text-left py-3 px-2 text-muted-foreground text-sm">
+                    Image
+                  </th>
+                  <th className="text-left py-3 px-2 text-muted-foreground text-sm">
+                    Name
+                  </th>
+                  <th className="text-left py-3 px-2 text-muted-foreground text-sm">
+                    Event Type
+                  </th>
+                  <th className="text-left py-3 px-2 text-muted-foreground text-sm">
+                    Link Path
+                  </th>
+                  <th className="text-left py-3 px-2 text-muted-foreground text-sm">
+                    Markets
+                  </th>
+                  <th className="text-left py-3 px-2 text-muted-foreground text-sm">
+                    Status
+                  </th>
+                  <th className="text-left py-3 px-2 text-muted-foreground text-sm">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               {isLoading ? (
                 <tbody>
                   {Array.from({ length: 6 }).map((_, i) => (
                     <tr key={i} className="border-b border-border/50">
-                      <td className="py-3 px-2"><div className="h-12 w-12 bg-muted rounded animate-pulse"></div></td>
-                      <td className="py-3 px-2"><div className="h-4 bg-muted rounded animate-pulse"></div></td>
-                      <td className="py-3 px-2"><div className="h-4 bg-muted rounded animate-pulse"></div></td>
-                      <td className="py-3 px-2"><div className="h-4 bg-muted rounded animate-pulse"></div></td>
-                      <td className="py-3 px-2"><div className="h-4 bg-muted rounded animate-pulse"></div></td>
-                      <td className="py-3 px-2"><div className="h-4 bg-muted rounded animate-pulse"></div></td>
-                      <td className="py-3 px-2"><div className="h-8 bg-muted rounded animate-pulse"></div></td>
+                      <td className="py-3 px-2">
+                        <div className="h-12 w-12 bg-muted rounded animate-pulse"></div>
+                      </td>
+                      <td className="py-3 px-2">
+                        <div className="h-4 bg-muted rounded animate-pulse"></div>
+                      </td>
+                      <td className="py-3 px-2">
+                        <div className="h-4 bg-muted rounded animate-pulse"></div>
+                      </td>
+                      <td className="py-3 px-2">
+                        <div className="h-4 bg-muted rounded animate-pulse"></div>
+                      </td>
+                      <td className="py-3 px-2">
+                        <div className="h-4 bg-muted rounded animate-pulse"></div>
+                      </td>
+                      <td className="py-3 px-2">
+                        <div className="h-4 bg-muted rounded animate-pulse"></div>
+                      </td>
+                      <td className="py-3 px-2">
+                        <div className="h-8 bg-muted rounded animate-pulse"></div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -269,12 +344,25 @@ export default function SportsGamesPage() {
                           </div>
                         )}
                       </td>
-                      <td className="py-3 px-2 font-medium text-foreground text-sm">{game.name}</td>
-                      <td className="py-3 px-2 text-foreground text-sm">{game.eventType}</td>
-                      <td className="py-3 px-2 text-foreground text-sm">{game.linkPath || 'N/A'}</td>
-                      <td className="py-3 px-2 text-foreground text-sm">{game.marketCount}</td>
+                      <td className="py-3 px-2 font-medium text-foreground text-sm">
+                        {game.name}
+                      </td>
+                      <td className="py-3 px-2 text-foreground text-sm">
+                        {game.eventType}
+                      </td>
+                      <td className="py-3 px-2 text-foreground text-sm">
+                        {game.linkPath || "N/A"}
+                      </td>
+                      <td className="py-3 px-2 text-foreground text-sm">
+                        {game.marketCount}
+                      </td>
                       <td className="py-3 px-2">
-                        <Badge variant={game.status === "active" ? "default" : "secondary"} className="text-xs">
+                        <Badge
+                          variant={
+                            game.status === "active" ? "default" : "secondary"
+                          }
+                          className="text-xs"
+                        >
                           {game.status}
                         </Badge>
                       </td>
@@ -305,7 +393,10 @@ export default function SportsGamesPage() {
               ) : (
                 <tbody>
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-muted-foreground">
+                    <td
+                      colSpan={7}
+                      className="py-8 text-center text-muted-foreground"
+                    >
                       No sports games found
                     </td>
                   </tr>
@@ -315,7 +406,7 @@ export default function SportsGamesPage() {
           </div>
         </CardContent>
       </Card>
-      
+
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         title={confirmDialog.config?.title || ""}

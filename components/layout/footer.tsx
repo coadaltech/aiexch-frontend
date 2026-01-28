@@ -32,7 +32,7 @@ const footerLinks = {
     { name: "Game Rules", href: "/rules" },
   ],
   account: [
-    { name: "Sign Up", href: "/register" },
+    { name: "Sign Up", href: "/signup" },
     { name: "Login", href: "/login" },
     { name: "My Account", href: "/account" },
     { name: "Promotions", href: "/promotions" },
@@ -44,6 +44,10 @@ const footerLinks = {
     { name: "Responsible Gaming", href: "/responsible-gaming" },
     { name: "Licensing", href: "/licensing" },
     { name: "Complaints", href: "/complaints" },
+
+    { name: "Live Support", href: "/live-support" },
+    { name: "Faqs", href: "/faqs" },
+    { name: "Game Rules", href: "/game-rules" },
   ],
 };
 
@@ -215,7 +219,7 @@ export default function Footer() {
               © 2024 Royal Casino. All rights reserved. Licensed and regulated.
             </p>
             <div className="flex items-center gap-4">
-              <Badge variant="secondary" className="text-xs">
+              <Badge variant="secondary" className="text-xs ">
                 18+ Only
               </Badge>
               <Badge variant="secondary" className="text-xs">
