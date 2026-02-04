@@ -33,6 +33,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSportsSeries } from "@/contexts/SportsContext";
 import { Series } from "@/components/sports/types";
 import { sportsList } from "@/data";
+import axios from "axios";
+import { UseSportsSeries } from "@/hooks/UseSportsSeries";
 
 const getIconColor = (title: string) => {
   const colors: Record<string, string> = {
@@ -123,6 +125,12 @@ const getMenuGroups = (isLoggedIn: boolean): MenuGroup[] => {
   return baseGroups;
 };
 
+interface ApiResponse {
+  success: boolean;
+  eventTypeId: string;
+  data: Series[];
+}
+
 export function AppSidebar() {
   const { isLoggedIn, logout } = useAuth();
   const [mounted, setMounted] = useState(false);
@@ -150,7 +158,39 @@ export function AppSidebar() {
       pathSegments[0] === "sports"); // /sports/[eventType] only, not deeper routes
 
   // Fetch series data for cricket
-  const cricketSeries = useSportsSeries("4", isCricketRoute) as Series[];
+
+  // const [cricketSeries, setCricketSeries] = useState<Series[]>([]);
+  // const [loadingCricket, setLoadingCricket] = useState(false);
+
+ 
+
+   const {
+     seriesData: cricketSeries,
+     loading: loadingCricket,
+     error: cricketError,
+     refetch: refetchCricket,
+   } = UseSportsSeries("4");
+
+  //  const fetchCricketSeries = async () => {
+  //    try {
+  //      setLoadingCricket(true);
+  //      const response = await axios.get<ApiResponse>(
+  //        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/sports/series/4`,
+  //      );
+
+  //      if (response.data.success && response.data.data) {
+  //        setCricketSeries(response.data.data);
+  //      } else {
+  //        setCricketSeries([]);
+  //      }
+  //    } catch (error) {
+  //      console.error("Error fetching cricket series:", error);
+  //      setCricketSeries([]);
+  //    } finally {
+  //      setLoadingCricket(false);
+  //    }
+  //  };
+
 
   // Filter live and upcoming series
   const filteredSeries = useMemo(() => {
@@ -161,13 +201,15 @@ export function AppSidebar() {
       if (!series.matches || series.matches.length === 0) return false;
 
       // Check if series has live matches
-      const hasLiveMatches = series.matches.some(
-        (match) => match.odds?.[0]?.odds?.inplay === true
-      );
-
+   const hasLiveMatches = series.matches.some((match) =>
+     match.odds?.some((odd) => odd?.inPlay === true),
+   );
       // Check if series has upcoming matches (not live but has future date)
       const hasUpcomingMatches = series.matches.some((match) => {
-        if (match.odds?.[0]?.odds?.inplay === true) return false;
+        // Check if ANY odds entry shows the match is live
+        const isLive = match.odds?.some((odd) => odd?.inPlay === true);
+        if (isLive) return false;
+
         if (!match.event?.openDate) return false;
         const matchDate = new Date(match.event.openDate);
         const now = new Date();
@@ -364,9 +406,9 @@ export function AppSidebar() {
                     series.matches?.some(
                       (match) => match.event?.id === matchIdFromPath
                     ));
-                const hasLiveMatches = series.matches?.some(
-                  (match) => match.odds?.[0]?.odds?.inplay === true
-                );
+              const hasLiveMatches = series.matches?.some((match) =>
+                match.odds?.some((odd) => odd?.odds?.inplay === true),
+              );
 
                 return (
                   <SidebarMenuItem key={series.id}>

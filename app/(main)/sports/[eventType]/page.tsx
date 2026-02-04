@@ -47,6 +47,7 @@ export default function EventTypePage({
   }, []);
 
   console.log("series list ", seriesList);
+  console.log("isLoading",isLoading)
 
   if (isLoading) return <SportsEventsSkeleton />;
   if (error)
@@ -55,6 +56,8 @@ export default function EventTypePage({
         Failed to load events. Please try again.
       </Card>
     );
+
+    console.log("has", hasWaited);
 
   if (!seriesList.length && hasWaited)
     return (

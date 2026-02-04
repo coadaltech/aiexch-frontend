@@ -171,6 +171,7 @@ export function SportsProvider({ children }: { children: React.ReactNode }) {
 
         ws.onmessage = (event) => {
           try {
+            console.log("event",event.data)
             const message = JSON.parse(event.data);
             console.log("message",message)
             const { type, data, subscription } = message;
@@ -473,7 +474,6 @@ export function useSportsContext() {
   }
   return context;
 }
-
 // Hook for series data
 export function useSportsSeries(
   eventTypeId: string,
@@ -749,3 +749,4 @@ export function useSportsMatchDetails(
 
   return data;
 }
+

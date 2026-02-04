@@ -1,59 +1,171 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
-import { useSportsSeries } from "@/contexts/SportsContext";
 import { SportsEventsSkeleton } from "@/components/skeletons/sports-skeletons";
-import { Series } from "@/components/sports/types";
 import { ChevronRight } from "lucide-react";
+import { UseSportsSeries } from "@/hooks/UseSportsSeries";
+
+// Types
+export interface Series {
+  id: string;
+  name: string;
+  eventTypeId: string;
+  matches: Match[];
+}
+
+export interface Match {
+  id: string;
+  name: string;
+  openDate: string | null;
+  status: string;
+  odds: Odds[];
+}
+
+export interface Odds {
+  marketId: string;
+  marketTime: string;
+  marketType: string;
+  bettingType: string;
+  marketName: string;
+  provider: string;
+  status: string;
+  inPlay: boolean;
+  marketCondition: MarketCondition;
+  runners: Runner[];
+  odds: MarketOdds | null;
+}
+
+export interface MarketCondition {
+  marketId: string;
+  betLock: boolean;
+  minBet: number;
+  maxBet: number;
+  maxProfit: number;
+  betDelay: number;
+  mtp: number;
+  allowUnmatchBet: boolean;
+  potLimit: number;
+  volume: number;
+}
+
+export interface Runner {
+  id: number;
+  name: string;
+  sortPriority: number;
+  metadata: any;
+}
+
+export interface MarketOdds {
+  marketId: string;
+  betDelay: number;
+  status: string;
+  inPlay: boolean;
+  lastMatchTime: string | null;
+  updateTime: number;
+  sportingEvent: boolean;
+  runners: OddsRunner[];
+}
+
+export interface OddsRunner {
+  selectionId: number;
+  status: string;
+  back: PriceSize[];
+  lay: PriceSize[];
+  pnl: number;
+}
+
+export interface PriceSize {
+  price: number;
+  size: number;
+}
 
 export default function CricketPage() {
-  const seriesList = useSportsSeries("4", true) as Series[];
-  const [hasWaited, setHasWaited] = useState(false);
-  console.log("ss", seriesList);
+  const { seriesData, loading, error, refetch } = UseSportsSeries("4");
 
-  useEffect(() => {
-    if (seriesList.length > 0) {
-      setHasWaited(true);
-    }
-  }, [seriesList]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setHasWaited(true);
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Filter series that have live or upcoming matches
+  // Filter series with live or upcoming matches
   const filteredSeries = useMemo(() => {
-    return seriesList.filter((series) => {
+    return seriesData.filter((series) => {
       if (!series.matches || series.matches.length === 0) return false;
 
-      // Check if series has live matches
-      const hasLiveMatches = series.matches.some(
-        (match) => match.odds?.[0]?.odds?.inplay === true,
+      const hasLiveMatches = series.matches.some((match) =>
+        match.odds?.some((odd) => odd.inPlay === true),
       );
 
-      // Check if series has upcoming matches (not live but has future date)
       const hasUpcomingMatches = series.matches.some((match) => {
-        if (match.odds?.[0]?.odds?.inplay === true) return false;
-        if (!match.event?.openDate) return false;
-        const matchDate = new Date(match.event.openDate);
-        const now = new Date();
-        return matchDate > now;
+        const isLive = match.odds?.some((odd) => odd.inPlay === true);
+        if (isLive) return false;
+
+        if (!match.openDate) return true;
+
+        try {
+          return new Date(match.openDate) > new Date();
+        } catch {
+          return false;
+        }
       });
 
       return hasLiveMatches || hasUpcomingMatches;
     });
-  }, [seriesList]);
+  }, [seriesData]);
 
-  const isLoading = filteredSeries.length === 0 && !hasWaited;
+  // Separate live and upcoming series
+  const liveSeries = useMemo(
+    () =>
+      filteredSeries.filter((series) =>
+        series.matches?.some((match) =>
+          match.odds?.some((odd) => odd.inPlay === true),
+        ),
+      ),
+    [filteredSeries],
+  );
 
-  if (isLoading) return <SportsEventsSkeleton />;
+  const upcomingSeries = useMemo(
+    () =>
+      filteredSeries.filter((series) =>
+        series.matches?.some((match) => {
+          const isLive = match.odds?.some((odd) => odd.inPlay === true);
+          if (isLive) return false;
 
-  if (!filteredSeries.length && hasWaited)
+          if (match.openDate) {
+            try {
+              return new Date(match.openDate) > new Date();
+            } catch {
+              return false;
+            }
+          }
+          return true;
+        }),
+      ),
+    [filteredSeries],
+  );
+
+  // Show loader until data arrives
+  if (loading) {
+    return <SportsEventsSkeleton />;
+  }
+
+  // Show error if request failed
+  if (error) {
+    return (
+      <Card className="p-8 text-center">
+        <div className="text-red-500 mb-2">
+          <p className="font-semibold">Error Loading Data</p>
+          <p className="text-sm">{error}</p>
+        </div>
+        <button
+          onClick={refetch}
+          className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm hover:bg-primary/90"
+        >
+          Retry
+        </button>
+      </Card>
+    );
+  }
+
+  // Show empty state if no series found
+  if (filteredSeries.length === 0) {
     return (
       <Card className="p-8 text-center">
         <p className="text-muted-foreground mb-2">
@@ -64,23 +176,15 @@ export default function CricketPage() {
         </p>
       </Card>
     );
+  }
 
-  // Separate live and upcoming series
-  const liveSeries = filteredSeries.filter((series) =>
-    series.matches?.some((match) => match.odds?.[0]?.odds?.inplay === true),
-  );
-
-  const upcomingSeries = filteredSeries.filter(
-    (series) =>
-      !series.matches?.some((match) => match.odds?.[0]?.odds?.inplay === true),
-  );
-
+  // Display the series
   return (
     <div className="space-y-4">
       {liveSeries.length > 0 && (
         <div className="space-y-2">
           <h2 className="text-lg font-semibold text-foreground px-2">
-            Live Series
+            Live Series ({liveSeries.length})
           </h2>
           {liveSeries.map((series) => (
             <SeriesCard key={series.id} series={series} />
@@ -91,7 +195,7 @@ export default function CricketPage() {
       {upcomingSeries.length > 0 && (
         <div className="space-y-2">
           <h2 className="text-lg font-semibold text-foreground px-2">
-            Upcoming Series
+            Upcoming Series ({upcomingSeries.length})
           </h2>
           {upcomingSeries.map((series) => (
             <SeriesCard key={series.id} series={series} />
@@ -103,13 +207,16 @@ export default function CricketPage() {
 }
 
 function SeriesCard({ series }: { series: Series }) {
-  const hasLiveMatches = series.matches?.some(
-    (match) => match.odds?.[0]?.odds?.inplay === true,
+  const hasLiveMatches = series.matches?.some((match) =>
+    match.odds?.some((odd) => odd.inPlay === true),
   );
+
   const matchCount = series.matches?.length || 0;
+
   const liveMatchCount =
-    series.matches?.filter((match) => match.odds?.[0]?.odds?.inplay === true)
-      .length || 0;
+    series.matches?.filter((match) =>
+      match.odds?.some((odd) => odd.inPlay === true),
+    ).length || 0;
 
   return (
     <Link href={`/sports/cricket/${series.id}`}>
@@ -119,7 +226,7 @@ function SeriesCard({ series }: { series: Series }) {
             <div className="flex items-center gap-2 mb-2">
               <h3 className="font-semibold text-sm">{series.name}</h3>
               {hasLiveMatches && (
-                <span className="bg-red-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
+                <span className="bg-red-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded animate-pulse">
                   LIVE
                 </span>
               )}

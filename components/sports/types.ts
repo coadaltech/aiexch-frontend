@@ -48,6 +48,7 @@ export interface Market {
   totalMatched: string;
   runners: Runner[];
   odds?: Odds;
+  inPlay?: boolean;
 }
 
 export interface MarketListProps {

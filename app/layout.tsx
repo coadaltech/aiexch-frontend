@@ -51,19 +51,21 @@ export default function RootLayout({
         {/* <ThemeLoader /> */}
         <MetadataLoader />
         <QueryProvider>
-          <AuthProvider>
-            <BetSlipProvider>
-              <SportsProvider>
-                <MaintenanceWrapper>
-                  <MainLayout>
-                    {children}
-                    <PopupDisplay />
-                    <BottomNavigation />
-                  </MainLayout>
-                </MaintenanceWrapper>
-              </SportsProvider>
-            </BetSlipProvider>
-          </AuthProvider>
+          {/* <UseSportsSeries> */}
+            <AuthProvider>
+              <BetSlipProvider>
+                <SportsProvider>
+                  <MaintenanceWrapper>
+                    <MainLayout>
+                      {children}
+                      <PopupDisplay />
+                      <BottomNavigation />
+                    </MainLayout>
+                  </MaintenanceWrapper>
+                </SportsProvider>
+              </BetSlipProvider>
+            </AuthProvider>
+          {/* </UseSportsSeries> */}
         </QueryProvider>
       </body>
     </html>
