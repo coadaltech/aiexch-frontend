@@ -13,9 +13,10 @@ export function UseSportsSeries(eventTypeId: string) {
     try {
       setLoading(true);
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/sports/series/${eventTypeId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/sports/getAllSeries/${eventTypeId}`,
       );
 
+      console.log("resuuu",response.data)
       if (response.data.success && response.data.data) {
         setSeriesData(response.data.data);
       } else {
@@ -35,8 +36,6 @@ export function UseSportsSeries(eventTypeId: string) {
     fetchSeriesData();
     // Refresh every 30 seconds
     
-    const intervalId = setInterval(fetchSeriesData, 15000);
-    return () => clearInterval(intervalId);
   }, [fetchSeriesData]);
 
   return {

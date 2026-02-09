@@ -17,7 +17,7 @@ export default function SeriesMatchesPage({
 }) {
   const router = useRouter();
   const { seriesId } = use(params);
-  const { seriesData, loading, error, refetch } = UseSportsSeries("4");
+  const { seriesData, loading, error, refetch } = UseSportsSeries("2");
 
   // Find the specific series
   const series = useMemo(() => {
@@ -60,7 +60,7 @@ export default function SeriesMatchesPage({
   const matches = series.matches || [];
 
   const handleMatchClick = (matchId: string) => {
-    router.push(`/sports/cricket/${seriesId}/${matchId}`);
+    router.push(`/sports/tennis/${seriesId}/${matchId}`);
   };
 
   return (

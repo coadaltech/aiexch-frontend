@@ -30,7 +30,6 @@ import {
 } from "lucide-react";
 import { MenuGroup, MenuItem } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSportsSeries } from "@/contexts/SportsContext";
 import { Series } from "@/components/sports/types";
 import { sportsList } from "@/data";
 import axios from "axios";
@@ -57,7 +56,7 @@ const getIconColor = (title: string) => {
   return colors[title] || "text-white";
 };
 
-const getMenuGroups = (isLoggedIn: boolean): MenuGroup[] => {
+const getMenuGroups = (isLoggedIn: boolean, games: any[]): MenuGroup[] => {
   const baseGroups = [
     {
       title: "",
@@ -68,17 +67,8 @@ const getMenuGroups = (isLoggedIn: boolean): MenuGroup[] => {
           title: "Sport",
           icon: Trophy,
           link: "/sports",
-          subItems: [
-            { title: "Cricket", link: "/sports/cricket" },
-            { title: "Kabaddi", link: "/sports/-4" },
-            { title: "Virtual T10", link: "/sports/-17" },
-            { title: "Greyhound Racing", link: "/sports/4339" },
-            { title: "Horse Racing", link: "/sports/7" },
-            { title: "Football", link: "/sports/1" },
-            { title: "Tennis", link: "/sports/2" },
-          ],
+          subItems: games,
         },
-        // { title: "Live Casino", icon: Leaf, link: "/live-casino" },
         { title: "Promotions", icon: Gift, link: "/promotions" },
       ],
     },
@@ -125,28 +115,77 @@ const getMenuGroups = (isLoggedIn: boolean): MenuGroup[] => {
   return baseGroups;
 };
 
-interface ApiResponse {
-  success: boolean;
-  eventTypeId: string;
-  data: Series[];
-}
-
 export function AppSidebar() {
   const { isLoggedIn, logout } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>(["Sport"]);
+  const [loadingGames, setLoadingGames] = useState(false);
+  const [games, setGames] = useState<any[]>([]); // ✅ MOVED HERE
+
   const router = useRouter();
   const pathname = usePathname();
-  console.log("path", pathname);
 
-  // Check if we're on the cricket route (including match detail pages)
+  // Fetch sports list from API - ✅ MOVED HERE
+  useEffect(() => {
+    const fetchSportsList = async () => {
+      try {
+        setLoadingGames(true);
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/sports/sports-list`,
+        );
+
+        console.log("API Response:", response);
+
+        const data = await response.data.data;
+
+        // Map of special eventTypes to their exact link paths
+        const sportLinkMapping: Record<string, string> = {
+          "4": "/sports/cricket",
+          "-4": "/sports/-4",
+          "-17": "/sports/-17",
+          "4339": "/sports/4339",
+          "7": "/sports/7",
+          "1": "/sports/1",
+          "2": "/sports/tennis",
+        };
+
+        const transformedData = data.map((sport: any) => {
+          const eventType = String(sport.id || sport.eventType || "");
+          const sportName =
+            sport.name || sport.title || sport.displayName || "Unknown Sport";
+
+          const link = sportLinkMapping[eventType] || `/sports/${eventType}`;
+
+          return {
+            title: sportName,
+            link: link,
+          };
+        });
+
+        setGames(transformedData);
+      } catch (error) {
+        console.error("Error fetching sports list:", error);
+      } finally {
+        setLoadingGames(false);
+      }
+    };
+
+    if (mounted) {
+      fetchSportsList();
+    }
+  }, [mounted]);
+
+  // Check routes
   const isCricketRoute =
     pathname === "/sports/cricket" ||
     pathname.startsWith("/sports/cricket/") ||
     pathname.startsWith("/sports/4/");
 
-  // Check if we're on sports or live route (show sport types)
-  // Exclude cricket route, all route, and match detail pages
+  const isTennisRoute =
+    pathname === "/sports/tennis" ||
+    pathname.startsWith("/sports/tennis/") ||
+    pathname.startsWith("/sports/2/");
+
   const pathSegments = pathname.split("/").filter(Boolean);
   const isSportsOrLiveRoute =
     pathname === "/sports" ||
@@ -154,78 +193,22 @@ export function AppSidebar() {
     pathname === "/live" ||
     (pathname.startsWith("/sports/") &&
       !pathname.startsWith("/sports/cricket") &&
+      !pathname.startsWith("/sports/tennis") &&
       pathSegments.length === 2 &&
-      pathSegments[0] === "sports"); // /sports/[eventType] only, not deeper routes
+      pathSegments[0] === "sports");
 
-  // Fetch series data for cricket
-
-  // const [cricketSeries, setCricketSeries] = useState<Series[]>([]);
-  // const [loadingCricket, setLoadingCricket] = useState(false);
-
- 
-
-   const {
-     seriesData: cricketSeries,
-     loading: loadingCricket,
-     error: cricketError,
-     refetch: refetchCricket,
-   } = UseSportsSeries("4");
-
-  //  const fetchCricketSeries = async () => {
-  //    try {
-  //      setLoadingCricket(true);
-  //      const response = await axios.get<ApiResponse>(
-  //        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/sports/series/4`,
-  //      );
-
-  //      if (response.data.success && response.data.data) {
-  //        setCricketSeries(response.data.data);
-  //      } else {
-  //        setCricketSeries([]);
-  //      }
-  //    } catch (error) {
-  //      console.error("Error fetching cricket series:", error);
-  //      setCricketSeries([]);
-  //    } finally {
-  //      setLoadingCricket(false);
-  //    }
-  //  };
-
-
-  // Filter live and upcoming series
-  const filteredSeries = useMemo(() => {
-    if (!isCricketRoute || !cricketSeries.length) return [];
-
-
-    return cricketSeries.filter((series) => {
-      if (!series.matches || series.matches.length === 0) return false;
-
-      // Check if series has live matches
-   const hasLiveMatches = series.matches.some((match) =>
-     match.odds?.some((odd) => odd?.inPlay === true),
-   );
-      // Check if series has upcoming matches (not live but has future date)
-      const hasUpcomingMatches = series.matches.some((match) => {
-        // Check if ANY odds entry shows the match is live
-        const isLive = match.odds?.some((odd) => odd?.inPlay === true);
-        if (isLive) return false;
-
-        if (!match.event?.openDate) return false;
-        const matchDate = new Date(match.event.openDate);
-        const now = new Date();
-        return matchDate > now;
-      });
-
-      return hasLiveMatches || hasUpcomingMatches;
-    });
-  }, [cricketSeries, isCricketRoute]);
+  // Fetch cricket series data
+  const { seriesData: cricketSeries, loading: loadingCricket } =
+    UseSportsSeries("4");
+     const { seriesData: tennisSeries, loading: loadingTennis } =
+       UseSportsSeries("2");
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Show base menu during loading to prevent layout shift
-  const menuGroups = getMenuGroups(mounted ? isLoggedIn : false);
+  // Get menu groups with games data
+  const menuGroups = getMenuGroups(mounted ? isLoggedIn : false, games);
 
   const handleItemClick = (item: MenuItem) => {
     if (item.title === "Logout") {
@@ -238,7 +221,7 @@ export function AppSidebar() {
       setExpandedItems((prev) =>
         prev.includes(item.title)
           ? prev.filter((title) => title !== item.title)
-          : [...prev, item.title]
+          : [...prev, item.title],
       );
     } else if (item.link) {
       router.push(item.link);
@@ -247,8 +230,8 @@ export function AppSidebar() {
 
   if (pathname.includes("/admin")) return null;
 
-  // Show loading skeleton during auth check
-  if (!mounted) {
+  // Show loading skeleton
+  if (!mounted || loadingGames) {
     return (
       <Sidebar className="w-64 h-full border-r border-blue-700/30 bg-[#1a2b47]">
         <SidebarContent className="p-4 pt-4 h-full overflow-y-auto overflow-x-hidden sidebar-scrollbar">
@@ -321,27 +304,21 @@ export function AppSidebar() {
                 </div>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            {sportsList.map((sport) => {
+            {games.map((sport) => {
               const isActive =
-                pathname === `/sports/${sport.eventType}` ||
+                pathname === sport.link ||
                 (pathname.startsWith("/sports/") &&
-                  pathname.split("/")[2] === sport.eventType);
-
-              // Special handling for Cricket - navigate to /sports/cricket
-              const sportLink =
-                sport.eventType === "4"
-                  ? "/sports/cricket"
-                  : `/sports/${sport.eventType}`;
+                  pathname.split("/")[2] === sport.link.split("/")[2]);
 
               return (
-                <SidebarMenuItem key={sport.eventType}>
+                <SidebarMenuItem key={sport.title}>
                   <SidebarMenuButton
                     className={`group relative w-full h-full justify-start px-3 py-3 rounded-lg transition-all duration-200 cursor-pointer ${
                       isActive
                         ? "bg-[#3730a3] hover:bg-[#3730a3]/80 text-white shadow-md"
                         : "bg-transparent text-white hover:bg-[#3730a3]/20 border border-transparent"
                     }`}
-                    onClick={() => router.push(sportLink)}
+                    onClick={() => router.push(sport.link)}
                   >
                     <div className="relative flex items-center w-full gap-3">
                       <Trophy
@@ -358,7 +335,7 @@ export function AppSidebar() {
                             : "text-white/90 group-hover:text-white"
                         }`}
                       >
-                        {sport.name}
+                        {sport.title}
                       </span>
                     </div>
                   </SidebarMenuButton>
@@ -371,7 +348,81 @@ export function AppSidebar() {
     );
   }
 
-  // Show series list when on cricket route
+  // Show tennis series when on tennis route
+  if (isTennisRoute) {
+   
+
+    return (
+      <Sidebar className="w-64 h-[calc(100vh-5rem)] sm:h-[calc(100vh-6rem)] rounded-2xl md:h-[calc(100vh-7rem)] border-r border-blue-700/30 bg-[#1a2b47] relative overflow-hidden">
+        <SidebarContent className="p-3 pt-4 h-full overflow-y-auto overflow-x-hidden sidebar-scrollbar bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 pb-6">
+          <div className="mb-3 px-2">
+            <h3 className="text-xs font-semibold text-blue-300 uppercase tracking-wider">
+              Tennis Tournaments
+            </h3>
+          </div>
+          <SidebarMenu className="space-y-1">
+            {tennisSeries.length === 0 ? (
+              <div className="px-3 py-2 text-sm text-white/60">
+                No tournaments available
+              </div>
+            ) : (
+              tennisSeries.map((series) => {
+                const pathSegments = pathname.split("/").filter(Boolean);
+                const isOnMatchDetailPage =
+                  pathSegments.length === 4 &&
+                  pathSegments[0] === "sports" &&
+                  pathSegments[1] === "2";
+                const matchIdFromPath = isOnMatchDetailPage
+                  ? pathSegments[3]
+                  : null;
+
+                const isActive =
+                  pathname === `/sports/tennis/${series.id}` ||
+                  (matchIdFromPath &&
+                    series.matches?.some(
+                      (match) => match.id === matchIdFromPath,
+                    ));
+
+                return (
+                  <SidebarMenuItem key={series.id}>
+                    <SidebarMenuButton
+                      className={`group relative w-full h-full justify-start px-3 py-3 rounded-lg transition-all duration-200 cursor-pointer ${
+                        isActive
+                          ? "bg-[#3730a3] hover:bg-[#3730a3]/80 text-white shadow-md"
+                          : "bg-transparent text-white hover:bg-[#3730a3]/20 border border-transparent"
+                      }`}
+                      onClick={() => router.push(`/sports/tennis/${series.id}`)}
+                    >
+                      <div className="relative flex items-center w-full gap-3">
+                        <Trophy
+                          className={`h-5 w-5 transition-all duration-200 flex-shrink-0 ${
+                            isActive
+                              ? "text-white"
+                              : "text-white/80 group-hover:text-white"
+                          }`}
+                        />
+                        <span
+                          className={`flex-1 text-sm font-medium transition-colors duration-200 ${
+                            isActive
+                              ? "text-white"
+                              : "text-white/90 group-hover:text-white"
+                          }`}
+                        >
+                          {series.name}
+                        </span>
+                      </div>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })
+            )}
+          </SidebarMenu>
+        </SidebarContent>
+      </Sidebar>
+    );
+  }
+
+  // Show cricket series when on cricket route
   if (isCricketRoute) {
     return (
       <Sidebar className="w-64 h-[calc(100vh-5rem)] sm:h-[calc(100vh-6rem)] rounded-2xl md:h-[calc(100vh-7rem)] border-r border-blue-700/30 bg-[#1a2b47] relative overflow-hidden">
@@ -382,15 +433,12 @@ export function AppSidebar() {
             </h3>
           </div>
           <SidebarMenu className="space-y-1">
-            {filteredSeries.length === 0 ? (
+            {cricketSeries.length === 0 ? (
               <div className="px-3 py-2 text-sm text-white/60">
-                No live or upcoming series available
+                No series available
               </div>
             ) : (
-              filteredSeries.map((series) => {
-                // Check if this series is active
-                // 1. On series page: /sports/cricket/[seriesId]
-                // 2. On match detail page: /sports/4/[marketId]/[matchId] - check if matchId matches
+              cricketSeries.map((series) => {
                 const pathSegments = pathname.split("/").filter(Boolean);
                 const isOnMatchDetailPage =
                   pathSegments.length === 4 &&
@@ -404,11 +452,8 @@ export function AppSidebar() {
                   pathname === `/sports/cricket/${series.id}` ||
                   (matchIdFromPath &&
                     series.matches?.some(
-                      (match) => match.event?.id === matchIdFromPath
+                      (match) => match.id === matchIdFromPath,
                     ));
-              const hasLiveMatches = series.matches?.some((match) =>
-                match.odds?.some((odd) => odd?.odds?.inplay === true),
-              );
 
                 return (
                   <SidebarMenuItem key={series.id}>
@@ -439,11 +484,6 @@ export function AppSidebar() {
                         >
                           {series.name}
                         </span>
-                        {hasLiveMatches && (
-                          <span className="bg-red-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
-                            LIVE
-                          </span>
-                        )}
                       </div>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -456,6 +496,7 @@ export function AppSidebar() {
     );
   }
 
+  // Default sidebar
   return (
     <Sidebar className="w-64 h-[calc(100vh-5rem)] sm:h-[calc(100vh-6rem)] rounded-2xl md:h-[calc(100vh-7rem)] border-r border-blue-700/30 bg-[#1a2b47] relative overflow-hidden">
       <SidebarContent className="p-3 pt-4 h-full overflow-y-auto overflow-x-hidden sidebar-scrollbar bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 pb-6">
@@ -487,8 +528,8 @@ export function AppSidebar() {
                           isLogout
                             ? "bg-[#3730a3]/20 text-white hover:bg-[#3730a3]/30 border border-[#3730a3]/30"
                             : isActive
-                            ? "bg-[#3730a3] hover:bg-[#3730a3]/80 text-white shadow-md"
-                            : "bg-transparent text-white hover:bg-[#3730a3]/20 border border-transparent"
+                              ? "bg-[#3730a3] hover:bg-[#3730a3]/80 text-white shadow-md"
+                              : "bg-transparent text-white hover:bg-[#3730a3]/20 border border-transparent"
                         }`}
                         onClick={() => handleItemClick(item)}
                       >
