@@ -83,7 +83,7 @@ export interface PriceSize {
 
 export default function SoccerPage() {
   // Fetch series data from API
-  const { seriesData, loading, error, refetch } = UseSportsSeries("4");
+  const { seriesData, loading, error, refetch } = UseSportsSeries("1");
 
   // Filter series that have at least one match
   const filteredSeries = useMemo(() => {

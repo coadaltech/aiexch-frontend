@@ -81,9 +81,9 @@ export interface PriceSize {
   size: number;
 }
 
-export default function GreyHoundRacingPage() {
+export default function GreyhoundRacingPage() {
   // Fetch series data from API
-  const { seriesData, loading, error, refetch } = UseSportsSeries("4");
+  const { seriesData, loading, error, refetch } = UseSportsSeries("4339");
 
   // Filter series that have at least one match
   const filteredSeries = useMemo(() => {
@@ -120,7 +120,7 @@ export default function GreyHoundRacingPage() {
     return (
       <Card className="p-8 text-center">
         <p className="text-muted-foreground mb-2">
-          No Greyhound Racing series available at the moment.
+          No greyhound racing series available at the moment.
         </p>
         <p className="text-sm text-muted-foreground">
           Please check back later.

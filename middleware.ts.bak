@@ -46,8 +46,8 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // url.pathname = "/admin";
-    // return NextResponse.redirect(url);
+    url.pathname = "/admin";
+    return NextResponse.redirect(url);
   }
 
   return NextResponse.next();

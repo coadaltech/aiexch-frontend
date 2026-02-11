@@ -75,14 +75,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("Invalid user data provided to login");
       return;
     }
+
+    console.log("userdata",userData)
     localStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);
     setIsLoggedIn(true);
 
     // Refresh user data to get latest balance
-    setTimeout(() => {
-      refreshUser();
-    }, 100);
+    // setTimeout(() => {
+    //   refreshUser();
+    // }, 100);
   };
 
   const logout = async () => {

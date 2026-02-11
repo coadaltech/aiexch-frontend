@@ -81,7 +81,7 @@ export interface PriceSize {
   size: number;
 }
 
-export default function SoccerPage() {
+export default function HorseRacingPage() {
   // Fetch series data from API
   const { seriesData, loading, error, refetch } = UseSportsSeries("7");
 
@@ -120,7 +120,7 @@ export default function SoccerPage() {
     return (
       <Card className="p-8 text-center">
         <p className="text-muted-foreground mb-2">
-          No soccer series available at the moment.
+          No horse racing series available at the moment.
         </p>
         <p className="text-sm text-muted-foreground">
           Please check back later.
@@ -133,7 +133,7 @@ export default function SoccerPage() {
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold text-foreground px-2">
-        Soccer Series ({filteredSeries.length})
+        Horse Racing Series ({filteredSeries.length})
       </h2>
       {filteredSeries.map((series) => (
         <SeriesCard key={series.id} series={series} />
@@ -155,7 +155,7 @@ function SeriesCard({ series }: { series: Series }) {
     ).length || 0;
 
   return (
-    <Link href={`/sports/soccer/${series.id}`}>
+    <Link href={`/sports/horse-racing/${series.id}`}>
       <Card className="bg-secondary/40 backdrop-blur-2xl border rounded-md p-4 hover:bg-secondary/60 transition-colors cursor-pointer">
         <div className="flex items-center justify-between">
           <div className="flex-1">

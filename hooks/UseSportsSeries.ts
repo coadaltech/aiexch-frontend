@@ -8,19 +8,22 @@ export function UseSportsSeries(eventTypeId: string | null) {
   const [seriesData, setSeriesData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  if(eventTypeId===null){
-    return { seriesData: [], loading: false, error: null, refetch: () => {} };
-
-  }
 
   const fetchSeriesData = useCallback(async () => {
+    if (!eventTypeId) {
+      setSeriesData([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
     try {
       setLoading(true);
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}/api/sports/getAllSeries/${eventTypeId}`,
       );
 
-      console.log("resuuu",response.data)
+      console.log("resuuu", response.data);
       if (response.data.success && response.data.data) {
         setSeriesData(response.data.data);
       } else {
@@ -35,11 +38,8 @@ export function UseSportsSeries(eventTypeId: string | null) {
     }
   }, [eventTypeId]);
 
-
   useEffect(() => {
     fetchSeriesData();
-    // Refresh every 30 seconds
-    
   }, [fetchSeriesData]);
 
   return {

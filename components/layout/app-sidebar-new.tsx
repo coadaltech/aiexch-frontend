@@ -144,9 +144,9 @@ export function AppSidebar() {
           "4": "/sports/cricket",
           "-4": "/sports/-4",
           "-17": "/sports/-17",
-          "4339": "/sports/4339",
-          "7": "/sports/7",
-          "1": "/sports/1",
+          "4339": "/sports/greyhound-racing",
+          "7": "/sports/horse-racing",
+          "1": "/sports/soccer",
           "2": "/sports/tennis",
         };
 
@@ -187,6 +187,21 @@ export function AppSidebar() {
     pathname.startsWith("/sports/tennis/") ||
     pathname.startsWith("/sports/2/");
 
+  const isSoccerRoute =
+    pathname === "/sports/soccer" ||
+    pathname.startsWith("/sports/soccer/") ||
+    pathname.startsWith("/sports/1/");
+
+  const isHorseRacingRoute =
+    pathname === "/sports/horse-racing" ||
+    pathname.startsWith("/sports/horse-racing/") ||
+    pathname.startsWith("/sports/7/");
+
+  const isGreyhoundRacingRoute =
+    pathname === "/sports/greyhound-racing" ||
+    pathname.startsWith("/sports/greyhound-racing/") ||
+    pathname.startsWith("/sports/4339/");
+
   const pathSegments = pathname.split("/").filter(Boolean);
   const isSportsOrLiveRoute =
     pathname === "/sports" ||
@@ -195,6 +210,9 @@ export function AppSidebar() {
     (pathname.startsWith("/sports/") &&
       !pathname.startsWith("/sports/cricket") &&
       !pathname.startsWith("/sports/tennis") &&
+      !pathname.startsWith("/sports/soccer") &&
+      !pathname.startsWith("/sports/horse-racing") &&
+      !pathname.startsWith("/sports/greyhound-racing") &&
       pathSegments.length === 2 &&
       pathSegments[0] === "sports");
 
@@ -202,11 +220,21 @@ export function AppSidebar() {
   const { seriesData: cricketSeries, loading: loadingCricket } =
     UseSportsSeries(isCricketRoute ? "4" : null); // Pass null if not needed
 
-    console.log("datt",cricketSeries)
+  console.log("datt", cricketSeries);
 
   const { seriesData: tennisSeries, loading: loadingTennis } = UseSportsSeries(
     isTennisRoute ? "2" : null,
   ); // Pass null if not needed
+
+  const { seriesData: soccerSeries, loading: loadingSoccer } = UseSportsSeries(
+    isSoccerRoute ? "1" : null,
+  );
+
+  const { seriesData: horseRacingSeries, loading: loadingHorseRacing } =
+    UseSportsSeries(isHorseRacingRoute ? "7" : null);
+
+  const { seriesData: greyhoundSeries, loading: loadingGreyhound } =
+    UseSportsSeries(isGreyhoundRacingRoute ? "4339" : null);
 
   useEffect(() => {
     setMounted(true);
@@ -236,7 +264,14 @@ export function AppSidebar() {
   if (pathname.includes("/admin")) return null;
 
   // Show loading skeleton
-  if (!mounted || loadingCricket || loadingTennis) {
+  if (
+    !mounted ||
+    loadingCricket ||
+    loadingTennis ||
+    loadingSoccer ||
+    loadingHorseRacing ||
+    loadingGreyhound
+  ) {
     return (
       <Sidebar className="w-64 h-full border-r border-blue-700/30 bg-[#1a2b47]">
         <SidebarContent className="p-4 pt-4 h-full overflow-y-auto overflow-x-hidden sidebar-scrollbar">
@@ -353,34 +388,46 @@ export function AppSidebar() {
     );
   }
 
-  // Show tennis series when on tennis route
-  if (isTennisRoute) {
+  const getMatchIdFromPath = (basePath: string, eventTypeId: string) => {
+    const segments = pathname.split("/").filter(Boolean);
+    const isMatchByName =
+      segments.length === 4 &&
+      segments[0] === "sports" &&
+      segments[1] === basePath;
+    const isMatchById =
+      segments.length === 4 &&
+      segments[0] === "sports" &&
+      segments[1] === eventTypeId;
+
+    if (isMatchByName || isMatchById) return segments[3];
+    return null;
+  };
+
+  const renderSeriesSidebar = (
+    title: string,
+    seriesList: Series[],
+    basePath: string,
+    eventTypeId: string,
+    emptyText: string,
+  ) => {
+    const matchIdFromPath = getMatchIdFromPath(basePath, eventTypeId);
+
     return (
       <Sidebar className="w-64 h-[calc(100vh-5rem)] sm:h-[calc(100vh-6rem)] rounded-2xl md:h-[calc(100vh-7rem)] border-r border-blue-700/30 bg-[#1a2b47] relative overflow-hidden">
         <SidebarContent className="p-3 pt-4 h-full overflow-y-auto overflow-x-hidden sidebar-scrollbar bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 pb-6">
           <div className="mb-3 px-2">
             <h3 className="text-xs font-semibold text-blue-300 uppercase tracking-wider">
-              Tennis Tournaments
+              {title}
             </h3>
           </div>
           <SidebarMenu className="space-y-1">
-            {tennisSeries.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-white/60">
-                No tournaments available
-              </div>
+            {seriesList.length === 0 ? (
+              <div className="px-3 py-2 text-sm text-white/60">{emptyText}</div>
             ) : (
-              tennisSeries.map((series) => {
-                const pathSegments = pathname.split("/").filter(Boolean);
-                const isOnMatchDetailPage =
-                  pathSegments.length === 4 &&
-                  pathSegments[0] === "sports" &&
-                  pathSegments[1] === "2";
-                const matchIdFromPath = isOnMatchDetailPage
-                  ? pathSegments[3]
-                  : null;
-
+              seriesList.map((series) => {
                 const isActive =
-                  pathname === `/sports/tennis/${series.id}` ||
+                  pathname === `/sports/${basePath}/${series.id}` ||
+                  pathname === `/sports/${eventTypeId}/${series.id}` ||
                   (matchIdFromPath &&
                     series.matches?.some(
                       (match) => match.id === matchIdFromPath,
@@ -394,7 +441,9 @@ export function AppSidebar() {
                           ? "bg-[#3730a3] hover:bg-[#3730a3]/80 text-white shadow-md"
                           : "bg-transparent text-white hover:bg-[#3730a3]/20 border border-transparent"
                       }`}
-                      onClick={() => router.push(`/sports/tennis/${series.id}`)}
+                      onClick={() =>
+                        router.push(`/sports/${basePath}/${series.id}`)
+                      }
                     >
                       <div className="relative flex items-center w-full gap-3">
                         <Trophy
@@ -423,98 +472,57 @@ export function AppSidebar() {
         </SidebarContent>
       </Sidebar>
     );
+  };
+
+  if (isTennisRoute) {
+    return renderSeriesSidebar(
+      "Tennis Tournaments",
+      tennisSeries,
+      "tennis",
+      "2",
+      "No tournaments available",
+    );
   }
 
-  // Show cricket series when on cricket route
-if (isCricketRoute) {
-  return (
-    <Sidebar className="w-64 h-[calc(100vh-5rem)] sm:h-[calc(100vh-6rem)] rounded-2xl md:h-[calc(100vh-7rem)] border-r border-blue-700/30 bg-[#1a2b47] relative overflow-hidden">
-      <SidebarContent className="p-3 pt-4 h-full overflow-y-auto overflow-x-hidden sidebar-scrollbar bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 pb-6">
-        {/* Header */}
-        <div className="mb-4 px-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Trophy className="h-4 w-4 text-yellow-500" />
-              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">
-                Cricket Series
-              </h3>
-            </div>
-            <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded-full font-medium">
-              {cricketSeries.length}
-            </span>
-          </div>
-        </div>
+  if (isCricketRoute) {
+    return renderSeriesSidebar(
+      "Cricket Series",
+      cricketSeries,
+      "cricket",
+      "4",
+      "No cricket series available",
+    );
+  }
 
-        {/* Series List - Single Line */}
-        <SidebarMenu className="space-y-1">
-          {cricketSeries.length === 0 ? (
-            <div className="px-3 py-2 text-sm text-white/60 text-center">
-              No cricket series available
-            </div>
-          ) : (
-            cricketSeries.map((series) => {
-              const pathSegments = pathname.split("/").filter(Boolean);
-              const isOnMatchDetailPage =
-                pathSegments.length === 4 &&
-                pathSegments[0] === "sports" &&
-                pathSegments[1] === "4";
-              const matchIdFromPath = isOnMatchDetailPage
-                ? pathSegments[3]
-                : null;
+  if (isSoccerRoute) {
+    return renderSeriesSidebar(
+      "Soccer Leagues",
+      soccerSeries,
+      "soccer",
+      "1",
+      "No soccer leagues available",
+    );
+  }
 
-              const isActive =
-                pathname === `/sports/cricket/${series.id}` ||
-                (matchIdFromPath &&
-                  series.matches?.some(
-                    (match) => match.id === matchIdFromPath,
-                  ));
+  if (isHorseRacingRoute) {
+    return renderSeriesSidebar(
+      "Horse Racing",
+      horseRacingSeries,
+      "horse-racing",
+      "7",
+      "No horse racing events available",
+    );
+  }
 
-              const totalMatches = series.matches?.length || 0;
-
-              return (
-                <SidebarMenuItem key={series.id}>
-                  <SidebarMenuButton
-                    className={`group relative w-full h-full justify-between p-3 rounded-lg transition-all duration-200 cursor-pointer 
-    focus:outline-none  focus-visible:outline-none
-    active:bg-inherit active:text-inherit
-    ${
-      isActive
-        ? "bg-gradient-to-r from-blue-800 to-indigo-800 text-white shadow-lg"
-        : "bg-transparent text-gray-300 hover:bg-[#253348] hover:text-white"
-    }`}
-                    onClick={() => router.push(`/sports/cricket/${series.id}`)}
-                  >
-                    {/* Everything in one line */}
-                    <div className="flex items-center justify-between w-full">
-                      {/* Left side: Series name */}
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <span className="text-sm font-medium ">
-                          {series.name}
-                        </span>
-                        {/* <span className="text-xs bg-slate-700 text-gray-300 px-2 py-0.5 rounded">
-                          {totalMatches}
-                        </span> */}
-                      </div>
-
-                      {/* Right side: Arrow */}
-                      <ChevronRight
-                        className={`h-3 w-3 flex-shrink-0 ml-2 ${
-                          isActive ? "text-white" : "text-gray-500"
-                        }`}
-                      />
-                    </div>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              );
-            })
-          )}
-        </SidebarMenu>
-
-     
-      </SidebarContent>
-    </Sidebar>
-  );
-}
+  if (isGreyhoundRacingRoute) {
+    return renderSeriesSidebar(
+      "Greyhound Racing",
+      greyhoundSeries,
+      "greyhound-racing",
+      "4339",
+      "No greyhound racing events available",
+    );
+  }
   // Default sidebar
   return (
     <Sidebar className="w-64 h-[calc(100vh-5rem)] sm:h-[calc(100vh-6rem)] rounded-2xl md:h-[calc(100vh-7rem)] border-r border-blue-700/30 bg-[#1a2b47] relative overflow-hidden">

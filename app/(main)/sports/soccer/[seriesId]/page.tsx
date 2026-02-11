@@ -17,7 +17,7 @@ export default function SeriesMatchesPage({
 }) {
   const router = useRouter();
   const { seriesId } = use(params);
-  const { seriesData, loading, error, refetch } = UseSportsSeries("4");
+  const { seriesData, loading, error, refetch } = UseSportsSeries("1");
 
   // Find the specific series
   const series = useMemo(() => {
@@ -66,7 +66,7 @@ export default function SeriesMatchesPage({
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
-        <Link href="/sports/cricket">
+        <Link href="/sports/soccer">
           <Button
             size="sm"
             variant="ghost"

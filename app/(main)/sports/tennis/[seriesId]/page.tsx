@@ -48,7 +48,7 @@ export default function SeriesMatchesPage({
         <p className="text-muted-foreground mb-2">
           Series not found or no matches available.
         </p>
-        <Link href="/sports/cricket">
+        <Link href="/sports/tennis">
           <Button variant="outline" className="mt-4">
             Back to Series
           </Button>
@@ -66,7 +66,7 @@ export default function SeriesMatchesPage({
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
-        <Link href="/sports/cricket">
+        <Link href="/sports/tennis">
           <Button
             size="sm"
             variant="ghost"

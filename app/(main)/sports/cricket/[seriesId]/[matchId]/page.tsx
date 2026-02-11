@@ -4,10 +4,12 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { io } from "socket.io-client";
+import { useBetSlip } from "@/contexts/BetSlipContext";
 
 export default function MatchPage() {
   const params = useParams();
   const matchId = params.matchId as string;
+  const { addToBetSlip } = useBetSlip();
 
   const [markets, setMarkets] = useState<any[]>([]);
   const [matchInfo, setMatchInfo] = useState<any>(null);
@@ -28,7 +30,6 @@ export default function MatchPage() {
       setStatus("connected");
       socket.emit("subscribe-markets", matchId);
 
-      // 4 second timeout for data
       timeoutId = setTimeout(() => {
         if (markets.length === 0) {
           setStatus("no-data");
@@ -86,9 +87,48 @@ export default function MatchPage() {
     return odds.toString();
   };
 
-  // ============ RENDER STATES ============
+  // ============ HANDLERS ============
+  const handleBackClick = (market: any, runner: any, odds: number) => {
+    if (!odds) return;
 
-  // 1. ERROR - Connection failed
+    const bet = {
+      id: Date.now(),
+      teams: `${matchInfo?.eventName || "Match"} - ${runner.name}`,
+      market: market.marketName,
+      odds: odds.toString(),
+      stake: "0",
+      potentialWin: "0",
+      matchId: matchId,
+      marketId: market.marketId,
+      selectionId: runner.selectionId.toString(),
+      marketName: market.marketName,
+      runnerName: runner.name,
+    };
+
+    addToBetSlip(bet);
+  };
+
+  const handleLayClick = (market: any, runner: any, odds: number) => {
+    if (!odds) return;
+
+    const bet = {
+      id: Date.now(),
+      teams: `${matchInfo?.eventName || "Match"} - ${runner.name}`,
+      market: `LAY ${market.marketName}`,
+      odds: odds.toString(),
+      stake: "0",
+      potentialWin: "0",
+      matchId: matchId,
+      marketId: market.marketId,
+      selectionId: runner.selectionId.toString(),
+      marketName: market.marketName,
+      runnerName: runner.name,
+    };
+
+    addToBetSlip(bet);
+  };
+
+  // ============ RENDER STATES ============
   if (status === "error") {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
@@ -111,7 +151,6 @@ export default function MatchPage() {
     );
   }
 
-  // 2. LOADING - Connected but waiting for data
   if (status === "connecting" || status === "connected") {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
@@ -124,7 +163,6 @@ export default function MatchPage() {
     );
   }
 
-  // 3. NO DATA - Connected but no markets
   if (status === "no-data") {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
@@ -139,7 +177,6 @@ export default function MatchPage() {
           <p className="text-sm text-gray-600">
             Markets will appear when available
           </p>
-
           {matchInfo && (
             <div className="mt-6 p-4 bg-gray-800/50 rounded-lg">
               <div className="text-sm text-gray-400">Match ID: {matchId}</div>
@@ -172,8 +209,6 @@ export default function MatchPage() {
         </div>
 
         {/* Markets */}
-
-        
         <div className="space-y-4">
           {markets.map((market) => (
             <div
@@ -209,13 +244,33 @@ export default function MatchPage() {
 
                       {/* Odds */}
                       <div className="flex gap-2">
-                        <button className="w-24 bg-green-900/30 hover:bg-green-900/50 border border-green-800/30 rounded-lg p-2">
+                        <button
+                          onClick={() =>
+                            handleBackClick(market, runner, runner.back?.price)
+                          }
+                          disabled={!runner.back?.price}
+                          className={`w-24 rounded-lg p-2 transition-colors ${
+                            runner.back?.price
+                              ? "bg-green-900/30 hover:bg-green-900/50 border border-green-800/30"
+                              : "bg-gray-800/50 border border-gray-700 cursor-not-allowed opacity-50"
+                          }`}
+                        >
                           <div className="text-xs text-green-400">BACK</div>
                           <div className="text-lg font-bold text-white">
                             {formatOdds(runner.back)}
                           </div>
                         </button>
-                        <button className="w-24 bg-red-900/30 hover:bg-red-900/50 border border-red-800/30 rounded-lg p-2">
+                        <button
+                          onClick={() =>
+                            handleLayClick(market, runner, runner.lay?.price)
+                          }
+                          disabled={!runner.lay?.price}
+                          className={`w-24 rounded-lg p-2 transition-colors ${
+                            runner.lay?.price
+                              ? "bg-red-900/30 hover:bg-red-900/50 border border-red-800/30"
+                              : "bg-gray-800/50 border border-gray-700 cursor-not-allowed opacity-50"
+                          }`}
+                        >
                           <div className="text-xs text-red-400">LAY</div>
                           <div className="text-lg font-bold text-white">
                             {formatOdds(runner.lay)}
@@ -223,6 +278,18 @@ export default function MatchPage() {
                         </button>
                       </div>
                     </div>
+
+                    {/* Volume/Size indicator (optional) */}
+                    {(runner.back?.size || runner.lay?.size) && (
+                      <div className="flex justify-end mt-1 gap-4 text-xs text-gray-500">
+                        {runner.back?.size && (
+                          <span>Vol: ₹{runner.back.size}</span>
+                        )}
+                        {runner.lay?.size && (
+                          <span>Vol: ₹{runner.lay.size}</span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
