@@ -83,7 +83,6 @@ export default function SeriesMatchesPage({
         </p>
       </div>
 
-      {/* LIVE MATCHES - सिर्फ यहीं LIVE बैज दिखेगा */}
       {liveMatches.length > 0 && (
         <div className="space-y-3">
           {liveMatches.map((match: any) => (
@@ -94,7 +93,6 @@ export default function SeriesMatchesPage({
         </div>
       )}
 
-      {/* NON-LIVE MATCHES - कोई LIVE बैज नहीं */}
       {nonLiveMatches.length > 0 && (
         <div className="space-y-3">
           {liveMatches.length > 0 && <div className="border-t my-4"></div>}

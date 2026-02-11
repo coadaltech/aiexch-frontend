@@ -105,15 +105,11 @@ export default function Header() {
 
             {/* Right: Action Buttons */}
             <div className="flex items-center gap-1 sm:gap-2 md:gap-3 flex-shrink-0">
-              {isLoading ? (
-                <div className="flex items-center gap-1.5 sm:gap-2 animate-pulse">
-                  <div className="hidden xs:block w-16 sm:w-20 h-6 sm:h-7 bg-slate-700 rounded"></div>
-                  <div className="w-12 sm:w-16 h-6 sm:h-7 bg-slate-700 rounded"></div>
-                </div>
-              ) : isLoggedIn ? (
-                <>
-                  {/* Gift Icon with Badge - Always visible */}
-                  {/* <Button
+              {
+                isLoggedIn ? (
+                  <>
+                    {/* Gift Icon with Badge - Always visible */}
+                    {/* <Button
                     variant="ghost"
                     size="icon"
                     className="relative h-8 w-8 sm:h-9 sm:w-9 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg touch-manipulation"
@@ -125,73 +121,73 @@ export default function Header() {
                     </span>
                   </Button> */}
 
-                  {/* Add Funds Button - Hidden on very small screens */}
-                  <div className="md:block hidden">
-                  <Button
-                    onClick={() => setIsTransactionModalOpen(true)}
-                    size="sm"
-                    className="  xs:flex h-7 sm:h-8 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold px-2 sm:px-3 md:px-4 rounded-lg shadow-md text-xs sm:text-sm touch-manipulation"
-                  >
-                    <Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5" />
-                    <span className="hidden sm:inline">Add Funds</span>
-                    <span className="sm:hidden">Add</span>
-                  </Button>
-                  </div>
+                    {/* Add Funds Button - Hidden on very small screens */}
+                    <div className="md:block hidden">
+                      <Button
+                        onClick={() => setIsTransactionModalOpen(true)}
+                        size="sm"
+                        className="  xs:flex h-7 sm:h-8 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold px-2 sm:px-3 md:px-4 rounded-lg shadow-md text-xs sm:text-sm touch-manipulation"
+                      >
+                        <Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5" />
+                        <span className="hidden sm:inline">Add Funds</span>
+                        <span className="sm:hidden">Add</span>
+                      </Button>
+                    </div>
 
-                  {/* Balance Display - Always visible but compact on mobile */}
-                  <Button
-                    size="sm"
-                    onClick={() => router.push("/profile")}
-                    className="h-7 sm:h-8 bg-slate-700/50 hover:bg-slate-700 text-white font-medium px-2 sm:px-3 rounded-lg text-xs sm:text-sm touch-manipulation min-w-0"
-                  >
-                    <Wallet className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5 flex-shrink-0" />
-                    {isLoading || balanceLoading ? (
-                      <span className="animate-pulse">...</span>
-                    ) : (
-                      <span className="truncate max-w-[60px] sm:max-w-none">
-                        ₹{formatBalance(balance || user?.balance || "0.00").inr}
+                    {/* Balance Display - Always visible but compact on mobile */}
+                    <Button
+                      size="sm"
+                      onClick={() => router.push("/profile")}
+                      className="h-7 sm:h-8 bg-slate-700/50 hover:bg-slate-700 text-white font-medium px-2 sm:px-3 rounded-lg text-xs sm:text-sm touch-manipulation min-w-0"
+                    >
+                      <Wallet className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5 flex-shrink-0" />
+                      {isLoading || balanceLoading ? (
+                        <span className="animate-pulse">...</span>
+                      ) : (
+                        <span className="truncate max-w-[60px] sm:max-w-none">
+                          ₹{formatBalance(balance || user?.balance || "0.00").inr}
+                        </span>
+                      )}
+                    </Button>
+
+                    {/* User Info - Hidden on mobile, visible on tablet+ */}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => router.push("/profile")}
+                      className="hidden md:flex h-7 sm:h-8 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg px-2 sm:px-3 text-xs sm:text-sm touch-manipulation"
+                    >
+                      <User className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5" />
+                      <span className="truncate max-w-[80px] lg:max-w-none">
+                        {user?.username}
                       </span>
-                    )}
-                  </Button>
+                    </Button>
 
-                  {/* User Info - Hidden on mobile, visible on tablet+ */}
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => router.push("/profile")}
-                    className="hidden md:flex h-7 sm:h-8 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg px-2 sm:px-3 text-xs sm:text-sm touch-manipulation"
-                  >
-                    <User className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5" />
-                    <span className="truncate max-w-[80px] lg:max-w-none">
-                      {user?.username}
-                    </span>
-                  </Button>
+                    {/* Settings - Hidden on very small screens */}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="hidden xs:flex h-7 w-7 sm:h-8 sm:w-8 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg p-0 touch-manipulation"
+                      aria-label="Settings"
+                    >
+                      <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    </Button>
 
-                  {/* Settings - Hidden on very small screens */}
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="hidden xs:flex h-7 w-7 sm:h-8 sm:w-8 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg p-0 touch-manipulation"
-                    aria-label="Settings"
-                  >
-                    <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  </Button>
-
-                  {/* Logout - Hidden on mobile */}
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={logout}
-                    className="hidden md:flex h-7 sm:h-8 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg touch-manipulation"
-                    aria-label="Logout"
-                  >
-                    <LogOut className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                  </Button>
-                </>
-              ) : (
-                <>
-                  {/* Gift Icon - Always visible */}
-                  {/* <Button
+                    {/* Logout - Hidden on mobile */}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={logout}
+                      className="hidden md:flex h-7 sm:h-8 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg touch-manipulation"
+                      aria-label="Logout"
+                    >
+                      <LogOut className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    {/* Gift Icon - Always visible */}
+                    {/* <Button
                     variant="ghost"
                     size="icon"
                     className="relative h-8 w-8 sm:h-9 sm:w-9 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg touch-manipulation"
@@ -203,8 +199,8 @@ export default function Header() {
                     </span>
                   </Button> */}
 
-                  {/* Registration Button - Compact on mobile */}
-                  {/* <Button
+                    {/* Registration Button - Compact on mobile */}
+                    {/* <Button
                     size="sm"
                     onClick={() => {
                       setAuthModal(true);
@@ -215,21 +211,21 @@ export default function Header() {
                     <span className="sm:hidden">Reg</span>
                   </Button> */}
 
-                  {/* Login Button - Compact on mobile */}
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      setAuthModal(true);
-                    }}
-                    className="h-7 sm:h-8 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-semibold px-2 sm:px-3 md:px-4 rounded-lg shadow-md text-xs sm:text-sm touch-manipulation"
-                  >
-                    <LogIn className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5" />
-                    <span className="hidden sm:inline">Log In</span>
-                    <span className="sm:hidden">Login</span>
-                  </Button>
+                    {/* Login Button - Compact on mobile */}
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setAuthModal(true);
+                      }}
+                      className="h-7 sm:h-8 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-semibold px-2 sm:px-3 md:px-4 rounded-lg shadow-md text-xs sm:text-sm touch-manipulation"
+                    >
+                      <LogIn className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5" />
+                      <span className="hidden sm:inline">Log In</span>
+                      <span className="sm:hidden">Login</span>
+                    </Button>
 
-                  {/* Settings - Hidden on very small screens */}
-                  {/* <Button
+                    {/* Settings - Hidden on very small screens */}
+                    {/* <Button
                     size="sm"
                     variant="ghost"
                     className="hidden xs:flex h-7 w-7 sm:h-8 sm:w-8 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg p-0 touch-manipulation"
@@ -239,8 +235,8 @@ export default function Header() {
                     <ChevronDown className="h-2.5 w-2.5 sm:h-3 sm:w-3 ml-0.5 hidden sm:block" />
                   </Button> */}
 
-                  {/* Language & Time - Hidden on mobile and tablet */}
-                  {/* <Button
+                    {/* Language & Time - Hidden on mobile and tablet */}
+                    {/* <Button
                     size="sm"
                     variant="ghost"
                     className="hidden xl:flex h-7 sm:h-8 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg px-2 sm:px-3 gap-1.5 sm:gap-2 touch-manipulation"
@@ -257,8 +253,8 @@ export default function Header() {
                     </span>
                     <ChevronDown className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                   </Button> */}
-                </>
-              )}
+                  </>
+                )}
 
               {/* Search Button - Mobile only */}
               <Button

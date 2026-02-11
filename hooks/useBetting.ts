@@ -7,6 +7,7 @@ type BetType = "back" | "lay";
 interface PlaceBetParams {
   matchId: string;
   marketId: string;
+  eventTypeId: string;
   selectionId: string;
   marketName?: string;
   runnerName?: string;

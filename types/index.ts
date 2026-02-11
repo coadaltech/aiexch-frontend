@@ -232,3 +232,11 @@ export interface PromoCode {
   usedCount?: number;
   status: "active" | "expired" | "used";
 }
+
+export const EventTypeById = {
+  "soccer": 1,
+  "tennis": 2,
+  "greyhound-racing": 4339,
+  "cricket": 4,
+  "horse-racing": 7
+}

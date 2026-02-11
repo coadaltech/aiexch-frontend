@@ -7,6 +7,7 @@ import { SportsEventsSkeleton } from "@/components/skeletons/sports-skeletons";
 import { PlayCircle, Trophy } from "lucide-react";
 import { UseSportsSeries } from "@/hooks/UseSportsSeries";
 import { Button } from "@/components/ui/button";
+import { EventTypeById } from "@/types";
 
 // Types (keep as is)
 export interface Series {
@@ -86,6 +87,8 @@ export interface PriceSize {
 export default function CricketPage() {
   // Fetch series data from API
   const { seriesData, loading, error, refetch } = UseSportsSeries("4");
+  // localStorage.setItem("current_sports", "cricket")
+  // localStorage.setItem("current_sports_id", EventTypeById.cricket.toString())
 
   // Format date to Indian Standard Time (IST)
 
@@ -199,31 +202,31 @@ export default function CricketPage() {
 
 function SeriesCard({ series }: { series: Series & { liveMatches: Match[] } }) {
 
-    const formatToIST = (dateString: string | null): string => {
-      if (!dateString) return "TBD";
+  const formatToIST = (dateString: string | null): string => {
+    if (!dateString) return "TBD";
 
-      try {
-        const date = new Date(dateString);
+    try {
+      const date = new Date(dateString);
 
-        // Convert to IST (UTC+5:30)
-        const istDate = new Date(date.getTime() + 5.5 * 60 * 60 * 1000);
+      // Convert to IST (UTC+5:30)
+      const istDate = new Date(date.getTime() + 5.5 * 60 * 60 * 1000);
 
-        // Format options
-        const options: Intl.DateTimeFormatOptions = {
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-          timeZone: "Asia/Kolkata",
-        };
+      // Format options
+      const options: Intl.DateTimeFormatOptions = {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+        timeZone: "Asia/Kolkata",
+      };
 
-        return istDate.toLocaleString("en-IN", options);
-      } catch (error) {
-        console.error("Error formatting date:", error);
-        return "Invalid Date";
-      }
-    };
+      return istDate.toLocaleString("en-IN", options);
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "Invalid Date";
+    }
+  };
   return (
     <Card className="bg-secondary/40 backdrop-blur-2xl border rounded-lg p-4 hover:bg-secondary/60 transition-all duration-300 cursor-pointer">
       <div className="flex flex-col gap-3">
