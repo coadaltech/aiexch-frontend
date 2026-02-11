@@ -35,7 +35,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
 
           {/* Main Content */}
           <main
-            className="flex-1 min-h-screen lg:ml-64 transition-all duration-300"
+            className="flex-1 min-h-screen lg:ml-70 transition-all duration-300"
             id="main-content"
           >
             {/* Content with padding */}

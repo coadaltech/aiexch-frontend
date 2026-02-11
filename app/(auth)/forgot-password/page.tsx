@@ -42,6 +42,11 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setError("");
 
+    if (otp.length !== 6) {
+      setError("OTP must be 6 digits");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError("Passwords don't match");
       return;
@@ -68,65 +73,102 @@ export default function ForgotPasswordPage() {
           </p>
         </div>
 
-        <form onSubmit={handleResetSubmit} className="space-y-5">
-          <div>
-            <Label htmlFor="otp">OTP Code</Label>
-            <Input
-              id="otp"
-              type="text"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              required
-              maxLength={6}
-            />
-          </div>
+        {/* IMPORTANT: browser autofill off */}
+        <form
+  onSubmit={handleResetSubmit}
+  className="space-y-5"
+  autoComplete="off"
+>
+  {/* 🔥 Chrome Autofill Stop Hack (Must be FIRST inside form) */}
+  <input
+    type="text"
+    name="username"
+    autoComplete="username"
+    className="hidden"
+  />
+  <input
+    type="password"
+    name="password"
+    autoComplete="current-password"
+    className="hidden"
+  />
 
-          <div>
-            <Label htmlFor="password">New Password</Label>
-            <div className="relative">
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-          </div>
+  {/* OTP */}
+  <div>
+    <Label htmlFor="reset_otp">OTP Code</Label>
+    <Input
+      id="reset_otp"
+      name="reset_otp"
+      type="text"
+      inputMode="numeric"
+      pattern="[0-9]*"
+      maxLength={6}
+      autoComplete="one-time-code"
+      autoCorrect="off"
+      spellCheck={false}
+      value={otp}
+      onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+      required
+    />
+  </div>
 
-          <div>
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <Input
-              id="confirmPassword"
-              type={showPassword ? "text" : "password"}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-            />
-          </div>
+  {/* New Password */}
+  <div>
+    <Label htmlFor="reset_new_password">New Password</Label>
+    <div className="relative">
+      <Input
+        id="reset_new_password"
+        name="reset_new_password"
+        type={showPassword ? "text" : "password"}
+        autoComplete="new-password"
+        autoCorrect="off"
+        spellCheck={false}
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        required
+      />
+      <button
+        type="button"
+        onClick={() => setShowPassword(!showPassword)}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+      >
+        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+      </button>
+    </div>
+  </div>
 
-          {error && <p className="text-destructive text-sm">{error}</p>}
+  {/* Confirm Password */}
+  <div>
+    <Label htmlFor="reset_confirm_password">Confirm Password</Label>
+    <Input
+      id="reset_confirm_password"
+      name="reset_confirm_password"
+      type={showPassword ? "text" : "password"}
+      autoComplete="new-password"
+      autoCorrect="off"
+      spellCheck={false}
+      value={confirmPassword}
+      onChange={(e) => setConfirmPassword(e.target.value)}
+      required
+    />
+  </div>
 
-          <Button type="submit" className="w-full h-11 text-base">
-            Reset Password
-          </Button>
+  {error && <p className="text-destructive text-sm">{error}</p>}
 
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full h-11"
-            onClick={() => setStep("email")}
-          >
-            Back
-          </Button>
-        </form>
+  <Button type="submit" className="w-full h-11 text-base">
+    Reset Password
+  </Button>
+
+  <Button
+    type="button"
+    variant="outline"
+    className="w-full h-11"
+    onClick={() => setStep("email")}
+  >
+    Back
+  </Button>
+</form>
+
       </Card>
     );
   }
@@ -142,12 +184,15 @@ export default function ForgotPasswordPage() {
         </p>
       </div>
 
-      <form onSubmit={handleEmailSubmit} className="space-y-5">
+      {/* IMPORTANT: browser autofill off */}
+      <form onSubmit={handleEmailSubmit} className="space-y-5" autoComplete="off">
         <div>
           <Label htmlFor="email">Email</Label>
           <Input
             id="email"
+            name="email"
             type="email"
+            autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -176,3 +221,8 @@ export default function ForgotPasswordPage() {
     </Card>
   );
 }
+
+
+
+
+

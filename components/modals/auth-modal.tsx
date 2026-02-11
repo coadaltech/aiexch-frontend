@@ -12,6 +12,7 @@ import { AuthForm } from "./auth/auth-form";
 import { ForgotPasswordForm } from "./auth/forgot-password-form";
 import { OtpForm } from "./auth/otp-form";
 import Image from "next/image";
+import { CloudLightning } from "lucide-react";
 
 const initialFormData: AuthFormData = {
   email: "",
@@ -152,6 +153,12 @@ export function AuthModal({
         }
       );
     } else {
+      // Validate password length first
+      if (!resetPassword || resetPassword.length < 8) {
+        setError("Password must be at least 8 characters long");
+        return;
+      }
+
       if (resetPassword !== confirmResetPassword) {
         setError("Passwords don't match");
         return;
@@ -188,11 +195,12 @@ export function AuthModal({
         });
     }
   }, [isOpen]);
+  console.log("newotp",otp)
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className="backdrop-blur-2xl border-border max-w-2xl max-h-[90vh] overflow-y-auto"
+        className="backdrop-blur-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border-blue-700/20 max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl"
         showCloseButton={false}
       >
         <div className="w-full relative">
@@ -203,7 +211,7 @@ export function AuthModal({
                 alt="Auth background"
                 width={800}
                 height={200}
-                className="w-full h-48 object-cover"
+                className="w-full h-48 object-cover rounded-lg"
               />
             </div>
           )} */}
@@ -215,9 +223,19 @@ export function AuthModal({
               onValueChange={(value) => setMode(value as "signin" | "signup")}
               className="mb-6 mt-4"
             >
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="signin">Sign In</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 bg-gradient-to-r from-slate-900/80 via-slate-800/80 to-slate-900/80 border border-blue-700/20">
+                <TabsTrigger 
+                  className="cursor-pointer data-[state=active]:bg-[#3730a3] data-[state=active]:hover:bg-[#3730a3]/80 data-[state=active]:text-white data-[state=active]:shadow-md transition-all font-semibold" 
+                  value="signin"
+                >
+                  Sign In
+                </TabsTrigger>
+                <TabsTrigger 
+                  className="cursor-pointer data-[state=active]:bg-[#3730a3] data-[state=active]:hover:bg-[#3730a3]/80 data-[state=active]:text-white data-[state=active]:shadow-md transition-all font-semibold" 
+                  value="signup"
+                >
+                  Sign Up
+                </TabsTrigger>
               </TabsList>
             </Tabs>
           )}
@@ -241,6 +259,7 @@ export function AuthModal({
                 email={formData.email}
                 onEmailChange={(email) => setFormData({ ...formData, email })}
                 otp={otp}
+                setOtp={setOtp}
                 onOtpChange={setOtp}
                 resetPassword={resetPassword}
                 onResetPasswordChange={setResetPassword}

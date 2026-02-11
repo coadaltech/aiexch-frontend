@@ -34,13 +34,13 @@ export function Captcha({ onValidate }: CaptchaProps) {
   }, [userAnswer, answer, onValidate]);
 
   return (
-    <div className="bg-card border border-border rounded-lg p-4">
+    <div className="bg-gradient-to-r from-slate-900/80 via-slate-800/80 to-slate-900/80 border border-border rounded-lg p-4">
       <div className="flex items-center justify-between mb-2">
         <span className="text-foreground font-medium text-lg">{question}</span>
         <button
           type="button"
           onClick={generate}
-          className="text-primary hover:text-primary/80 text-sm"
+          className="text-primary hover:text-primary/80 text-sm cursor-pointer transition-colors"
         >
           Refresh
         </button>

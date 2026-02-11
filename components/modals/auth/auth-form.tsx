@@ -33,21 +33,23 @@ export function AuthForm({
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       {error && (
-        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-          <p className="text-red-400 text-sm">{error}</p>
+        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 backdrop-blur-sm">
+          <p className="text-destructive text-sm font-medium">{error}</p>
         </div>
       )}
 
-      <Input
-        type="email"
-        placeholder="Email"
-        value={formData.email}
-        onChange={(e) => onFormChange({ ...formData, email: e.target.value })}
-        className="h-12"
-        required
-      />
+      <div className="space-y-1">
+        <Input
+          type="email"
+          placeholder="Email"
+          value={formData.email}
+          onChange={(e) => onFormChange({ ...formData, email: e.target.value })}
+          className="h-12 bg-gradient-to-r from-slate-900/80 via-slate-800/80 to-slate-900/80 border-blue-700/30 text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-primary/50 focus-visible:ring-2"
+          required
+        />
+      </div>
 
-      <div className="relative">
+      <div className="relative space-y-1">
         <Input
           type={showPassword ? "text" : "password"}
           placeholder="Password"
@@ -55,13 +57,14 @@ export function AuthForm({
           onChange={(e) =>
             onFormChange({ ...formData, password: e.target.value })
           }
-          className="h-12 pr-12"
+          className="h-12 pr-12 bg-gradient-to-r from-slate-900/80 via-slate-800/80 to-slate-900/80 border-blue-700/30 text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-primary/50 focus-visible:ring-2"
           required
+          minLength={8}
         />
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm p-1 cursor-pointer"
         >
           {showPassword ? (
             <EyeOff className="w-5 h-5" />
@@ -82,7 +85,7 @@ export function AuthForm({
           <button
             type="button"
             onClick={onForgotPassword}
-            className="text-sm text-muted-foreground hover:text-primary"
+            className="text-sm text-muted-foreground hover:text-primary transition-all font-medium focus:outline-none focus-visible:underline cursor-pointer"
           >
             Forgot your password?
           </button>
@@ -93,7 +96,7 @@ export function AuthForm({
         type="submit"
         disabled={isLoading || (mode === "signin" && !captchaValid)}
         isLoading={isLoading}
-        className="w-full h-12"
+        className="w-full h-12 bg-[#3730a3] hover:bg-[#3730a3]/80 text-white shadow-md cursor-pointer transition-all font-semibold"
       >
         {mode === "signin" ? "Sign In" : "Sign Up"}
       </Button>

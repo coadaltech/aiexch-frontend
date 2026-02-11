@@ -32,8 +32,8 @@ const footerLinks = {
     { name: "Game Rules", href: "/rules" },
   ],
   account: [
-    { name: "Sign Up", href: "/signup" },
-    { name: "Login", href: "/login" },
+    // { name: "Sign Up", href: "/signup" },
+    // { name: "Login", href: "/login" },
     { name: "My Account", href: "/account" },
     { name: "Promotions", href: "/promotions" },
     { name: "VIP Program", href: "/vip" },
