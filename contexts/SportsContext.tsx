@@ -97,6 +97,10 @@ export function SportsProvider({ children }: { children: React.ReactNode }) {
     (shouldConnect: boolean) => {
       if (!shouldConnect) {
         // Disconnect if we shouldn't be connected
+        if (reconnectTimeoutRef.current) {
+          clearTimeout(reconnectTimeoutRef.current);
+          reconnectTimeoutRef.current = null;
+        }
         if (wsRef.current) {
           console.log(
             "[SportsContext] Disconnecting WebSocket (not on sports page)"
@@ -104,10 +108,18 @@ export function SportsProvider({ children }: { children: React.ReactNode }) {
           wsRef.current.close();
           wsRef.current = null;
         }
+        setIsConnected(false);
         return;
       }
 
+      // Prevent multiple simultaneous connection attempts
       if (wsRef.current?.readyState === WebSocket.OPEN) {
+        return;
+      }
+      
+      // If already connecting, don't start another connection
+      if (wsRef.current?.readyState === WebSocket.CONNECTING) {
+        console.log("[SportsContext] Already connecting, skipping...");
         return;
       }
 
@@ -247,6 +259,23 @@ console.log("type-",type," subscription-",subscription)
           setIsConnected(false);
           wsRef.current = null;
 
+          // Only reconnect if we're still on the sports page
+          const isSportsPage =
+            typeof window !== "undefined" &&
+            window.location.pathname.startsWith("/sports");
+          
+          if (!isSportsPage) {
+            console.log(
+              "[SportsContext] Not on sports page, skipping reconnection"
+            );
+            return;
+          }
+
+          // Clear any existing reconnect timeout
+          if (reconnectTimeoutRef.current) {
+            clearTimeout(reconnectTimeoutRef.current);
+          }
+
           // Attempt to reconnect with exponential backoff
           const delay = Math.min(
             1000 * Math.pow(2, reconnectAttemptsRef.current),
@@ -259,7 +288,18 @@ console.log("type-",type," subscription-",subscription)
           );
 
           reconnectTimeoutRef.current = setTimeout(() => {
-            connect();
+            // Check again if we're still on sports page before reconnecting
+            const stillOnSportsPage =
+              typeof window !== "undefined" &&
+              window.location.pathname.startsWith("/sports");
+            
+            if (stillOnSportsPage) {
+              connect(true);
+            } else {
+              console.log(
+                "[SportsContext] No longer on sports page, aborting reconnection"
+              );
+            }
           }, delay);
         };
 
@@ -390,10 +430,13 @@ console.log("type-",type," subscription-",subscription)
   useEffect(() => {
     const handleRouteChange = () => {
       const isSportsPage = window.location.pathname.startsWith("/sports");
-      if (isSportsPage && !wsRef.current) {
+      const isConnected = wsRef.current?.readyState === WebSocket.OPEN;
+      const isConnecting = wsRef.current?.readyState === WebSocket.CONNECTING;
+      
+      if (isSportsPage && !isConnected && !isConnecting) {
         console.log("[SportsContext] Navigated to sports page, connecting...");
         connect(true);
-      } else if (!isSportsPage && wsRef.current) {
+      } else if (!isSportsPage && (isConnected || isConnecting)) {
         console.log(
           "[SportsContext] Navigated away from sports page, disconnecting..."
         );
