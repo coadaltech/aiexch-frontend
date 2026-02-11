@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 interface Sport {
   id: string;
@@ -9,6 +10,7 @@ interface Sport {
 }
 
 export default function SportsPage() {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [sports, setSports] = useState<Sport[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,7 +22,6 @@ export default function SportsPage() {
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/sports-list`,
         );
-        console.log("dd",response)
         const data = await response.json();
 
         if (Array.isArray(data)) {
@@ -42,6 +43,11 @@ export default function SportsPage() {
   const filteredSports = sports.filter((sport) =>
     sport.name.toLowerCase().includes(search.toLowerCase()),
   );
+
+  // Handle sport click
+  const handleSportClick = (sportId: string) => {
+    router.push(`/admin/sports-games/competitions/${sportId}`);
+  };
 
   if (loading) {
     return (
@@ -81,7 +87,8 @@ export default function SportsPage() {
           {filteredSports.map((sport) => (
             <div
               key={sport.id}
-              className="p-4 border border-gray-200 rounded-lg hover:border-blue-400 hover:shadow-md transition-all"
+              onClick={() => handleSportClick(sport.id)}
+              className="p-4 border border-gray-200 rounded-lg hover:border-blue-400 hover:shadow-md transition-all cursor-pointer hover:bg-blue-50"
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -102,6 +109,19 @@ export default function SportsPage() {
                   >
                     {sport.isActive ? "Active" : "Inactive"}
                   </div>
+                  <svg
+                    className="w-5 h-5 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
                 </div>
               </div>
             </div>

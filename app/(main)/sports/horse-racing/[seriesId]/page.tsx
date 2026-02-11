@@ -17,8 +17,9 @@ export default function SeriesMatchesPage({
 }) {
   const router = useRouter();
   const { seriesId } = use(params);
-  const { seriesData, loading, error, refetch } = UseSportsSeries("4");
+  const { seriesData, loading, error, refetch } = UseSportsSeries("7");
 
+  // Find the specific series
   const series = useMemo(() => {
     return seriesData.find((s: Series) => s.id === seriesId);
   }, [seriesData, seriesId]);
@@ -26,6 +27,7 @@ export default function SeriesMatchesPage({
   const isLoading = loading || (seriesData.length === 0 && !error);
 
   if (isLoading) return <SportsEventsSkeleton />;
+
   if (error) {
     return (
       <Card className="p-8 text-center">
@@ -39,6 +41,7 @@ export default function SeriesMatchesPage({
       </Card>
     );
   }
+
   if (!series) {
     return (
       <Card className="p-8 text-center">
@@ -55,11 +58,9 @@ export default function SeriesMatchesPage({
   }
 
   const matches = series.matches || [];
-  const liveMatches = matches.filter((m) => m.inPlay === true);
-  const nonLiveMatches = matches.filter((m) => m.inPlay !== true);
 
   const handleMatchClick = (matchId: string) => {
-    router.push(`/sports/cricket/${seriesId}/${matchId}`);
+    router.push(`/sports/tennis/${seriesId}/${matchId}`);
   };
 
   return (
@@ -79,34 +80,22 @@ export default function SeriesMatchesPage({
       <div className="mb-4">
         <h1 className="text-xl font-bold text-foreground">{series.name}</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          {matches.length} matches • {liveMatches.length} live
+          {matches.length} matches
         </p>
       </div>
 
-      {/* LIVE MATCHES - सिर्फ यहीं LIVE बैज दिखेगा */}
-      {liveMatches.length > 0 && (
-        <div className="space-y-3">
-          {liveMatches.map((match: any) => (
-            <div key={match.id} onClick={() => handleMatchClick(match.id)}>
-              <MatchCard match={match} showLive={true} />
+      {matches.length > 0 ? (
+        <div className="space-y-2">
+          {matches.map((match: any, idx: number) => (
+            <div
+              key={match.id || `${match.name}-${idx}`}
+              onClick={() => handleMatchClick(match.id)}
+            >
+              <MatchCard match={match} seriesName={series.name} />
             </div>
           ))}
         </div>
-      )}
-
-      {/* NON-LIVE MATCHES - कोई LIVE बैज नहीं */}
-      {nonLiveMatches.length > 0 && (
-        <div className="space-y-3">
-          {liveMatches.length > 0 && <div className="border-t my-4"></div>}
-          {nonLiveMatches.map((match: any) => (
-            <div key={match.id} onClick={() => handleMatchClick(match.id)}>
-              <MatchCard match={match} showLive={false} />
-            </div>
-          ))}
-        </div>
-      )}
-
-      {matches.length === 0 && (
+      ) : (
         <Card className="p-8 text-center">
           <p className="text-muted-foreground">
             No matches available for this series.
@@ -117,33 +106,47 @@ export default function SeriesMatchesPage({
   );
 }
 
-/* ---------------------------- SIMPLE MATCH CARD ---------------------------- */
+/* ---------------------------- SIMPLIFIED MATCH CARD ---------------------------- */
 
-function MatchCard({ match, showLive }: { match: any; showLive: boolean }) {
+function MatchCard({ match, seriesName }: { match: any; seriesName?: string }) {
   const matchName = match.name || "Match";
   const matchDate = match.openDate;
+  const matchId = match.id || "N/A";
 
   return (
     <Card className="bg-secondary/40 backdrop-blur-2xl border rounded-md p-4 hover:bg-secondary/60 transition-colors cursor-pointer">
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-semibold text-sm">{matchName}</h3>
-            {showLive && (
-              <span className="text-[10px] bg-red-600 text-white px-2 py-0.5 rounded-full animate-pulse">
-                LIVE
-              </span>
+      <div className="flex flex-col">
+        {seriesName && (
+          <p className="text-xs text-muted-foreground mb-1">{seriesName}</p>
+        )}
+
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-1.5 mb-2">
+              <h3 className="font-semibold text-sm">{matchName}</h3>
+            </div>
+
+            {matchDate ? (
+              <p className="text-xs font-medium text-muted-foreground">
+                {formatToIST(matchDate)}
+              </p>
+            ) : (
+              <p className="text-xs font-medium text-muted-foreground">
+                Date: TBD
+              </p>
             )}
-          </div>
-          {matchDate && (
-            <p className="text-xs font-medium text-muted-foreground">
-              {formatToIST(matchDate)}
+
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Match ID: {matchId}
             </p>
-          )}
+          </div>
+
+          <div className="flex items-center">
+            <Button size="sm" variant="ghost" className="text-xs">
+              View →
+            </Button>
+          </div>
         </div>
-        <Button size="sm" variant="ghost" className="text-xs">
-          View →
-        </Button>
       </div>
     </Card>
   );

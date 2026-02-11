@@ -58,7 +58,7 @@ export default function MatchPage() {
       console.log("📊 Received market update for:", data.eventId);
 
       if (data.eventId === matchId) {
-        console.log(`✅ Match ${matchId} update received`, data);
+        console.log(`✅ Match ${matchId} update received`,data);
         setHasReceivedFirstData(true);
         setConnectionTimeout(false);
         setMarkets(data.markets);

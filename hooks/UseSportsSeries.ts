@@ -4,10 +4,14 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 
-export function UseSportsSeries(eventTypeId: string) {
+export function UseSportsSeries(eventTypeId: string | null) {
   const [seriesData, setSeriesData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  if(eventTypeId===null){
+    return { seriesData: [], loading: false, error: null, refetch: () => {} };
+
+  }
 
   const fetchSeriesData = useCallback(async () => {
     try {

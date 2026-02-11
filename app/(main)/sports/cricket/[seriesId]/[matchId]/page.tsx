@@ -8,104 +8,220 @@ import { io } from "socket.io-client";
 export default function MatchPage() {
   const params = useParams();
   const matchId = params.matchId as string;
+
   const [markets, setMarkets] = useState<any[]>([]);
-  const [socketConnected, setSocketConnected] = useState(false);
+  const [matchInfo, setMatchInfo] = useState<any>(null);
+  const [status, setStatus] = useState<
+    "connecting" | "connected" | "no-data" | "error" | "success"
+  >("connecting");
 
   useEffect(() => {
-    // ✅ Connect to WebSocket on port 3003
+    let timeoutId: NodeJS.Timeout;
+
     const socket = io("http://localhost:3003", {
       transports: ["websocket", "polling"],
+      timeout: 5000,
     });
-
-    console.log("🔌 Connecting to WebSocket at localhost:3003...");
 
     socket.on("connect", () => {
-      console.log("✅ Connected to WebSocket server");
-      setSocketConnected(true);
-
-      // Subscribe to this match
+      console.log("✅ Connected");
+      setStatus("connected");
       socket.emit("subscribe-markets", matchId);
-      console.log(`📡 Subscribed to match: ${matchId}`);
-    });
 
-    socket.on("connect_error", (error) => {
-      console.error("❌ WebSocket connection error:", error);
-      setSocketConnected(false);
+      // 4 second timeout for data
+      timeoutId = setTimeout(() => {
+        if (markets.length === 0) {
+          setStatus("no-data");
+        }
+      }, 4000);
     });
 
     socket.on("market-update", (data) => {
-      console.log("📊 Received market update for:", data.eventId);
-
       if (data.eventId === matchId) {
-        console.log(`✅ Match ${matchId} update received`);
-        setMarkets(data.markets);
+        clearTimeout(timeoutId);
+
+        if (data.markets.length > 0) {
+          setMarkets(data.markets);
+          setMatchInfo({
+            eventName: data.markets[0]?.eventName || "Match",
+            sport: data.markets[0]?.sport || "Cricket",
+            startTime: data.markets[0]?.startTime,
+          });
+          setStatus("success");
+        } else {
+          setStatus("no-data");
+        }
       }
     });
 
-    // Cleanup
+    socket.on("connect_error", () => {
+      setStatus("error");
+    });
+
+    socket.on("disconnect", () => {
+      setStatus("connecting");
+    });
+
     return () => {
+      clearTimeout(timeoutId);
       socket.disconnect();
     };
   }, [matchId]);
 
-  return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">
-        Match ID: {matchId}
-        <span
-          className={`ml-2 text-sm ${socketConnected ? "text-green-500" : "text-red-500"}`}
-        >
-          {socketConnected ? "🟢 Live" : "🔴 Offline"}
-        </span>
-      </h1>
+  // Format date
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
-      {!socketConnected && (
-        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
-          <p className="text-yellow-800">
-            <strong>Note:</strong> WebSocket on port 3003 | HTTP API on port
-            3001
-          </p>
+  // Format odds
+  const formatOdds = (odds: any) => {
+    if (!odds) return "-";
+    if (typeof odds === "object") return odds.price || "-";
+    return odds.toString();
+  };
+
+  // ============ RENDER STATES ============
+
+  // 1. ERROR - Connection failed
+  if (status === "error") {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <div className="w-20 h-20 mx-auto bg-red-900/20 rounded-full flex items-center justify-center mb-4">
+            <span className="text-red-400 text-4xl">⚠️</span>
+          </div>
+          <h2 className="text-xl font-semibold text-white mb-2">
+            Connection Failed
+          </h2>
+          <p className="text-gray-400 mb-4">Unable to connect to server</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700"
+          >
+            Retry
+          </button>
         </div>
-      )}
+      </div>
+    );
+  }
 
-      {markets.length === 0 ? (
-        <div className="text-center py-8">
-          {socketConnected ? (
-            <>
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-              <p className="text-gray-500">Waiting for market data...</p>
-              <p className="text-sm text-gray-400 mt-2">
-                Backend will send data when available
-              </p>
-            </>
-          ) : (
-            <>
-              <p className="text-red-500">Not connected to WebSocket</p>
-              <p className="text-sm text-gray-400 mt-2">
-                Make sure WebSocket server is running on port 3003
-              </p>
-            </>
+  // 2. LOADING - Connected but waiting for data
+  if (status === "connecting" || status === "connected") {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="w-16 h-16 mx-auto border-4 border-gray-700 border-t-blue-500 rounded-full animate-spin mb-4"></div>
+          <p className="text-gray-400">Loading match data...</p>
+          <p className="text-xs text-gray-600 mt-2">ID: {matchId}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 3. NO DATA - Connected but no markets
+  if (status === "no-data") {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <div className="w-20 h-20 mx-auto bg-gray-800 rounded-full flex items-center justify-center mb-4">
+            <span className="text-gray-400 text-3xl">📊</span>
+          </div>
+          <h2 className="text-xl font-semibold text-white mb-2">
+            No Open Markets
+          </h2>
+          <p className="text-gray-400 mb-2">This match has no active markets</p>
+          <p className="text-sm text-gray-600">
+            Markets will appear when available
+          </p>
+
+          {matchInfo && (
+            <div className="mt-6 p-4 bg-gray-800/50 rounded-lg">
+              <div className="text-sm text-gray-400">Match ID: {matchId}</div>
+              {matchInfo.startTime && (
+                <div className="text-sm text-gray-400 mt-1">
+                  Start: {formatDate(matchInfo.startTime)}
+                </div>
+              )}
+            </div>
           )}
         </div>
-      ) : (
+      </div>
+    );
+  }
+
+  // 4. SUCCESS - Show markets
+  return (
+    <div className="min-h-screen bg-gray-900">
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-white">
+            {matchInfo?.eventName || `Match ${matchId}`}
+          </h1>
+          {matchInfo?.startTime && (
+            <p className="text-gray-400 text-sm mt-1">
+              {formatDate(matchInfo.startTime)}
+            </p>
+          )}
+        </div>
+
+        {/* Markets */}
+
+        
         <div className="space-y-4">
           {markets.map((market) => (
-            <div key={market.marketId} className="border p-4 rounded-lg">
-              <h3 className="font-bold text-lg mb-2">{market.marketName}</h3>
-              <div className="space-y-2">
-                {market.runners.map((runner: any) => (
-                  <div
-                    key={runner.selectionId}
-                    className="flex justify-between items-center border-b py-2"
-                  >
-                    <span>{runner.name}</span>
-                    <div className="flex gap-6">
-                      <span className="text-green-600 font-bold">
-                        Back: {runner.back || "-"}
-                      </span>
-                      <span className="text-red-600 font-bold">
-                        Lay: {runner.lay || "-"}
-                      </span>
+            <div
+              key={market.marketId}
+              className="bg-gray-800 rounded-lg border border-gray-700"
+            >
+              {/* Market Title */}
+              <div className="px-4 py-3 border-b border-gray-700 bg-gray-900/50">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-white">
+                    {market.marketName}
+                  </h3>
+                  <span className="text-xs text-green-400 px-2 py-1 bg-green-900/30 rounded-full">
+                    LIVE
+                  </span>
+                </div>
+              </div>
+
+              {/* Runners */}
+              <div className="divide-y divide-gray-700">
+                {market.runners.map((runner: any, idx: number) => (
+                  <div key={runner.selectionId} className="px-4 py-3">
+                    <div className="flex items-center justify-between">
+                      {/* Name */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-400 w-6">
+                          {idx + 1}
+                        </span>
+                        <span className="text-white font-medium">
+                          {runner.name}
+                        </span>
+                      </div>
+
+                      {/* Odds */}
+                      <div className="flex gap-2">
+                        <button className="w-24 bg-green-900/30 hover:bg-green-900/50 border border-green-800/30 rounded-lg p-2">
+                          <div className="text-xs text-green-400">BACK</div>
+                          <div className="text-lg font-bold text-white">
+                            {formatOdds(runner.back)}
+                          </div>
+                        </button>
+                        <button className="w-24 bg-red-900/30 hover:bg-red-900/50 border border-red-800/30 rounded-lg p-2">
+                          <div className="text-xs text-red-400">LAY</div>
+                          <div className="text-lg font-bold text-white">
+                            {formatOdds(runner.lay)}
+                          </div>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -113,7 +229,7 @@ export default function MatchPage() {
             </div>
           ))}
         </div>
-      )}
+      </div>
     </div>
   );
 }
