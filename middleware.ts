@@ -55,6 +55,7 @@ export async function middleware(request: NextRequest) {
       }
     }
   }
+  //// just checking
 
   // Admin-only routes
   // if (url.pathname.startsWith("/admin")) {
