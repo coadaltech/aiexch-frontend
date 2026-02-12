@@ -6,6 +6,12 @@ import { useParams } from "next/navigation";
 import { io } from "socket.io-client";
 import { useBetSlip } from "@/contexts/BetSlipContext";
 
+
+const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL
+if (!SOCKET_URL) {
+  console.warn("NEXT_PUBLIC_SOCKET_URL is not defined. Defaulting to ws://localhost:3003");
+}
+
 export default function MatchPage() {
   const params = useParams();
   const matchId = params.matchId as string;
@@ -20,7 +26,7 @@ export default function MatchPage() {
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
 
-    const socket = io("http://localhost:3003", {
+    const socket = io(SOCKET_URL, {
       transports: ["websocket", "polling"],
       timeout: 5000,
     });
@@ -249,11 +255,10 @@ export default function MatchPage() {
                             handleBackClick(market, runner, runner.back?.price)
                           }
                           disabled={!runner.back?.price}
-                          className={`w-24 rounded-lg p-2 transition-colors ${
-                            runner.back?.price
-                              ? "bg-green-900/30 hover:bg-green-900/50 border border-green-800/30"
-                              : "bg-gray-800/50 border border-gray-700 cursor-not-allowed opacity-50"
-                          }`}
+                          className={`w-24 rounded-lg p-2 transition-colors ${runner.back?.price
+                            ? "bg-green-900/30 hover:bg-green-900/50 border border-green-800/30"
+                            : "bg-gray-800/50 border border-gray-700 cursor-not-allowed opacity-50"
+                            }`}
                         >
                           <div className="text-xs text-green-400">BACK</div>
                           <div className="text-lg font-bold text-white">
@@ -265,11 +270,10 @@ export default function MatchPage() {
                             handleLayClick(market, runner, runner.lay?.price)
                           }
                           disabled={!runner.lay?.price}
-                          className={`w-24 rounded-lg p-2 transition-colors ${
-                            runner.lay?.price
-                              ? "bg-red-900/30 hover:bg-red-900/50 border border-red-800/30"
-                              : "bg-gray-800/50 border border-gray-700 cursor-not-allowed opacity-50"
-                          }`}
+                          className={`w-24 rounded-lg p-2 transition-colors ${runner.lay?.price
+                            ? "bg-red-900/30 hover:bg-red-900/50 border border-red-800/30"
+                            : "bg-gray-800/50 border border-gray-700 cursor-not-allowed opacity-50"
+                            }`}
                         >
                           <div className="text-xs text-red-400">LAY</div>
                           <div className="text-lg font-bold text-white">

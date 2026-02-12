@@ -15,6 +15,11 @@ import {
   ChevronRight,
 } from "lucide-react";
 
+const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL
+if (!SOCKET_URL) {
+  console.warn("NEXT_PUBLIC_SOCKET_URL is not defined. Defaulting to ws://localhost:3003");
+}
+
 export default function MatchPage() {
   const params = useParams();
   const matchId = params.matchId as string;
@@ -31,7 +36,8 @@ export default function MatchPage() {
       }
     }, 10000);
 
-    const socket = io("http://localhost:3003", {
+
+    const socket = io(SOCKET_URL, {
       transports: ["websocket", "polling"],
       timeout: 5000,
     });
