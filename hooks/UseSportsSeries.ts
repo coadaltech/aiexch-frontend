@@ -23,7 +23,7 @@ export function UseSportsSeries(eventTypeId: string | null) {
         `${process.env.NEXT_PUBLIC_API_URL}/api/sports/getAllSeries/${eventTypeId}`,
       );
 
-      console.log("resuuu", response.data);
+      // console.log("response", response.data);
       if (response.data.success && response.data.data) {
         setSeriesData(response.data.data);
       } else {
