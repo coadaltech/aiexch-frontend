@@ -86,14 +86,19 @@ export default function SeriesMatchesPage({
 
       {matches.length > 0 ? (
         <div className="space-y-2">
-          {matches.map((match: any, idx: number) => (
-            <div
-              key={match.id || `${match.name}-${idx}`}
-              onClick={() => handleMatchClick(match.id)}
-            >
-              <MatchCard match={match} seriesName={series.name} />
-            </div>
-          ))}
+          {matches.map((match: any, idx: number) => {
+            if (new Date(match.openDate).getTime() < Date.now()) {
+              return null; // Skip past matches
+            }
+            return (
+              <div
+                key={match.id || `${match.name}-${idx}`}
+                onClick={() => handleMatchClick(match.id)}
+              >
+                <MatchCard match={match} seriesName={series.name} />
+              </div>
+            )
+          })}
         </div>
       ) : (
         <Card className="p-8 text-center">

@@ -85,11 +85,17 @@ export default function SeriesMatchesPage({
 
       {liveMatches.length > 0 && (
         <div className="space-y-3">
-          {liveMatches.map((match: any) => (
-            <div key={match.id} onClick={() => handleMatchClick(match.id)}>
-              <MatchCard match={match} showLive={true} />
-            </div>
-          ))}
+          {liveMatches.map((match: any) => {
+
+            if (new Date(match.openDate).getTime() < Date.now()) {
+              return null; // Skip past matches
+            }
+            return (
+              <div key={match.id} onClick={() => handleMatchClick(match.id)}>
+                <MatchCard match={match} showLive={true} />
+              </div>
+            )
+          })}
         </div>
       )}
 

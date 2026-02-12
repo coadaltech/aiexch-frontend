@@ -88,6 +88,7 @@ export default function TennisPage() {
   // Filter series that have at least one match
   const filteredSeries = useMemo(() => {
     return seriesData.filter((series) => {
+      console.log("series -> ", series)
       return series.matches && series.matches.length > 0;
     });
   }, [seriesData]);
@@ -133,7 +134,7 @@ export default function TennisPage() {
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold text-foreground px-2">
-         Tennis Series ({filteredSeries.length})
+        Tennis Series ({filteredSeries.length})
       </h2>
       {filteredSeries.map((series) => (
         <SeriesCard key={series.id} series={series} />
