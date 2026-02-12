@@ -3,77 +3,44 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { io } from "socket.io-client";
 import { useBetSlip } from "@/contexts/BetSlipContext";
-
-
-const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL
-if (!SOCKET_URL) {
-  console.warn("NEXT_PUBLIC_SOCKET_URL is not defined. Defaulting to ws://localhost:3003");
-}
+import { useMarketWebSocket } from "@/hooks/useMarketWebSocket";
 
 export default function MatchPage() {
   const params = useParams();
   const matchId = params.matchId as string;
   const { addToBetSlip } = useBetSlip();
 
-  const [markets, setMarkets] = useState<any[]>([]);
+  const { status, isConnected, markets } = useMarketWebSocket(matchId);
+
   const [matchInfo, setMatchInfo] = useState<any>(null);
-  const [status, setStatus] = useState<
+  const [pageStatus, setPageStatus] = useState<
     "connecting" | "connected" | "no-data" | "error" | "success"
   >("connecting");
 
+  // Derive page status from WS status + markets
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-
-    const socket = io(SOCKET_URL, {
-      transports: ["websocket", "polling"],
-      timeout: 5000,
-    });
-
-    socket.on("connect", () => {
-      console.log("✅ Connected");
-      setStatus("connected");
-      socket.emit("subscribe-markets", matchId);
-
-      timeoutId = setTimeout(() => {
+    if (status === "error") {
+      setPageStatus("error");
+    } else if (status === "disconnected" || status === "connecting") {
+      setPageStatus("connecting");
+    } else if (isConnected && markets.length > 0) {
+      setMatchInfo({
+        eventName: markets[0]?.eventName || "Match",
+        sport: markets[0]?.sport || "Cricket",
+        startTime: markets[0]?.startTime,
+      });
+      setPageStatus("success");
+    } else if (isConnected && markets.length === 0) {
+      // Give a brief window for data to arrive
+      const timeout = setTimeout(() => {
         if (markets.length === 0) {
-          setStatus("no-data");
+          setPageStatus("no-data");
         }
       }, 4000);
-    });
-
-    socket.on("market-update", (data) => {
-      if (data.eventId === matchId) {
-        clearTimeout(timeoutId);
-
-        if (data.markets.length > 0) {
-          setMarkets(data.markets);
-          setMatchInfo({
-            eventName: data.markets[0]?.eventName || "Match",
-            sport: data.markets[0]?.sport || "Cricket",
-            startTime: data.markets[0]?.startTime,
-          });
-          setStatus("success");
-        } else {
-          setStatus("no-data");
-        }
-      }
-    });
-
-    socket.on("connect_error", () => {
-      setStatus("error");
-    });
-
-    socket.on("disconnect", () => {
-      setStatus("connecting");
-    });
-
-    return () => {
-      clearTimeout(timeoutId);
-      socket.disconnect();
-    };
-  }, [matchId]);
+      return () => clearTimeout(timeout);
+    }
+  }, [status, isConnected, markets]);
 
   // Format date
   const formatDate = (dateString: string) => {
@@ -135,7 +102,7 @@ export default function MatchPage() {
   };
 
   // ============ RENDER STATES ============
-  if (status === "error") {
+  if (pageStatus === "error") {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
         <div className="text-center max-w-md">
@@ -157,7 +124,7 @@ export default function MatchPage() {
     );
   }
 
-  if (status === "connecting" || status === "connected") {
+  if (pageStatus === "connecting" || pageStatus === "connected") {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
         <div className="text-center">
@@ -169,7 +136,7 @@ export default function MatchPage() {
     );
   }
 
-  if (status === "no-data") {
+  if (pageStatus === "no-data") {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
         <div className="text-center max-w-md">

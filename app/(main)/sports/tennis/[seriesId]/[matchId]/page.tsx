@@ -3,7 +3,6 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { io } from "socket.io-client";
 import {
   Trophy,
   Calendar,
@@ -15,80 +14,49 @@ import {
   BarChart3,
   ChevronRight,
 } from "lucide-react";
-
-
-const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL
-if (!SOCKET_URL) {
-  console.warn("NEXT_PUBLIC_SOCKET_URL is not defined. Defaulting to ws://localhost:3003");
-}
+import { useMarketWebSocket } from "@/hooks/useMarketWebSocket";
 
 export default function MatchPage() {
   const params = useParams();
   const matchId = params.matchId as string;
-  const [markets, setMarkets] = useState<any[]>([]);
-  const [socketConnected, setSocketConnected] = useState(false);
+
+  const { status, isConnected, markets } = useMarketWebSocket(matchId);
+
   const [matchInfo, setMatchInfo] = useState<any>(null);
   const [hasReceivedFirstData, setHasReceivedFirstData] = useState(false);
   const [connectionTimeout, setConnectionTimeout] = useState(false);
 
+  // Track data arrival and timeout
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (socketConnected && markets.length === 0 && !hasReceivedFirstData) {
-        setConnectionTimeout(true);
-      }
-    }, 10000);
-
-    const socket = io(SOCKET_URL, {
-      transports: ["websocket", "polling"],
-      timeout: 5000,
-    });
-
-    console.log("🔌 Connecting to WebSocket at localhost:3003...");
-
-    socket.on("connect", () => {
-      console.log("✅ Connected to WebSocket server");
-      setSocketConnected(true);
+    if (markets.length > 0) {
+      setHasReceivedFirstData(true);
       setConnectionTimeout(false);
-      socket.emit("subscribe-markets", matchId);
-      console.log(`📡 Subscribed to match: ${matchId}`);
-      clearTimeout(timeoutId);
-    });
-
-    socket.on("connect_error", (error) => {
-      console.error("❌ WebSocket connection error:", error);
-      setSocketConnected(false);
-      setConnectionTimeout(true);
-    });
-
-    socket.on("market-update", (data) => {
-      console.log("📊 Received market update for:", data.eventId);
-
-      if (data.eventId === matchId) {
-        console.log(`✅ Match ${matchId} update received`, data);
-        setHasReceivedFirstData(true);
-        setConnectionTimeout(false);
-        setMarkets(data.markets);
-
-        if (data.markets.length > 0 && !matchInfo) {
-          setMatchInfo({
-            eventName: data.markets[0]?.eventName || "Match",
-            sport: data.markets[0]?.sport || "Sport",
-            startTime: data.markets[0]?.startTime || new Date().toISOString(),
-          });
-        }
+      if (!matchInfo) {
+        setMatchInfo({
+          eventName: markets[0]?.eventName || "Match",
+          sport: markets[0]?.sport || "Sport",
+          startTime: markets[0]?.startTime || new Date().toISOString(),
+        });
       }
-    });
+    }
+  }, [markets]);
 
-    socket.on("disconnect", () => {
-      console.log("🔌 Disconnected from WebSocket");
-      setSocketConnected(false);
-    });
+  useEffect(() => {
+    if (status === "error") {
+      setConnectionTimeout(true);
+    }
+  }, [status]);
 
-    return () => {
-      clearTimeout(timeoutId);
-      socket.disconnect();
-    };
-  }, [matchId]);
+  useEffect(() => {
+    if (isConnected && !hasReceivedFirstData) {
+      const timeoutId = setTimeout(() => {
+        if (!hasReceivedFirstData) {
+          setConnectionTimeout(true);
+        }
+      }, 10000);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isConnected, hasReceivedFirstData]);
 
   // Format odds helper function
   const formatOdds = (odds: any): string => {
@@ -114,7 +82,7 @@ export default function MatchPage() {
   // Render different states
   const renderContent = () => {
     // 1. Not connected to WebSocket
-    if (!socketConnected) {
+    if (!isConnected && status !== "connecting") {
       return (
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
           <div className="w-20 h-20 rounded-full bg-red-900/20 flex items-center justify-center mb-5">
@@ -128,10 +96,6 @@ export default function MatchPage() {
             is running.
           </p>
           <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700 max-w-md">
-            <p className="text-sm text-gray-300">
-              Connection URL:{" "}
-              <code className="ml-1 text-gray-200">ws://localhost:3003</code>
-            </p>
             <p className="text-sm text-gray-300 mt-1">
               Match ID: <code className="ml-1 text-gray-200">{matchId}</code>
             </p>
@@ -140,7 +104,7 @@ export default function MatchPage() {
       );
     }
 
-    // 2. Connected but no data received yet (show for max 3 seconds)
+    // 2. Connected but no data received yet
     if (!hasReceivedFirstData && !connectionTimeout) {
       return (
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -155,7 +119,7 @@ export default function MatchPage() {
       );
     }
 
-    // 3. Connection timeout - connected but no data for a while
+    // 3. Connection timeout
     if (connectionTimeout) {
       return (
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -245,7 +209,6 @@ export default function MatchPage() {
             key={market.marketId}
             className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden"
           >
-            {/* Market Header */}
             <div className="px-6 py-4 border-b border-gray-700 bg-gray-900/50">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-gray-100">
@@ -260,9 +223,7 @@ export default function MatchPage() {
               </div>
             </div>
 
-            {/* Market Runners */}
             <div className="divide-y divide-gray-700">
-              {/* Table Header */}
               <div className="px-6 py-3 bg-gray-900/30 grid grid-cols-12 gap-4">
                 <div className="col-span-6">
                   <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
@@ -281,7 +242,6 @@ export default function MatchPage() {
                 </div>
               </div>
 
-              {/* Runners List */}
               {market.runners.map((runner: any, index: number) => {
                 const backPrice = formatOdds(runner.back);
                 const layPrice = formatOdds(runner.lay);
@@ -291,7 +251,6 @@ export default function MatchPage() {
                     key={runner.selectionId}
                     className="px-6 py-4 hover:bg-gray-750 transition-colors grid grid-cols-12 gap-4 items-center"
                   >
-                    {/* Runner Name */}
                     <div className="col-span-6 flex items-center gap-3">
                       <div className="w-7 h-7 flex items-center justify-center bg-gray-700 rounded text-sm font-medium text-gray-300">
                         {index + 1}
@@ -303,7 +262,6 @@ export default function MatchPage() {
                       </div>
                     </div>
 
-                    {/* Back Odds */}
                     <div className="col-span-3">
                       <button className="w-full bg-green-900/20 hover:bg-green-900/30 border border-green-800/30 rounded-lg px-3 py-2 text-center transition-colors">
                         <div className="text-xs text-green-400 mb-1">Back</div>
@@ -318,7 +276,6 @@ export default function MatchPage() {
                       </button>
                     </div>
 
-                    {/* Lay Odds */}
                     <div className="col-span-3">
                       <button className="w-full bg-red-900/20 hover:bg-red-900/30 border border-red-800/30 rounded-lg px-3 py-2 text-center transition-colors">
                         <div className="text-xs text-red-400 mb-1">Lay</div>
@@ -337,7 +294,6 @@ export default function MatchPage() {
               })}
             </div>
 
-            {/* Market Footer */}
             <div className="px-6 py-3 border-t border-gray-700 bg-gray-900/30">
               <div className="flex justify-between items-center text-xs text-gray-400">
                 <span>Market ID: {market.marketId}</span>
@@ -353,7 +309,6 @@ export default function MatchPage() {
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
       <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Header */}
         <div className="mb-8">
           <div className="flex justify-between items-start mb-4">
             <div>
@@ -384,12 +339,12 @@ export default function MatchPage() {
             </div>
 
             <div
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${socketConnected
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${isConnected
                   ? "bg-green-900/30 text-green-400 border border-green-800/50"
                   : "bg-red-900/30 text-red-400 border border-red-800/50"
                 }`}
             >
-              {socketConnected ? (
+              {isConnected ? (
                 <>
                   <Wifi size={14} />
                   <span>Live</span>
@@ -403,8 +358,7 @@ export default function MatchPage() {
             </div>
           </div>
 
-          {/* Connection Status */}
-          {socketConnected && !hasReceivedFirstData && !connectionTimeout && (
+          {isConnected && !hasReceivedFirstData && !connectionTimeout && (
             <div className="mb-6">
               <div className="flex items-center gap-3 text-sm text-blue-400 bg-blue-900/20 px-4 py-2 rounded-lg border border-blue-800/30">
                 <Clock size={14} />
@@ -414,20 +368,18 @@ export default function MatchPage() {
           )}
         </div>
 
-        {/* Main Content */}
         {renderContent()}
 
-        {/* Stats Bar */}
         <div className="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 py-2">
           <div className="max-w-6xl mx-auto px-4">
             <div className="flex justify-between items-center text-sm">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <div
-                    className={`w-2 h-2 rounded-full ${socketConnected ? "bg-green-500" : "bg-red-500"}`}
+                    className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-500" : "bg-red-500"}`}
                   ></div>
                   <span className="text-gray-300">
-                    {socketConnected ? "Connected" : "Disconnected"}
+                    {isConnected ? "Connected" : "Disconnected"}
                   </span>
                 </div>
                 <div className="text-gray-600">•</div>
