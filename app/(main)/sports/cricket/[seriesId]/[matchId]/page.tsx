@@ -14,6 +14,7 @@ export default function MatchPage() {
   const { addToBetSlip } = useBetSlip();
 
   const { status, isConnected, markets } = useMarketWebSocket(matchId);
+  console.log("markets -> ", markets)
 
   const [matchInfo, setMatchInfo] = useState<any>(null);
   const [pageStatus, setPageStatus] = useState<
@@ -198,111 +199,219 @@ export default function MatchPage() {
 
         {/* Markets */}
         <div className="space-y-4">
-          {markets.map((market) => (
-            <div
-              key={market.marketId}
-              className="bg-gray-800 rounded-lg border border-gray-700"
-            >
-              {/* Market Title */}
-              <div className="px-4 py-3 border-b border-gray-700 bg-gray-900/50">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-white">
-                    {market.marketName}
-                  </h3>
-                  <span className="text-xs text-green-400 px-2 py-1 bg-green-900/30 rounded-full">
-                    LIVE
-                  </span>
-                </div>
-              </div>
-
-              {/* Runners */}
-              <div className="divide-y divide-gray-700">
-                {market.runners.map((runner: any, idx: number) => (
-                  <div key={runner.selectionId} className="px-2 py-1 flex justify-between items-center">
-                    {/* Runner Name */}
-                    <div className="">
-                      <span className="text-white font-semibold text-base">
-                        {runner.name}
-                      </span>
+          {
+            markets.map((market) =>
+              market.bettingType == "ODDS"
+              && (
+                <div
+                  key={market.marketId}
+                  className="bg-gray-800 rounded-lg border border-gray-700"
+                >
+                  {/* Market Title */}
+                  <div className="grid grid-cols-3 gap-5 px-4 py-3 border-b border-gray-700 bg-gray-900/50">
+                    <h3 className="font-semibold text-white">
+                      {market.marketName}
+                    </h3>
+                    <div className="justify-self-end text-sm font-semibold text-green-400 mb-2 uppercase tracking-wide">
+                      Back
                     </div>
+                    <div className="text-sm font-semibold text-red-400 mb-2 uppercase tracking-wide">
+                      Lay
+                    </div>
+                    {/* <span className="text-xs text-green-400 px-2 py-1 bg-green-900/30 rounded-full"> */}
+                    {/*   LIVE */}
+                    {/* </span> */}
+                  </div>
 
-                    {/* Back and Lay Table */}
-                    <div className="flex gap-6 items-center">
-                      {/* Back Column */}
-                      <div className="flex flex-col items-end">
-                        <div className="text-xs font-semibold text-green-400 mb-2 uppercase tracking-wide">
-                          Back
+                  {/* Runners */}
+                  <div className="divide-y divide-gray-700">
+                    {market.runners.map((runner: any, idx: number) => (
+                      <div key={runner.selectionId} className="px-2 py-1 grid grid-cols-3 gap-5 justify-between items-center">
+                        {/* Runner Name */}
+                        <div className="">
+                          <span className="text-white font-semibold text-base">
+                            {runner.name}
+                          </span>
                         </div>
-                        <div className="gap-2 flex justify-center items-center">
-                          {runner.back && runner.back.length > 0 ? (
-                            runner.back.map((backItem: any, backIdx: number) => (
+
+                        {/* Back Column */}
+                        <div className="flex flex-col items-end">
+                          <div className="gap-2 flex justify-center items-center">
+                            {runner.back && runner.back.length > 0 ? (
+                              runner.back.map((backItem: any, backIdx: number) => (
+                                <button
+                                  key={backIdx}
+                                  onClick={() =>
+                                    handleBackClick(market, runner, backItem.price)
+                                  }
+                                  className="w-25 h-full px-2 py-1 flex flex-col items-center justify-between hover:bg-green-900 transition-colors bg-green-900/70 border-none rounded-lg cursor-pointer"
+                                >
+                                  <span className="text-white font-bold text-sm">
+                                    {backItem.price}
+                                  </span>
+                                  <span className="text-gray-400 text-xs font-semibold">
+                                    {formatAmount(backItem.size)}
+                                  </span>
+                                </button>
+                              ))
+                            ) : (
+
                               <button
-                                key={backIdx}
-                                onClick={() =>
-                                  handleBackClick(market, runner, backItem.price)
-                                }
-                                className="w-25 h-full px-2 py-1 flex flex-col items-center justify-between hover:bg-green-900 transition-colors bg-green-900/70 border-none rounded-lg cursor-pointer"
+                                className="w-full h-full text-sm flex flex-col items-center justify-between px-3 py-2 hover:bg-green-900 transition-colors bg-green-900/70 border-none rounded-lg cursor-pointer"
                               >
-                                <span className="text-white font-bold text-sm">
-                                  {backItem.price}
-                                </span>
-                                <span className="text-gray-400 text-xs font-semibold">
-                                  {formatAmount(backItem.size)}
-                                </span>
+                                No Back Odds
                               </button>
-                            ))
-                          ) : (
 
-                            <button
-                              className="w-full h-full text-sm flex flex-col items-center justify-between px-3 py-2 hover:bg-green-900 transition-colors bg-green-900/70 border-none rounded-lg cursor-pointer"
-                            >
-                              No Back Odds
-                            </button>
+                            )}
+                          </div>
+                        </div>
 
-                          )}
+                        {/* Lay Column */}
+                        <div className="flex flex-col items-start">
+                          <div className="gap-2 flex justify-center items-center">
+                            {runner.lay && runner.lay.length > 0 ? (
+                              runner.lay.map((layItem: any, layIdx: number) => (
+                                <button
+                                  key={layIdx}
+                                  onClick={() =>
+                                    handleLayClick(market, runner, layItem.price)
+                                  }
+                                  className="w-25 h-full px-2 py-1 flex flex-col items-center justify-between hover:bg-[#39111A] transition-colors bg-[#39111A]/70 border-none rounded-lg cursor-pointer"
+                                >
+                                  <span className="text-white font-bold text-sm">
+                                    {layItem.price}
+                                  </span>
+                                  <span className="text-gray-400 text-xs font-semibold">
+                                    {formatAmount(layItem.size)}
+                                  </span>
+                                </button>
+                              ))
+                            ) : (
+
+                              <button
+                                className="w-full h-full text-sm flex flex-col items-center justify-between px-3 py-2 hover:bg-[#39111A] transition-colors bg-[#39111A]/70 border-none rounded-lg cursor-pointer"
+                              >
+                                No lay Odds
+                              </button>
+
+                            )}
+                          </div>
                         </div>
                       </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            )
+          }
 
-                      {/* Lay Column */}
-                      <div className="flex flex-col">
-                        <div className="text-xs font-semibold text-red-400 mb-2 uppercase tracking-wide">
-                          Lay
+          <div className="bg-gray-800 rounded-lg border border-gray-700" >
+
+            {/* Market Title */}
+            <div className="grid grid-cols-3 gap-5 px-4 py-3 border-b border-gray-700 bg-gray-900/50">
+              <h3 className="font-semibold text-white">
+                Fancy
+              </h3>
+              <div className="text-sm font-semibold text-red-400 mb-2 uppercase tracking-wide justify-self-end">
+                NO
+              </div>
+              <div className="text-sm font-semibold text-green-400 mb-2 uppercase tracking-wide">
+                YES
+              </div>
+              {/* <span className="text-xs text-green-400 px-2 py-1 bg-green-900/30 rounded-full"> */}
+              {/*   LIVE */}
+              {/* </span> */}
+            </div>
+
+            {
+              markets.map((market) =>
+                market.bettingType == "LINE"
+                && (
+                  <div
+                    key={market.marketId}
+                    className="bg-gray-800 border-b border-gray-700"
+                  >
+                    {/* Runners */}
+                    <div className="divide-y divide-gray-700">
+                      {market.runners.map((runner: any, idx: number) => (
+                        <div key={runner.selectionId} className="px-2 py-1 grid grid-cols-3 gap-5 justify-between items-center">
+                          {/* Runner Name */}
+                          <div className="">
+                            <span className="text-white font-medium text-base">
+                              {market.marketName}
+                            </span>
+                          </div>
+
+                          {/* Back Column */}
+                          <div className="flex flex-col items-end">
+                            <div className="gap-2 flex justify-center items-center">
+                              {runner.back && runner.back.length > 0 ? (
+                                runner.back.map((backItem: any, backIdx: number) => (
+                                  <button
+                                    key={backIdx}
+                                    onClick={() =>
+                                      handleBackClick(market, runner, backItem.price)
+                                    }
+                                    className="w-25 h-full px-2 py-1 flex flex-col items-center justify-between hover:bg-[#39111A] transition-colors bg-[#39111A]/70 border-none rounded-lg cursor-pointer"
+                                  >
+                                    <span className="text-white font-bold text-sm">
+                                      {backItem.price}
+                                    </span>
+                                    <span className="text-gray-400 text-xs font-semibold">
+                                      {formatAmount(backItem.size)}
+                                    </span>
+                                  </button>
+                                ))
+                              ) : (
+
+                                <button
+                                  className="w-full h-full text-sm flex flex-col items-center justify-between px-3 py-2 hover:bg-[#39111A] transition-colors bg-[#39111A]/70 border-none rounded-lg cursor-pointer"
+                                >
+                                  No Back Odds
+                                </button>
+
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Lay Column */}
+                          <div className="flex flex-col items-start">
+                            <div className="gap-2 flex justify-center items-center">
+                              {runner.lay && runner.lay.length > 0 ? (
+                                runner.lay.map((layItem: any, layIdx: number) => (
+                                  <button
+                                    key={layIdx}
+                                    onClick={() =>
+                                      handleLayClick(market, runner, layItem.price)
+                                    }
+                                    className="w-25 h-full px-2 py-1 flex flex-col items-center justify-between hover:bg-green-900 transition-colors bg-green-900/70 border-none rounded-lg cursor-pointer"
+                                  >
+                                    <span className="text-white font-bold text-sm">
+                                      {layItem.price}
+                                    </span>
+                                    <span className="text-gray-400 text-xs font-semibold">
+                                      {formatAmount(layItem.size)}
+                                    </span>
+                                  </button>
+                                ))
+                              ) : (
+
+                                <button
+                                  className="w-full h-full text-sm flex flex-col items-center justify-between px-3 py-2 hover:bg-green-900 transition-colors bg-green-900/70 border-none rounded-lg cursor-pointer"
+                                >
+                                  No lay Odds
+                                </button>
+
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <div className="gap-2 flex justify-center items-center">
-                          {runner.lay && runner.lay.length > 0 ? (
-                            runner.lay.map((layItem: any, layIdx: number) => (
-                              <button
-                                key={layIdx}
-                                onClick={() =>
-                                  handleLayClick(market, runner, layItem.price)
-                                }
-                                className="w-25 h-full px-2 py-1 flex flex-col items-center justify-between hover:bg-[#39111A] transition-colors bg-[#39111A]/70 border-none rounded-lg cursor-pointer"
-                              >
-                                <span className="text-white font-bold text-sm">
-                                  {layItem.price}
-                                </span>
-                                <span className="text-gray-400 text-xs font-semibold">
-                                  {formatAmount(layItem.size)}
-                                </span>
-                              </button>
-                            ))
-                          ) : (
-
-                            <button
-                              className="w-full h-full text-sm flex flex-col items-center justify-between px-3 py-2 hover:bg-[#39111A] transition-colors bg-[#39111A]/70 border-none rounded-lg cursor-pointer"
-                            >
-                              No lay Odds
-                            </button>
-
-                          )}
-                        </div>
-                      </div>
+                      ))}
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          ))}
+                )
+              )}
+          </div>
         </div>
       </div>
     </div>

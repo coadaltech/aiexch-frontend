@@ -33,8 +33,12 @@ import Dropheader from "./dropheader";
 const leftMenu = [
   { label: "Home", link: "/" },
   { label: "Cricket", link: "/sports/4" },
-  { label: "Live Casino", link: "/casino" },
   { label: "Sports", link: "/sports" },
+  // { label: "Tennis", link: "/sports/2" },
+  // { label: "Soccer", link: "/sports/1" },
+  // { label: "Horse Racing", link: "/sports/7" },
+  // { label: "Greyhound Racing", link: "/sports/4339" },
+  { label: "Live Casino", link: "/casino" },
   { label: "Live", link: "/live" },
   { label: "Promotions", link: "/promotions" },
 ];

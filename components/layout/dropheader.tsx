@@ -4,6 +4,7 @@ import React from "react";
 import { ChevronDown } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
 
 interface MenuItem {
   label: string;
@@ -69,10 +70,10 @@ export default function Dropheader({ leftMenu, rightMenu }: HeaderProps) {
               <button
                 key={index}
                 onClick={() => handleNavigation(item.link, item.label)}
-                className={`group relative px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all duration-200 rounded-lg flex items-center gap-1 sm:gap-1.5 touch-manipulation flex-shrink-0 cursor-pointer ${active
+                className={cn(`group relative px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all duration-200 rounded-lg flex items-center gap-1 sm:gap-1.5 touch-manipulation flex-shrink-0 cursor-pointer ${active
                   ? "text-white bg-slate-700/40"
                   : "text-slate-200 hover:text-white hover:bg-slate-700/40"
-                  }`}
+                  }`, item.label == "Cricket" && "bg-slate-700/50 hover:bg-slate-700 rounded-r-none -mr-1", item.label == "Sports" && "bg-slate-700/50 hover:bg-slate-700 rounded-l-none", (item.label == "Sports" && active) && "bg-[#00BC8A]/50", (item.label == "Cricket" && active) && "bg-[#00BC8A]/50")}
               >
                 <span className="whitespace-nowrap">{item.label}</span>
                 {/* <ChevronDown className="h-3 w-3 sm:h-3.5 sm:w-3.5 opacity-70 group-hover:opacity-100 transition-opacity flex-shrink-0" /> */}
@@ -103,6 +104,6 @@ export default function Dropheader({ leftMenu, rightMenu }: HeaderProps) {
           </nav>
         }
       </div>
-    </div>
+    </div >
   );
 }
