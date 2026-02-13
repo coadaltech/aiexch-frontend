@@ -87,7 +87,7 @@ export default function SeriesMatchesPage({
         <div className="space-y-3">
           {liveMatches.map((match: any) => {
 
-            if (new Date(match.openDate).getTime() < Date.now()) {
+            if (new Date(match.openDate).getDate() < new Date().getDate()) {
               return null; // Skip past matches
             }
             return (

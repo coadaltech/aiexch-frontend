@@ -47,7 +47,8 @@ export function BetSlip() {
         const marketName = bet.marketName || bet.teams;
         const runnerName = bet.runnerName || runnerNameFromMarket;
 
-        await placeBet({
+        placeBet({
+          // eventTypeId: "4",
           matchId: bet.matchId || "1001",
           marketId:
             bet.marketId ||

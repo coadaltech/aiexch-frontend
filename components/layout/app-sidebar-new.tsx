@@ -220,7 +220,7 @@ export function AppSidebar() {
   const { seriesData: cricketSeries, loading: loadingCricket } =
     UseSportsSeries(isCricketRoute ? "4" : null); // Pass null if not needed
 
-  console.log("datt", cricketSeries);
+  // console.log("datt", cricketSeries);
 
   const { seriesData: tennisSeries, loading: loadingTennis } = UseSportsSeries(
     isTennisRoute ? "2" : null,
@@ -317,27 +317,24 @@ export function AppSidebar() {
           <SidebarMenu className="space-y-1">
             <SidebarMenuItem key="all">
               <SidebarMenuButton
-                className={`group relative w-full h-full justify-start px-3 py-3 rounded-lg transition-all duration-200 cursor-pointer ${
-                  isAllActive
+                className={`group relative w-full h-full justify-start px-3 py-3 rounded-lg transition-all duration-200 cursor-pointer ${isAllActive
                     ? "bg-[#3730a3] hover:bg-[#3730a3]/80 text-white shadow-md"
                     : "bg-transparent text-white hover:bg-[#3730a3]/20 border border-transparent"
-                }`}
+                  }`}
                 onClick={() => router.push("/sports")}
               >
                 <div className="relative flex items-center w-full gap-3">
                   <Trophy
-                    className={`h-5 w-5 transition-all duration-200 flex-shrink-0 ${
-                      isAllActive
+                    className={`h-5 w-5 transition-all duration-200 flex-shrink-0 ${isAllActive
                         ? "text-white"
                         : "text-white/80 group-hover:text-white"
-                    }`}
+                      }`}
                   />
                   <span
-                    className={`flex-1 text-sm font-medium transition-colors duration-200 ${
-                      isAllActive
+                    className={`flex-1 text-sm font-medium transition-colors duration-200 ${isAllActive
                         ? "text-white"
                         : "text-white/90 group-hover:text-white"
-                    }`}
+                      }`}
                   >
                     All
                   </span>
@@ -353,27 +350,24 @@ export function AppSidebar() {
               return (
                 <SidebarMenuItem key={sport.title}>
                   <SidebarMenuButton
-                    className={`group relative w-full h-full justify-start px-3 py-3 rounded-lg transition-all duration-200 cursor-pointer ${
-                      isActive
+                    className={`group relative w-full h-full justify-start px-3 py-3 rounded-lg transition-all duration-200 cursor-pointer ${isActive
                         ? "bg-[#3730a3] hover:bg-[#3730a3]/80 text-white shadow-md"
                         : "bg-transparent text-white hover:bg-[#3730a3]/20 border border-transparent"
-                    }`}
+                      }`}
                     onClick={() => router.push(sport.link)}
                   >
                     <div className="relative flex items-center w-full gap-3">
                       <Trophy
-                        className={`h-5 w-5 transition-all duration-200 flex-shrink-0 ${
-                          isActive
+                        className={`h-5 w-5 transition-all duration-200 flex-shrink-0 ${isActive
                             ? "text-white"
                             : "text-white/80 group-hover:text-white"
-                        }`}
+                          }`}
                       />
                       <span
-                        className={`flex-1 text-sm font-medium transition-colors duration-200 ${
-                          isActive
+                        className={`flex-1 text-sm font-medium transition-colors duration-200 ${isActive
                             ? "text-white"
                             : "text-white/90 group-hover:text-white"
-                        }`}
+                          }`}
                       >
                         {sport.title}
                       </span>
@@ -436,29 +430,26 @@ export function AppSidebar() {
                 return (
                   <SidebarMenuItem key={series.id}>
                     <SidebarMenuButton
-                      className={`group relative w-full h-full justify-start px-3 py-3 rounded-lg transition-all duration-200 cursor-pointer ${
-                        isActive
+                      className={`group relative w-full h-full justify-start px-3 py-3 rounded-lg transition-all duration-200 cursor-pointer ${isActive
                           ? "bg-[#3730a3] hover:bg-[#3730a3]/80 text-white shadow-md"
                           : "bg-transparent text-white hover:bg-[#3730a3]/20 border border-transparent"
-                      }`}
+                        }`}
                       onClick={() =>
                         router.push(`/sports/${basePath}/${series.id}`)
                       }
                     >
                       <div className="relative flex items-center w-full gap-3">
                         <Trophy
-                          className={`h-5 w-5 transition-all duration-200 flex-shrink-0 ${
-                            isActive
+                          className={`h-5 w-5 transition-all duration-200 flex-shrink-0 ${isActive
                               ? "text-white"
                               : "text-white/80 group-hover:text-white"
-                          }`}
+                            }`}
                         />
                         <span
-                          className={`flex-1 text-sm font-medium transition-colors duration-200 ${
-                            isActive
+                          className={`flex-1 text-sm font-medium transition-colors duration-200 ${isActive
                               ? "text-white"
                               : "text-white/90 group-hover:text-white"
-                          }`}
+                            }`}
                         >
                           {series.name}
                         </span>
@@ -551,29 +542,26 @@ export function AppSidebar() {
                   return (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
-                        className={`group relative w-full justify-start px-3 py-3 rounded-lg transition-all duration-200 cursor-pointer ${
-                          isLogout
+                        className={`group relative w-full justify-start px-3 py-3 rounded-lg transition-all duration-200 cursor-pointer ${isLogout
                             ? "bg-[#3730a3]/20 text-white hover:bg-[#3730a3]/30 border border-[#3730a3]/30"
                             : isActive
                               ? "bg-[#3730a3] hover:bg-[#3730a3]/80 text-white shadow-md"
                               : "bg-transparent text-white hover:bg-[#3730a3]/20 border border-transparent"
-                        }`}
+                          }`}
                         onClick={() => handleItemClick(item)}
                       >
                         <div className="relative flex items-center w-full gap-3">
                           <item.icon
-                            className={`h-5 w-5 transition-all duration-200 flex-shrink-0 ${
-                              isActive || isLogout
+                            className={`h-5 w-5 transition-all duration-200 flex-shrink-0 ${isActive || isLogout
                                 ? "text-white"
                                 : "text-white/80 group-hover:text-white"
-                            }`}
+                              }`}
                           />
                           <span
-                            className={`flex-1 text-sm font-medium transition-colors duration-200 ${
-                              isActive || isLogout
+                            className={`flex-1 text-sm font-medium transition-colors duration-200 ${isActive || isLogout
                                 ? "text-white"
                                 : "text-white/90 group-hover:text-white"
-                            }`}
+                              }`}
                           >
                             {item.title}
                           </span>
@@ -581,19 +569,17 @@ export function AppSidebar() {
                             item.title !== "Sport" &&
                             (isExpanded ? (
                               <ChevronDown
-                                className={`h-4 w-4 transition-transform duration-200 flex-shrink-0 ${
-                                  isActive
+                                className={`h-4 w-4 transition-transform duration-200 flex-shrink-0 ${isActive
                                     ? "text-white"
                                     : "text-white/60 group-hover:text-white"
-                                }`}
+                                  }`}
                               />
                             ) : (
                               <ChevronRight
-                                className={`h-4 w-4 transition-transform duration-200 flex-shrink-0 ${
-                                  isActive
+                                className={`h-4 w-4 transition-transform duration-200 flex-shrink-0 ${isActive
                                     ? "text-white"
                                     : "text-white/60 group-hover:text-white"
-                                }`}
+                                  }`}
                               />
                             ))}
                         </div>
@@ -607,11 +593,10 @@ export function AppSidebar() {
                             return (
                               <SidebarMenuButton
                                 key={subItem.title}
-                                className={`group relative w-full justify-start px-3 py-2 text-sm rounded-md transition-all duration-200 cursor-pointer ${
-                                  isSubActive
+                                className={`group relative w-full justify-start px-3 py-2 text-sm rounded-md transition-all duration-200 cursor-pointer ${isSubActive
                                     ? "bg-[#3730a3]/30 text-white border-l-2 border-[#3730a3]"
                                     : "text-white/70 hover:text-white hover:bg-[#3730a3]/10"
-                                }`}
+                                  }`}
                                 onClick={() => router.push(subItem.link)}
                               >
                                 <span className="relative font-normal">

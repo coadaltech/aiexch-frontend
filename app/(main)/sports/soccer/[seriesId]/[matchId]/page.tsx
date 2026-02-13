@@ -15,10 +15,13 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useMarketWebSocket } from "@/hooks/useMarketWebSocket";
+import { useBetSlip } from "@/contexts/BetSlipContext";
+import { cn } from "@/lib/utils";
 
 export default function MatchPage() {
   const params = useParams();
   const matchId = params.matchId as string;
+  const { addToBetSlip } = useBetSlip();
 
   const { status, isConnected, markets } = useMarketWebSocket(matchId);
 
@@ -65,6 +68,60 @@ export default function MatchPage() {
       return odds.price ? `${odds.price}` : "-";
     }
     return odds.toString();
+  };
+
+  // Format size/amount (K for thousands, L for lacs)
+  const formatAmount = (amount: number) => {
+    if (!amount) return "0";
+    if (amount >= 100000) {
+      const lacs = (amount / 100000).toFixed(1);
+      return `${lacs}L`;
+    } else if (amount >= 1000) {
+      const thousands = (amount / 1000).toFixed(1);
+      return `${thousands}K`;
+    }
+    return amount.toFixed(0);
+  };
+
+  // ============ HANDLERS ============
+  const handleBackClick = (market: any, runner: any, odds: number) => {
+    if (!odds) return;
+
+    const bet = {
+      id: Date.now(),
+      teams: `${matchInfo?.eventName || "Match"} - ${runner.name}`,
+      market: market.marketName,
+      odds: odds.toString(),
+      stake: "0",
+      potentialWin: "0",
+      matchId: matchId,
+      marketId: market.marketId,
+      selectionId: runner.selectionId.toString(),
+      marketName: market.marketName,
+      runnerName: runner.name,
+    };
+
+    addToBetSlip(bet);
+  };
+
+  const handleLayClick = (market: any, runner: any, odds: number) => {
+    if (!odds) return;
+
+    const bet = {
+      id: Date.now(),
+      teams: `${matchInfo?.eventName || "Match"} - ${runner.name}`,
+      market: `LAY ${market.marketName}`,
+      odds: odds.toString(),
+      stake: "0",
+      potentialWin: "0",
+      matchId: matchId,
+      marketId: market.marketId,
+      selectionId: runner.selectionId.toString(),
+      marketName: market.marketName,
+      runnerName: runner.name,
+    };
+
+    addToBetSlip(bet);
   };
 
   // Format date
@@ -226,79 +283,82 @@ export default function MatchPage() {
 
             {/* Market Runners */}
             <div className="divide-y divide-gray-700">
-              {/* Table Header */}
-              <div className="px-6 py-3 bg-gray-900/30 grid grid-cols-12 gap-4">
-                <div className="col-span-6">
-                  <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
-                    Runner
-                  </span>
-                </div>
-                <div className="col-span-3">
-                  <span className="text-xs font-medium text-gray-400 uppercase tracking-wide text-center block">
-                    Back
-                  </span>
-                </div>
-                <div className="col-span-3">
-                  <span className="text-xs font-medium text-gray-400 uppercase tracking-wide text-center block">
-                    Lay
-                  </span>
-                </div>
-              </div>
+              {/* Runners */}
+              {market.runners.map((runner: any, idx: number) => (
+                <div key={runner.selectionId} className="px-4 py-4 flex justify-between">
+                  {/* Runner Name */}
+                  <div className="mb-3">
+                    <span className="text-white font-semibold text-base">
+                      {runner.name}
+                    </span>
+                  </div>
 
-              {/* Runners List */}
-              {market.runners.map((runner: any, index: number) => {
-                const backPrice = formatOdds(runner.back);
-                const layPrice = formatOdds(runner.lay);
-
-                return (
-                  <div
-                    key={runner.selectionId}
-                    className="px-6 py-4 hover:bg-gray-750 transition-colors grid grid-cols-12 gap-4 items-center"
-                  >
-                    {/* Runner Name */}
-                    <div className="col-span-6 flex items-center gap-3">
-                      <div className="w-7 h-7 flex items-center justify-center bg-gray-700 rounded text-sm font-medium text-gray-300">
-                        {index + 1}
+                  {/* Back and Lay Table */}
+                  <div className="flex gap-6">
+                    {/* Back Column */}
+                    <div>
+                      <div className="text-xs font-semibold text-green-400 mb-2 uppercase tracking-wide">
+                        Back
                       </div>
-                      <div className="min-w-0">
-                        <span className="font-medium text-gray-200 truncate block">
-                          {runner.name}
-                        </span>
+                      <div className="gap-2 flex">
+                        {runner.back && runner.back.length > 0 ? (
+                          runner.back.map((backItem: any, backIdx: number) => (
+                            <button
+                              key={backIdx}
+                              onClick={() =>
+                                handleBackClick(market, runner, backItem.price)
+                              }
+                              className="w-25 h-full flex flex-col items-center justify-between px-3 py-2 hover:bg-green-900 transition-colors bg-green-900/70 border-none rounded-lg cursor-pointer"
+                            >
+                              <span className="text-white font-semibold text-md">
+                                {backItem.price}
+                              </span>
+                              <span className="text-gray-300 text-xs">
+                                {formatAmount(backItem.size)}
+                              </span>
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-2 py-1.5 text-gray-600 text-xs">
+                            No back odds
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    {/* Back Odds */}
-                    <div className="col-span-3">
-                      <button className="w-full bg-green-900/20 hover:bg-green-900/30 border border-green-800/30 rounded-lg px-3 py-2 text-center transition-colors">
-                        <div className="text-xs text-green-400 mb-1">Back</div>
-                        <div className="text-lg font-bold text-white">
-                          {backPrice}
-                        </div>
-                        {runner.back?.size && (
-                          <div className="text-xs text-gray-400 mt-0.5">
-                            ₹{runner.back.size}
+                    {/* Lay Column */}
+                    <div>
+                      <div className="text-xs font-semibold text-red-400 mb-2 uppercase tracking-wide">
+                        Lay
+                      </div>
+                      <div className="gap-2 flex">
+                        {runner.lay && runner.lay.length > 0 ? (
+                          runner.lay.map((layItem: any, layIdx: number) => (
+                            <button
+                              key={layIdx}
+                              onClick={() =>
+                                handleLayClick(market, runner, layItem.price)
+                              }
+                              className={cn("w-25 h-full flex flex-col items-center justify-between px-3 py-2 hover:bg-[#39111A] transition-colors bg-[#39111A]/70 border-none rounded-lg cursor-pointer")}
+                            >
+                              <span className="text-white font-semibold text-sm">
+                                {layItem.price}
+                              </span>
+                              <span className="text-gray-300 text-xs">
+                                {formatAmount(layItem.size)}
+                              </span>
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-2 py-1.5 text-gray-600 text-xs">
+                            No lay odds
                           </div>
                         )}
-                      </button>
-                    </div>
-
-                    {/* Lay Odds */}
-                    <div className="col-span-3">
-                      <button className="w-full bg-red-900/20 hover:bg-red-900/30 border border-red-800/30 rounded-lg px-3 py-2 text-center transition-colors">
-                        <div className="text-xs text-red-400 mb-1">Lay</div>
-                        <div className="text-lg font-bold text-white">
-                          {layPrice}
-                        </div>
-                        {runner.lay?.size && (
-                          <div className="text-xs text-gray-400 mt-0.5">
-                            ₹{runner.lay.size}
-                          </div>
-                        )}
-                      </button>
+                      </div>
                     </div>
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
 
             {/* Market Footer */}

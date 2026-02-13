@@ -3,6 +3,7 @@
 import React from "react";
 import { ChevronDown } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface MenuItem {
   label: string;
@@ -17,6 +18,7 @@ interface HeaderProps {
 export default function Dropheader({ leftMenu, rightMenu }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const { user, isLoggedIn, logout, isLoading } = useAuth();
 
   const handleNavigation = (link?: string, label?: string) => {
     if (link && link !== "#") {
@@ -67,11 +69,10 @@ export default function Dropheader({ leftMenu, rightMenu }: HeaderProps) {
               <button
                 key={index}
                 onClick={() => handleNavigation(item.link, item.label)}
-                className={`group relative px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all duration-200 rounded-lg flex items-center gap-1 sm:gap-1.5 touch-manipulation flex-shrink-0 cursor-pointer ${
-                  active
-                    ? "text-white bg-slate-700/40"
-                    : "text-slate-200 hover:text-white hover:bg-slate-700/40"
-                }`}
+                className={`group relative px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all duration-200 rounded-lg flex items-center gap-1 sm:gap-1.5 touch-manipulation flex-shrink-0 cursor-pointer ${active
+                  ? "text-white bg-slate-700/40"
+                  : "text-slate-200 hover:text-white hover:bg-slate-700/40"
+                  }`}
               >
                 <span className="whitespace-nowrap">{item.label}</span>
                 {/* <ChevronDown className="h-3 w-3 sm:h-3.5 sm:w-3.5 opacity-70 group-hover:opacity-100 transition-opacity flex-shrink-0" /> */}
@@ -81,24 +82,26 @@ export default function Dropheader({ leftMenu, rightMenu }: HeaderProps) {
         </nav>
 
         {/* RIGHT SECTION - User Menu */}
-        <nav className="hidden md:flex items-center gap-1 flex-shrink-0">
-          {rightMenu.map((item, index) => {
-            const active = isActive(item.link);
-            return (
-              <button
-                key={index}
-                onClick={() => handleNavigation(item.link)}
-                className={`px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all duration-200 rounded-lg touch-manipulation whitespace-nowrap cursor-pointer ${
-                  active
+        {
+          isLoggedIn &&
+          <nav className="hidden md:flex items-center gap-1 flex-shrink-0">
+            {rightMenu.map((item, index) => {
+              const active = isActive(item.link);
+              return (
+                <button
+                  key={index}
+                  onClick={() => handleNavigation(item.link)}
+                  className={`px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all duration-200 rounded-lg touch-manipulation whitespace-nowrap cursor-pointer ${active
                     ? "text-white bg-slate-700/40"
                     : "text-slate-300 hover:text-white hover:bg-slate-700/40"
-                }`}
-              >
-                {item.label}
-              </button>
-            );
-          })}
-        </nav>
+                    }`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </nav>
+        }
       </div>
     </div>
   );
