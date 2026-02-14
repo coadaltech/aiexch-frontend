@@ -198,8 +198,8 @@ export default function CasinoPage() {
   );
 
   return (
-    <div className="min-h-screen pt-4 sm:pt-6 md:pt-10">
-      <div className="max-w-screen-2xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
+    <div className="h-[calc(100vh-8rem)] overflow-y-scroll w-full pt-4 sm:pt-6 md:pt-10">
+      <div className="md:max-w-[calc(100vw-17rem)] mx-auto px-3">
         {/* Search */}
         <div className="mb-4 sm:mb-6">
           <div className="relative w-full max-w-md">
@@ -262,11 +262,10 @@ export default function CasinoPage() {
                     onClick={() =>
                       setFiltersState((prev) => ({ ...prev, provider: "all" }))
                     }
-                    className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
-                      provider === "all"
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "bg-muted hover:bg-muted/80 text-foreground"
-                    }`}
+                    className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${provider === "all"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "bg-muted hover:bg-muted/80 text-foreground"
+                      }`}
                   >
                     All
                   </button>
@@ -279,11 +278,10 @@ export default function CasinoPage() {
                           provider: providerName,
                         }))
                       }
-                      className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
-                        provider === providerName
-                          ? "bg-primary text-primary-foreground shadow-sm"
-                          : "bg-muted hover:bg-muted/80 text-foreground"
-                      }`}
+                      className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${provider === providerName
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "bg-muted hover:bg-muted/80 text-foreground"
+                        }`}
                     >
                       {providerName}
                     </button>
@@ -355,18 +353,16 @@ export default function CasinoPage() {
                           type: typeOption.value,
                         }))
                       }
-                      className={`flex flex-col items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-4 py-2 sm:py-3 rounded-lg text-[10px] sm:text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 min-w-[64px] sm:min-w-[80px] ${
-                        type === typeOption.value
-                          ? "bg-primary text-primary-foreground shadow-md"
-                          : "bg-card border border-border text-foreground"
-                      }`}
+                      className={`flex flex-col items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-4 py-2 sm:py-3 rounded-lg text-[10px] sm:text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 min-w-[64px] sm:min-w-[80px] ${type === typeOption.value
+                        ? "bg-primary text-primary-foreground shadow-md"
+                        : "bg-card border border-border text-foreground"
+                        }`}
                     >
                       <Icon
-                        className={`h-4 w-4 sm:h-5 sm:w-5 ${
-                          type === typeOption.value
-                            ? "text-primary-foreground"
-                            : "text-muted-foreground"
-                        }`}
+                        className={`h-4 w-4 sm:h-5 sm:w-5 ${type === typeOption.value
+                          ? "text-primary-foreground"
+                          : "text-muted-foreground"
+                          }`}
                       />
                       <span className="text-center leading-tight">
                         {typeOption.label}
@@ -383,9 +379,8 @@ export default function CasinoPage() {
         {!isLoading && (
           <div className="mb-3 sm:mb-4 text-xs sm:text-sm text-muted-foreground px-1">
             {allGames.length > 0
-              ? `Showing ${allGames.length} game${
-                  allGames.length !== 1 ? "s" : ""
-                }`
+              ? `Showing ${allGames.length} game${allGames.length !== 1 ? "s" : ""
+              }`
               : "No games found"}
           </div>
         )}

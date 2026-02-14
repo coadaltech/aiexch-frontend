@@ -25,7 +25,19 @@ export default function SeriesMatchesPage({
 
   const isLoading = loading || (seriesData.length === 0 && !error);
 
-  if (isLoading) return <SportsEventsSkeleton />;
+  // if (isLoading) return <SportsEventsSkeleton />;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center w-full mt-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Loading sports...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <Card className="p-8 text-center">
@@ -63,7 +75,7 @@ export default function SeriesMatchesPage({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 h-full w-full px-4 py-1 pb-10">
       <div className="flex items-center gap-2 mb-4">
         <Link href="/sports/cricket">
           <Button
@@ -84,7 +96,7 @@ export default function SeriesMatchesPage({
       </div>
 
       {liveMatches.length > 0 && (
-        <div className="space-y-3">
+        <div className="space-y-3 w-full h-full">
           {liveMatches.map((match: any) => {
 
             if (new Date(match.openDate).getDate() < new Date().getDate()) {

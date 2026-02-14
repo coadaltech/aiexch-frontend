@@ -126,8 +126,19 @@ export default function CricketPage() {
   }, [seriesWithLiveMatches]);
 
   // Show loader until data arrives
+  // if (loading) {
+  //   return <SportsEventsSkeleton />;
+  // }
+
   if (loading) {
-    return <SportsEventsSkeleton />;
+    return (
+      <div className="flex items-center justify-center w-full mt-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Loading sports...</p>
+        </div>
+      </div>
+    );
   }
 
   // Show error if request failed
@@ -166,21 +177,21 @@ export default function CricketPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full h-full px-4 py-1">
       {/* Header */}
 
       {/* Live Matches Count Badge */}
-      {totalLiveMatches > 0 && (
-        <div className="flex items-center justify-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-full shadow-md">
-            <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-            <span>Live Now: {totalLiveMatches} matches</span>
-          </div>
-        </div>
-      )}
+      {/* {totalLiveMatches > 0 && ( */}
+      {/*   <div className="flex items-center justify-center"> */}
+      {/*     <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-full shadow-md"> */}
+      {/*       <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div> */}
+      {/*       <span>Live Now: {totalLiveMatches} matches</span> */}
+      {/*     </div> */}
+      {/*   </div> */}
+      {/* )} */}
 
       {/* Series List */}
-      <div className="space-y-4">
+      <div className="">
         {seriesWithLiveMatches.map((series) => (
           <SeriesCard key={series.id} series={series} />
         ))}

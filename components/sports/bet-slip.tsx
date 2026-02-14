@@ -6,10 +6,24 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { X, Minus, Plus } from "lucide-react";
-import { useBetSlip } from "@/contexts/BetSlipContext";
+import { Bet, useBetSlip } from "@/contexts/BetSlipContext";
 import { useBetting, useMyBets } from "@/hooks/useBetting";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+
+const empty_bet_item: Bet = {
+  id: -2,
+  teams: "",
+  market: "",
+  odds: "0.00",
+  stake: "",
+  potentialWin: "",
+  matchId: "",
+  marketId: "",
+  selectionId: "",
+  marketName: "",
+  runnerName: ""
+}
 
 export function BetSlip() {
   const [isOpen, setIsOpen] = useState(false);
@@ -172,7 +186,7 @@ export function BetSlip() {
       )}
 
       {/* Desktop: Right Panel */}
-      <div className="hidden lg:block fixed right-0 top-28 bottom-0 w-80 p-4 z-40">
+      <div className="hidden lg:block h-full w-full z-40">
         <div className="h-full flex flex-col">
           <Card className="h-full flex flex-col overflow-hidden ">
             <Tabs
@@ -194,37 +208,50 @@ export function BetSlip() {
               >
                 <div className="p-4 h-full flex flex-col">
                   {bets.length === 0 ? (
-                    <EmptyState message="No selections yet" />
-                  ) : (
-                    <div className="space-y-3 flex-1 overflow-y-auto min-h-0">
-                      {bets.map((bet) => (
-                        <BetItem
-                          key={bet.id}
-                          bet={bet}
-                          onUpdateStake={updateStake}
-                          onRemove={removeBet}
-                        />
-                      ))}
+                    <>
+                      <BetItem
+                        bet={empty_bet_item}
+                        onUpdateStake={updateStake}
+                        onRemove={removeBet}
+                      />
                       <BetSummary totalStake={totalStake} totalWin={totalWin} />
-                      {hasInsufficientBalance && (
-                        <div className="text-xs text-destructive text-center p-2 bg-destructive/10 rounded">
-                          Insufficient balance: ₹{userBalance.toFixed(2)} / ₹
-                          {totalStake.toFixed(2)}
-                        </div>
-                      )}
                       <Button
                         className="w-full flex-shrink-0"
-                        onClick={handlePlaceAllBets}
-                        disabled={
-                          isPlacingBet ||
-                          bets.length === 0 ||
-                          hasInsufficientBalance
-                        }
-                      >
+                        disabled                        >
                         {isPlacingBet ? "Placing..." : "Place All Bets"}
                       </Button>
-                    </div>
-                  )}
+                    </>
+                  ) :
+                    (
+                      <div className="space-y-3 flex-1 overflow-y-auto min-h-0">
+                        {bets.map((bet) => (
+                          <BetItem
+                            key={bet.id}
+                            bet={bet}
+                            onUpdateStake={updateStake}
+                            onRemove={removeBet}
+                          />
+                        ))}
+                        <BetSummary totalStake={totalStake} totalWin={totalWin} />
+                        {hasInsufficientBalance && (
+                          <div className="text-xs text-destructive text-center p-2 bg-destructive/10 rounded">
+                            Insufficient balance: ₹{userBalance.toFixed(2)} / ₹
+                            {totalStake.toFixed(2)}
+                          </div>
+                        )}
+                        <Button
+                          className="w-full flex-shrink-0"
+                          onClick={handlePlaceAllBets}
+                          disabled={
+                            isPlacingBet ||
+                            bets.length === 0 ||
+                            hasInsufficientBalance
+                          }
+                        >
+                          {isPlacingBet ? "Placing..." : "Place All Bets"}
+                        </Button>
+                      </div>
+                    )}
                 </div>
               </TabsContent>
 

@@ -16,7 +16,7 @@ export default function HomeBanner() {
   // if (!banners || banners.length === 0) return null;
 
   return (
-    <div className="relative mx-auto px-4 sm:px-6 lg:px-18 pt-4">
+    <div className="mx-auto px-4 -mt-5">
       <div className="relative group">
         {/* Glowing border effect */}
         {/* <div className="absolute -inset-0.5 rounded-2xl blur opacity-30 group-hover:opacity-50 transition duration-1000 animate-pulse"></div> */}
@@ -24,7 +24,7 @@ export default function HomeBanner() {
         {isLoading ? (
           <CarouselSkeleton
             itemCount={1}
-            className="h-[200px] sm:h-[250px] md:h-[300px] lg:h-[300px] rounded-2xl "
+            className="h-[200px] sm:h-[250px] md:h-[300px] lg:h-[300px] rounded-2xl mt-7 "
           />
         ) : (
           <div className="relative rounded-2xl overflow-hidden ">

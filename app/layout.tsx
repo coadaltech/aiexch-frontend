@@ -43,10 +43,10 @@ export default function RootLayout({
         <ThemeScript />
       </head>
       <body
-        className={`${inter.variable} ${cinzel.variable} min-h-screen overflow-x-hidden `}
+        className={`${inter.variable} ${cinzel.variable} min-h-screen`}
         suppressHydrationWarning={true}
       >
-        <Toaster closeButton position="top-right" />
+        <Toaster closeButton position="bottom-right" />
         <NextTopLoader />
         {/* <ThemeLoader /> */}
         <MetadataLoader />

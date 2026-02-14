@@ -18,7 +18,7 @@ export function CasinoGameCard({ game }: CasinoGameCardProps) {
       className="flex-shrink-0 w-64 md:w-74 group"
     >
       <div className="relative overflow-hidden rounded-lg border bg-card hover:border-primary transition-all">
-        <div className="aspect-[4/3] relative h-[400px]">
+        <div className="aspect-[4/3] relative ">
           <Image
             src={game.image}
             alt={game.name}

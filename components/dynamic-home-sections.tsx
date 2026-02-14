@@ -20,28 +20,28 @@ const CASINO_DB_SECTIONS: Array<{
     technology?: string;
   };
 }> = [
-  {
-    key: "latest",
-    title: "Latest Casino Picks",
-    subtitle: "Fresh drops from our providers",
-    link: "/casino",
-    filters: {},
-  },
-  {
-    key: "slots",
-    title: "Trending Slots",
-    subtitle: "Spin the hottest reels",
-    link: "/casino?type=slots",
-    filters: { type: "slots" },
-  },
-  {
-    key: "table",
-    title: "Table Classics",
-    subtitle: "Roulette, Blackjack & more",
-    link: "/casino?type=table",
-    filters: { type: "table" },
-  },
-];
+    {
+      key: "latest",
+      title: "Latest Casino Picks",
+      subtitle: "Fresh drops from our providers",
+      link: "/casino",
+      filters: {},
+    },
+    {
+      key: "slots",
+      title: "Trending Slots",
+      subtitle: "Spin the hottest reels",
+      link: "/casino?type=slots",
+      filters: { type: "slots" },
+    },
+    {
+      key: "table",
+      title: "Table Classics",
+      subtitle: "Roulette, Blackjack & more",
+      link: "/casino?type=table",
+      filters: { type: "table" },
+    },
+  ];
 
 function DynamicHomeSections() {
   const { data: sections, isLoading } = useHomeSections();

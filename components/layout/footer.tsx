@@ -72,7 +72,7 @@ export default function Footer() {
     pathname?.startsWith("/forgot-password");
   if (pathname.includes("/admin") || isAuthRoute) return null;
   return (
-    <footer className="bg-muted/20 hidden md:block -mx-4 md:-mx-6 -mb-4 md:-mb-6 border-t border-border">
+    <footer className="bg-[#141940]  hidden md:block border-t border-border">
       <div className="container mx-auto px-4 py-12">
         {/* Main Footer Content */}
         <div className="grid lg:grid-cols-5 md:grid-cols-2 gap-8 mb-8">

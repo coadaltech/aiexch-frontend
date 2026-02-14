@@ -3,7 +3,7 @@ import { createContext, useContext, useState, ReactNode } from "react";
 import { useAuth } from "./AuthContext";
 import { toast } from "sonner";
 
-interface Bet {
+export interface Bet {
   id: number;
   teams: string;
   market: string;
@@ -57,12 +57,12 @@ export function BetSlipProvider({ children }: { children: ReactNode }) {
       prev.map((bet) =>
         bet.id === id
           ? {
-              ...bet,
-              stake: newStake,
-              potentialWin: (
-                parseFloat(newStake) * parseFloat(bet.odds)
-              ).toFixed(2),
-            }
+            ...bet,
+            stake: newStake,
+            potentialWin: (
+              parseFloat(newStake) * parseFloat(bet.odds)
+            ).toFixed(2),
+          }
           : bet
       )
     );

@@ -14,13 +14,12 @@ export const GameCard = ({
   variant?: "default" | "compact" | "banner" | "short";
 }) => {
   let containerClass = `
-    flex-shrink-0 group cursor-pointer relative ${
-      width === "fixed" ? "md:w-74 w-64" : "w-full"
+    flex-shrink-0 group cursor-pointer relative ${width === "fixed" ? "md:w-74 w-64" : "w-full"
     } 
     rounded-xl overflow-hidden transform transition-all duration-300  bg-card border border-primary/20 hover:border-primary/50
   `;
 
-  const href = `${process.env.NEXT_PUBLIC_URL}/${type}/${game.link}`;
+  const href = `${process.env.NEXT_PUBLIC_URL}/${type}/${(game.name.toLowerCase())}`;
 
   return (
     <Link href={href} key={game.id} className={containerClass}>

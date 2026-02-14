@@ -26,7 +26,7 @@ export default function HomePromotionsSection() {
   }
 
   return (
-    <div className="mt-8 sm:mt-12 overflow-auto hide-scrollbar">
+    <div className="mt-8 sm:mt-12 hide-scrollbar">
       <div className="flex items-center justify-between mb-4">
         <div className="relative group">
           <div className="absolute -inset-1  opacity-20 group-hover:opacity-30 transition duration-500"></div>

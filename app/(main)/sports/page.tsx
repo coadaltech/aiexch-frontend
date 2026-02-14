@@ -79,9 +79,9 @@ export default function SportsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center w-full mt-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="text-muted-foreground">Loading sports...</p>
         </div>
       </div>
@@ -89,7 +89,7 @@ export default function SportsPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 p-5">
       {/* Header */}
       <div className="space-y-2">
         <h1 className="text-3xl md:text-4xl font-bold text-foreground">
@@ -122,10 +122,10 @@ export default function SportsPage() {
             >
               {/* Glowing effect on hover */}
               <div className="absolute -inset-0.5 bg-gradient-to-r from-primary via-purple-500 to-amber-500 rounded-xl opacity-0 group-hover:opacity-20 blur transition-opacity duration-500 -z-10"></div>
-              
+
               {/* Animated shine */}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-              
+
               <div className="flex flex-col items-center relative z-10">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-primary/20 to-amber-500/20 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-125 group-hover:rotate-6 transition-all duration-500 shadow-lg group-hover:shadow-primary/30 border border-primary/30 group-hover:border-primary/60">
                   <Image

@@ -55,6 +55,12 @@ export async function middleware(request: NextRequest) {
       }
     }
   }
+
+  // move user away from / to /home
+  if (pathname === "/") {
+    return NextResponse.redirect(new URL("/home", request.url));
+  }
+
   //// just checking
 
   // Admin-only routes
