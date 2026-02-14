@@ -266,7 +266,7 @@ function SeriesCard({ series }: { series: Series & { liveMatches: Match[] } }) {
         </div>
 
         {/* Matches List */}
-        <div className="space-y-3 pt-2 border-t border-border/50">
+        <div className="space-y-3 pt-2 border-t border-border/50 ">
           {series.liveMatches.map((match) => (
             <Link
               key={match.id}

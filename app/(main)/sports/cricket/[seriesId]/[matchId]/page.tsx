@@ -185,7 +185,7 @@ export default function MatchPage() {
 
   // 4. SUCCESS - Show markets
   return (
-    <div className="px-2 py-1">
+    <div className="px-2 py-1 w-full" >
       {/* Markets */}
       <div className="space-y-2 sm:space-y-3 md:space-y-4  bg-gray-900 rounded-lg">
         {

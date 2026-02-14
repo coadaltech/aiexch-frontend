@@ -90,17 +90,17 @@ export default function SportsLayout({
           </div> */}
 
       <div className="flex w-full">
-        <div className="h-[calc(100vh-8rem)] w-[75%] overflow-scroll">
+        <div className="h-[calc(100vh-8rem)] w-full lg:w-[75%] overflow-scroll">
           {children}
         </div>
 
-        {/* Right Sidebar - Bet Slip */}
-        <div className="h-[calc(100vh-8rem)] w-[25%] mr-2">
+        {/* Right Sidebar - Bet Slip (hidden on small screens so main content gets full width) */}
+        <div className="hidden lg:block shrink-0 h-[calc(100vh-8rem)] w-[25%] mr-2">
           <BetSlip />
         </div>
       </div>
 
-      {/* Mobile Bet Slip */}
+      {/* Mobile Bet Slip - floating button/modal only when bets exist */}
       <div className="lg:hidden">
         <BetSlip />
       </div>
