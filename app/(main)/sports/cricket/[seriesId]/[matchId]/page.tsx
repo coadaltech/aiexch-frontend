@@ -5,8 +5,6 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useBetSlip } from "@/contexts/BetSlipContext";
 import { useMarketWebSocket } from "@/hooks/useMarketWebSocket";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 
 export default function MatchPage() {
   const params = useParams();
@@ -14,7 +12,6 @@ export default function MatchPage() {
   const { addToBetSlip } = useBetSlip();
 
   const { status, isConnected, markets } = useMarketWebSocket(matchId);
-  console.log("markets -> ", markets)
 
   const [matchInfo, setMatchInfo] = useState<any>(null);
   const [pageStatus, setPageStatus] = useState<
@@ -183,121 +180,132 @@ export default function MatchPage() {
     );
   }
 
-  // 4. SUCCESS - Show markets
+  // Overlay when sportingEvent (ball running) or market suspended – only over Back/Lay area
+  const backLayOverlay = (market: any) => {
+    const show = market?.sportingEvent || market?.status === "SUSPENDED";
+    if (!show) return null;
+    const label = market?.status === "SUSPENDED" ? "Suspended" : "Ball Running";
+    return (
+      <div
+        className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[40%] min-w-[4rem] flex items-center justify-center pointer-events-none z-10"
+        style={{
+          background: "repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(0,0,0,0.12) 6px, rgba(0,0,0,0.12) 12px)",
+          backgroundColor: "rgba(0,0,0,0.35)",
+          cursor: "not-allowed" // fallback for browsers if needed
+        }}
+      >
+        <span className="text-red-500 font-bold text-sm sm:text-base drop-shadow-sm" style={{ pointerEvents: "auto" }}>
+          {label}
+        </span>
+      </div>
+    );
+  };
+
+  // Odds button/label classes – compact but usable
+  const oddsBtnClass =
+    "min-w-[28px] sm:min-w-[34px] md:min-w-[40px] px-1 py-1 flex flex-col items-center justify-center border-none rounded cursor-pointer leading-tight";
+  const oddsPriceClass = "text-white font-bold text-[10px] sm:text-xs";
+  const oddsSizeClass = "text-gray-400 font-medium text-[8px] sm:text-[9px]";
+
+  // 4. SUCCESS - Show markets (moderate spacing: readable, still dense)
   return (
-    <div className="px-2 py-1 w-full" >
-      {/* Markets */}
-      <div className="space-y-2 sm:space-y-3 md:space-y-4  bg-gray-900 rounded-lg">
+    <div className="px-1 sm:px-2 py-1 w-full max-w-full min-w-0">
+      <div className="bg-gray-900 space-y-1">
         {
           markets.map((market) =>
-            market.bettingType == "ODDS"
+            (market.bettingType == "ODDS" || market.bettingType == 'BOOKMAKER')
             && (
               <div
                 key={market.marketId}
-                className="bg-gray-800 rounded-lg border border-gray-700"
+                className="bg-gray-800 border border-gray-700 rounded overflow-hidden"
               >
-                {/* Market Title */}
-                <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 lg:gap-5 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-2.5 border-b border-gray-700 bg-gray-900/50">
-                  <h3 className="font-semibold text-white text-xs sm:text-sm md:text-base truncate pr-1">
-                    {market.marketName}
-                  </h3>
-                  <div className="justify-self-end font-semibold uppercase tracking-wide bg-green-900 text-white text-xs p-1 px-2 rounded-t-lg">
+                {/* Market header */}
+                <div className="grid grid-cols-3 gap-1 sm:gap-2 px-2 sm:px-3 py-1 border-b border-gray-700 bg-gray-900/50 items-center">
+                  <div className="min-w-0 flex flex-col gap-0.5">
+                    <h3 className="font-semibold text-white text-[11px] sm:text-xs truncate leading-tight">
+                      {market.marketName}
+                    </h3>
+                    <p className="text-gray-400 text-[9px] sm:text-[10px] truncate leading-tight">
+                      Min: {market.marketCondition?.['minBet'] ?? '-'} / Max: {market.marketCondition?.['maxBet'] ?? '-'}
+                    </p>
+                  </div>
+                  <div className="justify-self-end font-semibold uppercase bg-green-900 text-white text-[10px] sm:text-xs py-0.5 px-1.5 rounded">
                     Back
                   </div>
-                  <div className="font-semibold uppercase tracking-wide bg-[#39111A] text-white text-xs p-1 px-2 rounded-t-lg w-fit">
+                  <div className="font-semibold uppercase bg-[#39111A] text-white text-[10px] sm:text-xs py-0.5 px-1.5 rounded w-fit">
                     Lay
                   </div>
                 </div>
 
                 {/* Runners */}
                 <div className="divide-y divide-gray-700">
-                  {market.runners.map((runner: any, idx: number) => (
-                    <div key={runner.selectionId} className="px-1.5 sm:px-2 md:px-3 py-0.5 sm:py-1 md:py-1.5 grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 lg:gap-5 justify-between items-center">
-                      {/* Runner Name */}
+                  {market.runners.map((runner: any) => (
+                    <div key={runner.selectionId} className="px-2 sm:px-3 py-1 grid grid-cols-3 gap-1 sm:gap-2 items-center min-h-0">
                       <div className="min-w-0 pr-1">
-                        <span className="text-white font-semibold text-xs sm:text-sm md:text-base truncate block">
+                        <span className="text-white font-semibold text-[11px] sm:text-xs truncate block leading-tight">
                           {runner.name}
                         </span>
                       </div>
 
-                      {/* Back Column */}
-                      <div className="flex flex-col items-end">
-                        <div className="gap-1 sm:gap-1.5 md:gap-2 flex justify-end items-center">
-                          {/* Show real back odds */}
-                          {runner.back && runner.back.length > 0 && (
-                            [...runner.back].reverse().map((backItem: any, backIdx: number) => (
+                      {/* Back + Lay container with overlay (only over this area) */}
+                      <div className="col-span-2 relative flex min-h-[2.25rem]">
+                        <div className="flex-1 flex flex-col items-end min-w-0">
+                          <div className="gap-1 flex justify-end items-center flex-wrap">
+                            {runner.back && runner.back.length > 0 && (
+                              [...runner.back].reverse().map((backItem: any, backIdx: number) => (
+                                <button
+                                  key={backIdx}
+                                  onClick={() =>
+                                    handleBackClick(market, runner, backItem.price)
+                                  }
+                                  className={`${oddsBtnClass} hover:bg-green-900 transition-colors bg-green-900/70`}
+                                >
+                                  <span className={oddsPriceClass}>{backItem.price}</span>
+                                  <span className={oddsSizeClass}>{formatAmount(backItem.size)}</span>
+                                </button>
+                              ))
+                            )}
+                            {Array.from({ length: Math.max(0, 3 - (runner.back?.length || 0)) }).map((_, emptyIdx: number) => (
                               <button
-                                key={backIdx}
-                                onClick={() =>
-                                  handleBackClick(market, runner, backItem.price)
-                                }
-                                className="min-w-[32px] sm:min-w-[38px] md:min-w-[45px] lg:min-w-[52px] px-0.5 sm:px-1 md:px-1.5 py-0.5 sm:py-0.5 md:py-1 flex flex-col items-center justify-center hover:bg-green-900 transition-colors bg-green-900/70 border-none rounded sm:rounded-md md:rounded-lg cursor-pointer"
+                                key={`empty-back-${emptyIdx}`}
+                                className={`${oddsBtnClass} bg-green-900/70`}
+                                disabled
                               >
-                                <span className="text-white font-bold text-[10px] sm:text-xs md:text-sm leading-tight">
-                                  {backItem.price}
-                                </span>
-                                <span className="text-gray-400 text-[9px] sm:text-[10px] md:text-xs font-semibold leading-tight">
-                                  {formatAmount(backItem.size)}
-                                </span>
+                                <span className={oddsPriceClass}>-</span>
+                                <span className={oddsSizeClass}>-</span>
                               </button>
-                            ))
-                          )}
-                          {/* Show empty boxes for missing odds (max 3 total) */}
-                          {Array.from({ length: Math.max(0, 3 - (runner.back?.length || 0)) }).map((_, emptyIdx: number) => (
-                            <button
-                              key={`empty-back-${emptyIdx}`}
-                              className="min-w-[32px] sm:min-w-[38px] md:min-w-[45px] lg:min-w-[52px] px-0.5 sm:px-1 md:px-1.5 py-0.5 sm:py-0.5 md:py-1 flex flex-col items-center justify-center hover:bg-green-900 transition-colors bg-green-900/70 border-none rounded sm:rounded-md md:rounded-lg cursor-pointer"
-                              disabled
-                            >
-                              <span className="text-white font-bold text-[10px] sm:text-xs md:text-sm leading-tight">
-                                -
-                              </span>
-                              <span className="text-gray-400 text-[9px] sm:text-[10px] md:text-xs font-semibold leading-tight">
-                                -
-                              </span>
-                            </button>
-                          ))}
+                            ))}
+                          </div>
                         </div>
-                      </div>
-
-                      {/* Lay Column */}
-                      <div className="flex flex-col items-start">
-                        <div className="gap-1 sm:gap-1.5 md:gap-2 flex justify-start items-center">
-                          {/* Show real lay odds */}
-                          {runner.lay && runner.lay.length > 0 && (
-                            runner.lay.map((layItem: any, layIdx: number) => (
+                        <div className="flex-1 flex flex-col items-start min-w-0">
+                          <div className="gap-1 flex justify-start items-center flex-wrap">
+                            {runner.lay && runner.lay.length > 0 && (
+                              runner.lay.map((layItem: any, layIdx: number) => (
+                                <button
+                                  key={layIdx}
+                                  onClick={() =>
+                                    handleLayClick(market, runner, layItem.price)
+                                  }
+                                  className={`${oddsBtnClass} hover:bg-[#39111A] transition-colors bg-[#39111A]/70`}
+                                >
+                                  <span className={oddsPriceClass}>{layItem.price}</span>
+                                  <span className={oddsSizeClass}>{formatAmount(layItem.size)}</span>
+                                </button>
+                              ))
+                            )}
+                            {Array.from({ length: Math.max(0, 3 - (runner.lay?.length || 0)) }).map((_, emptyIdx: number) => (
                               <button
-                                key={layIdx}
-                                onClick={() =>
-                                  handleLayClick(market, runner, layItem.price)
-                                }
-                                className="min-w-[32px] sm:min-w-[38px] md:min-w-[45px] lg:min-w-[52px] px-0.5 sm:px-1 md:px-1.5 py-0.5 sm:py-0.5 md:py-1 flex flex-col items-center justify-center hover:bg-[#39111A] transition-colors bg-[#39111A]/70 border-none rounded sm:rounded-md md:rounded-lg cursor-pointer"
+                                key={`empty-lay-${emptyIdx}`}
+                                className={`${oddsBtnClass} bg-[#39111A]/70`}
+                                disabled
                               >
-                                <span className="text-white font-bold text-[10px] sm:text-xs md:text-sm leading-tight">
-                                  {layItem.price}
-                                </span>
-                                <span className="text-gray-400 text-[9px] sm:text-[10px] md:text-xs font-semibold leading-tight">
-                                  {formatAmount(layItem.size)}
-                                </span>
+                                <span className={oddsPriceClass}>-</span>
+                                <span className={oddsSizeClass}>-</span>
                               </button>
-                            ))
-                          )}
-                          {/* Show empty boxes for missing odds (max 3 total) */}
-                          {Array.from({ length: Math.max(0, 3 - (runner.lay?.length || 0)) }).map((_, emptyIdx: number) => (
-                            <button
-                              key={`empty-lay-${emptyIdx}`}
-                              className="min-w-[32px] sm:min-w-[38px] md:min-w-[45px] lg:min-w-[52px] px-0.5 sm:px-1 md:px-1.5 py-0.5 sm:py-0.5 md:py-1 flex flex-col items-center justify-center hover:bg-[#39111A] transition-colors bg-[#39111A]/70 border-none rounded sm:rounded-md md:rounded-lg cursor-pointer"
-                              disabled
-                            >
-                              <span className="text-white font-bold text-[10px] sm:text-xs md:text-sm leading-tight">
-                                -
-                              </span>
-                              <span className="text-gray-400 text-[9px] sm:text-[10px] md:text-xs font-semibold leading-tight">
-                                -
-                              </span>
-                            </button>
-                          ))}
+                            ))}
+                          </div>
                         </div>
+                        {backLayOverlay(market)}
                       </div>
                     </div>
                   ))}
@@ -307,17 +315,15 @@ export default function MatchPage() {
           )
         }
 
-        <div className="bg-gray-800 rounded-lg border border-gray-700" >
-
-          {/* Market Title */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 lg:gap-5 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-2.5 border-b border-gray-700 bg-gray-900/50">
-            <h3 className="font-semibold text-white text-xs sm:text-sm md:text-base truncate pr-1">
+        <div className="bg-gray-800 border border-gray-700 rounded overflow-hidden">
+          <div className="grid grid-cols-3 gap-1 sm:gap-2 px-2 sm:px-3 py-1 border-b border-gray-700 bg-gray-900/50 items-center">
+            <h3 className="font-semibold text-white text-[11px] sm:text-xs truncate leading-tight">
               Fancy
             </h3>
-            <div className="justify-self-end font-semibold uppercase tracking-wide bg-[#39111A] text-white text-xs p-1 px-2 rounded-t-lg w-fit">
+            <div className="justify-self-end font-semibold uppercase bg-[#39111A] text-white text-[10px] sm:text-xs py-0.5 px-1.5 rounded w-fit">
               NO
             </div>
-            <div className="w-fit font-semibold uppercase tracking-wide bg-green-900 text-white text-xs p-1 px-2 rounded-t-lg">
+            <div className="w-fit font-semibold uppercase bg-green-900 text-white text-[10px] sm:text-xs py-0.5 px-1.5 rounded">
               YES
             </div>
           </div>
@@ -328,94 +334,70 @@ export default function MatchPage() {
               && (
                 <div
                   key={market.marketId}
-                  className="bg-gray-800 border-b border-gray-700"
+                  className="border-b border-gray-700 last:border-b-0"
                 >
-                  {/* Runners */}
                   <div className="divide-y divide-gray-700">
-                    {market.runners.map((runner: any, idx: number) => (
-                      <div key={runner.selectionId} className="px-1.5 sm:px-2 md:px-3 py-0.5 sm:py-1 md:py-1.5 grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 lg:gap-5 justify-between items-center">
-                        {/* Runner Name */}
+                    {market.runners.map((runner: any) => (
+                      <div key={runner.selectionId} className="px-2 sm:px-3 py-1 grid grid-cols-3 gap-1 sm:gap-2 items-center min-h-0">
                         <div className="min-w-0 pr-1">
-                          <span className="text-white font-medium text-xs sm:text-sm md:text-base truncate block">
+                          <span className="text-white font-medium text-[11px] sm:text-xs truncate block leading-tight">
                             {market.marketName}
                           </span>
                         </div>
 
-                        {/* Back Column */}
-                        <div className="flex flex-col items-end">
-                          <div className="gap-1 sm:gap-1.5 md:gap-2 flex justify-end items-center">
-                            {/* Show real back odds */}
-                            {runner.back && runner.back.length > 0 ? (
-                              runner.back.map((backItem: any, backIdx: number) => (
-                                <button
-                                  key={backIdx}
-                                  onClick={() =>
-                                    handleBackClick(market, runner, backItem.price)
-                                  }
-                                  className="min-w-[32px] sm:min-w-[38px] md:min-w-[45px] lg:min-w-[52px] px-0.5 sm:px-1 md:px-1.5 py-0.5 sm:py-0.5 md:py-1 flex flex-col items-center justify-center hover:bg-[#39111A] transition-colors bg-[#39111A]/70 border-none rounded sm:rounded-md md:rounded-lg cursor-pointer"
-                                >
-                                  <span className="text-white font-bold text-[10px] sm:text-xs md:text-sm leading-tight">
-                                    {backItem.price}
-                                  </span>
-                                  <span className="text-gray-400 text-[9px] sm:text-[10px] md:text-xs font-semibold leading-tight">
-                                    {formatAmount(backItem.size)}
-                                  </span>
+                        {/* Back + Lay container with overlay (only over this area) */}
+                        <div className="col-span-2 relative flex min-h-[2.25rem]">
+                          <div className="flex-1 flex flex-col items-end min-w-0">
+                            <div className="gap-1 flex justify-end items-center flex-wrap">
+                              {runner.back && runner.back.length > 0 ? (
+                                runner.back.map((backItem: any, backIdx: number) => (
+                                  <button
+                                    key={backIdx}
+                                    onClick={() =>
+                                      handleBackClick(market, runner, backItem.price)
+                                    }
+                                    className={`${oddsBtnClass} hover:bg-[#39111A] transition-colors bg-[#39111A]/70`}
+                                  >
+                                    <span className={oddsPriceClass}>{backItem.price}</span>
+                                    <span className={oddsSizeClass}>{formatAmount(backItem.size)}</span>
+                                  </button>
+                                ))
+                              ) : (
+                                <button className={`${oddsBtnClass} bg-[#39111A]/70`} disabled>
+                                  <span className={oddsPriceClass}>-</span>
+                                  <span className={oddsSizeClass}>-</span>
                                 </button>
-                              ))
-                            ) :
-
-                              <button
-                                className="min-w-[32px] sm:min-w-[38px] md:min-w-[45px] lg:min-w-[52px] px-0.5 sm:px-1 md:px-1.5 py-0.5 sm:py-0.5 md:py-1 flex flex-col items-center justify-center hover:bg-green-900 transition-colors bg-green-900/70 border-none rounded sm:rounded-md md:rounded-lg cursor-pointer"
-                                disabled
-                              >
-                                <span className="text-white font-bold text-[10px] sm:text-xs md:text-sm leading-tight">
-                                  -
-                                </span>
-                                <span className="text-gray-400 text-[9px] sm:text-[10px] md:text-xs font-semibold leading-tight">
-                                  -
-                                </span>
-                              </button>
-                            }
+                              )}
+                            </div>
                           </div>
-                        </div>
-
-                        {/* Lay Column */}
-                        <div className="flex flex-col items-start">
-                          <div className="gap-1 sm:gap-1.5 md:gap-2 flex justify-start items-center">
-                            {/* Show real lay odds */}
-                            {runner.lay && runner.lay.length > 0 ? (
-                              runner.lay.map((layItem: any, layIdx: number) => (
-                                <button
-                                  key={layIdx}
-                                  onClick={() =>
-                                    handleLayClick(market, runner, layItem.price)
-                                  }
-                                  className="min-w-[32px] sm:min-w-[38px] md:min-w-[45px] lg:min-w-[52px] px-0.5 sm:px-1 md:px-1.5 py-0.5 sm:py-0.5 md:py-1 flex flex-col items-center justify-center hover:bg-green-900 transition-colors bg-green-900/70 border-none rounded sm:rounded-md md:rounded-lg cursor-pointer"
-                                >
-                                  <span className="text-white font-bold text-[10px] sm:text-xs md:text-sm leading-tight">
-                                    {layItem.price}
-                                  </span>
-                                  <span className="text-gray-400 text-[9px] sm:text-[10px] md:text-xs font-semibold leading-tight">
-                                    {formatAmount(layItem.size)}
-                                  </span>
+                          <div className="flex-1 flex items-center justify-between gap-1 min-w-0">
+                            <div className="gap-1 flex justify-start items-center flex-wrap min-w-0">
+                              {runner.lay && runner.lay.length > 0 ? (
+                                runner.lay.map((layItem: any, layIdx: number) => (
+                                  <button
+                                    key={layIdx}
+                                    onClick={() =>
+                                      handleLayClick(market, runner, layItem.price)
+                                    }
+                                    className={`${oddsBtnClass} hover:bg-green-900 transition-colors bg-green-900/70`}
+                                  >
+                                    <span className={oddsPriceClass}>{layItem.price}</span>
+                                    <span className={oddsSizeClass}>{formatAmount(layItem.size)}</span>
+                                  </button>
+                                ))
+                              ) : (
+                                <button className={`${oddsBtnClass} bg-green-900/70`} disabled>
+                                  <span className={oddsPriceClass}>-</span>
+                                  <span className={oddsSizeClass}>-</span>
                                 </button>
-                              ))
-                            ) :
-
-                              <button
-                                className="min-w-[32px] sm:min-w-[38px] md:min-w-[45px] lg:min-w-[52px] px-0.5 sm:px-1 md:px-1.5 py-0.5 sm:py-0.5 md:py-1 flex flex-col items-center justify-center hover:bg-green-900 transition-colors bg-green-900/70 border-none rounded sm:rounded-md md:rounded-lg cursor-pointer"
-                                disabled
-                              >
-                                <span className="text-white font-bold text-[10px] sm:text-xs md:text-sm leading-tight">
-                                  -
-                                </span>
-                                <span className="text-gray-400 text-[9px] sm:text-[10px] md:text-xs font-semibold leading-tight">
-                                  -
-                                </span>
-                              </button>
-                            }
-
+                              )}
+                            </div>
+                            <div className="hidden sm:flex flex-col text-[9px] text-gray-400 leading-tight text-right shrink-0">
+                              <span>Min: {market.marketCondition?.['minBet'] ?? '-'}</span>
+                              <span>Max: {market.marketCondition?.['maxBet'] ?? '-'}</span>
+                            </div>
                           </div>
+                          {backLayOverlay(market)}
                         </div>
                       </div>
                     ))}
@@ -425,7 +407,6 @@ export default function MatchPage() {
             )}
         </div>
       </div>
-      {/* </div> */}
     </div>
   );
 }
