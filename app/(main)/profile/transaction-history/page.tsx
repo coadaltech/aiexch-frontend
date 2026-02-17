@@ -76,26 +76,26 @@ export default function TransactionHistory() {
   };
 
   return (
-    <div className="min-h-screen max-w-md mx-auto lg:max-w-6xl">
-      <div className="md:pb-6">
+    <div className="min-h-screen w-full min-w-0">
+      <div className="pb-6 sm:pb-8">
         {/* Header */}
-        <div className="flex items-center gap-4  lg:p-0 lg:mb-6">
+        <div className="flex items-center gap-3 sm:gap-4 py-4 sm:py-0 lg:mb-6">
           <Button
             onClick={() => router.back()}
             variant="ghost"
             size="sm"
-            className="text-foreground hover:bg-muted"
+            className="text-foreground hover:bg-muted shrink-0"
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <h1 className="text-xl lg:text-2xl font-bold text-foreground">
+          <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground truncate">
             Transaction History
           </h1>
         </div>
 
         {/* Filters and Search */}
-        <div className="lg:p-0 mt-4  lg:mb-6 space-y-4">
-          <div className="flex gap-2 overflow-x-auto">
+        <div className="mt-4 lg:mb-6 space-y-3 sm:space-y-4">
+          <div className="flex gap-2 overflow-x-auto pb-1">
             <Button
               onClick={() => setFilter("all")}
               size="sm"
@@ -120,19 +120,19 @@ export default function TransactionHistory() {
           </div>
 
           {/* Date Filters */}
-          <div className="flex gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <Input
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="flex-1"
+              className="w-full min-w-0"
               placeholder="From date"
             />
             <Input
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="flex-1"
+              className="w-full min-w-0"
               placeholder="To date"
             />
           </div>
@@ -150,10 +150,10 @@ export default function TransactionHistory() {
         </div>
 
         {/* Transaction List */}
-        <div className="space-y-3 mt-4 lg:p-0">
+        <div className="space-y-3 mt-4">
           {filteredTransactions.length === 0 ? (
-            <Card className="p-8 text-center">
-              <p className="text-muted-foreground">
+            <Card className="p-6 sm:p-8 text-center">
+              <p className="text-muted-foreground text-sm sm:text-base">
                 No transactions found
               </p>
             </Card>
@@ -163,10 +163,10 @@ export default function TransactionHistory() {
               return (
                 <Card
                   key={transaction.id}
-                  className="p-4 hover:bg-muted/50 transition-colors"
+                  className="p-3 sm:p-4 hover:bg-muted/50 transition-colors min-w-0"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-3">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                    <div className="flex items-start gap-3 min-w-0 flex-1">
                       <div
                         className={`p-2 rounded-full ${
                           ["deposit", "promocode"].includes(transaction.type)
@@ -181,17 +181,17 @@ export default function TransactionHistory() {
                         )}
                       </div>
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-foreground font-medium capitalize">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <span className="text-foreground font-medium capitalize text-sm sm:text-base">
                             {transaction.type}
                           </span>
                           <Badge
-                            className={getStatusColor(transaction.status)}
+                            className={`${getStatusColor(transaction.status)} text-xs`}
                           >
                             {transaction.status}
                           </Badge>
                         </div>
-                        <div className="text-sm text-muted-foreground mb-1">
+                        <div className="text-xs sm:text-sm text-muted-foreground mb-1 break-words">
                           {transaction.method || "N/A"} •{" "}
                           {formatDate(transaction.createdAt)}
                         </div>
@@ -207,9 +207,9 @@ export default function TransactionHistory() {
                         )}
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-left sm:text-right shrink-0">
                       <div
-                        className={`font-bold text-lg ${
+                        className={`font-bold text-base sm:text-lg ${
                           transaction.type === "deposit"
                             ? "text-green-400"
                             : "text-red-400"

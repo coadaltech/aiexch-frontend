@@ -112,6 +112,18 @@ export default function PersonalInfoScreen() {
         // Refresh user data in AuthContext if needed
         if (field === "firstName" || field === "lastName") {
           // You might want to refresh auth context here
+          setUserData({
+
+            username: "erfan",
+            email: "erfan@gmail.com",
+            firstName: "Erfan",
+            lastName: "Aalam",
+            birthDate: "19 jan",
+            country: "england",
+            city: "jaipur",
+            address: "",
+            phone: "",
+          })
         }
       },
     });
@@ -123,45 +135,47 @@ export default function PersonalInfoScreen() {
   };
 
   return (
-    <div className="min-h-screen max-w-md mx-auto lg:max-w-6xl ">
-      <div className="  min-h-screen  lg:bg-transparent md:pb-6">
+    <div className="min-h-screen w-full min-w-0">
+      <div className="min-h-screen pb-6 sm:pb-8">
         {/* Header */}
-        <div className="flex items-center gap-4  md:p-6 lg:p-0 lg:mb-6 mt-8 lg:border-0">
+        <div className="flex items-center gap-3 sm:gap-4 py-4 sm:py-6 lg:mb-6">
           <Button
             onClick={() => router.back()}
             variant="ghost"
             size="sm"
-            className="text-foreground hover:bg-muted"
+            className="text-foreground hover:bg-muted shrink-0"
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <div className="flex items-center gap-3">
-            <User className="w-6 h-6 text-primary" />
-            <h1 className="text-foreground font-bold text-lg lg:text-2xl">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <User className="w-5 h-5 sm:w-6 sm:h-6 text-primary shrink-0" />
+            <h1 className="text-foreground font-bold text-base sm:text-lg lg:text-2xl truncate">
               Personal Information
             </h1>
           </div>
         </div>
 
-        <div className="lg:grid lg:grid-cols-4 lg:gap-8">
+        <div className="lg:grid lg:grid-cols-4 lg:gap-6 xl:gap-8 space-y-6 lg:space-y-0">
           {/* Profile Overview Card */}
-          <div className="mt-4 lg:mt-0 lg:col-span-1">
-            <Card className="p-6 text-center">
-              <h2 className="text-xl font-bold text-foreground mb-1">
-                {userData.firstName} {userData.lastName}
+          <div className="lg:col-span-1">
+            <Card className="p-4 sm:p-6 text-center">
+              <h2 className="text-lg sm:text-xl font-bold text-foreground mb-1 truncate px-1">
+                {userData.firstName || userData.lastName
+                  ? `${userData.firstName} ${userData.lastName}`.trim()
+                  : "—"}
               </h2>
-              <p className="text-muted-foreground mb-4">@{userData.username}</p>
+              <p className="text-muted-foreground text-sm sm:text-base mb-4 truncate">@{userData.username}</p>
 
-              <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-border">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-border">
                 <div>
-                  <div className="text-2xl font-bold text-primary">85%</div>
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-xl sm:text-2xl font-bold text-primary">85%</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">
                     Profile Complete
                   </div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-accent">Level 2</div>
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-xl sm:text-2xl font-bold text-accent">Level 2</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">
                     Account Level
                   </div>
                 </div>
@@ -170,10 +184,10 @@ export default function PersonalInfoScreen() {
           </div>
 
           {/* Profile Details */}
-          <div className="mt-4 lg:mt-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 lg:col-span-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:col-span-3">
             {/* Account Information */}
-            <Card className="shrink-0 p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-6 flex items-center gap-2">
+            <Card className="p-4 sm:p-6 min-w-0">
+              <h3 className="text-base sm:text-lg font-semibold text-foreground mb-4 sm:mb-6 flex items-center gap-2">
                 <Shield className="w-5 h-5 text-primary" />
                 Account Information
               </h3>
@@ -207,13 +221,13 @@ export default function PersonalInfoScreen() {
             </Card>
 
             {/* Personal Details */}
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-6 flex items-center gap-2">
+            <Card className="p-4 sm:p-6 min-w-0">
+              <h3 className="text-base sm:text-lg font-semibold text-foreground mb-4 sm:mb-6 flex items-center gap-2">
                 <User className="w-5 h-5 text-primary" />
                 Personal Details
               </h3>
 
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <ProfileField
                   label="First Name"
                   value={userData.firstName}
@@ -263,12 +277,12 @@ export default function PersonalInfoScreen() {
             </Card>
 
             {/* Address Information (full width) */}
-            <Card className="p-6 md:col-span-2 lg:col-span-2">
-              <h3 className="text-lg font-semibold text-foreground mb-6">
+            <Card className="p-4 sm:p-6 md:col-span-2 min-w-0">
+              <h3 className="text-base sm:text-lg font-semibold text-foreground mb-4 sm:mb-6">
                 Address Information
               </h3>
 
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <ProfileField
                   label="Country"
                   value={userData.country}
@@ -291,7 +305,7 @@ export default function PersonalInfoScreen() {
                   onCancel={handleCancel}
                   setTempValue={setTempValue}
                 />
-                <div className="md:col-span-2">
+                <div className="sm:col-span-2">
                   <ProfileField
                     label="Home Address"
                     value={userData.address}
@@ -308,14 +322,14 @@ export default function PersonalInfoScreen() {
             </Card>
 
             {/* Security Settings (full width) */}
-            <Card className="p-6 md:col-span-2 lg:col-span-2">
-              <h3 className="text-lg font-semibold text-foreground mb-6">
+            <Card className="p-4 sm:p-6 md:col-span-2 min-w-0">
+              <h3 className="text-base sm:text-lg font-semibold text-foreground mb-4 sm:mb-6">
                 Security Settings
               </h3>
 
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-card rounded-lg">
-                  <div>
+              <div className="space-y-3 sm:space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 sm:p-4 bg-card rounded-lg">
+                  <div className="min-w-0">
                     <div className="text-foreground font-medium">Password</div>
                     <div className="text-muted-foreground text-sm">
                       Last changed 30 days ago
@@ -325,13 +339,14 @@ export default function PersonalInfoScreen() {
                     variant="outline"
                     size="sm"
                     onClick={() => setShowPasswordModal(true)}
+                    className="w-full sm:w-auto shrink-0"
                   >
                     Change Password
                   </Button>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-card rounded-lg">
-                  <div>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 sm:p-4 bg-card rounded-lg">
+                  <div className="min-w-0">
                     <div className="text-foreground font-medium">
                       Two-Factor Authentication
                     </div>
@@ -339,7 +354,7 @@ export default function PersonalInfoScreen() {
                       Add an extra layer of security
                     </div>
                   </div>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" className="w-full sm:w-auto shrink-0">
                     Enable 2FA
                   </Button>
                 </div>

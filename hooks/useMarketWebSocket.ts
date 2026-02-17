@@ -66,7 +66,7 @@ export const useMarketWebSocketStore = create<MarketWebSocketState>(
         try {
           intentionalClose = true;
           socket.close();
-        } catch {}
+        } catch { }
       }
 
       intentionalClose = false;
@@ -186,7 +186,7 @@ export const useMarketWebSocketStore = create<MarketWebSocketState>(
         try {
           intentionalClose = true;
           socket.close(1000, "Client disconnecting");
-        } catch {}
+        } catch { }
       }
       set({
         socket: null,

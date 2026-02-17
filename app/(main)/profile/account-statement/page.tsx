@@ -41,28 +41,28 @@ export default function AccountStatement() {
   const [selectedPeriod, setSelectedPeriod] = useState("all");
 
   return (
-    <div className="min-h-screen max-w-md mx-auto mt-8 lg:max-w-6xl">
-      <div className="md:pb-6">
-        <div className="flex items-center gap-4 lg:p-0 lg:mb-6">
+    <div className="min-h-screen w-full min-w-0">
+      <div className="pb-6 sm:pb-8">
+        <div className="flex items-center gap-3 sm:gap-4 py-4 sm:py-0 lg:mb-6">
           <Button
             onClick={() => router.back()}
             variant="ghost"
             size="sm"
-            className="text-foreground hover:bg-muted"
+            className="text-foreground hover:bg-muted shrink-0"
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-foreground truncate">
             Account Statement
           </h1>
         </div>
 
-        <Card className="mt-4 p-4 mb-6 lg:mx-0">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Calendar className="w-5 h-5 text-primary" />
+        <Card className="mt-4 p-4 sm:p-6 mb-6 min-w-0">
+          <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 min-w-0">
+              <Calendar className="w-5 h-5 text-primary shrink-0" />
               <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-                <SelectTrigger className="w-48">
+                <SelectTrigger className="w-full sm:w-48 min-w-0">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -73,68 +73,68 @@ export default function AccountStatement() {
                 </SelectContent>
               </Select>
             </div>
-            <Button className="flex items-center gap-2">
+            <Button className="flex items-center gap-2 w-full sm:w-auto justify-center">
               <Download className="w-4 h-4" />
               Download PDF
             </Button>
           </div>
         </Card>
 
-        <div className="space-y-4 lg:p-0">
+        <div className="space-y-4">
           {mockStatements.map((statement) => (
             <Card
               key={statement.id}
-              className="p-6"
+              className="p-4 sm:p-6 min-w-0"
             >
-              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground mb-1">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
+                <div className="min-w-0">
+                  <h3 className="text-base sm:text-lg font-semibold text-foreground mb-1 break-words">
                     {statement.type} - {statement.period}
                   </h3>
-                  <p className="text-muted-foreground text-sm">
+                  <p className="text-muted-foreground text-xs sm:text-sm">
                     Generated on {new Date(statement.date).toLocaleDateString()}
                   </p>
                 </div>
-                <div className="flex gap-2 mt-4 lg:mt-0">
-                  <Button variant="outline" size="sm">
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" size="sm" className="flex-1 sm:flex-none">
                     View Details
                   </Button>
-                  <Button size="sm">
+                  <Button size="sm" className="flex-1 sm:flex-none">
                     Download
                   </Button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center p-3 bg-muted rounded-md">
-                  <div className="text-sm text-muted-foreground">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <div className="text-center p-2 sm:p-3 bg-muted rounded-md min-w-0">
+                  <div className="text-xs sm:text-sm text-muted-foreground">
                     Opening Balance
                   </div>
-                  <div className="text-lg font-semibold text-foreground">
+                  <div className="text-base sm:text-lg font-semibold text-foreground truncate" title={`₹${statement.openingBalance.toFixed(2)}`}>
                     ₹{statement.openingBalance.toFixed(2)}
                   </div>
                 </div>
-                <div className="text-center p-3 bg-muted rounded-md">
-                  <div className="text-sm text-muted-foreground">
+                <div className="text-center p-2 sm:p-3 bg-muted rounded-md min-w-0">
+                  <div className="text-xs sm:text-sm text-muted-foreground">
                     Closing Balance
                   </div>
-                  <div className="text-lg font-semibold text-foreground">
+                  <div className="text-base sm:text-lg font-semibold text-foreground truncate" title={`₹${statement.closingBalance.toFixed(2)}`}>
                     ₹{statement.closingBalance.toFixed(2)}
                   </div>
                 </div>
-                <div className="text-center p-3 bg-muted rounded-md">
-                  <div className="text-sm text-muted-foreground">
+                <div className="text-center p-2 sm:p-3 bg-muted rounded-md min-w-0">
+                  <div className="text-xs sm:text-sm text-muted-foreground">
                     Total Bets
                   </div>
-                  <div className="text-lg font-semibold text-foreground">
+                  <div className="text-base sm:text-lg font-semibold text-foreground truncate" title={`₹${statement.totalBets.toFixed(2)}`}>
                     ₹{statement.totalBets.toFixed(2)}
                   </div>
                 </div>
-                <div className="text-center p-3 bg-muted rounded-md">
-                  <div className="text-sm text-muted-foreground">
+                <div className="text-center p-2 sm:p-3 bg-muted rounded-md min-w-0">
+                  <div className="text-xs sm:text-sm text-muted-foreground">
                     Total Winnings
                   </div>
-                  <div className="text-lg font-semibold text-green-400">
+                  <div className="text-base sm:text-lg font-semibold text-green-400 truncate" title={`₹${statement.totalWinnings.toFixed(2)}`}>
                     ₹{statement.totalWinnings.toFixed(2)}
                   </div>
                 </div>

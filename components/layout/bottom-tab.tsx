@@ -100,7 +100,7 @@ export default function BottomNavigation() {
 
   return (
     <>
-      <div className="sticky w-full bottom-0 left-0 right-0 rounded-t-2xl z-40 bg-gradient-to-r from-slate-800 via-slate-750 to-slate-800 border-b border-slate-700/30 lg:hidden body-modal-open:hidden">
+      <div className="fixed bottom-0 left-0 right-0 w-full rounded-t-2xl z-40 bg-gradient-to-r from-slate-800 via-slate-750 to-slate-800 border-t border-slate-700/30 lg:hidden body-modal-open:hidden">
         <div className="flex items-center justify-around  px-2 py-2">
           {visibleNavItems.map((item) => {
             const Icon = item.icon;

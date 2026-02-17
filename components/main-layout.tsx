@@ -26,20 +26,18 @@ export default function MainLayout({ children }: { children: ReactNode }) {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 w-full flex flex-col">
-        {/* Fixed Header - Full Width */}
-        {/* <div className="fixed top-0 left-0 right-0 z-50 w-full"> */}
+      <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 w-full flex flex-col">
+        {/* Fixed Header - always visible at top */}
         <Header />
-        {/* </div> */}
 
-        {/* Main Content Area - Below Header */}
-        <div className="flex mt-30">
+        {/* Main Content Area - only this part scrolls; header and (on mobile) bottom tab stay fixed */}
+        <div className="flex flex-1 min-h-0 mt-14 md:mt-30 max-h-[calc(100vh-4rem)] md:max-h-[calc(100vh-7.5rem)]">
           {/* Sidebar - Starts below header */}
           <AppSidebar />
 
-          {/* Main Content */}
+          {/* Main Content - scrollable area; pb for mobile so content clears fixed bottom tab */}
           <main
-            className="h-full w-full transition-all duration-300"
+            className="min-h-0 flex-1 w-full overflow-y-auto overflow-x-hidden transition-all duration-300 pb-20 lg:pb-0"
             id="main-content"
           >
             {children}
@@ -47,11 +45,11 @@ export default function MainLayout({ children }: { children: ReactNode }) {
         </div>
 
         {/* Footer - Only on /home route, full width break out of sidebar constraints */}
-        {is_home_route && (
+        {/* {is_home_route && (
           <div className="w-screen relative ml-[calc((100%-100vw)/2)] mr-[calc((100%-100vw)/2)]">
             <Footer />
           </div>
-        )}
+        )} */}
       </div>
     </SidebarProvider>
   );

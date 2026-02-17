@@ -115,24 +115,22 @@ export default function Notifications() {
   };
 
   return (
-    <div className="max-w-md min-h-screen mx-auto lg:max-w-6xl">
-      <div className="md:pb-6">
+    <div className="min-h-screen w-full min-w-0">
+      <div className="pb-6 sm:pb-8">
         {/* Header */}
-        <div className="flex items-center justify-between  lg:p-0 lg:mb-6">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 py-4 sm:py-0 lg:mb-6">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
             <Button
               onClick={() => router.back()}
               variant="ghost"
               size="sm"
-              className="text-foreground hover:bg-muted"
+              className="text-foreground hover:bg-muted shrink-0"
             >
               <ArrowLeft className="w-4 h-4" />
             </Button>
-            <div>
-              <h1 className="text-xl lg:text-2xl font-bold text-foreground">
-                Notifications
-              </h1>
-            </div>
+            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground truncate">
+              Notifications
+            </h1>
           </div>
 
           {unreadCount > 0 && (
@@ -140,20 +138,21 @@ export default function Notifications() {
               onClick={markAllAsRead}
               size="sm"
               variant="outline"
+              className="w-full sm:w-auto shrink-0"
             >
-              {/* <MarkAsRead className="w-4 h-4 mr-2" /> */}
               Mark All Read
             </Button>
           )}
         </div>
 
         {/* Filters */}
-        <div className=" lg:p-0 mt-4 lg:mb-6">
-          <div className="flex gap-2 overflow-x-auto">
+        <div className="mt-4 lg:mb-6">
+          <div className="flex gap-2 overflow-x-auto pb-1">
             <Button
               onClick={() => setFilter("all")}
               size="sm"
               variant={filter === "all" ? "default" : "outline"}
+              className="shrink-0"
             >
               All ({notifications.length})
             </Button>
@@ -161,6 +160,7 @@ export default function Notifications() {
               onClick={() => setFilter("unread")}
               size="sm"
               variant={filter === "unread" ? "default" : "outline"}
+              className="shrink-0"
             >
               Unread ({unreadCount})
             </Button>
@@ -168,6 +168,7 @@ export default function Notifications() {
               onClick={() => setFilter("read")}
               size="sm"
               variant={filter === "read" ? "default" : "outline"}
+              className="shrink-0"
             >
               Read ({notifications.length - unreadCount})
             </Button>
@@ -175,11 +176,11 @@ export default function Notifications() {
         </div>
 
         {/* Notifications List */}
-        <div className="space-y-3 mt-6 lg:px-0">
+        <div className="space-y-3 mt-6">
           {filteredNotifications.length === 0 ? (
-            <Card className="p-8 text-center">
-              <Bell className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">
+            <Card className="p-6 sm:p-8 text-center">
+              <Bell className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground text-sm sm:text-base">
                 No notifications found
               </p>
             </Card>
@@ -187,9 +188,9 @@ export default function Notifications() {
             filteredNotifications.map((notification: Notification) => (
               <Card
                 key={notification.id}
-                className="p-4 hover:bg-muted/50 transition-colors"
+                className="p-3 sm:p-4 hover:bg-muted/50 transition-colors min-w-0"
               >
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-2 sm:gap-3">
                   <div
                     className={`p-2 rounded-full ${getNotificationColor(
                       notification.type
@@ -199,11 +200,11 @@ export default function Notifications() {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
                           <h3
-                            className={`font-semibold ${
+                            className={`font-semibold text-sm sm:text-base break-words ${
                               notification.isRead
                                 ? "text-muted-foreground"
                                 : "text-foreground"

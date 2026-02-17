@@ -5,27 +5,38 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { SportsEventsSkeleton } from "@/components/skeletons/sports-skeletons";
 import { Series } from "@/components/sports/types";
 import { formatToIST } from "@/lib/date-utils";
 import { UseSportsSeries } from "@/hooks/UseSportsSeries";
+import { getSportConfig, isValidSportSlug } from "@/lib/sports-config";
 
 export default function SeriesMatchesPage({
   params,
 }: {
-  params: Promise<{ seriesId: string }>;
+  params: Promise<{ sport: string; seriesId: string }>;
 }) {
   const router = useRouter();
-  const { seriesId } = use(params);
-  const { seriesData, loading, error, refetch } = UseSportsSeries("4");
+  const { sport, seriesId } = use(params);
+  const config = getSportConfig(sport);
+
+  if (!config || !isValidSportSlug(sport)) {
+    return (
+      <Card className="p-8 text-center">
+        <p className="text-destructive font-semibold">Sport not found</p>
+        <Link href="/sports">
+          <Button variant="outline" className="mt-4">
+            Back to Sports
+          </Button>
+        </Link>
+      </Card>
+    );
+  }
+
+  const { seriesData, loading, error, refetch } = UseSportsSeries(config.eventTypeId);
 
   const series = useMemo(() => {
     return seriesData.find((s: Series) => s.id === seriesId);
   }, [seriesData, seriesId]);
-
-  const isLoading = loading || (seriesData.length === 0 && !error);
-
-  // if (isLoading) return <SportsEventsSkeleton />;
 
   if (loading) {
     return (
@@ -51,13 +62,14 @@ export default function SeriesMatchesPage({
       </Card>
     );
   }
+
   if (!series) {
     return (
       <Card className="p-8 text-center">
         <p className="text-muted-foreground mb-2">
           Series not found or no matches available.
         </p>
-        <Link href="/sports/cricket">
+        <Link href={`/sports/${sport}`}>
           <Button variant="outline" className="mt-4">
             Back to Series
           </Button>
@@ -71,13 +83,13 @@ export default function SeriesMatchesPage({
   const nonLiveMatches = matches.filter((m) => m.inPlay !== true);
 
   const handleMatchClick = (matchId: string) => {
-    router.push(`/sports/cricket/${seriesId}/${matchId}`);
+    router.push(`/sports/${sport}/${seriesId}/${matchId}`);
   };
 
   return (
     <div className="space-y-4 h-full w-full px-4 py-1 pb-10">
       <div className="flex items-center gap-2 mb-4">
-        <Link href="/sports/cricket">
+        <Link href={`/sports/${sport}`}>
           <Button
             size="sm"
             variant="ghost"
@@ -98,15 +110,14 @@ export default function SeriesMatchesPage({
       {liveMatches.length > 0 && (
         <div className="space-y-3 w-full h-full">
           {liveMatches.map((match: any) => {
-
             if (new Date(match.openDate).getDate() < new Date().getDate()) {
-              return null; // Skip past matches
+              return null;
             }
             return (
               <div key={match.id} onClick={() => handleMatchClick(match.id)}>
                 <MatchCard match={match} showLive={true} />
               </div>
-            )
+            );
           })}
         </div>
       )}
@@ -132,8 +143,6 @@ export default function SeriesMatchesPage({
     </div>
   );
 }
-
-/* ---------------------------- SIMPLE MATCH CARD ---------------------------- */
 
 function MatchCard({ match, showLive }: { match: any; showLive: boolean }) {
   const matchName = match.name || "Match";

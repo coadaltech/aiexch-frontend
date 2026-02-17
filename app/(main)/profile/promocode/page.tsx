@@ -106,25 +106,25 @@ export default function PromoCodePage() {
   };
 
   return (
-    <div className="max-w-md mx-auto lg:max-w-6xl">
-      <div className="md:pb-8">
+    <div className="min-h-screen w-full min-w-0">
+      <div className="pb-6 sm:pb-8">
         {/* Header */}
-        <div className="flex items-center gap-4 lg:p-0 lg:mb-6">
+        <div className="flex items-center gap-3 sm:gap-4 py-4 sm:py-0 lg:mb-6">
           <Button
             onClick={() => router.back()}
             variant="ghost"
             size="sm"
-            className="text-foreground hover:bg-muted"
+            className="text-foreground hover:bg-muted shrink-0"
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <h1 className="text-xl lg:text-2xl font-bold text-foreground">
+          <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground truncate">
             Promo Codes
           </h1>
         </div>
 
         {/* Redeem Section */}
-        <Card className="mt-4 p-4 lg:p-6 mb-6 lg:mx-0">
+        <Card className="mt-4 p-4 sm:p-6 mb-6 min-w-0">
           <div className="flex items-center gap-3 mb-4">
             <Tag className="w-6 h-6 text-primary" />
             <h2 className="text-lg font-semibold text-foreground">
@@ -133,13 +133,13 @@ export default function PromoCodePage() {
           </div>
 
           <div className="space-y-4">
-            <div className="flex md:flex-row flex-col gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <input
                 type="text"
                 placeholder="Enter promo code..."
                 value={promoInput}
                 onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
-                className="flex-1 px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
+                className="flex-1 min-w-0 px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary text-sm sm:text-base"
               />
               <Button
                 onClick={handleRedeemCode}
@@ -171,37 +171,37 @@ export default function PromoCodePage() {
         </Card>
 
         {/* Available Promo Codes */}
-        <div className=" lg:px-0">
-          <h2 className="text-lg font-semibold text-foreground mb-4">
+        <div className="min-w-0">
+          <h2 className="text-base sm:text-lg font-semibold text-foreground mb-4">
             Available Promo Codes
           </h2>
 
           {promocodes.length === 0 ? (
-            <Card className="p-8 text-center">
-              <Tag className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No promocodes available</p>
+            <Card className="p-6 sm:p-8 text-center">
+              <Tag className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground text-sm sm:text-base">No promocodes available</p>
             </Card>
           ) : (
             <div className="space-y-4">
               {promocodes.map((promo: PromoCode) => (
                 <Card
                   key={promo.id}
-                  className="border p-6 hover:border-primary/50 transition-all duration-300 relative overflow-hidden"
+                  className="border p-4 sm:p-6 hover:border-primary/50 transition-all duration-300 relative overflow-hidden min-w-0"
                 >
                   {/* Decorative gradient overlay */}
                   <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-primary/5 to-transparent rounded-full -translate-y-16 translate-x-16"></div>
 
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 relative">
                     {/* Left Content */}
-                    <div className="flex-1">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 mb-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 mb-3 gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center shrink-0">
                             <span className="text-primary font-bold text-sm">
                               🎁
                             </span>
                           </div>
-                          <h3 className="text-foreground font-bold text-lg">
+                          <h3 className="text-foreground font-bold text-base sm:text-lg truncate">
                             {promo.title}
                           </h3>
                         </div>
@@ -214,13 +214,13 @@ export default function PromoCodePage() {
                         </div>
                       </div>
 
-                      <p className="text-muted-foreground text-sm mb-4 leading-relaxed">
+                      <p className="text-muted-foreground text-xs sm:text-sm mb-4 leading-relaxed break-words">
                         {promo.description}
                       </p>
 
                       {/* Code + Copy */}
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="bg-gradient-to-r from-primary/10 to-primary/5 px-4 py-3 rounded-xl border border-primary/30 flex-1">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+                        <div className="bg-gradient-to-r from-primary/10 to-primary/5 px-3 sm:px-4 py-3 rounded-xl border border-primary/30 flex-1 min-w-0">
                           <div className="text-xs text-muted-foreground mb-1 uppercase tracking-wide">
                             Promo Code
                           </div>

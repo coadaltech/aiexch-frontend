@@ -32,28 +32,20 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Series } from "@/components/sports/types";
 import axios from "axios";
 import { UseSportsSeries } from "@/hooks/UseSportsSeries";
+import { SPORT_ROUTES, type SportSlug } from "@/lib/sports-config";
 
-// Sport route configuration
-const SPORT_ROUTES = {
-  cricket: { basePath: "cricket", eventTypeId: "4", title: "Cricket Series", emptyText: "No cricket series available" },
-  tennis: { basePath: "tennis", eventTypeId: "2", title: "Tennis Tournaments", emptyText: "No tournaments available" },
-  soccer: { basePath: "soccer", eventTypeId: "1", title: "Soccer Leagues", emptyText: "No soccer leagues available" },
-  "horse-racing": { basePath: "horse-racing", eventTypeId: "7", title: "Horse Racing", emptyText: "No horse racing events available" },
-  "greyhound-racing": { basePath: "greyhound-racing", eventTypeId: "4339", title: "Greyhound Racing", emptyText: "No greyhound racing events available" },
-} as const;
+type SportRouteKey = SportSlug;
 
-type SportRouteKey = keyof typeof SPORT_ROUTES;
-
-// Sport link mapping
-const SPORT_LINK_MAPPING: Record<string, string> = {
-  "4": "/sports/cricket",
-  "-4": "/sports/-4",
-  "-17": "/sports/-17",
-  "4339": "/sports/greyhound-racing",
-  "7": "/sports/horse-racing",
-  "1": "/sports/soccer",
-  "2": "/sports/tennis",
-};
+// Sport link mapping derived from shared config
+const SPORT_LINK_MAPPING: Record<string, string> = Object.fromEntries(
+  Object.entries(SPORT_ROUTES).map(([, config]) => [
+    config.eventTypeId,
+    `/sports/${config.basePath}`,
+  ])
+);
+// Keep fallbacks for other event types that may come from API
+SPORT_LINK_MAPPING["-4"] = "/sports/-4";
+SPORT_LINK_MAPPING["-17"] = "/sports/-17";
 
 // Helper: Get menu groups
 const getMenuGroups = (isLoggedIn: boolean, games: any[]): MenuGroup[] => {
