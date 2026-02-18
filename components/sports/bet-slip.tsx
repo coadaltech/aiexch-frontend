@@ -13,9 +13,10 @@ export function BetSlip() {
   );
 
   const EmptyState = ({ message }: { message: string }) => (
-    <div className="text-center py-8">
-      <div className="text-slate-400 mb-2">🎯</div>
-      <p className="text-muted-foreground text-sm">{message}</p>
+    <div className="flex-1 min-h-0 flex flex-col items-center justify-center p-8 rounded-xl border border-border bg-slate-100/40 dark:bg-slate-900/50 text-center shadow-inner">
+      <div className="text-4xl mb-3 animate-bounce text-teal-500">🎯</div>
+      <p className="text-base font-medium text-gray-500 dark:text-gray-400 mb-1">{message}</p>
+      <span className="text-xs text-gray-400">All your active or matched bets will show up here.</span>
     </div>
   );
 
