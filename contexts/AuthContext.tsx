@@ -1,15 +1,32 @@
 "use client";
 
 import { api } from "@/lib/api";
+import { clearDemoBets } from "@/lib/demo-bets";
 import { useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
 
-interface User {
+export const DEMO_BALANCE = "5000";
+
+export interface User {
   id: number;
   username: string;
   email: string;
   membership: string;
   balance: string;
+  isDemo?: boolean;
+}
+
+/** Creates a new demo user (cached per session). Each call gets a unique id/email. */
+export function createDemoUser(): User {
+  const id = Date.now();
+  return {
+    id,
+    username: "Demo User",
+    email: `demo-${id}@demo.aiexch.in`,
+    membership: "standard",
+    balance: DEMO_BALANCE,
+    isDemo: true,
+  };
 }
 
 interface AuthContextType {
@@ -18,6 +35,7 @@ interface AuthContextType {
   login: (userData: User) => void;
   logout: () => void;
   refreshUser: () => Promise<void>;
+  updateDemoBalance: (newBalance: string) => void;
   isLoading: boolean;
 }
 
@@ -43,8 +61,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // 2. Always validate with backend for up-to-date data
+    // 2. Validate with backend (skip for demo users – they are cache-only)
     const initAuth = async () => {
+      const cached = localStorage.getItem("user");
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached) as User;
+          if (parsed.isDemo) {
+            setUser(parsed);
+            setIsLoggedIn(true);
+            setIsLoading(false);
+            return;
+          }
+        } catch {
+          // ignore
+        }
+      }
+
       try {
         const { data } = await api.get("/profile/me", {
           withCredentials: true,
@@ -70,28 +103,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initAuth();
   }, []);
 
-  const login = async (userData: User) => {
+  const login = (userData: User) => {
     if (!userData?.id || !userData?.email) {
       console.error("Invalid user data provided to login");
       return;
     }
-
-    console.log("userdata",userData)
     localStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);
     setIsLoggedIn(true);
-
-    // Refresh user data to get latest balance
-    // setTimeout(() => {
-    //   refreshUser();
-    // }, 100);
   };
 
   const logout = async () => {
-    try {
-      await api.post("/auth/logout");
-    } catch (error) {
-      console.error("Logout error:", error);
+    const isDemo = user?.isDemo;
+    if (!isDemo) {
+      try {
+        await api.post("/auth/logout");
+      } catch (error) {
+        console.error("Logout error:", error);
+      }
+    } else {
+      clearDemoBets();
     }
     localStorage.removeItem("user");
     setUser(null);
@@ -100,6 +131,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const refreshUser = async () => {
+    if (user?.isDemo) return;
     try {
       const { data } = await api.get("/profile/me", { withCredentials: true });
       if (data.loggedIn && data.user) {
@@ -114,9 +146,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateDemoBalance = (newBalance: string) => {
+    if (!user?.isDemo) return;
+    const updated = { ...user, balance: newBalance };
+    setUser(updated);
+    localStorage.setItem("user", JSON.stringify(updated));
+  };
+
   return (
     <AuthContext.Provider
-      value={{ user, isLoggedIn, login, logout, refreshUser, isLoading }}
+      value={{
+        user,
+        isLoggedIn,
+        login,
+        logout,
+        refreshUser,
+        updateDemoBalance,
+        isLoading,
+      }}
     >
       {children}
     </AuthContext.Provider>

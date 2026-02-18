@@ -15,6 +15,9 @@ export interface Bet {
   selectionId?: string;
   marketName?: string;
   runnerName?: string;
+  /** "back" | "lay" - used for row styling in bet slip */
+  type?: "back" | "lay";
+  eventTypeId?: string;
 }
 
 interface BetSlipContextType {
@@ -39,13 +42,16 @@ export function BetSlipProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    const isLay =
+      bet.type === "lay" || (bet.market || "").toUpperCase().startsWith("LAY ");
     const enhancedBet = {
       ...bet,
+      type: bet.type ?? (isLay ? "lay" : "back"),
       matchId: bet.matchId || "1001",
       marketId: bet.marketId || bet.market.toLowerCase().replace(/\s+/g, "_"),
       selectionId: bet.selectionId || bet.id.toString(),
     };
-    setBets([enhancedBet]); // Replace existing bet with new one
+    setBets((prev) => [...prev, enhancedBet]);
   };
 
   const removeBet = (id: number) => {

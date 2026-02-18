@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { getDemoBets } from "@/lib/demo-bets";
 
 type BetType = "back" | "lay";
 
@@ -53,20 +54,20 @@ export const useBetting = () => {
 
 export const useMyBets = (status = "matched") => {
   const { user } = useAuth();
+  const isDemo = !!user?.isDemo;
 
   return useQuery({
-    queryKey: ["my-bets", status],
+    queryKey: ["my-bets", status, isDemo],
     queryFn: async () => {
-      try {
-        const response = await api.get(`/betting/my-bets?status=${status}`);
-        return response.data;
-      } catch (error) {
-        console.error("API Error:", error);
-        throw error;
+      if (isDemo) {
+        const data = getDemoBets();
+        return { data };
       }
+      const response = await api.get(`/betting/my-bets?status=${status}`);
+      return response.data;
     },
     enabled: !!user,
-    retry: 1,
+    retry: isDemo ? false : 1,
   });
 };
 

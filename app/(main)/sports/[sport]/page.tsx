@@ -148,7 +148,7 @@ export default function SportPage({
 
   if (seriesWithLiveMatches.length === 0) {
     return (
-      <Card className="p-8 text-center border bg-card">
+      <Card className="p-8  mx-4 text-center border bg-card">
         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
           <Trophy className="h-8 w-8 text-muted-foreground" />
         </div>

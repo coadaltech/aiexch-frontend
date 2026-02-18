@@ -1,22 +1,163 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { useBetSlip } from "@/contexts/BetSlipContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useBetting } from "@/hooks/useBetting";
 import { useMarketWebSocket } from "@/hooks/useMarketWebSocket";
+import { UseSportsSeries } from "@/hooks/UseSportsSeries";
+import { getSportConfig } from "@/lib/sports-config";
+import { addDemoBets } from "@/lib/demo-bets";
+import type { DemoBet } from "@/lib/demo-bets";
+import { toast } from "sonner";
+
+type QuickBetData = {
+  marketId: string;
+  bettingType: string;
+  market: any;
+  runner: any;
+  eventName: string;
+  odds: string;
+  isLay: boolean;
+};
+
+function QuickBetPanel({
+  data,
+  onClose,
+  onPlaceBet,
+}: {
+  data: QuickBetData;
+  onClose: () => void;
+  onPlaceBet: (stake: string, odds: string) => void;
+}) {
+  const [stake, setStake] = useState("");
+  const { market, runner, eventName, odds } = data;
+  const marketName = market?.marketName || "";
+  const runnerName = runner?.name || "";
+
+  const quickStakes = [100, 500, 1000, 5000, 10000, 50000];
+
+  const handleStake = (val: string) => {
+    const n = parseFloat(val) || 0;
+    setStake(n > 0 ? String(n) : "");
+  };
+
+  return (
+    <div className="px-2 sm:px-3 py-3 border-t border-teal-600 bg-gradient-to-b from-sky-200/90 via-sky-100/80 to-white dark:from-sky-900/40 dark:via-sky-800/30 dark:to-gray-900">
+      {/* Top Right Section: Label, Odds Input, Stake Input */}
+      <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-3 justify-end mb-3">
+        {/* Label */}
+        <div className="text-black dark:text-white font-bold text-xs sm:text-sm truncate max-w-full sm:max-w-none text-right sm:text-left">
+          {runnerName} - {marketName.toUpperCase()}
+        </div>
+
+        {/* Odds Display (Fixed) */}
+        <div className="flex items-center">
+          <input
+            type="text"
+            value={odds}
+            readOnly
+            className="w-14 sm:w-16 bg-white dark:bg-gray-800 text-black dark:text-white text-[10px] sm:text-xs py-1.5 px-2 text-center border border-gray-300 dark:border-gray-600 rounded cursor-default"
+          />
+        </div>
+
+        {/* Stake Input */}
+        <div className="flex items-center">
+          <input
+            type="number"
+            value={stake}
+            onChange={(e) => handleStake(e.target.value)}
+            placeholder="1"
+            className="w-14 sm:w-16 bg-white dark:bg-gray-800 text-black dark:text-white text-[10px] sm:text-xs py-1.5 px-2 text-center border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-blue-500 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          />
+          <div className="flex flex-col ml-0.5">
+            <button
+              type="button"
+              onClick={() => handleStake(String((parseFloat(stake) || 0) + 1))}
+              className="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1 py-0.5 text-[10px] hover:bg-gray-300 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-t"
+            >
+              ▲
+            </button>
+            <button
+              type="button"
+              onClick={() => handleStake(String(Math.max(0, (parseFloat(stake) || 0) - 1)))}
+              className="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1 py-0.5 text-[10px] hover:bg-gray-300 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 border-t-0 rounded-b"
+            >
+              ▼
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Right Section: Quick Bet Buttons and Action Buttons */}
+      <div className="flex flex-wrap items-center gap-2 justify-end">
+        {/* Quick Bet Amount Buttons */}
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
+          {quickStakes.map((amount) => (
+            <button
+              key={amount}
+              type="button"
+              onClick={() => setStake(String(amount))}
+              className="px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-semibold rounded bg-teal-600 hover:bg-teal-700 text-white transition-colors"
+            >
+              {amount >= 1000 ? amount / 1000 + "K" : amount}
+            </button>
+          ))}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => onPlaceBet(stake, odds)}
+            disabled={!stake || parseFloat(stake) <= 0}
+            className="px-4 sm:px-5 py-1.5 sm:py-2 rounded text-xs sm:text-sm font-semibold bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors"
+          >
+            Place Bet
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 sm:px-5 py-1.5 sm:py-2 rounded text-xs sm:text-sm font-semibold bg-red-600 hover:bg-red-700 text-white transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function MatchPage() {
   const params = useParams();
+  const sport = params.sport as string;
+  const seriesId = params.seriesId as string;
   const matchId = params.matchId as string;
   const { addToBetSlip } = useBetSlip();
+  const [quickBet, setQuickBet] = useState<QuickBetData | null>(null);
+  const queryClient = useQueryClient();
+  const { user, updateDemoBalance } = useAuth();
+  const { placeBet } = useBetting();
 
+  const config = getSportConfig(sport);
+  const { seriesData } = UseSportsSeries(config?.eventTypeId ?? null);
   const { status, isConnected, markets } = useMarketWebSocket(matchId);
 
-  console.log(markets)
   const [matchInfo, setMatchInfo] = useState<any>(null);
   const [pageStatus, setPageStatus] = useState<
     "connecting" | "connected" | "no-data" | "error" | "success"
   >("connecting");
+
+  const series = useMemo(
+    () => seriesData.find((s: { id: string }) => s.id === seriesId),
+    [seriesData, seriesId]
+  );
+  const matchFromSeries = useMemo(
+    () => series?.matches?.find((m: { id: string }) => m.id === matchId),
+    [series, matchId]
+  );
 
   useEffect(() => {
     if (status === "error") {
@@ -62,40 +203,94 @@ export default function MatchPage() {
     return amount.toFixed(0);
   };
 
-  const handleBackClick = (market: any, runner: any, odds: number) => {
-    if (!odds) return;
-    const bet = {
-      id: Date.now(),
-      teams: `${matchInfo?.eventName || "Match"} - ${runner.name}`,
-      market: market.marketName,
-      odds: odds.toString(),
-      stake: "0",
-      potentialWin: "0",
-      matchId: matchId,
+  const handleBackClick = (market: any, runner: any, odds: number | string) => {
+    const o = typeof odds === "number" ? odds : parseFloat(String(odds));
+    if (o === 0 && odds !== "0") return;
+    setQuickBet({
       marketId: market.marketId,
-      selectionId: runner.selectionId.toString(),
-      marketName: market.marketName,
-      runnerName: runner.name,
-    };
-    addToBetSlip(bet);
+      bettingType: market.bettingType,
+      market,
+      runner,
+      eventName: matchInfo?.eventName || "Match",
+      odds: String(odds),
+      isLay: false,
+    });
   };
 
-  const handleLayClick = (market: any, runner: any, odds: number) => {
-    if (!odds) return;
-    const bet = {
-      id: Date.now(),
-      teams: `${matchInfo?.eventName || "Match"} - ${runner.name}`,
-      market: `LAY ${market.marketName}`,
-      odds: odds.toString(),
-      stake: "0",
-      potentialWin: "0",
-      matchId: matchId,
+  const handleLayClick = (market: any, runner: any, odds: number | string) => {
+    const o = typeof odds === "number" ? odds : parseFloat(String(odds));
+    if (o === 0 && odds !== "0") return;
+    setQuickBet({
       marketId: market.marketId,
-      selectionId: runner.selectionId.toString(),
-      marketName: market.marketName,
-      runnerName: runner.name,
+      bettingType: market.bettingType,
+      market,
+      runner,
+      eventName: matchInfo?.eventName || "Match",
+      odds: String(odds),
+      isLay: true,
+    });
+  };
+
+  const handleQuickBetPlace = (stake: string, odds: string) => {
+    if (!quickBet || !stake || parseFloat(stake) <= 0) return;
+    const { market, runner, eventName, isLay } = quickBet;
+    const oddsValue = odds || quickBet.odds;
+    const marketName = market?.marketName || "";
+    const runnerName = runner?.name || "";
+    const stakeNum = parseFloat(stake);
+    const oddsNum = parseFloat(oddsValue) || 0;
+    const betPayload = {
+      id: Date.now(),
+      teams: `${eventName} - ${runnerName}`,
+      market: isLay ? `LAY ${marketName}` : marketName,
+      odds: oddsValue,
+      stake,
+      potentialWin: (stakeNum * oddsNum).toFixed(2),
+      matchId,
+      marketId: market.marketId,
+      selectionId: runner.selectionId?.toString() ?? "",
+      marketName,
+      runnerName,
+      type: (isLay ? "lay" : "back") as "back" | "lay",
+      eventTypeId: config?.eventTypeId?.toString(),
     };
-    addToBetSlip(bet);
+    addToBetSlip(betPayload);
+
+    if (user?.isDemo) {
+      const demoBet: DemoBet = {
+        id: `demo-${betPayload.id}`,
+        type: isLay ? "lay" : "back",
+        status: "pending",
+        stake: stakeNum,
+        odds: oddsNum,
+        marketName,
+        runnerName,
+        potentialWin: stakeNum * oddsNum,
+        createdAt: new Date().toISOString(),
+        matchId,
+        marketId: market.marketId,
+        selectionId: runner.selectionId?.toString(),
+      };
+      addDemoBets([demoBet]);
+      const userBalance = parseFloat(user?.balance || "0");
+      updateDemoBalance((userBalance - stakeNum).toFixed(2));
+      queryClient.invalidateQueries({ queryKey: ["my-bets"] });
+      toast.success("Bet placed. Balance updated.");
+    } else {
+      placeBet({
+        matchId,
+        marketId: market.marketId,
+        eventTypeId: config?.eventTypeId?.toString() || "1",
+        selectionId: runner.selectionId?.toString() ?? "",
+        marketName,
+        runnerName,
+        odds: oddsNum,
+        stake: stakeNum,
+        type: isLay ? "lay" : "back",
+      });
+      toast.success("Bet placed.");
+    }
+    setQuickBet(null);
   };
 
   if (pageStatus === "error") {
@@ -193,6 +388,26 @@ export default function MatchPage() {
 
   return (
     <div className="px-1 sm:px-2 py-1 w-full max-w-full min-w-0">
+      {/* Match header: left = event name + series name, right = start time */}
+      {(matchInfo || series || matchFromSeries) && (
+        <div className="bg-gray-800 border border-gray-700 rounded-lg px-3 sm:px-4 py-3 mb-2">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-white font-semibold text-base sm:text-lg truncate">
+                {[series?.name, matchFromSeries?.name || matchInfo?.eventName || "Match"]
+                  .filter(Boolean)
+                  .join(" - ")}
+              </h1>
+            </div>
+            {(matchFromSeries?.openDate || matchInfo?.startTime) && (
+              <span className="text-gray-400 text-xs sm:text-sm shrink-0">
+                {formatDate(matchFromSeries?.openDate || matchInfo?.startTime)}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="bg-gray-900 space-y-1">
         {markets.map(
           (market) =>
@@ -236,14 +451,14 @@ export default function MatchPage() {
                               // For ODDS and BOOKMAKER, fill from right to left
                               const backItems = runner.back || [];
                               const positions = Array(3).fill(null);
-                              
+
                               // Fill from right to left: first item in rightmost (index 2), second in middle (index 1), third in leftmost (index 0)
                               backItems.forEach((item: any, idx: number) => {
                                 if (idx < 3) {
                                   positions[2 - idx] = item; // Fill from right: idx 0 -> pos 2, idx 1 -> pos 1, idx 2 -> pos 0
                                 }
                               });
-                              
+
                               return positions.map((item, posIdx) => {
                                 if (item) {
                                   return (
@@ -299,7 +514,7 @@ export default function MatchPage() {
                                   className={`${oddsBtnClass} hover:bg-[#39111A] transition-colors bg-[#39111A]/70 w-20`}
                                 >
                                   <span className={oddsPriceClass}>
-                                    {layItem.price}
+                                    {layItem.price ? layItem.price : "0"}
                                   </span>
                                   <span className={oddsSizeClass}>
                                     {formatAmount(layItem.size)}
@@ -328,6 +543,16 @@ export default function MatchPage() {
                     </div>
                   ))}
                 </div>
+                {quickBet &&
+                  quickBet.marketId === market.marketId &&
+                  (quickBet.bettingType === "ODDS" ||
+                    quickBet.bettingType === "BOOKMAKER") && (
+                    <QuickBetPanel
+                      data={quickBet}
+                      onClose={() => setQuickBet(null)}
+                      onPlaceBet={handleQuickBetPlace}
+                    />
+                  )}
               </div>
             )
         )}
@@ -374,7 +599,7 @@ export default function MatchPage() {
                                         handleBackClick(
                                           market,
                                           runner,
-                                          backItem.price
+                                          String(backItem.line ?? backItem.price)
                                         )
                                       }
                                       className={`${oddsBtnClass} hover:bg-[#39111A] transition-colors bg-[#39111A]/70 w-20`}
@@ -410,13 +635,13 @@ export default function MatchPage() {
                                         handleLayClick(
                                           market,
                                           runner,
-                                          layItem.price
+                                          String(layItem.line ?? layItem.price)
                                         )
                                       }
                                       className={`${oddsBtnClass} hover:bg-green-900 transition-colors bg-green-900/70 w-20`}
                                     >
                                       <span className={oddsPriceClass}>
-                                        {layItem.price}
+                                        {layItem.line}
                                       </span>
                                       <span className={oddsSizeClass}>
                                         {formatAmount(layItem.size)}
@@ -448,6 +673,13 @@ export default function MatchPage() {
                       </div>
                     ))}
                   </div>
+                  {quickBet && quickBet.marketId === market.marketId && quickBet.bettingType === "LINE" && (
+                    <QuickBetPanel
+                      data={quickBet}
+                      onClose={() => setQuickBet(null)}
+                      onPlaceBet={handleQuickBetPlace}
+                    />
+                  )}
                 </div>
               )
           )}

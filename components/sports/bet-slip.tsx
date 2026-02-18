@@ -1,104 +1,16 @@
 "use client";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
-import { X, Minus, Plus } from "lucide-react";
-import { Bet, useBetSlip } from "@/contexts/BetSlipContext";
-import { useBetting, useMyBets } from "@/hooks/useBetting";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
-
-const empty_bet_item: Bet = {
-  id: -2,
-  teams: "",
-  market: "",
-  odds: "0.00",
-  stake: "",
-  potentialWin: "",
-  matchId: "",
-  marketId: "",
-  selectionId: "",
-  marketName: "",
-  runnerName: ""
-}
+import { X } from "lucide-react";
+import { useMyBets } from "@/hooks/useBetting";
 
 export function BetSlip() {
   const [isOpen, setIsOpen] = useState(false);
-  const { bets, removeBet, updateStake, clearBets } = useBetSlip();
-  const { placeBet, isPlacingBet } = useBetting();
-  const { isLoggedIn, user } = useAuth();
   const { data: currentBetsData } = useMyBets("all");
   const currentBets = (currentBetsData?.data || []).filter(
     (bet: any) => bet.status === "pending" || bet.status === "matched"
   );
-
-  const handlePlaceAllBets = async () => {
-    if (!isLoggedIn) {
-      toast.error("Please login to place bets");
-      window.dispatchEvent(new CustomEvent("openAuthModal"));
-      return;
-    }
-
-    const userBalance = parseFloat(user?.balance || "0");
-    if (userBalance < totalStake) {
-      toast.error(
-        `Insufficient balance. You have ₹${userBalance.toFixed(
-          2
-        )} but need ₹${totalStake.toFixed(2)}`
-      );
-      return;
-    }
-
-    try {
-      toast.loading("Placing bets...", { id: "placing-bets" });
-
-      for (const bet of bets) {
-        const [runnerNameFromMarket, type] = bet.market.split(" - ");
-        // Use explicit marketName/runnerName if available, otherwise extract from existing fields
-        const marketName = bet.marketName || bet.teams;
-        const runnerName = bet.runnerName || runnerNameFromMarket;
-
-        placeBet({
-          // eventTypeId: "4",
-          matchId: bet.matchId || "1001",
-          marketId:
-            bet.marketId ||
-            marketName?.toLowerCase().replace(/\s+/g, "_") ||
-            "default-market",
-          selectionId: bet.selectionId || bet.id.toString(),
-          marketName: marketName,
-          runnerName: runnerName,
-          odds: parseFloat(bet.odds),
-          stake: parseFloat(bet.stake),
-          type: type?.toLowerCase() === "lay" ? "lay" : "back",
-        });
-      }
-
-      toast.success(
-        `${bets.length} bet(s) placed successfully! Balance updated.`,
-        { id: "placing-bets" }
-      );
-      clearBets();
-    } catch (error) {
-      toast.error("Failed to place bets. Please try again.", {
-        id: "placing-bets",
-      });
-    }
-  };
-
-  const totalStake = bets.reduce(
-    (sum, bet) => sum + parseFloat(bet.stake || "0"),
-    0
-  );
-  const totalWin = bets.reduce(
-    (sum, bet) => sum + parseFloat(bet.potentialWin || "0"),
-    0
-  );
-  const userBalance = parseFloat(user?.balance || "0");
-  const hasInsufficientBalance = isLoggedIn && userBalance < totalStake;
 
   const EmptyState = ({ message }: { message: string }) => (
     <div className="text-center py-8">
@@ -107,336 +19,113 @@ export function BetSlip() {
     </div>
   );
 
+  const CurrentBetsContent = () =>
+    currentBets.length === 0 ? (
+      <EmptyState message="No bet found" />
+    ) : (
+      <div className="flex-1 min-h-0 overflow-y-auto rounded-xl border border-border scrollbar-hide">
+        <table className="w-full text-sm border-collapse">
+          <thead className="sticky top-0 z-10">
+            <tr className="bg-[#0C1529] text-white font-bold">
+              <th className="text-left py-2.5 px-3">Matched Bet</th>
+              <th className="text-center py-2.5 px-3">Odds</th>
+              <th className="text-right py-2.5 px-3">Stake</th>
+            </tr>
+          </thead>
+          <tbody>
+            {currentBets.map((bet: any) => (
+              <CurrentBetTableRow key={bet.id} bet={bet} />
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+
   return (
     <>
-      {/* Mobile: Floating Button */}
-      {bets.length > 0 && (
-        <div className="lg:hidden">
-          <div className="fixed bottom-20 right-4 z-50 flex flex-col gap-2">
-            <Button
-              className="bg-primary hover:bg-primary/80 text-primary-foreground rounded-full w-14 h-14 shadow-lg"
-              onClick={() => setIsOpen(true)}
-            >
-              <div className="text-center">
-                <div className="text-xs font-bold">{bets.length}</div>
-                <div className="text-[10px]">Bets</div>
-              </div>
-            </Button>
-            <Button
-              variant="destructive"
-              className="rounded-full w-8 h-8 shadow-lg self-end"
-              onClick={clearBets}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+      {/* Mobile: Button to open Current bets modal */}
+      <div className="lg:hidden">
+        <Button
+          className="fixed bottom-20 right-4 z-50 bg-primary hover:bg-primary/80 text-primary-foreground rounded-full w-14 h-14 shadow-lg"
+          onClick={() => setIsOpen(true)}
+          aria-label="Current bets"
+        >
+          <div className="text-center">
+            <div className="text-xs font-bold">{currentBets.length}</div>
+            <div className="text-[10px]">Bets</div>
           </div>
+        </Button>
 
-          {/* Mobile Popup Modal */}
-          {isOpen && (
-            <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm">
-              <Card className="fixed inset-x-4 top-1/2 -translate-y-1/2 p-4 max-h-[80vh] overflow-hidden">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-foreground font-semibold">
-                    Bet Slip ({bets.length})
-                  </h3>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
+        {isOpen && (
+          <div
+            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+            onClick={() => setIsOpen(false)}
+          >
+            <Card
+              className="fixed inset-x-4 top-1/2 -translate-y-1/2 p-4 max-h-[80vh] overflow-hidden flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center mb-4 flex-shrink-0">
+                <h3 className="text-foreground font-semibold">Current bets</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="p-4 pt-0 flex-1 flex flex-col min-h-0 overflow-hidden">
+                <CurrentBetsContent />
+              </div>
+            </Card>
+          </div>
+        )}
+      </div>
 
-                <div className="space-y-3 max-h-[60vh] overflow-y-auto">
-                  {bets.map((bet) => (
-                    <BetItem
-                      key={bet.id}
-                      bet={bet}
-                      onUpdateStake={updateStake}
-                      onRemove={removeBet}
-                    />
-                  ))}
-
-                  <BetSummary totalStake={totalStake} totalWin={totalWin} />
-
-                  {hasInsufficientBalance && (
-                    <div className="text-xs text-destructive text-center p-2 bg-destructive/10 rounded">
-                      Insufficient balance: ₹{userBalance.toFixed(2)} / ₹
-                      {totalStake.toFixed(2)}
-                    </div>
-                  )}
-                  <Button
-                    className="w-full"
-                    onClick={handlePlaceAllBets}
-                    disabled={
-                      isPlacingBet ||
-                      bets.length === 0 ||
-                      hasInsufficientBalance
-                    }
-                  >
-                    {isPlacingBet ? "Placing..." : "Place Bet"}
-                  </Button>
-                </div>
-              </Card>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Desktop: Right Panel */}
+      {/* Desktop: Right Panel - Current (placed) bets only */}
       <div className="hidden lg:block h-full w-full z-40">
         <div className="h-full flex flex-col">
-          <Card className="h-full flex flex-col overflow-hidden ">
-            <Tabs
-              defaultValue="betslip"
-              className="w-full h-full flex flex-col "
-            >
-              <TabsList className="grid w-full grid-cols-2 flex-shrink-0 bg-transparent px-4 pb-4 h-auto rounded-none border-b border-border">
-                <TabsTrigger value="betslip" className="text-xs">
-                  Bet Slip ({bets.length})
-                </TabsTrigger>
-                <TabsTrigger value="current" className="text-xs">
-                  Current ({currentBets.length})
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent
-                value="betslip"
-                className="mt-0 flex-1 flex flex-col min-h-0"
-              >
-                <div className="p-4 h-full flex flex-col">
-                  {bets.length === 0 ? (
-                    <>
-                      <BetItem
-                        bet={empty_bet_item}
-                        onUpdateStake={updateStake}
-                        onRemove={removeBet}
-                      />
-                      <BetSummary totalStake={totalStake} totalWin={totalWin} />
-                      <Button
-                        className="w-full flex-shrink-0"
-                        disabled                        >
-                        {isPlacingBet ? "Placing..." : "Place All Bets"}
-                      </Button>
-                    </>
-                  ) :
-                    (
-                      <div className="space-y-3 flex-1 overflow-y-auto min-h-0">
-                        {bets.map((bet) => (
-                          <BetItem
-                            key={bet.id}
-                            bet={bet}
-                            onUpdateStake={updateStake}
-                            onRemove={removeBet}
-                          />
-                        ))}
-                        <BetSummary totalStake={totalStake} totalWin={totalWin} />
-                        {hasInsufficientBalance && (
-                          <div className="text-xs text-destructive text-center p-2 bg-destructive/10 rounded">
-                            Insufficient balance: ₹{userBalance.toFixed(2)} / ₹
-                            {totalStake.toFixed(2)}
-                          </div>
-                        )}
-                        <Button
-                          className="w-full flex-shrink-0"
-                          onClick={handlePlaceAllBets}
-                          disabled={
-                            isPlacingBet ||
-                            bets.length === 0 ||
-                            hasInsufficientBalance
-                          }
-                        >
-                          {isPlacingBet ? "Placing..." : "Place All Bets"}
-                        </Button>
-                      </div>
-                    )}
-                </div>
-              </TabsContent>
-
-              <TabsContent
-                value="current"
-                className="mt-0 flex-1 flex flex-col min-h-0"
-              >
-                <div className="p-4 h-full flex flex-col">
-                  {currentBets.length === 0 ? (
-                    <EmptyState message="No current bets" />
-                  ) : (
-                    <div className="space-y-3 flex-1 overflow-y-auto min-h-0">
-                      {currentBets.map((bet: any) => (
-                        <CurrentBetItem key={bet.id} bet={bet} />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-            </Tabs>
-          </Card>
+          {/* <Card className="h-full flex flex-col overflow-hidden"> */}
+          {/*   <div className="flex-shrink-0 px-4 pb-3 border-b border-border"> */}
+          {/*     <h3 className="text-foreground font-semibold text-sm"> */}
+          {/*       Current bets */}
+          {/*     </h3> */}
+          {/*   </div> */}
+          {/*   <div className=" flex-1 flex flex-col min-h-0 overflow-hidden"> */}
+          {/*     <CurrentBetsContent /> */}
+          {/*   </div> */}
+          <div className=" flex-1 flex flex-col min-h-0 overflow-hidden">
+            <CurrentBetsContent />
+          </div>
+          {/* </Card> */}
         </div>
       </div>
     </>
   );
 }
 
-function BetItem({
-  bet,
-  onUpdateStake,
-  onRemove,
-}: {
-  bet: any;
-  onUpdateStake: (id: number, stake: string) => void;
-  onRemove: (id: number) => void;
-}) {
-  const [stake, setStake] = useState(bet.stake);
+/** Table row for current (placed) bets: Matched Bet (left), Odds (center), Stake (right); Back = green, Lay = maroon */
+function CurrentBetTableRow({ bet }: { bet: any }) {
+  const matchedBetLabel =
+    bet.runnerName && bet.marketName
+      ? `${bet.runnerName} - ${bet.marketName}`
+      : bet.runnerName || bet.marketName || "Bet";
+  const stakeFormatted =
+    bet.stake != null ? Number(bet.stake).toFixed(2) : "-";
+  const oddsFormatted = bet.odds != null ? String(Number(bet.odds)) : "-";
 
-  const handleStakeChange = (newStake: string) => {
-    setStake(newStake);
-    onUpdateStake(bet.id, newStake);
-  };
-
-  return (
-    <Card className="p-3">
-      <div className="flex justify-between items-start mb-2">
-        <div className="flex-1 min-w-0">
-          <Badge
-            variant="secondary"
-            className="text-xs mt-1 truncate max-w-full"
-          >
-            {bet.market}
-          </Badge>
-        </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-4 w-4 p-0 shrink-0"
-          onClick={() => onRemove(bet.id)}
-        >
-          <X className="h-3 w-3" />
-        </Button>
-      </div>
-
-      <div className="flex justify-between items-center text-xs mb-2">
-        <span className="text-foreground">Odds: {bet.odds}</span>
-        <span className="text-primary">Win: ₹{bet.potentialWin}</span>
-      </div>
-
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-6 w-6 p-0"
-            onClick={() =>
-              handleStakeChange(Math.max(0, parseFloat(stake) - 10).toString())
-            }
-          >
-            <Minus className="h-3 w-3" />
-          </Button>
-          <Input
-            type="number"
-            value={stake}
-            onChange={(e) => handleStakeChange(e.target.value)}
-            className="h-6 text-xs text-center"
-            placeholder="Stake"
-          />
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-6 w-6 p-0"
-            onClick={() =>
-              handleStakeChange((parseFloat(stake) + 10).toString())
-            }
-          >
-            <Plus className="h-3 w-3" />
-          </Button>
-        </div>
-
-        <div className="grid grid-cols-3 gap-1">
-          {[100, 500, 1000, 2000, 5000, 10000].map((amount) => (
-            <Button
-              key={amount}
-              variant="outline"
-              size="sm"
-              className="text-xs h-6 font-bold"
-              onClick={() => handleStakeChange(amount.toString())}
-            >
-              ₹{amount}
-            </Button>
-          ))}
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-function BetSummary({
-  totalStake,
-  totalWin,
-}: {
-  totalStake: number;
-  totalWin: number;
-}) {
-  return (
-    <Card className="p-3">
-      <div className="flex justify-between text-xs mb-1">
-        <span className="text-muted-foreground">Total Stake:</span>
-        <span className="text-foreground">₹{totalStake}</span>
-      </div>
-      <div className="flex justify-between text-xs">
-        <span className="text-muted-foreground">Total Win:</span>
-        <span className="text-primary font-bold">₹{totalWin.toFixed(2)}</span>
-      </div>
-    </Card>
-  );
-}
-
-function CurrentBetItem({ bet }: { bet: any }) {
-  const getStatusBadge = (status: string) => {
-    if (status === "matched") {
-      return (
-        <Badge
-          variant="secondary"
-          className="bg-chart-4/20 text-chart-4 border-chart-4/30 text-xs animate-pulse"
-        >
-          🔴 Live
-        </Badge>
-      );
-    }
-    return (
-      <Badge
-        variant="secondary"
-        className="bg-accent/20 text-accent-foreground border-accent/30 text-xs"
-      >
-        Pending
-      </Badge>
-    );
-  };
+  const isLay = bet.type === "lay";
+  const rowBg = isLay
+    ? "bg-[#39111A]/40 text-foreground"
+    : "bg-green-900/40 text-foreground";
 
   return (
-    <Card className="p-3">
-      <div className="flex justify-between items-start mb-2 gap-2">
-        <div className="flex-1">
-          <h4 className="text-foreground text-xs font-medium">
-            Cricket - {bet.type}
-          </h4>
-          <Badge variant="secondary" className="text-xs mt-1">
-            #{bet.id}
-          </Badge>
-        </div>
-        <div className="flex-shrink-0">{getStatusBadge(bet.status)}</div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-2 text-xs">
-        <div>
-          <span className="text-muted-foreground">Stake:</span>
-          <span className="text-foreground ml-1">₹{Number(bet.stake)}</span>
-        </div>
-        <div>
-          <span className="text-muted-foreground">Odds:</span>
-          <span className="text-foreground ml-1">{Number(bet.odds)}</span>
-        </div>
-      </div>
-    </Card>
+    <tr className={rowBg + " border-b border-black"} >
+      <td className="py-2 px-3 text-left text-xs">{matchedBetLabel}</td>
+      <td className="py-2 px-3 text-center text-sm">{oddsFormatted}</td>
+      <td className="py-2 px-3 text-right text-sm">{stakeFormatted}</td>
+    </tr>
   );
 }

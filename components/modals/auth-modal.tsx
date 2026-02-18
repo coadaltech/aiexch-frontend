@@ -11,6 +11,9 @@ import { toast } from "sonner";
 import { AuthForm } from "./auth/auth-form";
 import { ForgotPasswordForm } from "./auth/forgot-password-form";
 import { OtpForm } from "./auth/otp-form";
+import { createDemoUser, DEMO_BALANCE } from "@/contexts/AuthContext";
+import { Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import Image from "next/image";
 
 const initialFormData: AuthFormData = {
@@ -258,18 +261,46 @@ export function AuthModal({
             )}
 
             {(mode === "signin" || mode === "signup") && (
-              <AuthForm
-                mode={mode}
-                formData={formData}
-                onFormChange={setFormData}
-                onSubmit={handleAuthSubmit}
-                error={error}
-                isLoading={isLoading}
-                onForgotPassword={() => {
-                  setMode("forgot");
-                  resetForm();
-                }}
-              />
+              <>
+                <AuthForm
+                  mode={mode}
+                  formData={formData}
+                  onFormChange={setFormData}
+                  onSubmit={handleAuthSubmit}
+                  error={error}
+                  isLoading={isLoading}
+                  onForgotPassword={() => {
+                    setMode("forgot");
+                    resetForm();
+                  }}
+                />
+                {mode === "signin" && (
+                  <>
+                    <div className="relative my-4">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t border-border" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-background px-2 text-muted-foreground">Or</span>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full h-12 border-dashed border-primary/50 text-white hover:bg-primary/10"
+                      onClick={() => {
+                        const demoUser = createDemoUser();
+                        login(demoUser);
+                        onClose();
+                        resetForm();
+                      }}
+                    >
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Try demo account (₹{DEMO_BALANCE} balance)
+                    </Button>
+                  </>
+                )}
+              </>
             )}
           </div>
         </div>

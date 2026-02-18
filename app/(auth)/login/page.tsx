@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useLogin } from "@/hooks/useAuth";
-import { useAuth } from "@/contexts/AuthContext";
-import { Eye, EyeOff } from "lucide-react";
+import { useAuth, createDemoUser, DEMO_BALANCE } from "@/contexts/AuthContext";
+import { Eye, EyeOff, Sparkles } from "lucide-react";
 import { Captcha } from "@/components/modals/auth/captcha";
 
 export default function LoginPage() {
@@ -98,6 +98,28 @@ export default function LoginPage() {
           disabled={loginMutation.isPending || !captchaValid}
         >
           {loginMutation.isPending ? "Signing in..." : "Sign In"}
+        </Button>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-border" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-card px-2 text-muted-foreground">Or</span>
+          </div>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full h-12 text-white border-dashed border-primary/50 hover:bg-primary/10"
+          onClick={() => {
+            const demoUser = createDemoUser();
+            login(demoUser);
+            router.push("/");
+          }}
+        >
+          <Sparkles className="w-4 h-4 mr-2" />
+          Try demo account (₹{DEMO_BALANCE} balance)
         </Button>
       </form>
 

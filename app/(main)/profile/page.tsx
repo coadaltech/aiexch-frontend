@@ -34,7 +34,9 @@ const TransactionModal = lazy(
 
 export default function DashboardContent() {
   const { user, isLoggedIn, logout, isLoading } = useAuth();
-  const { data: balance, isLoading: balanceLoading } = useBalance(isLoggedIn);
+  const { data: balance, isLoading: balanceLoading } = useBalance(
+    isLoggedIn && !user?.isDemo
+  );
   const [transactionModalType, setTransactionModalType] = useState<
     "deposit" | "withdraw"
   >("deposit");

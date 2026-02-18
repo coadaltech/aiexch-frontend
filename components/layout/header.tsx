@@ -34,10 +34,10 @@ const leftMenu = [
   { label: "Home", link: "/home" },
   { label: "Cricket", link: "/sports/4" },
   { label: "Sports", link: "/sports" },
-  // { label: "Tennis", link: "/sports/2" },
-  // { label: "Soccer", link: "/sports/1" },
-  // { label: "Horse Racing", link: "/sports/7" },
-  // { label: "Greyhound Racing", link: "/sports/4339" },
+  { label: "Tennis", link: "/sports/tennis" },
+  { label: "Soccer", link: "/sports/soccer" },
+  { label: "Horse Racing", link: "/sports/horse-racing" },
+  { label: "Greyhound Racing", link: "/sports/greyhound-racing" },
   { label: "Live Casino", link: "/casino" },
   // { label: "Live", link: "/live" },
   { label: "Promotions", link: "/promotions" },
@@ -55,7 +55,9 @@ export default function Header() {
   const [authModal, setAuthModal] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const { user, isLoggedIn, logout, isLoading } = useAuth();
-  const { data: balance, isLoading: balanceLoading } = useBalance(isLoggedIn);
+  const { data: balance, isLoading: balanceLoading } = useBalance(
+    isLoggedIn && !user?.isDemo
+  );
 
   const { data: settings } = useSettings();
   const router = useRouter();
@@ -164,6 +166,11 @@ export default function Header() {
                       <User className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5" />
                       <span className="truncate max-w-[80px] lg:max-w-none">
                         {user?.username}
+                        {user?.isDemo && (
+                          <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-medium">
+                            Demo
+                          </span>
+                        )}
                       </span>
                     </Button>
 
