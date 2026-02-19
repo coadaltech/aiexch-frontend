@@ -590,6 +590,42 @@ export default function MatchPage() {
                         <div className="col-span-2 gap-2 relative flex min-h-[2.25rem]">
                           <div className="flex-1 flex flex-col items-end min-w-0">
                             <div className="gap-1 flex justify-end items-center flex-wrap">
+                              {runner.lay && runner.lay.length > 0 ? (
+                                runner.lay.map(
+                                  (layItem: any, layIdx: number) => (
+                                    <button
+                                      key={layIdx}
+                                      onClick={() =>
+                                        handleLayClick(
+                                          market,
+                                          runner,
+                                          String(layItem.line ?? layItem.price)
+                                        )
+                                      }
+                                      className={`${oddsBtnClass} hover:bg-green-900 transition-colors bg-green-900/70 w-20`}
+                                    >
+                                      <span className={oddsPriceClass}>
+                                        {layItem.line}
+                                      </span>
+                                      <span className={oddsSizeClass}>
+                                        {formatAmount(layItem.price)}
+                                      </span>
+                                    </button>
+                                  )
+                                )
+                              ) : (
+                                <button
+                                  className={`${oddsBtnClass} bg-green-900/70 w-20`}
+                                  disabled
+                                >
+                                  <span className={oddsPriceClass}>-</span>
+                                  <span className={oddsSizeClass}>-</span>
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex-1 flex items-center justify-between gap-1 min-w-0">
+                            <div className="gap-1 flex justify-start items-center flex-wrap min-w-0">
                               {runner.back && runner.back.length > 0 ? (
                                 runner.back.map(
                                   (backItem: any, backIdx: number) => (
@@ -616,42 +652,6 @@ export default function MatchPage() {
                               ) : (
                                 <button
                                   className={`${oddsBtnClass} bg-[#39111A]/70 w-20`}
-                                  disabled
-                                >
-                                  <span className={oddsPriceClass}>-</span>
-                                  <span className={oddsSizeClass}>-</span>
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex-1 flex items-center justify-between gap-1 min-w-0">
-                            <div className="gap-1 flex justify-start items-center flex-wrap min-w-0">
-                              {runner.lay && runner.lay.length > 0 ? (
-                                runner.lay.map(
-                                  (layItem: any, layIdx: number) => (
-                                    <button
-                                      key={layIdx}
-                                      onClick={() =>
-                                        handleLayClick(
-                                          market,
-                                          runner,
-                                          String(layItem.line ?? layItem.price)
-                                        )
-                                      }
-                                      className={`${oddsBtnClass} hover:bg-green-900 transition-colors bg-green-900/70 w-20`}
-                                    >
-                                      <span className={oddsPriceClass}>
-                                        {layItem.line}
-                                      </span>
-                                      <span className={oddsSizeClass}>
-                                        {formatAmount(layItem.size)}
-                                      </span>
-                                    </button>
-                                  )
-                                )
-                              ) : (
-                                <button
-                                  className={`${oddsBtnClass} bg-green-900/70 w-20`}
                                   disabled
                                 >
                                   <span className={oddsPriceClass}>-</span>

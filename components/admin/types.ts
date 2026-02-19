@@ -173,8 +173,8 @@ export interface Whitelabel {
   description?: string;
   status: string;
   contactEmail?: string;
-  logo?: string;
-  favicon?: string;
+  logo?: string | File;
+  favicon?: string | File;
   socialLinks?: {
     facebook?: string;
     twitter?: string;

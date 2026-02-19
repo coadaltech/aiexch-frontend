@@ -51,8 +51,7 @@ export default function PersonalInfoScreen() {
     phone: "",
   });
 
-  const [editingField, setEditingField] = useState<string | null>(null);
-  const [tempValue, setTempValue] = useState("");
+  const [editingFields, setEditingFields] = useState<Record<string, string>>({});
   const [isVerified, setIsVerified] = useState(true);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordData, setPasswordData] = useState({
@@ -98,90 +97,132 @@ export default function PersonalInfoScreen() {
   }
 
   const handleEdit = (field: string, currentValue: string) => {
-    setEditingField(field);
-    setTempValue(currentValue);
+    setEditingFields((prev) => ({
+      ...prev,
+      [field]: currentValue,
+    }));
   };
 
   const handleSave = (field: string) => {
-    const updatedData = { [field]: tempValue };
+    const value = editingFields[field];
+    if (value === undefined) return;
+
+    const updatedData = { [field]: value };
     updateProfileMutation.mutate(updatedData, {
       onSuccess: () => {
-        setUserData((prev) => ({ ...prev, [field]: tempValue }));
-        setEditingField(null);
-        setTempValue("");
-        // Refresh user data in AuthContext if needed
-        if (field === "firstName" || field === "lastName") {
-          // You might want to refresh auth context here
-          setUserData({
-
-            username: "erfan",
-            email: "erfan@gmail.com",
-            firstName: "Erfan",
-            lastName: "Aalam",
-            birthDate: "19 jan",
-            country: "england",
-            city: "jaipur",
-            address: "",
-            phone: "",
-          })
-        }
+        setUserData((prev) => ({ ...prev, [field]: value }));
+        setEditingFields((prev) => {
+          const newFields = { ...prev };
+          delete newFields[field];
+          return newFields;
+        });
       },
     });
   };
 
-  const handleCancel = () => {
-    setEditingField(null);
-    setTempValue("");
+  const handleSaveAll = () => {
+    const fieldsToSave = Object.keys(editingFields);
+    if (fieldsToSave.length === 0) return;
+
+    const updatedData: Record<string, string> = {};
+    fieldsToSave.forEach((field) => {
+      updatedData[field] = editingFields[field];
+    });
+
+    updateProfileMutation.mutate(updatedData, {
+      onSuccess: () => {
+        setUserData((prev) => ({
+          ...prev,
+          ...editingFields,
+        }));
+        setEditingFields({});
+      },
+    });
   };
+
+  const handleCancel = (field?: string) => {
+    if (field) {
+      setEditingFields((prev) => {
+        const newFields = { ...prev };
+        delete newFields[field];
+        return newFields;
+      });
+    } else {
+      setEditingFields({});
+    }
+  };
+
+  const hasUnsavedChanges = Object.keys(editingFields).length > 0;
 
   return (
     <div className="min-h-screen w-full min-w-0">
       <div className="min-h-screen pb-6 sm:pb-8">
         {/* Header */}
-        <div className="flex items-center gap-3 sm:gap-4 py-4 sm:py-6 lg:mb-6">
-          <Button
-            onClick={() => router.back()}
-            variant="ghost"
-            size="sm"
-            className="text-foreground hover:bg-muted shrink-0"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <User className="w-5 h-5 sm:w-6 sm:h-6 text-primary shrink-0" />
-            <h1 className="text-foreground font-bold text-base sm:text-lg lg:text-2xl truncate">
-              Personal Information
-            </h1>
+        <div className="flex items-center justify-between gap-3 sm:gap-4 py-4 sm:py-6 lg:mb-6">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            <Button
+              onClick={() => router.back()}
+              variant="ghost"
+              size="sm"
+              className="text-foreground hover:bg-muted shrink-0"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <User className="w-5 h-5 sm:w-6 sm:h-6 text-primary shrink-0" />
+              <h1 className="text-foreground font-bold text-base sm:text-lg lg:text-2xl truncate">
+                Personal Information
+              </h1>
+            </div>
           </div>
+          {hasUnsavedChanges && (
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                onClick={() => handleCancel()}
+                variant="outline"
+                size="sm"
+              >
+                Cancel All
+              </Button>
+              <Button
+                onClick={handleSaveAll}
+                size="sm"
+                disabled={updateProfileMutation.isPending}
+              >
+                <Save className="w-4 h-4 mr-2" />
+                Save All ({Object.keys(editingFields).length})
+              </Button>
+            </div>
+          )}
         </div>
 
         <div className="lg:grid lg:grid-cols-4 lg:gap-6 xl:gap-8 space-y-6 lg:space-y-0">
           {/* Profile Overview Card */}
-          <div className="lg:col-span-1">
-            <Card className="p-4 sm:p-6 text-center">
-              <h2 className="text-lg sm:text-xl font-bold text-foreground mb-1 truncate px-1">
-                {userData.firstName || userData.lastName
-                  ? `${userData.firstName} ${userData.lastName}`.trim()
-                  : "—"}
-              </h2>
-              <p className="text-muted-foreground text-sm sm:text-base mb-4 truncate">@{userData.username}</p>
-
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-border">
-                <div>
-                  <div className="text-xl sm:text-2xl font-bold text-primary">85%</div>
-                  <div className="text-xs sm:text-sm text-muted-foreground">
-                    Profile Complete
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xl sm:text-2xl font-bold text-accent">Level 2</div>
-                  <div className="text-xs sm:text-sm text-muted-foreground">
-                    Account Level
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </div>
+          {/* <div className="lg:col-span-1"> */}
+          {/*   <Card className="p-4 sm:p-6 text-center"> */}
+          {/*     <h2 className="text-lg sm:text-xl font-bold text-foreground mb-1 truncate px-1"> */}
+          {/*       {userData.firstName || userData.lastName */}
+          {/*         ? `${userData.firstName} ${userData.lastName}`.trim() */}
+          {/*         : "—"} */}
+          {/*     </h2> */}
+          {/*     <p className="text-muted-foreground text-sm sm:text-base mb-4 truncate">@{userData.username}</p> */}
+          {/**/}
+          {/*     <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-border"> */}
+          {/*       <div> */}
+          {/*         <div className="text-xl sm:text-2xl font-bold text-primary">85%</div> */}
+          {/*         <div className="text-xs sm:text-sm text-muted-foreground"> */}
+          {/*           Profile Complete */}
+          {/*         </div> */}
+          {/*       </div> */}
+          {/*       <div> */}
+          {/*         <div className="text-xl sm:text-2xl font-bold text-accent">Level 2</div> */}
+          {/*         <div className="text-xs sm:text-sm text-muted-foreground"> */}
+          {/*           Account Level */}
+          {/*         </div> */}
+          {/*       </div> */}
+          {/*     </div> */}
+          {/*   </Card> */}
+          {/* </div> */}
 
           {/* Profile Details */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:col-span-3">
@@ -198,24 +239,20 @@ export default function PersonalInfoScreen() {
                   value={userData.username}
                   field="username"
                   locked
-                  editingField={editingField}
-                  tempValue={tempValue}
+                  editingFields={editingFields}
                   onEdit={handleEdit}
                   onSave={handleSave}
                   onCancel={handleCancel}
-                  setTempValue={setTempValue}
                 />
                 <ProfileField
                   label="Email Address"
                   value={userData.email}
                   field="email"
                   locked
-                  editingField={editingField}
-                  tempValue={tempValue}
+                  editingFields={editingFields}
                   onEdit={handleEdit}
                   onSave={handleSave}
                   onCancel={handleCancel}
-                  setTempValue={setTempValue}
                 />
               </div>
             </Card>
@@ -232,46 +269,38 @@ export default function PersonalInfoScreen() {
                   label="First Name"
                   value={userData.firstName}
                   field="firstName"
-                  editingField={editingField}
-                  tempValue={tempValue}
+                  editingFields={editingFields}
                   onEdit={handleEdit}
                   onSave={handleSave}
                   onCancel={handleCancel}
-                  setTempValue={setTempValue}
                 />
                 <ProfileField
                   label="Last Name"
                   value={userData.lastName}
                   field="lastName"
-                  editingField={editingField}
-                  tempValue={tempValue}
+                  editingFields={editingFields}
                   onEdit={handleEdit}
                   onSave={handleSave}
                   onCancel={handleCancel}
-                  setTempValue={setTempValue}
                 />
                 <ProfileField
                   label="Birth Date"
                   value={userData.birthDate}
                   field="birthDate"
                   type="date"
-                  editingField={editingField}
-                  tempValue={tempValue}
+                  editingFields={editingFields}
                   onEdit={handleEdit}
                   onSave={handleSave}
                   onCancel={handleCancel}
-                  setTempValue={setTempValue}
                 />
                 <ProfileField
                   label="Phone Number"
                   value={userData.phone}
                   field="phone"
-                  editingField={editingField}
-                  tempValue={tempValue}
+                  editingFields={editingFields}
                   onEdit={handleEdit}
                   onSave={handleSave}
                   onCancel={handleCancel}
-                  setTempValue={setTempValue}
                 />
               </div>
             </Card>
@@ -287,35 +316,29 @@ export default function PersonalInfoScreen() {
                   label="Country"
                   value={userData.country}
                   field="country"
-                  editingField={editingField}
-                  tempValue={tempValue}
+                  editingFields={editingFields}
                   onEdit={handleEdit}
                   onSave={handleSave}
                   onCancel={handleCancel}
-                  setTempValue={setTempValue}
                 />
                 <ProfileField
                   label="City"
                   value={userData.city}
                   field="city"
-                  editingField={editingField}
-                  tempValue={tempValue}
+                  editingFields={editingFields}
                   onEdit={handleEdit}
                   onSave={handleSave}
                   onCancel={handleCancel}
-                  setTempValue={setTempValue}
                 />
                 <div className="sm:col-span-2">
                   <ProfileField
                     label="Home Address"
                     value={userData.address}
                     field="address"
-                    editingField={editingField}
-                    tempValue={tempValue}
+                    editingFields={editingFields}
                     onEdit={handleEdit}
                     onSave={handleSave}
                     onCancel={handleCancel}
-                    setTempValue={setTempValue}
                   />
                 </div>
               </div>
@@ -535,26 +558,27 @@ function ProfileField({
   field,
   locked = false,
   type = "text",
-  editingField,
-  tempValue,
+  editingFields,
   onEdit,
   onSave,
   onCancel,
-  setTempValue,
 }: {
   label: string;
   value: string;
   field: string;
   locked?: boolean;
   type?: string;
-  editingField: string | null;
-  tempValue: string;
+  editingFields: Record<string, string>;
   onEdit: (field: string, value: string) => void;
   onSave: (field: string) => void;
-  onCancel: () => void;
-  setTempValue: (value: string) => void;
+  onCancel: (field?: string) => void;
 }) {
-  const isEditing = editingField === field;
+  const isEditing = field in editingFields;
+  const tempValue = editingFields[field] ?? value;
+
+  const handleChange = (newValue: string) => {
+    onEdit(field, newValue);
+  };
 
   return (
     <div className="space-y-2">
@@ -565,14 +589,14 @@ function ProfileField({
           <Input
             type={type}
             value={tempValue}
-            onChange={(e) => setTempValue(e.target.value)}
+            onChange={(e) => handleChange(e.target.value)}
             autoFocus
           />
           <div className="flex gap-2 justify-end">
             <Button onClick={() => onSave(field)} size="sm">
               <Save className="w-4 h-4" />
             </Button>
-            <Button onClick={onCancel} variant="outline" size="sm">
+            <Button onClick={() => onCancel(field)} variant="outline" size="sm">
               <X className="w-4 h-4" />
             </Button>
           </div>

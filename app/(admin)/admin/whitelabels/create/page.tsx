@@ -17,15 +17,19 @@ export default function CreateWhitelabelPage() {
     if (formData.description) formDataToSend.append('description', formData.description);
     formDataToSend.append('status', formData.status);
     if (formData.contactEmail) formDataToSend.append('contactEmail', formData.contactEmail);
-    if (formData.logo instanceof File) {
-      formDataToSend.append('logo', formData.logo);
-    } else if (formData.logo) {
-      formDataToSend.append('logoUrl', formData.logo);
+    if (formData.logo) {
+      if (formData.logo instanceof File) {
+        formDataToSend.append('logo', formData.logo);
+      } else {
+        formDataToSend.append('logoUrl', formData.logo);
+      }
     }
-    if (formData.favicon instanceof File) {
-      formDataToSend.append('favicon', formData.favicon);
-    } else if (formData.favicon) {
-      formDataToSend.append('faviconUrl', formData.favicon);
+    if (formData.favicon) {
+      if (formData.favicon instanceof File) {
+        formDataToSend.append('favicon', formData.favicon);
+      } else {
+        formDataToSend.append('faviconUrl', formData.favicon);
+      }
     }
     if (formData.socialLinks) formDataToSend.append('socialLinks', JSON.stringify(formData.socialLinks));
     formDataToSend.append('theme', JSON.stringify(formData.theme));

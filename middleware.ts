@@ -10,7 +10,7 @@ import { decode_payload_from_token } from "./lib/token-utils";
 // }
 
 const isAuthenticated = async (request: NextRequest) => {
-  const token = request.cookies.get("refeshToken")?.value;
+  const token = request.cookies.get("refreshToken")?.value;
   return !!token;
 };
 
