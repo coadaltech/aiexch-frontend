@@ -9,7 +9,7 @@ export function ThemeLoader() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (pathname?.startsWith("/admin")) {
+    if (pathname?.startsWith("/owner")) {
       setLoading(false);
       return;
     }

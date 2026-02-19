@@ -35,7 +35,7 @@ export async function ThemeScript() {
   const headersList = await headers();
   const pathname = headersList.get("x-pathname") || "";
   // Don't apply whitelabel theme on admin routes
-  if (pathname.startsWith("/admin")) {
+  if (pathname.startsWith("/owner")) {
     return null;
   }
 
@@ -55,7 +55,7 @@ export async function ThemeScript() {
   const script = `
     (function() {
       // Don't apply theme on admin routes
-      if (window.location.pathname.startsWith('/admin')) return;
+      if (window.location.pathname.startsWith('/owner')) return;
       
       const root = document.documentElement;
       const theme = ${JSON.stringify(theme)};

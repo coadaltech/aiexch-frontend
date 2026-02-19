@@ -97,7 +97,7 @@ export default function Header() {
     return () => clearInterval(timer);
   }, []);
 
-  if (pathname.includes("/admin")) return null;
+  if (pathname.includes("/owner")) return null;
   return (
     <>
       <header className="fixed w-full pb-2 top-0 z-50 shadow-lg bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700/50">

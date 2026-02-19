@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { adminApi } from "@/lib/api";
+import { ownerApi } from "@/lib/api";
 
 interface Domain {
   id: number;
@@ -19,13 +19,13 @@ export const useDomains = () => {
   } = useQuery({
     queryKey: ["domains"],
     queryFn: async () => {
-      const response = await adminApi.getDomains();
+      const response = await ownerApi.getDomains();
       return response.data.result || [];
     },
   });
 
   const createMutation = useMutation({
-    mutationFn: (name: string) => adminApi.createDomain({ name }),
+    mutationFn: (name: string) => ownerApi.createDomain({ name }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["domains"] });
     },
@@ -33,14 +33,14 @@ export const useDomains = () => {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: any }) =>
-      adminApi.updateDomain(id, data),
+      ownerApi.updateDomain(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["domains"] });
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => adminApi.deleteDomain(id),
+    mutationFn: (id: number) => ownerApi.deleteDomain(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["domains"] });
     },

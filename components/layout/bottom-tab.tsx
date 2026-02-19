@@ -87,7 +87,7 @@ export default function BottomNavigation() {
     document.body.style.overflow = "unset";
   };
 
-  const hiddenRoutes = ["/login", "/signup", "/forgot-password", "/admin"];
+  const hiddenRoutes = ["/login", "/signup", "/forgot-password", "/owner"];
   const isCasinoGame =
     pathname?.startsWith("/casino/") && pathname !== "/casino";
 

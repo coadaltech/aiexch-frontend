@@ -15,13 +15,13 @@ export function MetadataLoader() {
 
         // Update title
         const siteName = data?.siteName || "AIEXCH";
-        const isAdmin = pathname?.startsWith("/admin");
-        document.title = isAdmin 
-          ? `Admin - ${siteName}` 
+        const isOwner = pathname?.startsWith("/owner");
+        document.title = isOwner 
+          ? `Owner - ${siteName}` 
           : `${siteName} - Gaming Exchange Platform`;
 
         // Update favicon (skip for admin to keep default)
-        if (!isAdmin) {
+        if (!isOwner) {
           const favicon = data?.favicon;
           if (favicon) {
             let link = document.querySelector("link[rel='icon']") as HTMLLinkElement;

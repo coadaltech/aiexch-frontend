@@ -70,7 +70,7 @@ export default function Footer() {
     pathname?.startsWith("/login") ||
     pathname?.startsWith("/signup") ||
     pathname?.startsWith("/forgot-password");
-  if (pathname.includes("/admin") || isAuthRoute) return null;
+  if (pathname.includes("/owner") || isAuthRoute) return null;
   return (
     <footer className="bg-[#141940]  border-t border-border">
       <div className="container mx-auto px-4 py-12">

@@ -43,14 +43,14 @@ export async function middleware(request: NextRequest) {
   const response = NextResponse.next();
 
   if (isAuth && userRole) {
-    // Special handling for admin routes - admin (ca or admin role) can access all /admin routes
-    if (pathname.startsWith("/admin")) {
-      if (userRole === "admin") {
-        // Admin can access all admin routes
+    // Special handling for owner routes - owner role can access all /owner routes
+    if (pathname.startsWith("/owner")) {
+      if (userRole === "owner") {
+        // Owner can access all owner routes
         return response;
       }
       else {
-        // Non-admin users trying to access admin routes
+        // Non-owner users trying to access owner routes
         return NextResponse.redirect(new URL("/access-denied", request.url));
       }
     }
@@ -64,7 +64,7 @@ export async function middleware(request: NextRequest) {
   //// just checking
 
   // Admin-only routes
-  // if (url.pathname.startsWith("/admin")) {
+  // if (url.pathname.startsWith("/owner")) {
   //   console.log("[MIDDLEWARE] Admin route accessed, verifying token...");
   //   try {
   //     console.log("payload_res -> ", payload_res)
@@ -83,7 +83,7 @@ export async function middleware(request: NextRequest) {
   //     return NextResponse.redirect((new URL(url, request.url)));
   //   }
   //
-  //   url.pathname = "/admin";
+  //   url.pathname = "/owner";
   //   return NextResponse.redirect((new URL(url, request.url)));
   // }
 
@@ -91,13 +91,13 @@ export async function middleware(request: NextRequest) {
 }
 
 // export const config = {
-//   matcher: ["/admin/:path*", "/profile/:path*"],
+//   matcher: ["/owner/:path*", "/profile/:path*"],
 // };
 
 export const config = {
   matcher: [
     "/((?!api|_next|static|favicon.png|site.webmanifest|Images|icon-512.png|signin).*)",
-    "/admin/:path*",
+    "/owner/:path*",
     "/profile/:path*"
   ],
 };

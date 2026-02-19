@@ -119,145 +119,145 @@ export const authApi = {
   refresh: () => api.post("/auth/refresh"),
 };
 
-export const adminApi = {
+export const ownerApi = {
   // Banners
-  getBanners: () => api.get("/admin/banners"),
+  getBanners: () => api.get("/owner/banners"),
   createBanner: (data: any) =>
-    api.post("/admin/banners", data, {
+    api.post("/owner/banners", data, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
   updateBanner: (id: number, data: any) =>
-    api.put(`/admin/banners/${id}`, data, {
+    api.put(`/owner/banners/${id}`, data, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
-  deleteBanner: (id: number) => api.delete(`/admin/banners/${id}`),
+  deleteBanner: (id: number) => api.delete(`/owner/banners/${id}`),
 
   // Whitelabels
-  getWhitelabels: () => api.get("/admin/whitelabels"),
-  createWhitelabel: (data: any) => api.post("/admin/whitelabels", data),
+  getWhitelabels: () => api.get("/owner/whitelabels"),
+  createWhitelabel: (data: any) => api.post("/owner/whitelabels", data),
   updateWhitelabel: (id: number, data: any) =>
-    api.put(`/admin/whitelabels/${id}`, data),
-  deleteWhitelabel: (id: number) => api.delete(`/admin/whitelabels/${id}`),
+    api.put(`/owner/whitelabels/${id}`, data),
+  deleteWhitelabel: (id: number) => api.delete(`/owner/whitelabels/${id}`),
   generateDatabase: (id: number) =>
-    api.post(`/admin/whitelabels/db/generate/${id}`),
+    api.post(`/owner/whitelabels/db/generate/${id}`),
   migrateDatabase: (id: number) =>
-    api.post(`/admin/whitelabels/db/migrate/${id}`),
+    api.post(`/owner/whitelabels/db/migrate/${id}`),
 
   // Promotions
-  getPromotions: () => api.get("/admin/promotions"),
+  getPromotions: () => api.get("/owner/promotions"),
   createPromotion: (data: any) =>
-    api.post("/admin/promotions", data, {
+    api.post("/owner/promotions", data, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
   updatePromotion: (id: number, data: any) =>
-    api.put(`/admin/promotions/${id}`, data, {
+    api.put(`/owner/promotions/${id}`, data, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
-  deletePromotion: (id: number) => api.delete(`/admin/promotions/${id}`),
+  deletePromotion: (id: number) => api.delete(`/owner/promotions/${id}`),
 
   // Users
-  getUsers: () => api.get("/admin/users"),
-  updateUser: (id: number, data: any) => api.put(`/admin/users/${id}`, data),
+  getUsers: () => api.get("/owner/users"),
+  updateUser: (id: number, data: any) => api.put(`/owner/users/${id}`, data),
 
   // Popups
-  getPopups: () => api.get("/admin/popups"),
+  getPopups: () => api.get("/owner/popups"),
   createPopup: (data: any) =>
-    api.post("/admin/popups", data, {
+    api.post("/owner/popups", data, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
   updatePopup: (id: number, data: any) =>
-    api.put(`/admin/popups/${id}`, data, {
+    api.put(`/owner/popups/${id}`, data, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
-  deletePopup: (id: number) => api.delete(`/admin/popups/${id}`),
+  deletePopup: (id: number) => api.delete(`/owner/popups/${id}`),
 
   // Promocodes
-  getPromocodes: () => api.get("/admin/promocodes"),
-  createPromocode: (data: any) => api.post("/admin/promocodes", data),
+  getPromocodes: () => api.get("/owner/promocodes"),
+  createPromocode: (data: any) => api.post("/owner/promocodes", data),
   updatePromocode: (id: number, data: any) =>
-    api.put(`/admin/promocodes/${id}`, data),
-  deletePromocode: (id: number) => api.delete(`/admin/promocodes/${id}`),
+    api.put(`/owner/promocodes/${id}`, data),
+  deletePromocode: (id: number) => api.delete(`/owner/promocodes/${id}`),
 
   // Transactions
-  getTransactions: () => api.get("/admin/transactions"),
-  createTransaction: (data: any) => api.post("/admin/transactions", data),
+  getTransactions: () => api.get("/owner/transactions"),
+  createTransaction: (data: any) => api.post("/owner/transactions", data),
   updateTransaction: (id: number, data: any) =>
-    api.put(`/admin/transactions/${id}`, data),
+    api.put(`/owner/transactions/${id}`, data),
 
   // KYC
-  getKycDocuments: () => api.get("/admin/kyc"),
-  updateKycStatus: (id: number, data: any) => api.put(`/admin/kyc/${id}`, data),
+  getKycDocuments: () => api.get("/owner/kyc"),
+  updateKycStatus: (id: number, data: any) => api.put(`/owner/kyc/${id}`, data),
 
   // Settings
-  getSettings: () => api.get("/admin/settings"),
-  updateSettings: (data: any) => api.put("/admin/settings", data),
+  getSettings: () => api.get("/owner/settings"),
+  updateSettings: (data: any) => api.put("/owner/settings", data),
 
   // Notifications
-  getNotifications: () => api.get("/admin/notifications"),
-  createNotification: (data: any) => api.post("/admin/notifications", data),
+  getNotifications: () => api.get("/owner/notifications"),
+  createNotification: (data: any) => api.post("/owner/notifications", data),
   updateNotification: (id: number, data: any) =>
-    api.put(`/admin/notifications/${id}`, data),
-  deleteNotification: (id: number) => api.delete(`/admin/notifications/${id}`),
+    api.put(`/owner/notifications/${id}`, data),
+  deleteNotification: (id: number) => api.delete(`/owner/notifications/${id}`),
 
   // QR Codes
-  getQrCodes: () => api.get("/admin/qrcodes"),
+  getQrCodes: () => api.get("/owner/qrcodes"),
   createQrCode: (data: any) =>
-    api.post("/admin/qrcodes", data, {
+    api.post("/owner/qrcodes", data, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
   updateQrCode: (id: number, data: any) =>
-    api.put(`/admin/qrcodes/${id}`, data, {
+    api.put(`/owner/qrcodes/${id}`, data, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
-  deleteQrCode: (id: number) => api.delete(`/admin/qrcodes/${id}`),
+  deleteQrCode: (id: number) => api.delete(`/owner/qrcodes/${id}`),
 
   // Sports Games
-  getSportsGames: () => api.get("/admin/sports-games"),
-  createSportsGame: (data: any) => api.post("/admin/sports-games", data),
+  getSportsGames: () => api.get("/owner/sports-games"),
+  createSportsGame: (data: any) => api.post("/owner/sports-games", data),
   updateSportsGame: (id: number, data: any) =>
-    api.put(`/admin/sports-games/${id}`, data),
-  deleteSportsGame: (id: number) => api.delete(`/admin/sports-games/${id}`),
+    api.put(`/owner/sports-games/${id}`, data),
+  deleteSportsGame: (id: number) => api.delete(`/owner/sports-games/${id}`),
 
   // Home Sections
-  getHomeSections: () => api.get("/admin/home-sections"),
-  createHomeSection: (data: any) => api.post("/admin/home-sections", data),
+  getHomeSections: () => api.get("/owner/home-sections"),
+  createHomeSection: (data: any) => api.post("/owner/home-sections", data),
   updateHomeSection: (id: number, data: any) =>
-    api.put(`/admin/home-sections/${id}`, data),
-  deleteHomeSection: (id: number) => api.delete(`/admin/home-sections/${id}`),
+    api.put(`/owner/home-sections/${id}`, data),
+  deleteHomeSection: (id: number) => api.delete(`/owner/home-sections/${id}`),
 
   // Section Games
   getSectionGames: (sectionId: number) =>
-    api.get(`/admin/home-sections/${sectionId}/games`),
+    api.get(`/owner/home-sections/${sectionId}/games`),
   createSectionGame: (sectionId: number, data: any) =>
-    api.post(`/admin/home-sections/${sectionId}/games`, data, {
+    api.post(`/owner/home-sections/${sectionId}/games`, data, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
   updateSectionGame: (gameId: number, data: any) => {
     // Extract body if data is wrapped in an object
     const actualData = data?.body || data;
 
-    return api.put(`/admin/home-sections/games/${gameId}`, actualData, {
+    return api.put(`/owner/home-sections/games/${gameId}`, actualData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
   },
   deleteSectionGame: (gameId: number) =>
-    api.delete(`/admin/home-sections/games/${gameId}`),
+    api.delete(`/owner/home-sections/games/${gameId}`),
 
   // Withdrawal Methods
-  getWithdrawalMethods: () => api.get("/admin/withdrawal-methods"),
+  getWithdrawalMethods: () => api.get("/owner/withdrawal-methods"),
   createWithdrawalMethod: (data: any) =>
-    api.post("/admin/withdrawal-methods", data),
+    api.post("/owner/withdrawal-methods", data),
   updateWithdrawalMethod: (id: number, data: any) =>
-    api.put(`/admin/withdrawal-methods/${id}`, data),
+    api.put(`/owner/withdrawal-methods/${id}`, data),
   deleteWithdrawalMethod: (id: number) =>
-    api.delete(`/admin/withdrawal-methods/${id}`),
+    api.delete(`/owner/withdrawal-methods/${id}`),
 
   // Domains
-  getDomains: () => api.get("/admin/domains"),
-  createDomain: (data: any) => api.post("/admin/domains", data),
+  getDomains: () => api.get("/owner/domains"),
+  createDomain: (data: any) => api.post("/owner/domains", data),
   updateDomain: (id: number, data: any) =>
-    api.put(`/admin/domains/${id}`, data),
-  deleteDomain: (id: number) => api.delete(`/admin/domains/${id}`),
+    api.put(`/owner/domains/${id}`, data),
+  deleteDomain: (id: number) => api.delete(`/owner/domains/${id}`),
 };
 
 export interface BetRecord {

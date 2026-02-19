@@ -24,7 +24,7 @@ const ErrorHandler = () => {
           message = "Access denied: Admins only.";
           break;
         case "2":
-          message = "Error verifying admin access.";
+          message = "Error verifying owner access.";
           break;
         default:
           message = "An unknown error occurred.";

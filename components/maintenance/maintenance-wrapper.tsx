@@ -12,7 +12,7 @@ export function MaintenanceWrapper({ children }: MaintenanceWrapperProps) {
   const [isLoading, setIsLoading] = useState(true);
   const pathname = usePathname();
 
-  const isAdminPage = pathname?.startsWith("/admin");
+  const isOwnerPage = pathname?.startsWith("/owner");
 
   useEffect(() => {
     const checkMaintenanceMode = async () => {
@@ -40,7 +40,7 @@ export function MaintenanceWrapper({ children }: MaintenanceWrapperProps) {
   //   );
   // }
 
-  if (isMaintenanceMode && !isAdminPage) {
+  if (isMaintenanceMode && !isOwnerPage) {
     return <MaintenancePage message={maintenanceMessage} />;
   }
 

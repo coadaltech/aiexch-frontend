@@ -170,7 +170,7 @@ export function AppSidebar() {
   // Detect current route type
   const sportRoute = detectSportRoute(pathname);
   const isSportsList = isSportsListRoute(pathname);
-  const isAdminRoute = pathname.includes("/admin");
+  const isOwnerRoute = pathname.includes("/owner");
 
   // Fetch sports list
   useEffect(() => {
@@ -237,7 +237,7 @@ export function AppSidebar() {
   };
 
   // Early return for admin routes
-  if (isAdminRoute) return null;
+  if (isOwnerRoute) return null;
 
   // Loading state
   const isLoading = !mounted || loadingGames || loadingSeries;

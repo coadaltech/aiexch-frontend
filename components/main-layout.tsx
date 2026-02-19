@@ -10,13 +10,13 @@ import Footer from "./layout/footer";
 export default function MainLayout({ children }: { children: ReactNode }) {
   const [is_home_route, setIsHomeRoute] = useState(false)
   const pathname = usePathname();
-  const isAdminRoute = pathname?.startsWith("/admin");
+  const isOwnerRoute = pathname?.startsWith("/owner");
   const isAuthRoute =
     pathname?.startsWith("/login") ||
     pathname?.startsWith("/signup") ||
     pathname?.startsWith("/forgot-password");
 
-  if (isAdminRoute || isAuthRoute) {
+  if (isOwnerRoute || isAuthRoute) {
     return <>{children}</>;
   }
   useEffect(() => {
