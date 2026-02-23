@@ -12,8 +12,10 @@ import {
   Edit,
   ChevronUp,
   ChevronDown,
+  User2Icon,
 } from "lucide-react";
 import { UserModal } from "@/components/owner/user-modal";
+import { ChangeStatusModal, type ChangeStatusModalUser } from "@/components/owner/change-status-modal";
 import { Pagination } from "@/components/owner/pagination";
 import {
   Select,
@@ -23,6 +25,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useOwnerUsers, useUpdateUser } from "@/hooks/useOwner";
+import { useWhitelabelInfo } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useFilters } from "@/hooks/useFilters";
 import { useTableSort } from "@/hooks/useTableSort";
@@ -32,20 +36,37 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/owner/skeletons";
 import { useModal } from "@/hooks/useModal";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [updatingUserId, setUpdatingUserId] = useState<number | null>(null);
   const userModal = useModal<any>();
+  const [statusModalUser, setStatusModalUser] = useState<ChangeStatusModalUser | null>(null);
 
   const { data: users = [], isLoading, error } = useOwnerUsers();
   const updateUserMutation = useUpdateUser();
   const queryClient = useQueryClient();
+  const { data: whitelabelInfo } = useWhitelabelInfo();
+  const { user: currentUser } = useAuth();
 
   const debouncedSearch = useDebounce(searchTerm, 300);
 
+  // Derive status for filtering (active = account + parent account both active)
+  const usersWithFilterStatus = useMemo(
+    () =>
+      users.map((u) => ({
+        ...u,
+        status:
+          (u.accountStatus !== false && u.parentAccountStatus !== false)
+            ? "active"
+            : "suspended",
+      })),
+    [users]
+  );
+
   const { filters, filteredData, updateFilter } = useFilters({
-    data: users,
+    data: usersWithFilterStatus,
     initialFilters: {
       search: debouncedSearch,
       status: "all",
@@ -80,7 +101,7 @@ export default function UsersPage() {
   });
 
   const handleCreateUser = () => {
-    userModal.open(null);
+    userModal.open(undefined);
   };
 
   const handleEditUser = (user: any) => {
@@ -91,15 +112,18 @@ export default function UsersPage() {
   };
 
   const handleSaveUser = async (userData: any) => {
-    if (userModal.data) {
+    if (userModal.data && userModal.data.id) {
       // Edit existing user
       if (userData.type === "user") {
         const userUpdateData: any = {
           role: userData.role,
           membership: userData.membership,
-          status: userData.status,
           balance: userData.balance,
+          upline: userData.upline ?? "0.00",
+          downline: userData.downline ?? "0.00",
         };
+        if (userData.accountStatus !== undefined) userUpdateData.accountStatus = userData.accountStatus;
+        if (userData.betStatus !== undefined) userUpdateData.betStatus = userData.betStatus;
 
         if (userData.password && userData.password.trim()) {
           userUpdateData.password = userData.password;
@@ -124,23 +148,65 @@ export default function UsersPage() {
           password: userData.password,
           role: userData.role,
           membership: userData.membership,
-          status: userData.status,
           balance: userData.balance,
+          upline: userData.upline ?? "0.00",
+          downline: userData.downline ?? "0.00",
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          phone: userData.phone,
+          country: userData.country,
+          ...(whitelabelInfo?.id != null && { whitelabelId: whitelabelInfo.id }),
+          ...(typeof window !== "undefined" && window.location?.host && { domain: window.location.host }),
         };
 
-        await api.post("/auth/register", newUserData);
+        await api.post("/owner/users", newUserData);
         queryClient.invalidateQueries({ queryKey: ["owner-users"] });
         toast.success("User created successfully");
         userModal.close();
-      } catch (error) {
-        toast.error("Failed to create user");
+      } catch (error: any) {
+        const errorMessage = error.response?.data?.message || "Failed to create user";
+        toast.error(errorMessage);
+        console.error("Create user error:", error);
       }
     }
   };
 
-  const handleToggleStatus = (user: any) => {
-    const newStatus = user.status === "active" ? "suspended" : "active";
-    updateUserMutation.mutate({ id: user.id, status: newStatus });
+  const handleOpenChangeStatus = (user: any) => {
+    setStatusModalUser({
+      id: user.id,
+      username: user.username,
+      accountStatus: user.accountStatus !== false,
+      betStatus: user.betStatus !== false,
+    });
+  };
+
+  const handleChangeStatusConfirm = (data: {
+    accountStatus: boolean;
+    betStatus: boolean;
+    currentUserPassword: string;
+  }) => {
+    if (!statusModalUser) return;
+    setUpdatingUserId(statusModalUser.id);
+    updateUserMutation.mutate(
+      {
+        id: statusModalUser.id,
+        accountStatus: data.accountStatus,
+        betStatus: data.betStatus,
+        currentUserPassword: data.currentUserPassword,
+      },
+      {
+        onSuccess: () => {
+          setStatusModalUser(null);
+        },
+        onError: (err: any) => {
+          const msg = err.response?.data?.message || "Failed to update status";
+          toast.error(msg);
+        },
+        onSettled: () => {
+          setUpdatingUserId(null);
+        },
+      }
+    );
   };
 
   if (error) {
@@ -312,20 +378,6 @@ export default function UsersPage() {
                     Profile
                   </th>
                   <th
-                    className="text-left py-3 px-2 text-muted-foreground text-sm cursor-pointer hover:text-foreground"
-                    onClick={() => requestSort("status")}
-                  >
-                    <div className="flex items-center gap-1">
-                      Status
-                      {getSortIcon("status") === "asc" && (
-                        <ChevronUp className="w-3 h-3" />
-                      )}
-                      {getSortIcon("status") === "desc" && (
-                        <ChevronDown className="w-3 h-3" />
-                      )}
-                    </div>
-                  </th>
-                  <th
                     className="text-left py-3 px-2 text-muted-foreground text-sm hidden md:table-cell cursor-pointer hover:text-foreground"
                     onClick={() => requestSort("role")}
                   >
@@ -352,6 +404,12 @@ export default function UsersPage() {
                         <ChevronDown className="w-3 h-3" />
                       )}
                     </div>
+                  </th>
+                  <th className="text-left py-3 px-2 text-muted-foreground text-sm hidden lg:table-cell">
+                    Created By
+                  </th>
+                  <th className="text-left py-3 px-2 text-muted-foreground text-sm hidden lg:table-cell">
+                    Whitelabel
                   </th>
                   <th
                     className="text-left py-3 px-2 text-muted-foreground text-sm cursor-pointer hover:text-foreground"
@@ -387,7 +445,7 @@ export default function UsersPage() {
                 </tr>
               </thead>
               {isLoading ? (
-                <TableSkeleton columns={8} />
+                <TableSkeleton columns={9} />
               ) : paginatedUsers.length > 0 ? (
                 <tbody>
                   {paginatedUsers.map((user) => (
@@ -406,8 +464,8 @@ export default function UsersPage() {
                                 user.role === "admin"
                                   ? "destructive"
                                   : user.role === "vip"
-                                  ? "default"
-                                  : "secondary"
+                                    ? "default"
+                                    : "secondary"
                               }
                               className="text-xs"
                             >
@@ -418,8 +476,8 @@ export default function UsersPage() {
                                 user.membership === "platinum"
                                   ? "destructive"
                                   : user.membership === "gold"
-                                  ? "default"
-                                  : "secondary"
+                                    ? "default"
+                                    : "secondary"
                               }
                               className="text-xs"
                             >
@@ -432,8 +490,7 @@ export default function UsersPage() {
                         <div className="text-sm">
                           <div className="text-foreground">
                             {user.firstName || user.lastName
-                              ? `${user.firstName || ""} ${
-                                  user.lastName || ""
+                              ? `${user.firstName || ""} ${user.lastName || ""
                                 }`.trim()
                               : "N/A"}
                           </div>
@@ -442,28 +499,14 @@ export default function UsersPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="py-3 px-2">
-                        <Badge
-                          variant={
-                            user.status === "active"
-                              ? "default"
-                              : user.status === "suspended"
-                              ? "destructive"
-                              : "secondary"
-                          }
-                          className="text-xs"
-                        >
-                          {user.status}
-                        </Badge>
-                      </td>
                       <td className="py-3 px-2 hidden md:table-cell">
                         <Badge
                           variant={
                             user.role === "admin"
                               ? "destructive"
                               : user.role === "vip"
-                              ? "default"
-                              : "secondary"
+                                ? "default"
+                                : "secondary"
                           }
                           className="text-xs"
                         >
@@ -476,13 +519,19 @@ export default function UsersPage() {
                             user.membership === "platinum"
                               ? "destructive"
                               : user.membership === "gold"
-                              ? "default"
-                              : "secondary"
+                                ? "default"
+                                : "secondary"
                           }
                           className="text-xs"
                         >
                           {user.membership}
                         </Badge>
+                      </td>
+                      <td className="py-3 px-2 hidden lg:table-cell text-sm text-muted-foreground">
+                        {(user as { createdByUsername?: string | null }).createdByUsername ?? "Owner"}
+                      </td>
+                      <td className="py-3 px-2 hidden lg:table-cell text-sm text-muted-foreground">
+                        {(user as { whitelabelName?: string | null }).whitelabelName ?? "—"}
                       </td>
                       <td className="py-3 px-2 text-foreground font-medium text-sm">
                         ₹{user.balance || "0.00"}
@@ -503,34 +552,42 @@ export default function UsersPage() {
                         <div className="flex gap-1">
                           <Button
                             size="sm"
-                            variant="ghost"
-                            title="View Details"
-                            className="h-8 w-8 p-0"
+                            // variant="outline"
+                            variant="secondary"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenChangeStatus(user);
+                            }}
+                            disabled={updatingUserId === user.id}
+                            title="Change status (User Active / Bet Active)"
+                            aria-label="Change status"
+                            className="h-8 px-2 gap-1"
                           >
-                            <Eye className="h-3 w-3" />
+                            <User2Icon className="h-3 w-3" />
+                            {/* <span className="test-xs">Status</span> */}
+                            {/* {(user.accountStatus !== false && user.parentAccountStatus !== false) ? ( */}
+                            {/*   <> */}
+                            {/*     <Ban className="h-3 w-3" /> */}
+                            {/*     <span className="text-xs">Suspend</span> */}
+                            {/*   </> */}
+                            {/* ) : ( */}
+                            {/*   <> */}
+                            {/*     <CheckCircle className="h-3 w-3" /> */}
+                            {/*     <span className="text-xs">Activate</span> */}
+                            {/*   </> */}
+                            {/* )} */}
                           </Button>
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => handleEditUser(user)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditUser(user);
+                            }}
                             title="Edit User"
                             className="h-8 w-8 p-0"
                           >
                             <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleToggleStatus(user)}
-                            disabled={updateUserMutation.isPending}
-                            title="Toggle Status"
-                            className="h-8 w-8 p-0"
-                          >
-                            {user.status === "active" ? (
-                              <Ban className="h-3 w-3" />
-                            ) : (
-                              <CheckCircle className="h-3 w-3" />
-                            )}
                           </Button>
                         </div>
                       </td>
@@ -541,7 +598,7 @@ export default function UsersPage() {
                 <tbody>
                   <tr>
                     <td
-                      colSpan={8}
+                      colSpan={9}
                       className="py-8 text-center text-muted-foreground"
                     >
                       No users found
@@ -560,6 +617,14 @@ export default function UsersPage() {
           </div>
         </CardContent>
       </Card>
+
+      <ChangeStatusModal
+        open={statusModalUser != null}
+        onClose={() => setStatusModalUser(null)}
+        user={statusModalUser}
+        onConfirm={handleChangeStatusConfirm}
+        isLoading={updatingUserId != null}
+      />
 
       <UserModal
         key={userModal.data?.id || "new"}

@@ -17,14 +17,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TransactionEditModalProps } from "./types";
+import { VoucherEditModalProps } from "./types";
 
-export function TransactionEditModal({
+export function VoucherEditModal({
   open,
   onClose,
-  transaction,
+  voucher,
   onSave,
-}: TransactionEditModalProps) {
+}: VoucherEditModalProps) {
   const [formData, setFormData] = useState({
     status: "",
     method: "",
@@ -33,32 +33,32 @@ export function TransactionEditModal({
   });
 
   React.useEffect(() => {
-    if (open && transaction) {
+    if (open && voucher) {
       setFormData({
-        status: transaction.status || "",
-        method: transaction.method || "",
-        reference: transaction.reference || "",
-        txnHash: transaction.txnHash || "",
+        status: voucher.status || "",
+        method: voucher.method || "",
+        reference: voucher.reference || "",
+        txnHash: voucher.txnHash || "",
       });
     }
-  }, [open, transaction]);
+  }, [open, voucher]);
 
   const handleSave = () => {
-    onSave({ id: transaction.id, ...formData });
+    onSave({ id: voucher.id, ...formData });
     onClose();
   };
 
-  if (!transaction) return null;
+  if (!voucher) return null;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="bg-card border max-h-[90vh] overflow-y-auto max-w-md">
         <DialogHeader>
           <DialogTitle className="text-foreground">
-            Edit Transaction
+            Edit Voucher
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            Update transaction details
+            Update voucher details
           </DialogDescription>
         </DialogHeader>
 

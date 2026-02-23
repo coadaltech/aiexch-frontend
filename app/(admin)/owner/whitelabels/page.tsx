@@ -2,12 +2,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Loader2, Database } from "lucide-react";
-import {
-  useWhitelabels,
-  useDeleteWhitelabel,
-  useMigrateDatabase,
-} from "@/hooks/useOwner";
+import { Plus, Edit, Trash2, Loader2 } from "lucide-react";
+import { useWhitelabels, useDeleteWhitelabel } from "@/hooks/useOwner";
 import { TableSkeleton } from "@/components/owner/skeletons";
 import { useConfirm } from "@/hooks/useConfirm";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -19,7 +15,6 @@ export default function WhitelabelsPage() {
 
   const { data: whitelabels = [], isLoading } = useWhitelabels();
   const deleteMutation = useDeleteWhitelabel();
-  const migrateDbMutation = useMigrateDatabase();
 
   const handleCreateWhitelabel = () => {
     router.push("/owner/whitelabels/create");
@@ -27,14 +22,6 @@ export default function WhitelabelsPage() {
 
   const handleEditWhitelabel = (whitelabel: any) => {
     router.push(`/owner/whitelabels/edit/${whitelabel.id}`);
-  };
-
-  const handleMigration = (id: number) => {
-    confirmDialog.confirm(
-      "Migrate Database",
-      "Are you sure you want to migrate the database? This action cannot be undone.",
-      () => migrateDbMutation.mutate(id)
-    );
   };
 
   const handleDeleteWhitelabel = (id: number) => {
@@ -80,6 +67,12 @@ export default function WhitelabelsPage() {
                   <th className="text-left py-3 px-2 text-muted-foreground text-sm hidden sm:table-cell">
                     Domain
                   </th>
+                  <th className="text-left py-3 px-2 text-muted-foreground text-sm hidden md:table-cell">
+                    User
+                  </th>
+                  <th className="text-left py-3 px-2 text-muted-foreground text-sm hidden lg:table-cell">
+                    Type
+                  </th>
                   <th className="text-left py-3 px-2 text-muted-foreground text-sm">
                     Colors
                   </th>
@@ -92,7 +85,7 @@ export default function WhitelabelsPage() {
                 </tr>
               </thead>
               {isLoading ? (
-                <TableSkeleton columns={5} />
+                <TableSkeleton columns={7} />
               ) : whitelabels.length > 0 ? (
                 <tbody>
                   {whitelabels.map((whitelabel: any) => (
@@ -107,9 +100,36 @@ export default function WhitelabelsPage() {
                         <div className="sm:hidden text-xs text-muted-foreground truncate">
                           {whitelabel.domain}
                         </div>
+                        {whitelabel.user && (
+                          <div className="md:hidden text-xs text-muted-foreground mt-1">
+                            User: {whitelabel.user.username}
+                          </div>
+                        )}
+                        <div className="lg:hidden text-xs text-muted-foreground mt-1">
+                          Type: {whitelabel.whitelabelType || "N/A"}
+                        </div>
                       </td>
                       <td className="py-3 px-2 text-muted-foreground text-sm hidden sm:table-cell truncate max-w-32">
                         {whitelabel.domain}
+                      </td>
+                      <td className="py-3 px-2 text-muted-foreground text-sm hidden md:table-cell">
+                        {whitelabel.user ? (
+                          <div>
+                            <div className="font-medium text-foreground text-sm">
+                              {whitelabel.user.username}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {whitelabel.user.email}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">N/A</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-2 text-muted-foreground text-sm hidden lg:table-cell">
+                        <Badge variant={whitelabel.whitelabelType === "B2B" ? "default" : "secondary"} className="text-xs">
+                          {whitelabel.whitelabelType || "N/A"}
+                        </Badge>
                       </td>
                       <td className="py-3 px-2">
                         <div className="flex gap-1">
@@ -148,20 +168,6 @@ export default function WhitelabelsPage() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => handleMigration(whitelabel.id)}
-                            title="Migrate DB"
-                            className="h-8 w-8 p-0 text-foreground"
-                            disabled={migrateDbMutation.isPending}
-                          >
-                            {migrateDbMutation.isPending ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : (
-                              <Database className="h-3 w-3" />
-                            )}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
                             onClick={() => handleEditWhitelabel(whitelabel)}
                             title="Edit"
                             className="h-8 w-8 p-0 text-foreground"
@@ -193,7 +199,7 @@ export default function WhitelabelsPage() {
                 <tbody>
                   <tr>
                     <td
-                      colSpan={5}
+                      colSpan={7}
                       className="py-8 text-center text-muted-foreground"
                     >
                       No white labels found

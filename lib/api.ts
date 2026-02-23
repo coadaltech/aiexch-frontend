@@ -23,6 +23,18 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Check for database not found error
+    if (
+      error.response?.status === 503 &&
+      error.response?.data?.error === "DATABASE_NOT_FOUND"
+    ) {
+      // Dispatch custom event to show database error dialog
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("database-not-found"));
+      }
+      return Promise.reject(error);
+    }
+
     if (
       [404, 401].includes(error.response?.status) &&
       !originalRequest._retry
@@ -66,6 +78,8 @@ export interface RegisterRequest {
   phone?: string;
   country?: string;
   otp: string;
+  whitelabelId?: number | null;
+  domain?: string;
 }
 
 export interface Transaction {
@@ -138,10 +152,6 @@ export const ownerApi = {
   updateWhitelabel: (id: number, data: any) =>
     api.put(`/owner/whitelabels/${id}`, data),
   deleteWhitelabel: (id: number) => api.delete(`/owner/whitelabels/${id}`),
-  generateDatabase: (id: number) =>
-    api.post(`/owner/whitelabels/db/generate/${id}`),
-  migrateDatabase: (id: number) =>
-    api.post(`/owner/whitelabels/db/migrate/${id}`),
 
   // Promotions
   getPromotions: () => api.get("/owner/promotions"),
@@ -157,6 +167,7 @@ export const ownerApi = {
 
   // Users
   getUsers: () => api.get("/owner/users"),
+  createUser: (data: any) => api.post("/owner/users", data),
   updateUser: (id: number, data: any) => api.put(`/owner/users/${id}`, data),
 
   // Popups
@@ -178,11 +189,11 @@ export const ownerApi = {
     api.put(`/owner/promocodes/${id}`, data),
   deletePromocode: (id: number) => api.delete(`/owner/promocodes/${id}`),
 
-  // Transactions
-  getTransactions: () => api.get("/owner/transactions"),
-  createTransaction: (data: any) => api.post("/owner/transactions", data),
-  updateTransaction: (id: number, data: any) =>
-    api.put(`/owner/transactions/${id}`, data),
+  // Vouchers
+  getVouchers: () => api.get("/owner/vouchers"),
+  createVoucher: (data: any) => api.post("/owner/vouchers", data),
+  updateVoucher: (id: number, data: any) =>
+    api.put(`/owner/vouchers/${id}`, data),
 
   // KYC
   getKycDocuments: () => api.get("/owner/kyc"),
@@ -340,6 +351,7 @@ export const publicApi = {
   submitWhitelabelRequest: (data: any) =>
     api.post("/public/whitelabel-request", data),
   getSettings: () => api.get("/public/settings"),
+  getWhitelabelInfo: () => api.get("/public/whitelabel-info"),
   getQrCodes: () => api.get("/public/qrcodes"),
   getWithdrawalMethods: () => api.get("/public/withdrawal-methods"),
   getHomeSections: () => api.get("/public/home-sections"),

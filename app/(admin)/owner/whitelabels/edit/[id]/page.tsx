@@ -15,6 +15,8 @@ export default function EditWhitelabelPage() {
 
   const handleSave = async (formData: Whitelabel) => {
     const formDataToSend = new FormData();
+    formDataToSend.append('userId', formData.userId.toString());
+    formDataToSend.append('whitelabelType', formData.whitelabelType);
     formDataToSend.append('name', formData.name);
     formDataToSend.append('domain', formData.domain);
     if (formData.title) formDataToSend.append('title', formData.title);

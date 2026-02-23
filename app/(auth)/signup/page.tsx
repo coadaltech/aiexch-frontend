@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useRegister, useSendOTP } from "@/hooks/useAuth";
+import { useRegister, useSendOTP, useWhitelabelInfo } from "@/hooks/useAuth";
 import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { countries } from "@/data/countries";
@@ -38,6 +38,23 @@ export default function SignupPage() {
   const router = useRouter();
   const registerMutation = useRegister();
   const sendOTPMutation = useSendOTP();
+  const { data: whitelabelInfo } = useWhitelabelInfo();
+  const isB2B = whitelabelInfo?.whitelabelType === "B2B";
+
+  useEffect(() => {
+    if (isB2B) {
+      router.replace("/login");
+      toast.info("Sign up is not available. Please sign in or contact your admin.");
+    }
+  }, [isB2B, router]);
+
+  if (isB2B) {
+    return (
+      <Card className="h-full lg:h-auto p-6 lg:p-8 border-0 lg:border lg:border-border/50 shadow-none lg:shadow-xl rounded-none lg:rounded-lg flex flex-col justify-center items-center">
+        <p className="text-muted-foreground">Redirecting to sign in...</p>
+      </Card>
+    );
+  }
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,11 +88,13 @@ export default function SignupPage() {
         phone: formData.phone,
         country: formData.country,
         otp,
+        ...(whitelabelInfo?.id != null && { whitelabelId: whitelabelInfo.id }),
+        ...(typeof window !== "undefined" && window.location?.host && { domain: window.location.host }),
       },
       {
         onSuccess: () => {
-          toast.success("Registration successful! Please login.");
-          router.push("/login");
+          toast.success("Registration successful! Please sign in to play.");
+          router.push("/");
         },
         onError: (error: any) => {
           setError(error.response?.data?.message || "Registration failed");

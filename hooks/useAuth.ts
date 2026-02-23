@@ -1,5 +1,18 @@
-import { useMutation } from "@tanstack/react-query";
-import { authApi, LoginRequest, RegisterRequest } from "@/lib/api";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { authApi, LoginRequest, RegisterRequest, publicApi } from "@/lib/api";
+
+export type WhitelabelType = "B2B" | "B2C" | null;
+
+export const useWhitelabelInfo = () => {
+  return useQuery({
+    queryKey: ["whitelabel-info"],
+    queryFn: async () => {
+      const { data } = await publicApi.getWhitelabelInfo();
+      return data?.data as { whitelabelType: WhitelabelType; id: number | null; name: string | null };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+};
 
 export const useLogin = () => {
   return useMutation({

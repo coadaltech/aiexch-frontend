@@ -18,7 +18,7 @@ import {
 import {
   useOwnerUsers,
   usePromotions,
-  useTransactions,
+  useVouchers,
   useKycDocuments,
 } from "@/hooks/useOwner";
 import { useRouter } from "next/navigation";
@@ -26,41 +26,45 @@ import {
   DashboardStatsSkeleton,
   DashboardActivitySkeleton,
 } from "@/components/owner/skeletons";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function AdminDashboard() {
   const router = useRouter();
+  const { user } = useAuth(); 
   const { data: users = [], isLoading: usersLoading } = useOwnerUsers();
   const { data: promotions = [], isLoading: promotionsLoading } =
     usePromotions();
-  const { data: transactions = [], isLoading: transactionsLoading } =
-    useTransactions();
+  const { data: vouchers = [], isLoading: vouchersLoading } =
+    useVouchers();
   const { data: kycDocuments = [], isLoading: kycLoading } = useKycDocuments();
 
   const isLoading =
-    usersLoading || promotionsLoading || transactionsLoading || kycLoading;
+    usersLoading || promotionsLoading || vouchersLoading || kycLoading;
 
   // Calculate real stats
   const totalUsers = users.length;
-  const activeUsers = users.filter((u) => u.status === "active").length;
+  const activeUsers = users.filter(
+    (u) => (u.accountStatus ?? true) && (u.parentAccountStatus ?? true)
+  ).length;
   const activePromotions = promotions.filter(
     (p) => p.status === "active"
   ).length;
   const pendingKyc = kycDocuments.filter((k) => k.status === "pending").length;
-  const todayTransactions = transactions.filter((t) => {
+  const todayVouchers = vouchers.filter((t) => {
     const today = new Date().toDateString();
     return new Date(t.createdAt).toDateString() === today;
   });
-  const todayVolume = todayTransactions.reduce(
+  const todayVolume = todayVouchers.reduce(
     (sum, t) => sum + parseFloat(t.amount || "0"),
     0
   );
-  const pendingTransactions = transactions.filter(
+  const pendingVouchers = vouchers.filter(
     (t) => t.status === "pending"
   ).length;
-  const completedTransactions = transactions.filter(
+  const completedVouchers = vouchers.filter(
     (t) => t.status === "completed"
   ).length;
-  const totalVolume = transactions.reduce(
+  const totalVolume = vouchers.reduce(
     (sum, t) => sum + parseFloat(t.amount || "0"),
     0
   );
@@ -91,21 +95,21 @@ export default function AdminDashboard() {
       title: "Today's Volume",
       value: `$${todayVolume.toLocaleString()}`,
       icon: DollarSign,
-      change: `${todayTransactions.length} transactions`,
+      change: `${todayVouchers.length} vouchers`,
       color: "text-purple-500",
     },
     {
       title: "Total Volume",
       value: `$${totalVolume.toLocaleString()}`,
       icon: TrendingUp,
-      change: `${transactions.length} total`,
+      change: `${vouchers.length} total`,
       color: "text-emerald-500",
     },
     {
-      title: "Pending Transactions",
-      value: pendingTransactions.toString(),
+      title: "Pending Vouchers",
+      value: pendingVouchers.toString(),
       icon: CreditCard,
-      change: `${completedTransactions} completed`,
+      change: `${completedVouchers} completed`,
       color: "text-orange-500",
     },
   ];
@@ -127,7 +131,7 @@ export default function AdminDashboard() {
         message: `KYC document submitted (ID: ${k.id})`,
         time: new Date(k.createdAt).toLocaleDateString(),
       })),
-    ...transactions
+    ...vouchers
       .filter((t) => t.status === "pending")
       .slice(-2)
       .map((t) => ({
@@ -142,7 +146,7 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-          Dashboard
+          Dashboard 
         </h1>
         <p className="text-muted-foreground">Welcome to the owner panel</p>
       </div>
@@ -250,11 +254,11 @@ export default function AdminDashboard() {
               Review KYC ({pendingKyc})
             </button>
             <button
-              onClick={() => router.push("/owner/transactions")}
+              onClick={() => router.push("/owner/vouchers")}
               className="w-full text-left p-3 rounded-lg bg-muted hover:bg-primary hover:text-black text-foreground transition-colors flex items-center gap-2"
             >
               <CreditCard className="h-4 w-4" />
-              Transactions ({pendingTransactions})
+              Vouchers ({pendingVouchers})
             </button>
             <button
               onClick={() => router.push("/owner/users")}
@@ -385,7 +389,7 @@ export default function AdminDashboard() {
                 <span className="text-muted-foreground">Pending Amount</span>
                 <span className="text-yellow-500 font-semibold">
                   $
-                  {transactions
+                  {vouchers
                     .filter((t) => t.status === "pending")
                     .reduce((sum, t) => sum + parseFloat(t.amount || "0"), 0)
                     .toLocaleString()}
@@ -394,9 +398,9 @@ export default function AdminDashboard() {
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Success Rate</span>
                 <span className="text-blue-500 font-semibold">
-                  {transactions.length > 0
+                  {vouchers.length > 0
                     ? Math.round(
-                        (completedTransactions / transactions.length) * 100
+                        (completedVouchers / vouchers.length) * 100
                       )
                     : 0}
                   %

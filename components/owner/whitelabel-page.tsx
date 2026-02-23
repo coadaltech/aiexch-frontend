@@ -7,6 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft } from "lucide-react";
 import { Whitelabel, WhitelabelTheme } from "./types";
+import { useConfirm } from "@/hooks/useConfirm";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { AlertCircle } from "lucide-react";
 import {
   GeneralTab,
   ThemeTab,
@@ -114,10 +124,15 @@ export function WhitelabelPage({
   title,
 }: WhitelabelPageProps) {
   const router = useRouter();
+  const confirmDialog = useConfirm();
   const [activeTab, setActiveTab] = useState("general");
   const [completedTabs, setCompletedTabs] = useState<string[]>([]);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [showValidationDialog, setShowValidationDialog] = useState(false);
 
   const [formData, setFormData] = useState<Whitelabel>({
+    userId: 0,
+    whitelabelType: "B2C",
     name: "",
     domain: "",
     title: "",
@@ -155,7 +170,7 @@ export function WhitelabelPage({
       sports: true,
       liveCasino: true,
       promotions: true,
-      transactions: true,
+      vouchers: true,
       userManagement: false,
       reports: false,
       settings: false,
@@ -189,7 +204,7 @@ export function WhitelabelPage({
 
   const validateTab = (tab: string): boolean => {
     if (tab === "general")
-      return !!(formData.name && formData.domain && formData.contactEmail);
+      return !!(formData.name && formData.domain && formData.contactEmail && formData.userId);
     if (tab === "theme") return true;
     if (tab === "layout") return true;
     if (tab === "config")
@@ -198,6 +213,58 @@ export function WhitelabelPage({
     if (tab === "permissions") return true;
     if (tab === "preview") return true;
     return false;
+  };
+
+  const validateForm = (): { isValid: boolean; errors: string[] } => {
+    const errors: string[] = [];
+
+    if (!formData.userId || formData.userId === 0) {
+      errors.push("User selection is required");
+    }
+    if (!formData.whitelabelType) {
+      errors.push("White Label Type is required");
+    }
+    if (!formData.name || !formData.name.trim()) {
+      errors.push("Casino Name is required");
+    }
+    if (!formData.domain || !formData.domain.trim()) {
+      errors.push("Domain is required");
+    }
+    if (!formData.contactEmail || !formData.contactEmail.trim()) {
+      errors.push("Contact Email is required");
+    }
+    if (!formData.config?.dbName || !formData.config.dbName.trim()) {
+      errors.push("Database Name is required");
+    }
+    if (!formData.config?.s3FolderName || !formData.config.s3FolderName.trim()) {
+      errors.push("S3 Folder Name is required");
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+    };
+  };
+
+  const handleCreateClick = () => {
+    const validation = validateForm();
+    
+    if (!validation.isValid) {
+      setValidationErrors(validation.errors);
+      setShowValidationDialog(true);
+      return;
+    }
+
+    // Show confirmation dialog
+    confirmDialog.confirm(
+      whitelabel ? "Update White Label" : "Create White Label",
+      whitelabel
+        ? `Are you sure you want to update "${formData.name}"? This will save all your changes.`
+        : `Are you sure you want to create the white label "${formData.name}"? This action will create a new white label configuration.`,
+      () => {
+        onSave(formData);
+      }
+    );
   };
 
   const handleTabChange = (value: string) => {
@@ -280,13 +347,58 @@ export function WhitelabelPage({
           </h1>
         </div>
         <Button
-          onClick={() => onSave(formData)}
+          onClick={handleCreateClick}
           className="bg-primary"
           disabled={isLoading}
         >
           {isLoading ? "Saving..." : whitelabel ? "Update" : "Create"}
         </Button>
       </div>
+
+      {/* Validation Error Dialog */}
+      <Dialog open={showValidationDialog} onOpenChange={setShowValidationDialog}>
+        <DialogContent className="bg-card border max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-destructive/10 rounded-full">
+                <AlertCircle className="h-6 w-6 text-destructive" />
+              </div>
+              <DialogTitle className="text-foreground text-xl">
+                Required Fields Missing
+              </DialogTitle>
+            </div>
+            <DialogDescription className="text-muted-foreground text-base pt-2">
+              Please fill in all required fields before {whitelabel ? "updating" : "creating"} the white label:
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4">
+            <ul className="list-disc list-inside space-y-1 text-sm text-foreground">
+              {validationErrors.map((error, index) => (
+                <li key={index} className="text-destructive">{error}</li>
+              ))}
+            </ul>
+          </div>
+          <div className="flex justify-end gap-2 mt-6">
+            <Button
+              onClick={() => setShowValidationDialog(false)}
+              variant="default"
+              className="bg-primary text-primary-foreground"
+            >
+              OK
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.config?.title || ""}
+        message={confirmDialog.config?.message || ""}
+        onConfirm={confirmDialog.handleConfirm}
+        onCancel={confirmDialog.handleCancel}
+        isLoading={isLoading}
+      />
 
       <Card className="bg-card border">
         <CardContent className="p-6">

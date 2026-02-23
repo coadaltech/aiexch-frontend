@@ -42,17 +42,21 @@ export async function middleware(request: NextRequest) {
 
   const response = NextResponse.next();
 
+  const PANEL_ROLES = ["owner", "admin", "super", "master", "agent"];
+  const isPanelRole = userRole && PANEL_ROLES.includes(userRole.toLowerCase());
+  const isAuthRoute = pathname.startsWith("/login") || pathname.startsWith("/signup") || pathname.startsWith("/forgot-password");
+
   if (isAuth && userRole) {
-    // Special handling for owner routes - owner role can access all /owner routes
+    // Panel users (owner, admin, super, master, agent) can only access /owner and auth routes; redirect them from main site to panel
+    if (isPanelRole && !pathname.startsWith("/owner") && !isAuthRoute) {
+      return NextResponse.redirect(new URL("/owner", request.url));
+    }
+    // Special handling for owner routes - only panel roles can access
     if (pathname.startsWith("/owner")) {
-      if (userRole === "owner") {
-        // Owner can access all owner routes
+      if (isPanelRole) {
         return response;
       }
-      else {
-        // Non-owner users trying to access owner routes
-        return NextResponse.redirect(new URL("/access-denied", request.url));
-      }
+      return NextResponse.redirect(new URL("/access-denied", request.url));
     }
   }
 

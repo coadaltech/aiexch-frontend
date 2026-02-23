@@ -24,7 +24,9 @@ export function ConfirmDialog({ isOpen, title, message, onConfirm, onCancel, isL
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={onCancel} disabled={isLoading}>Cancel</Button>
-          <Button variant="destructive" onClick={onConfirm} isLoading={isLoading}>Confirm</Button>
+          <Button variant="destructive" onClick={onConfirm} disabled={isLoading}>
+            {isLoading ? "Processing..." : "Confirm"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

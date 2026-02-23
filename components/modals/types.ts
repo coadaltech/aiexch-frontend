@@ -9,6 +9,7 @@ export interface BettingModalProps {
       matchId: string;
       marketId: string;
       selectionId: string;
+      eventTypeId?: string | number;
       marketName?: string;
       runnerName?: string;
       type: string;

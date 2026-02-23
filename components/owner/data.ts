@@ -36,7 +36,7 @@ export const navigation: {
       { name: "Popups", href: "/owner/popups" },
     ],
   },
-  { name: "Transactions", href: "/owner/transactions", icon: CreditCard },
+  { name: "Vouchers", href: "/owner/vouchers", icon: CreditCard },
   { name: "Notifications", href: "/owner/notifications", icon: Bell },
   { name: "QR Codes", href: "/owner/qrcodes", icon: QrCode },
   {

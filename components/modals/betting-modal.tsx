@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { X, Calculator, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { useBetting } from "@/hooks/useBetting";
 import { BettingModalProps } from "./types";
 
@@ -50,6 +51,7 @@ export function BettingModal({ open, onClose, match }: BettingModalProps) {
       await placeBetAsync({
         matchId: match.marketData.matchId,
         marketId: match.marketData.marketId || "default-market",
+        eventTypeId: match.marketData.eventTypeId?.toString() || "1",
         selectionId: match.marketData.selectionId,
         marketName: match.marketData.marketName || marketName,
         runnerName: match.marketData.runnerName || runnerName,
@@ -58,10 +60,14 @@ export function BettingModal({ open, onClose, match }: BettingModalProps) {
         type: match.marketData.type as "back" | "lay",
       });
 
+      toast.success("Bet placed.");
       onClose();
       setStake("");
-    } catch (error) {
-      console.error("Bet placement failed:", error);
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+        (err instanceof Error ? err.message : "Failed to place bet");
+      toast.error(message);
     }
   };
 

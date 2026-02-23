@@ -1,28 +1,42 @@
 "use client";
 import { ReactNode, useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { SidebarProvider } from "./ui/sidebar";
 import Header from "./layout/header";
 import { AppSidebar } from "./layout/app-sidebar-new";
 import Dropheader from "./layout/dropheader";
 import Footer from "./layout/footer";
+import { useWhitelabelInfo } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function MainLayout({ children }: { children: ReactNode }) {
-  const [is_home_route, setIsHomeRoute] = useState(false)
+  const [is_home_route, setIsHomeRoute] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const { data: whitelabelInfo } = useWhitelabelInfo();
+  const { isLoggedIn } = useAuth();
   const isOwnerRoute = pathname?.startsWith("/owner");
   const isAuthRoute =
     pathname?.startsWith("/login") ||
     pathname?.startsWith("/signup") ||
     pathname?.startsWith("/forgot-password");
 
+  const isB2B = String(whitelabelInfo?.whitelabelType ?? "").toUpperCase() === "B2B";
+  const isHomeOrRoot = pathname === "/" || pathname === "/home";
+
+  useEffect(() => {
+    if (isB2B && isHomeOrRoot && !isLoggedIn) {
+      router.replace("/login");
+    }
+  }, [isB2B, isHomeOrRoot, isLoggedIn, router]);
+
   if (isOwnerRoute || isAuthRoute) {
     return <>{children}</>;
   }
-  useEffect(() => {
-    setIsHomeRoute(pathname === "/home");
-  }, [pathname])
 
+  if (isB2B && isHomeOrRoot && !isLoggedIn) {
+    return null;
+  }
 
   return (
     <SidebarProvider>

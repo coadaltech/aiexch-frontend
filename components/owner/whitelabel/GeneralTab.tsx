@@ -3,7 +3,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { FileUpload } from "@/components/ui/file-upload";
-import { Whitelabel } from "../types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Whitelabel, WhitelabelType } from "../types";
+import { useOwnerUsers } from "@/hooks/useOwner";
 
 interface GeneralTabProps {
   formData: Whitelabel;
@@ -11,11 +19,12 @@ interface GeneralTabProps {
 }
 
 export function GeneralTab({ formData, setFormData }: GeneralTabProps) {
+  const { data: users = [], isLoading: usersLoading } = useOwnerUsers();
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
-  const validateField = (field: string, value: string) => {
+  const validateField = (field: string, value: string | number) => {
     const newErrors = { ...errors };
-    if (!value.trim()) {
+    if (!value || (typeof value === "string" && !value.trim()) || (typeof value === "number" && value === 0)) {
       newErrors[field] = "This field is required";
     } else {
       delete newErrors[field];
@@ -25,6 +34,61 @@ export function GeneralTab({ formData, setFormData }: GeneralTabProps) {
 
   return (
     <div className="space-y-4">
+      <div>
+        <Label className="text-muted-foreground">Select User *</Label>
+        <Select
+          value={formData.userId && formData.userId > 0 ? formData.userId.toString() : undefined}
+          onValueChange={(value) => {
+            const userId = parseInt(value, 10);
+            setFormData({ ...formData, userId });
+            validateField("userId", userId);
+          }}
+          required
+          disabled={usersLoading}
+        >
+          <SelectTrigger className={`bg-input border text-foreground ${errors.userId ? "border-red-500" : ""}`}>
+            <SelectValue placeholder={usersLoading ? "Loading users..." : "Select a user"} />
+          </SelectTrigger>
+          <SelectContent className="bg-card border max-h-[300px]">
+            {users.map((user: any) => (
+              <SelectItem
+                key={user.id}
+                value={user.id.toString()}
+                className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black"
+              >
+                {user.username} ({user.email})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {errors.userId && <p className="text-xs text-red-500">{errors.userId}</p>}
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label className="text-muted-foreground">White Label Type *</Label>
+          <Select
+            value={formData.whitelabelType || "B2C"}
+            onValueChange={(value: WhitelabelType) => {
+              setFormData({ ...formData, whitelabelType: value });
+              validateField("whitelabelType", value);
+            }}
+            required
+          >
+            <SelectTrigger className={`bg-input border text-foreground ${errors.whitelabelType ? "border-red-500" : ""}`}>
+              <SelectValue placeholder="Select type" />
+            </SelectTrigger>
+            <SelectContent className="bg-card border">
+              <SelectItem value="B2B" className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black">
+                B2B (Business to Business)
+              </SelectItem>
+              <SelectItem value="B2C" className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black">
+                B2C (Business to Client)
+              </SelectItem>
+            </SelectContent>
+          </Select>
+          {errors.whitelabelType && <p className="text-xs text-red-500">{errors.whitelabelType}</p>}
+        </div>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label className="text-muted-foreground">Casino Name *</Label>
@@ -133,7 +197,7 @@ export function GeneralTab({ formData, setFormData }: GeneralTabProps) {
         />
         <Label className="text-muted-foreground">Active</Label>
       </div>
-      
+
       <div className="space-y-4 pt-4 border-t">
         <h3 className="text-lg font-semibold text-foreground">Social Links</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

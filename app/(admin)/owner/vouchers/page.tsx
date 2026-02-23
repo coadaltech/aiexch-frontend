@@ -7,47 +7,48 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Eye, CheckCircle, XCircle, Plus, Edit, Image, ChevronUp, ChevronDown } from "lucide-react";
-import { useTransactions, useUpdateTransaction, useCreateTransaction } from "@/hooks/useOwner";
+import { useVouchers, useUpdateVoucher, useCreateVoucher } from "@/hooks/useOwner";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useFilters } from "@/hooks/useFilters";
 import { useTableSort } from "@/hooks/useTableSort";
 import { usePagination } from "@/hooks/usePagination";
-import { TransactionModal } from "@/components/owner/transaction-modal";
-import { TransactionEditModal } from "@/components/owner/transaction-edit-modal";
+import { VoucherModal } from "@/components/owner/voucher-modal";
+import { VoucherEditModal } from "@/components/owner/voucher-edit-modal";
 import { Pagination } from "@/components/ui/pagination";
 import { TableSkeleton } from "@/components/owner/skeletons";
 import { useModal } from "@/hooks/useModal";
 
-export default function TransactionsPage() {
+export default function VouchersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const createModal = useModal();
   const editModal = useModal<any>();
   const imageModal = useModal<string>();
   const detailsModal = useModal<any>();
 
-  const { data: transactions = [], isLoading, error } = useTransactions();
-  const updateTransactionMutation = useUpdateTransaction();
-  const createTransactionMutation = useCreateTransaction();
-  
+  const { data: vouchers = [], isLoading, error } = useVouchers();
+  const updateVoucherMutation = useUpdateVoucher();
+  const createVoucherMutation = useCreateVoucher();
+
   const debouncedSearch = useDebounce(searchTerm, 300);
-  
+
   const { filters, filteredData, updateFilter } = useFilters({
-    data: transactions,
+    data: vouchers,
     initialFilters: {
       search: debouncedSearch,
       status: "all",
       type: "all",
+      method: "all",
       dateFrom: "",
       dateTo: ""
     }
   });
-  
+
   const { sortedData, requestSort, getSortIcon } = useTableSort({
     data: filteredData,
     initialSort: { key: "createdAt", direction: "desc" }
   });
-  
-  const { items: paginatedTransactions, totalPages, currentPage, goToPage } = usePagination({
+
+  const { items: paginatedVouchers, totalPages, currentPage, goToPage } = usePagination({
     data: sortedData,
     itemsPerPage: 10
   });
@@ -55,24 +56,27 @@ export default function TransactionsPage() {
 
 
   const handleUpdateStatus = (id: number, status: string) => {
-    updateTransactionMutation.mutate({ id, status });
+    updateVoucherMutation.mutate({ id, status });
   };
 
-  const handleCreateTransaction = () => {
+  const handleCreateVoucher = () => {
     createModal.open();
   };
 
-  const handleSaveTransaction = (transactionData: any) => {
-    createTransactionMutation.mutate(transactionData);
-    createModal.close();
+  const handleSaveVoucher = (voucherData: any) => {
+    createVoucherMutation.mutate(voucherData, {
+      onSuccess: () => {
+        createModal.close();
+      },
+    });
   };
 
-  const handleEditTransaction = (transaction: any) => {
-    editModal.open(transaction);
+  const handleEditVoucher = (voucher: any) => {
+    editModal.open(voucher);
   };
 
-  const handleUpdateTransaction = (data: any) => {
-    updateTransactionMutation.mutate(data);
+  const handleUpdateVoucher = (data: any) => {
+    updateVoucherMutation.mutate(data);
     editModal.close();
   };
 
@@ -105,7 +109,7 @@ export default function TransactionsPage() {
   if (error) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-red-500">Error loading transactions</div>
+        <div className="text-red-500">Error loading vouchers</div>
       </div>
     );
   }
@@ -114,19 +118,19 @@ export default function TransactionsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Transactions</h1>
-          <p className="text-muted-foreground">Monitor and manage user transactions</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Vouchers</h1>
+          <p className="text-muted-foreground">Monitor and manage user vouchers</p>
         </div>
-        <Button onClick={handleCreateTransaction} className="bg-primary text-primary-foreground w-full sm:w-auto">
+        <Button onClick={handleCreateVoucher} className="bg-primary text-primary-foreground w-full sm:w-auto">
           <Plus className="h-4 w-4 mr-2" />
-          Add Transaction
+          Add Voucher
         </Button>
       </div>
 
       <Card className="bg-card border">
         <CardHeader>
           <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
-            <CardTitle className="text-foreground">Transaction Management</CardTitle>
+            <CardTitle className="text-foreground">Voucher Management</CardTitle>
             <div className="space-y-3">
               <div className="flex flex-col sm:flex-row gap-2">
                 <Select value={filters.status} onValueChange={(value) => updateFilter('status', value)}>
@@ -140,7 +144,7 @@ export default function TransactionsPage() {
                     <SelectItem value="failed" className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black">Failed</SelectItem>
                   </SelectContent>
                 </Select>
-                
+
                 <Select value={filters.type} onValueChange={(value) => updateFilter('type', value)}>
                   <SelectTrigger className="w-full sm:w-32 bg-background border text-foreground hover:bg-muted">
                     <SelectValue placeholder="Type" />
@@ -152,8 +156,21 @@ export default function TransactionsPage() {
                     <SelectItem value="bonus" className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black">Bonus</SelectItem>
                   </SelectContent>
                 </Select>
+
+                <Select value={filters.method} onValueChange={(value) => updateFilter('method', value)}>
+                  <SelectTrigger className="w-full sm:w-32 bg-background border text-foreground hover:bg-muted">
+                    <SelectValue placeholder="Method" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border text-black">
+                    <SelectItem value="all" className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black">All Methods</SelectItem>
+                    <SelectItem value="admin_credits" className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black">Admin Credits</SelectItem>
+                    <SelectItem value="crypto" className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black">Crypto</SelectItem>
+                    <SelectItem value="bank" className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black">Bank Transfer</SelectItem>
+                    <SelectItem value="promocode" className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black">Promocode</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              
+
               <div className="flex flex-col sm:flex-row gap-2">
                 <Input
                   type="date"
@@ -162,7 +179,7 @@ export default function TransactionsPage() {
                   className="w-full sm:w-40 bg-input border text-foreground [&::-webkit-calendar-picker-indicator]:invert"
                   placeholder="From date"
                 />
-                
+
                 <Input
                   type="date"
                   value={filters.dateTo}
@@ -170,11 +187,11 @@ export default function TransactionsPage() {
                   className="w-full sm:w-40 bg-input border text-foreground [&::-webkit-calendar-picker-indicator]:invert"
                   placeholder="To date"
                 />
-                
+
                 <div className="relative w-full sm:w-64">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search transactions..."
+                    placeholder="Search vouchers..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10 bg-input border"
@@ -238,28 +255,28 @@ export default function TransactionsPage() {
               </thead>
               {isLoading ? (
                 <TableSkeleton columns={8} />
-              ) : paginatedTransactions.length > 0 ? (
+              ) : paginatedVouchers.length > 0 ? (
                 <tbody>
-                  {paginatedTransactions.map((transaction) => (
-                    <tr key={transaction.id} className="border-b border-border/50">
+                  {paginatedVouchers.map((voucher) => (
+                    <tr key={voucher.id} className="border-b border-border/50">
                       <td className="py-3 px-2">
-                        <div className="font-medium text-foreground text-sm">#{transaction.id}</div>
-                        <div className="sm:hidden text-xs text-muted-foreground">ID: {transaction.userId}</div>
-                        <div className="lg:hidden text-xs text-muted-foreground">{new Date(transaction.createdAt).toLocaleDateString()}</div>
+                        <div className="font-medium text-foreground text-sm">#{voucher.id}</div>
+                        <div className="sm:hidden text-xs text-muted-foreground">ID: {voucher.userId}</div>
+                        <div className="lg:hidden text-xs text-muted-foreground">{new Date(voucher.createdAt).toLocaleDateString()}</div>
                       </td>
-                      <td className="py-3 px-2 text-muted-foreground text-sm hidden sm:table-cell">{transaction.userId}</td>
-                      <td className="py-3 px-2">{getTypeBadge(transaction.type)}</td>
+                      <td className="py-3 px-2 text-muted-foreground text-sm hidden sm:table-cell">{voucher.userId}</td>
+                      <td className="py-3 px-2">{getTypeBadge(voucher.type)}</td>
                       <td className="py-3 px-2 text-foreground font-medium text-sm">
-                        {transaction.amount} {transaction.currency}
-                        <div className="md:hidden text-xs text-muted-foreground">{transaction.method || "N/A"}</div>
+                        {voucher.amount} {voucher.currency}
+                        <div className="md:hidden text-xs text-muted-foreground">{voucher.method || "N/A"}</div>
                       </td>
-                      <td className="py-3 px-2 text-muted-foreground text-sm hidden md:table-cell">{transaction.method || "N/A"}</td>
+                      <td className="py-3 px-2 text-muted-foreground text-sm hidden md:table-cell">{voucher.method || "N/A"}</td>
                       <td className="py-3 px-2 hidden lg:table-cell">
-                        {transaction.proofImage ? (
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            onClick={() => imageModal.open(transaction.proofImage)}
+                        {voucher.proofImage ? (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => imageModal.open(voucher.proofImage)}
                             className="h-8 w-8 p-0 text-blue-500 hover:text-blue-400"
                             title="View Proof Image"
                           >
@@ -269,50 +286,50 @@ export default function TransactionsPage() {
                           <span className="text-muted-foreground text-xs">No image</span>
                         )}
                       </td>
-                      <td className="py-3 px-2">{getStatusBadge(transaction.status)}</td>
+                      <td className="py-3 px-2">{getStatusBadge(voucher.status)}</td>
                       <td className="py-3 px-2 text-muted-foreground text-sm hidden lg:table-cell">
-                        {new Date(transaction.createdAt).toLocaleDateString()}
+                        {new Date(voucher.createdAt).toLocaleDateString()}
                       </td>
                       <td className="py-3 px-2">
                         <div className="flex gap-1">
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            onClick={() => detailsModal.open(transaction)}
-                            title="View Details" 
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => detailsModal.open(voucher)}
+                            title="View Details"
                             className="h-8 w-8 p-0"
                           >
                             <Eye className="h-3 w-3" />
                           </Button>
-                          {transaction.proofImage && (
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
-                              onClick={() => imageModal.open(transaction.proofImage)}
+                          {voucher.proofImage && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => imageModal.open(voucher.proofImage)}
                               title="View Proof Image"
                               className="h-8 w-8 p-0 text-blue-500 hover:text-blue-400 lg:hidden"
                             >
                               <Image className="h-3 w-3" />
                             </Button>
                           )}
-                          <Button size="sm" variant="ghost" onClick={() => handleEditTransaction(transaction)} title="Edit" className="h-8 w-8 p-0">
+                          <Button size="sm" variant="ghost" onClick={() => handleEditVoucher(voucher)} title="Edit" className="h-8 w-8 p-0">
                             <Edit className="h-3 w-3" />
                           </Button>
-                          {transaction.status === "pending" && (
+                          {voucher.status === "pending" && (
                             <>
-                              <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                onClick={() => handleUpdateStatus(transaction.id, "completed")}
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleUpdateStatus(voucher.id, "completed")}
                                 title="Approve"
                                 className="h-8 w-8 p-0 text-green-500 hover:text-green-400"
                               >
                                 <CheckCircle className="h-3 w-3" />
                               </Button>
-                              <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                onClick={() => handleUpdateStatus(transaction.id, "failed")}
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleUpdateStatus(voucher.id, "failed")}
                                 title="Reject"
                                 className="h-8 w-8 p-0 text-red-500 hover:text-red-400"
                               >
@@ -329,7 +346,7 @@ export default function TransactionsPage() {
                 <tbody>
                   <tr>
                     <td colSpan={9} className="py-8 text-center text-muted-foreground">
-                      No transactions found
+                      No vouchers found
                     </td>
                   </tr>
                 </tbody>
@@ -345,29 +362,29 @@ export default function TransactionsPage() {
           </div>
         </CardContent>
       </Card>
-      
-      <TransactionModal
+
+      <VoucherModal
         open={createModal.isOpen}
         onClose={createModal.close}
-        onSave={handleSaveTransaction}
+        onSave={handleSaveVoucher}
       />
-      
-      <TransactionEditModal
+
+      <VoucherEditModal
         open={editModal.isOpen}
         onClose={editModal.close}
-        transaction={editModal.data}
-        onSave={handleUpdateTransaction}
+        voucher={editModal.data}
+        onSave={handleUpdateVoucher}
       />
-      
-      {/* Transaction Details Modal */}
+
+      {/* Voucher Details Modal */}
       {detailsModal.isOpen && detailsModal.data && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-card rounded-lg max-w-2xl max-h-[90vh] overflow-auto">
             <div className="flex justify-between items-center p-4 border-b">
-              <h3 className="text-lg font-semibold text-foreground">Transaction Details</h3>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <h3 className="text-lg font-semibold text-foreground">Voucher Details</h3>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={detailsModal.close}
                 className="h-8 w-8 p-0"
               >
@@ -377,7 +394,7 @@ export default function TransactionsPage() {
             <div className="p-4 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Transaction ID</label>
+                  <label className="text-sm font-medium text-muted-foreground">Voucher ID</label>
                   <p className="text-foreground">{detailsModal.data.id}</p>
                 </div>
                 <div>
@@ -405,7 +422,7 @@ export default function TransactionsPage() {
                   <p className="text-foreground">{new Date(detailsModal.data.createdAt).toLocaleString()}</p>
                 </div>
               </div>
-              
+
               {detailsModal.data.type === 'withdraw' && detailsModal.data.reference && (() => {
                 try {
                   const parsed = JSON.parse(detailsModal.data.reference);
@@ -437,7 +454,7 @@ export default function TransactionsPage() {
                 } catch {}
                 return null;
               })()}
-              
+
               {detailsModal.data.withdrawalAddress && (
                 <div className="border-t pt-4">
                   <label className="text-sm font-medium text-muted-foreground">Withdrawal Address</label>
@@ -455,9 +472,9 @@ export default function TransactionsPage() {
           <div className="bg-card rounded-lg max-w-4xl max-h-[90vh] overflow-auto">
             <div className="flex justify-between items-center p-4 border-b">
               <h3 className="text-lg font-semibold text-foreground">Payment Proof</h3>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={imageModal.close}
                 className="h-8 w-8 p-0"
               >
@@ -465,9 +482,9 @@ export default function TransactionsPage() {
               </Button>
             </div>
             <div className="p-4">
-              <img 
-                src={imageModal.data} 
-                alt="Payment Proof" 
+              <img
+                src={imageModal.data}
+                alt="Payment Proof"
                 className="max-w-full h-auto rounded-lg"
                 style={{ maxHeight: '70vh' }}
               />

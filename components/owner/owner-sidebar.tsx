@@ -2,10 +2,11 @@
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { X, LogOut, ChevronDown } from "lucide-react";
+import { X, LogOut, ChevronDown, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useWhitelabelInfo } from "@/hooks/useAuth";
 import { navigation } from "./data";
 import { useState } from "react";
 import { useSettings } from "@/hooks/usePublic";
@@ -60,10 +61,12 @@ function SidebarContent({
   pathname: string;
   setOpen?: (open: boolean) => void;
 }) {
-  const { logout } = useAuth();
+  const { logout, user: currentUser } = useAuth();
+  const { data: whitelabelInfo } = useWhitelabelInfo();
   const [openGroups, setOpenGroups] = useState<string[]>([]);
   const { data: settings } = useSettings();
   const isWhitelabel = !!settings?.whitelabelTheme;
+  const whitelabelType = whitelabelInfo?.whitelabelType ? String(whitelabelInfo.whitelabelType).toUpperCase() : null;
 
   const toggleGroup = (name: string) => {
     setOpenGroups((prev) =>
@@ -88,6 +91,23 @@ function SidebarContent({
           </Button>
         )}
       </div>
+
+      {currentUser && (
+        <div className="px-4 py-3 border-b border-sidebar-border flex items-center gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-sidebar-foreground">
+            <User className="h-4 w-4" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-sidebar-primary truncate">
+              {currentUser.username ?? currentUser.email ?? "owner"}
+            </p>
+            <p className="text-xs text-sidebar-foreground truncate">
+              {currentUser.role ? String(currentUser.role).toLowerCase() : "—"}
+              {whitelabelType ? ` · ${whitelabelType}` : ""}
+            </p>
+          </div>
+        </div>
+      )}
 
       <nav className="flex-1 overflow-y-auto py-4 px-3 lg:px-4 space-y-1">
         {navigation

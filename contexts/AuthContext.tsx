@@ -14,6 +14,9 @@ export interface User {
   membership: string;
   balance: string;
   isDemo?: boolean;
+  role?: string;
+  upline?: string;
+  downline?: string;
 }
 
 /** Creates a new demo user (cached per session). Each call gets a unique id/email. */
@@ -26,6 +29,7 @@ export function createDemoUser(): User {
     membership: "standard",
     balance: DEMO_BALANCE,
     isDemo: true,
+    role: "user",
   };
 }
 

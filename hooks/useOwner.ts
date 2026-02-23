@@ -277,38 +277,6 @@ export const useDeleteWhitelabel = () => {
   });
 };
 
-export const useGenerateDatabase = () => {
-  return useMutation({
-    mutationFn: (id: number) => ownerApi.generateDatabase(id),
-    onSuccess: (response) => {
-      toast.success(
-        response.data.message || "Database schema generated successfully"
-      );
-    },
-    onError: (error: any) => {
-      toast.error(
-        error.response?.data?.message || "Failed to generate database schema"
-      );
-    },
-  });
-};
-
-export const useMigrateDatabase = () => {
-  return useMutation({
-    mutationFn: (id: number) => ownerApi.migrateDatabase(id),
-    onSuccess: (response) => {
-      toast.success(
-        response.data.message || "Database migration completed successfully"
-      );
-    },
-    onError: (error: any) => {
-      toast.error(
-        error.response?.data?.message || "Failed to run database migration"
-      );
-    },
-  });
-};
-
 // Users
 export const useOwnerUsers = () => {
   return useQuery({
@@ -329,35 +297,39 @@ export const useUpdateUser = () => {
   });
 };
 
-// Transactions
-export const useTransactions = () => {
+// Vouchers
+export const useVouchers = () => {
   return useQuery({
-    queryKey: ["transactions"],
-    queryFn: () => ownerApi.getTransactions().then((res) => res.data.data),
+    queryKey: ["vouchers"],
+    queryFn: () => ownerApi.getVouchers().then((res) => res.data.data),
   });
 };
 
-export const useUpdateTransaction = () => {
+export const useUpdateVoucher = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, ...data }: any) => ownerApi.updateTransaction(id, data),
+    mutationFn: ({ id, ...data }: any) => ownerApi.updateVoucher(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      toast.success("Transaction updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["vouchers"] });
+      toast.success("Voucher updated successfully");
     },
-    onError: () => toast.error("Failed to update transaction"),
+    onError: () => toast.error("Failed to update voucher"),
   });
 };
 
-export const useCreateTransaction = () => {
+export const useCreateVoucher = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: any) => ownerApi.createTransaction(data),
+    mutationFn: (data: any) => ownerApi.createVoucher(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      toast.success("Transaction created successfully");
+      queryClient.invalidateQueries({ queryKey: ["vouchers"] });
+      toast.success("Voucher created successfully");
     },
-    onError: () => toast.error("Failed to create transaction"),
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.message || "Failed to create voucher";
+      toast.error(errorMessage);
+      console.error("Create voucher error:", error);
+    },
   });
 };
 

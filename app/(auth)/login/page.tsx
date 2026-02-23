@@ -6,10 +6,12 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { useLogin } from "@/hooks/useAuth";
+import { useLogin, useWhitelabelInfo } from "@/hooks/useAuth";
 import { useAuth, createDemoUser, DEMO_BALANCE } from "@/contexts/AuthContext";
 import { Eye, EyeOff, Sparkles } from "lucide-react";
 import { Captcha } from "@/components/modals/auth/captcha";
+
+const PANEL_ROLES = ["owner", "admin", "super", "master", "agent"];
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -20,6 +22,10 @@ export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
   const loginMutation = useLogin();
+  const { data: whitelabelInfo } = useWhitelabelInfo();
+  const whitelabelType = whitelabelInfo?.whitelabelType ?? null;
+  const isB2B = String(whitelabelType ?? "").toUpperCase() === "B2B";
+  const isB2C = !isB2B;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,8 +36,21 @@ export default function LoginPage() {
       {
         onSuccess: (response) => {
           if (response.data.success && response.data.user) {
-            login(response.data.user);
-            router.push("/");
+            const user = response.data.user as { id: number; username: string; email: string; membership: string; balance?: string; role?: string };
+            login({
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              membership: user.membership,
+              balance: user.balance ?? "0",
+              role: user.role ?? "user",
+            });
+            const role = (user.role ?? "user").toLowerCase();
+            if (PANEL_ROLES.includes(role)) {
+              router.push("/owner");
+            } else {
+              router.push("/");
+            }
           } else {
             setError("Invalid credentials");
           }
@@ -132,23 +151,27 @@ export default function LoginPage() {
             Forgot password?
           </Link>
         </div>
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-border" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">Or</span>
-          </div>
-        </div>
-        <p className="text-center text-sm text-muted-foreground">
-          Don't have an account?{" "}
-          <Link
-            href="/signup"
-            className="text-primary hover:underline font-semibold"
-          >
-            Sign up
-          </Link>
-        </p>
+        {isB2C && (
+          <>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">Or</span>
+              </div>
+            </div>
+            <p className="text-center text-sm text-muted-foreground">
+              Don't have an account?{" "}
+              <Link
+                href="/signup"
+                className="text-primary hover:underline font-semibold"
+              >
+                Sign up
+              </Link>
+            </p>
+          </>
+        )}
       </div>
     </Card>
   );

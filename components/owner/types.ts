@@ -95,17 +95,17 @@ export interface QrCodeModalProps {
   qrCode?: any;
 }
 
-export interface TransactionEditModalProps {
+export interface VoucherEditModalProps {
   open: boolean;
   onClose: () => void;
-  transaction: any;
+  voucher: any;
   onSave: (data: any) => void;
 }
 
-export interface TransactionModalProps {
+export interface VoucherModalProps {
   open: boolean;
   onClose: () => void;
-  onSave: (transaction: any) => void;
+  onSave: (voucher: any) => void;
 }
 
 export interface User {
@@ -114,20 +114,28 @@ export interface User {
   email: string;
   role: string;
   membership: string;
-  status: string;
+  accountStatus?: boolean;
+  betStatus?: boolean;
+  parentAccountStatus?: boolean;
+  parentBetStatus?: boolean;
+  createdBy?: number | null;
   balance?: string;
+  upline?: string | number;
+  downline?: string | number;
+  whitelabelId?: number | null;
   firstName?: string;
   lastName?: string;
   phone?: string;
   country?: string;
   password?: string;
+  type?: "user" | "profile"; // Used to distinguish between user account update and profile update
 }
 
 export interface UserModalProps {
   open: boolean;
   onClose: () => void;
   user?: User;
-  onSave: (user: User) => void;
+  onSave: (user: User & { type?: "user" | "profile" }) => void;
   isUpdating?: boolean;
   isUpdatingProfile?: boolean;
 }
@@ -165,8 +173,12 @@ export interface WhitelabelTheme {
   fontFamily: string;
 }
 
+export type WhitelabelType = "B2B" | "B2C";
+
 export interface Whitelabel {
   id?: number;
+  userId: number;
+  whitelabelType: WhitelabelType;
   name: string;
   domain: string;
   title?: string;
@@ -206,7 +218,7 @@ export interface Whitelabel {
     sports: boolean;
     liveCasino: boolean;
     promotions: boolean;
-    transactions: boolean;
+    vouchers: boolean;
     userManagement: boolean;
     reports: boolean;
     settings: boolean;

@@ -139,7 +139,7 @@ export default function MatchPage() {
   const [quickBet, setQuickBet] = useState<QuickBetData | null>(null);
   const queryClient = useQueryClient();
   const { user, updateDemoBalance } = useAuth();
-  const { placeBet } = useBetting();
+  const { placeBetAsync, isPlacingBet } = useBetting();
 
   const config = getSportConfig(sport);
   const { seriesData } = UseSportsSeries(config?.eventTypeId ?? null);
@@ -231,7 +231,7 @@ export default function MatchPage() {
     });
   };
 
-  const handleQuickBetPlace = (stake: string, odds: string) => {
+  const handleQuickBetPlace = async (stake: string, odds: string) => {
     if (!quickBet || !stake || parseFloat(stake) <= 0) return;
     const { market, runner, eventName, isLay } = quickBet;
     const oddsValue = odds || quickBet.odds;
@@ -276,21 +276,30 @@ export default function MatchPage() {
       updateDemoBalance((userBalance - stakeNum).toFixed(2));
       queryClient.invalidateQueries({ queryKey: ["my-bets"] });
       toast.success("Bet placed. Balance updated.");
+      setQuickBet(null);
     } else {
-      placeBet({
-        matchId,
-        marketId: market.marketId,
-        eventTypeId: config?.eventTypeId?.toString() || "1",
-        selectionId: runner.selectionId?.toString() ?? "",
-        marketName,
-        runnerName,
-        odds: oddsNum,
-        stake: stakeNum,
-        type: isLay ? "lay" : "back",
-      });
-      toast.success("Bet placed.");
+      try {
+        await placeBetAsync({
+          matchId,
+          marketId: market.marketId,
+          eventTypeId: config?.eventTypeId?.toString() || "1",
+          selectionId: runner.selectionId?.toString() ?? "",
+          marketName,
+          runnerName,
+          odds: oddsNum,
+          stake: stakeNum,
+          type: isLay ? "lay" : "back",
+        });
+        toast.success("Bet placed.");
+      } catch (err: unknown) {
+        const message =
+          (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+          (err instanceof Error ? err.message : "Failed to place bet");
+        toast.error(message);
+      } finally {
+        setQuickBet(null);
+      }
     }
-    setQuickBet(null);
   };
 
   if (pageStatus === "error") {
