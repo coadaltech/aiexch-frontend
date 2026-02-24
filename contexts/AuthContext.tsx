@@ -129,6 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       clearDemoBets();
     }
     localStorage.removeItem("user");
+    
     setUser(null);
     setIsLoggedIn(false);
     router.push("/");

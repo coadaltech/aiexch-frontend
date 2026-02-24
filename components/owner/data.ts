@@ -13,6 +13,7 @@ import {
   Users,
   Wallet,
   Image,
+  Banknote,
 } from "lucide-react";
 
 export const navigation: {
@@ -44,6 +45,7 @@ export const navigation: {
     href: "/owner/withdrawal-methods",
     icon: Wallet,
   },
+  { name: "Manage Currency", href: "/owner/manage-currency", icon: Banknote },
   {
     name: "Configuration",
     icon: Settings,

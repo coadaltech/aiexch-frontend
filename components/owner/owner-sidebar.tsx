@@ -78,7 +78,7 @@ function SidebarContent({
     <div className="flex h-full flex-col overflow-hidden">
       <div className="flex items-center justify-between p-4 lg:p-6 border-b border-sidebar-border">
         <h2 className="text-lg lg:text-xl font-bold text-sidebar-primary">
-              Owner Panel
+          Manage Dashboard
         </h2>
         {setOpen && (
           <Button
@@ -92,98 +92,107 @@ function SidebarContent({
         )}
       </div>
 
-      {currentUser && (
-        <div className="px-4 py-3 border-b border-sidebar-border flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-sidebar-foreground">
-            <User className="h-4 w-4" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-sidebar-primary truncate">
-              {currentUser.username ?? currentUser.email ?? "owner"}
-            </p>
-            <p className="text-xs text-sidebar-foreground truncate">
-              {currentUser.role ? String(currentUser.role).toLowerCase() : "—"}
-              {whitelabelType ? ` · ${whitelabelType}` : ""}
-            </p>
-          </div>
-        </div>
-      )}
 
       <nav className="flex-1 overflow-y-auto py-4 px-3 lg:px-4 space-y-1">
         {navigation
           .filter((item) => {
             if (isWhitelabel && item.name === "Configuration") return false;
+            if (item.name === "Manage Currency" && currentUser?.role !== "owner") return false;
             return true;
           })
           .map((item) =>
-          item.subItems ? (
-            <div key={item.name}>
-              <button
-                onClick={() => toggleGroup(item.name)}
-                className={cn(
-                  "w-full flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-all duration-200 touch-manipulation text-sidebar-foreground hover:bg-sidebar-accent"
+            item.subItems ? (
+              <div key={item.name}>
+                <button
+                  onClick={() => toggleGroup(item.name)}
+                  className={cn(
+                    "w-full flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-all duration-200 touch-manipulation text-sidebar-foreground hover:bg-sidebar-accent"
+                  )}
+                >
+                  <item.icon className="h-5 w-5 flex-shrink-0" />
+                  <span className="truncate flex-1 text-left">{item.name}</span>
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 transition-transform",
+                      openGroups.includes(item.name) && "rotate-180"
+                    )}
+                  />
+                </button>
+                {openGroups.includes(item.name) && (
+                  <div className="ml-8 mt-1 space-y-1">
+                    {item.subItems.map((subItem) => (
+                      <Link
+                        key={subItem.name}
+                        href={subItem.href}
+                        className={cn(
+                          "block rounded-lg px-3 py-2 text-sm transition-all duration-200",
+                          pathname === subItem.href
+                            ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                            : "text-sidebar-foreground hover:bg-sidebar-accent"
+                        )}
+                        onClick={() => setOpen?.(false)}
+                      >
+                        {subItem.name}
+                      </Link>
+                    ))}
+                  </div>
                 )}
+              </div>
+            ) : (
+              <Link
+                key={item.name}
+                href={item.href!}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-all duration-200 touch-manipulation",
+                  pathname === item.href
+                    ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-lg"
+                    : "text-sidebar-foreground hover:bg-sidebar-accent active:bg-sidebar-accent/80"
+                )}
+                onClick={() => setOpen?.(false)}
               >
                 <item.icon className="h-5 w-5 flex-shrink-0" />
-                <span className="truncate flex-1 text-left">{item.name}</span>
-                <ChevronDown
-                  className={cn(
-                    "h-4 w-4 transition-transform",
-                    openGroups.includes(item.name) && "rotate-180"
-                  )}
-                />
-              </button>
-              {openGroups.includes(item.name) && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {item.subItems.map((subItem) => (
-                    <Link
-                      key={subItem.name}
-                      href={subItem.href}
-                      className={cn(
-                        "block rounded-lg px-3 py-2 text-sm transition-all duration-200",
-                        pathname === subItem.href
-                          ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                          : "text-sidebar-foreground hover:bg-sidebar-accent"
-                      )}
-                      onClick={() => setOpen?.(false)}
-                    >
-                      {subItem.name}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : (
-            <Link
-              key={item.name}
-              href={item.href!}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-all duration-200 touch-manipulation",
-                pathname === item.href
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-lg"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent active:bg-sidebar-accent/80"
-              )}
-              onClick={() => setOpen?.(false)}
-            >
-              <item.icon className="h-5 w-5 flex-shrink-0" />
-              <span className="truncate">{item.name}</span>
-            </Link>
-          )
-        )}
+                <span className="truncate">{item.name}</span>
+              </Link>
+            )
+          )}
       </nav>
 
       <div className="p-3 lg:p-4 border-t border-sidebar-border mt-auto">
-        <Button
-          variant="ghost"
-          className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent py-3 touch-manipulation"
-          onClick={() => {
-            logout();
-            setOpen?.(false);
-          }}
-        >
-          <LogOut className="h-5 w-5 mr-3 flex-shrink-0" />
-          <span>Logout</span>
-        </Button>
+        {currentUser && (
+          <div className="px-4 py-3 border-b border-sidebar-border flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-sidebar-foreground">
+              <User className="h-4 w-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-sidebar-primary truncate">
+                {currentUser.username ?? currentUser.email ?? "owner"}
+              </p>
+              <p className="text-xs text-sidebar-foreground truncate">
+                {currentUser.role ? String(currentUser.role).toLowerCase() : "—"}
+                {whitelabelType ? ` · ${whitelabelType}` : ""}
+              </p>
+            </div>
+            <div
+              onClick={() => {
+                logout();
+                setOpen?.(false);
+              }}
+            >
+              <LogOut className="h-5 w-5 mr-3 flex-shrink-0" />
+            </div>
+          </div>
+        )}
+        {/* <Button */}
+        {/*   variant="ghost" */}
+        {/*   className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent py-3 touch-manipulation" */}
+        {/*   onClick={() => { */}
+        {/*     logout(); */}
+        {/*     setOpen?.(false); */}
+        {/*   }} */}
+        {/* > */}
+        {/*   <span>Logout</span> */}
+        {/*   <LogOut className="h-5 w-5 mr-3 flex-shrink-0" /> */}
+        {/* </Button> */}
       </div>
     </div>
   );

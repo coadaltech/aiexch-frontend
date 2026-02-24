@@ -684,3 +684,53 @@ export const useDeleteWithdrawalMethod = () => {
     onError: () => toast.error("Failed to delete withdrawal method"),
   });
 };
+
+// Currencies (owner-only)
+export const useAvailableCurrencies = () => {
+  return useQuery({
+    queryKey: ["owner-currencies-available"],
+    queryFn: () => ownerApi.getAvailableCurrencies().then((res) => res.data.data),
+  });
+};
+
+export const useCurrencies = () => {
+  return useQuery({
+    queryKey: ["owner-currencies"],
+    queryFn: () => ownerApi.getCurrencies().then((res) => res.data.data),
+  });
+};
+
+export const useCreateCurrency = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { code: string; name: string; countryName: string; value: string | number }) =>
+      ownerApi.createCurrency(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["owner-currencies"] });
+      toast.success("Currency added successfully");
+    },
+    onError: (err: any) =>
+      toast.error(err.response?.data?.message || "Failed to add currency"),
+  });
+};
+
+export const useUpdateCurrency = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, value }: { id: number; value: string | number }) =>
+      ownerApi.updateCurrency(id, { value }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["owner-currencies"] });
+      toast.success("Currency value updated successfully");
+    },
+    onError: () => toast.error("Failed to update currency"),
+  });
+};
+
+export const useCurrencyHistory = (currencyId: number | null) => {
+  return useQuery({
+    queryKey: ["owner-currency-history", currencyId],
+    queryFn: () => ownerApi.getCurrencyHistory(currencyId!).then((res) => res.data.data),
+    enabled: !!currencyId,
+  });
+};

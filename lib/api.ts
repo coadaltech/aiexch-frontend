@@ -269,6 +269,15 @@ export const ownerApi = {
   updateDomain: (id: number, data: any) =>
     api.put(`/owner/domains/${id}`, data),
   deleteDomain: (id: number) => api.delete(`/owner/domains/${id}`),
+
+  // Currencies (owner-only)
+  getAvailableCurrencies: () => api.get("/owner/currencies/available"),
+  getCurrencies: () => api.get("/owner/currencies"),
+  createCurrency: (data: { code: string; name: string; countryName: string; value: string | number }) =>
+    api.post("/owner/currencies", data),
+  updateCurrency: (id: number, data: { value: string | number }) =>
+    api.put(`/owner/currencies/${id}`, data),
+  getCurrencyHistory: (id: number) => api.get(`/owner/currencies/${id}/history`),
 };
 
 export interface BetRecord {
