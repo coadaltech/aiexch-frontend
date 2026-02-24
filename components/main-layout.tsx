@@ -1,19 +1,16 @@
 "use client";
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { SidebarProvider } from "./ui/sidebar";
 import Header from "./layout/header";
 import { AppSidebar } from "./layout/app-sidebar-new";
-import Dropheader from "./layout/dropheader";
-import Footer from "./layout/footer";
 import { useWhitelabelInfo } from "@/hooks/useAuth";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function MainLayout({ children }: { children: ReactNode }) {
-  const [is_home_route, setIsHomeRoute] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const { data: whitelabelInfo } = useWhitelabelInfo();
+  const { data: whitelabelInfo, isLoading: whitelabelLoading } = useWhitelabelInfo();
   const { isLoggedIn } = useAuth();
   const isOwnerRoute = pathname?.startsWith("/owner");
   const isAuthRoute =
@@ -21,20 +18,27 @@ export default function MainLayout({ children }: { children: ReactNode }) {
     pathname?.startsWith("/signup") ||
     pathname?.startsWith("/forgot-password");
 
-  const isB2B = String(whitelabelInfo?.whitelabelType ?? "").toUpperCase() === "B2B";
   const isHomeOrRoot = pathname === "/" || pathname === "/home";
+  const whitelabelNotFound =
+    !whitelabelLoading && whitelabelInfo?.whitelabelType == null;
 
   useEffect(() => {
-    if (isB2B && isHomeOrRoot && !isLoggedIn) {
+    if (isOwnerRoute || isAuthRoute) return;
+    if (whitelabelLoading) return;
+    if (whitelabelNotFound) {
+      router.replace("/login");
+      return;
+    }
+    if (!isLoggedIn && isHomeOrRoot) {
       router.replace("/login");
     }
-  }, [isB2B, isHomeOrRoot, isLoggedIn, router]);
+  }, [isOwnerRoute, isAuthRoute, whitelabelLoading, whitelabelNotFound, isLoggedIn, isHomeOrRoot, router]);
 
   if (isOwnerRoute || isAuthRoute) {
     return <>{children}</>;
   }
 
-  if (isB2B && isHomeOrRoot && !isLoggedIn) {
+  if (whitelabelNotFound || (!isLoggedIn && isHomeOrRoot)) {
     return null;
   }
 
@@ -58,12 +62,6 @@ export default function MainLayout({ children }: { children: ReactNode }) {
           </main>
         </div>
 
-        {/* Footer - Only on /home route, full width break out of sidebar constraints */}
-        {/* {is_home_route && (
-          <div className="w-screen relative ml-[calc((100%-100vw)/2)] mr-[calc((100%-100vw)/2)]">
-            <Footer />
-          </div>
-        )} */}
       </div>
     </SidebarProvider>
   );

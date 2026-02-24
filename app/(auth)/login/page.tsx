@@ -24,7 +24,9 @@ export default function LoginPage() {
   const loginMutation = useLogin();
   const { data: whitelabelInfo } = useWhitelabelInfo();
   const whitelabelType = whitelabelInfo?.whitelabelType ?? null;
-  const isB2B = String(whitelabelType ?? "").toUpperCase() === "B2B";
+  const isB2B =
+    whitelabelType == null ||
+    String(whitelabelType).toUpperCase() === "B2B";
   const isB2C = !isB2B;
 
   const handleSubmit = (e: React.FormEvent) => {

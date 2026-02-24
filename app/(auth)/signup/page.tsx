@@ -38,8 +38,11 @@ export default function SignupPage() {
   const router = useRouter();
   const registerMutation = useRegister();
   const sendOTPMutation = useSendOTP();
-  const { data: whitelabelInfo } = useWhitelabelInfo();
-  const isB2B = whitelabelInfo?.whitelabelType === "B2B";
+  const { data: whitelabelInfo, isLoading: whitelabelLoading } = useWhitelabelInfo();
+  const isB2B =
+    !whitelabelLoading &&
+    (whitelabelInfo?.whitelabelType == null ||
+      whitelabelInfo?.whitelabelType === "B2B");
 
   useEffect(() => {
     if (isB2B) {
