@@ -185,6 +185,10 @@ function calcExistingPnl(bets: any[], runnerId: string): number {
     const k = typeof bet.stake === "number" ? bet.stake : parseFloat(bet.stake);
     const o = typeof bet.odds === "number" ? bet.odds : parseFloat(bet.odds);
     if (!k || !o) return sum;
+    // LINE (sessions) bets: show -(stake) as potential loss
+    if (bet.marketType === "sessions") {
+      return sum + (-k);
+    }
     const isSelected = bet.selectionId?.toString() === runnerId;
     if (betType === "back") {
       return sum + (isSelected ? k * (o - 1) : -k);
@@ -204,6 +208,11 @@ function calcRunnerProfit(
   const stakeNum = parseFloat(stake) || 0;
   const oddsNum = parseFloat(quickBet.odds) || 0;
   if (!stakeNum || !oddsNum) return null;
+
+  // LINE markets: show -(stake) as potential loss only
+  if (quickBet.bettingType === "LINE") {
+    return -stakeNum;
+  }
 
   const isSelected = runnerId === quickBet.runner.selectionId?.toString();
 
@@ -249,6 +258,11 @@ export default function MatchPage() {
   const config = getSportConfig(sport);
   const { seriesData } = UseSportsSeries(config?.eventTypeId ?? null);
   const { status, isConnected, markets } = useMarketWebSocket(matchId);
+  markets.map((m)=>{
+    if(m.bettingType == "LINE"){
+      console.log(m)
+    }
+  })
 
   const [matchInfo, setMatchInfo] = useState<any>(null);
   const [pageStatus, setPageStatus] = useState<
@@ -307,7 +321,11 @@ export default function MatchPage() {
   };
 
   // Build allRunners for storage in transaction_details
+  // LINE markets: only pass the single clicked runner (binary YES/NO market)
   const buildAllRunners = (market: any, clickedRunner: any, clickedPrice: number): RunnerSummary[] => {
+    if (market.bettingType === "LINE") {
+      return [{ id: clickedRunner.selectionId?.toString() ?? "", name: clickedRunner.name || "", price: clickedPrice }];
+    }
     return (market.runners || []).map((r: any) => {
       const isClicked = r.selectionId === clickedRunner.selectionId;
       const price = isClicked
@@ -362,6 +380,7 @@ export default function MatchPage() {
     const stakeNum = parseFloat(stake);
     const oddsNum = parseFloat(oddsValue) || 0;
     const marketType = toMarketType(market.bettingType);
+    const isLineBet = market.bettingType === "LINE";
 
     const minBet = parseFloat(market?.marketCondition?.minBet) || 0;
     const maxBet = parseFloat(market?.marketCondition?.maxBet) || 0;
@@ -374,13 +393,18 @@ export default function MatchPage() {
       return;
     }
 
+    // For LINE: potentialWin = stake + stake*(rate/100), for others: stake*odds
+    const potentialWin = isLineBet
+      ? (stakeNum + stakeNum * (oddsNum / 100)).toFixed(2)
+      : (stakeNum * oddsNum).toFixed(2);
+
     const betPayload = {
       id: `slip-${Date.now()}-${market?.marketId ?? ""}-${runner?.selectionId ?? ""}`,
       teams: `${quickBet.eventName} - ${runnerName}`,
       market: isLay ? `LAY ${marketName}` : marketName,
       odds: oddsValue,
       stake,
-      potentialWin: (stakeNum * oddsNum).toFixed(2),
+      potentialWin,
       matchId,
       marketId: market.marketId,
       selectionId: runner.selectionId?.toString() ?? "",
