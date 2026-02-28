@@ -5,9 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Search,
-  Eye,
-  Ban,
-  CheckCircle,
   Plus,
   Edit,
   ChevronUp,
@@ -121,6 +118,7 @@ export default function UsersPage() {
           balance: userData.balance,
           upline: userData.upline ?? "0.00",
           downline: userData.downline ?? "0.00",
+          currencyId: userData.currencyId || null,
         };
         if (userData.accountStatus !== undefined) userUpdateData.accountStatus = userData.accountStatus;
         if (userData.betStatus !== undefined) userUpdateData.betStatus = userData.betStatus;
@@ -151,6 +149,7 @@ export default function UsersPage() {
           balance: userData.balance,
           upline: userData.upline ?? "0.00",
           downline: userData.downline ?? "0.00",
+          currencyId: userData.currencyId || null,
           firstName: userData.firstName,
           lastName: userData.lastName,
           phone: userData.phone,
@@ -186,7 +185,7 @@ export default function UsersPage() {
     currentUserPassword: string;
   }) => {
     if (!statusModalUser) return;
-    setUpdatingUserId(statusModalUser.id);
+    setUpdatingUserId(statusModalUser.id ? Number(statusModalUser.id) : null);
     updateUserMutation.mutate(
       {
         id: statusModalUser.id,

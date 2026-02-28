@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { X, Calculator, Loader2 } from "lucide-react";
+import { Calculator, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useBetting } from "@/hooks/useBetting";
 import { BettingModalProps } from "./types";
@@ -43,21 +43,31 @@ export function BettingModal({ open, onClose, match }: BettingModalProps) {
     }
 
     try {
-      // Extract runner name from market string (format: "RunnerName - type")
-      const runnerName = match.market.split(" - ")[0] || undefined;
-      // Market name is stored in teams field
-      const marketName = match.teams || undefined;
+      // Market name fallback from teams field
+      const marketName = match.marketData.marketName || match.teams || undefined;
+      // Selection name fallback from market string (format: "RunnerName - type")
+      const selectionName =
+        match.marketData.selectionName ||
+        match.market.split(" - ")[0] ||
+        undefined;
+
+      // Build runners array — use provided runners or fall back to a single-runner placeholder
+      const runners = match.marketData.runners && match.marketData.runners.length >= 2
+        ? match.marketData.runners
+        : [{ id: match.marketData.selectionId, name: selectionName || "", price: oddsAmount }];
 
       await placeBetAsync({
         matchId: match.marketData.matchId,
         marketId: match.marketData.marketId || "default-market",
-        eventTypeId: match.marketData.eventTypeId?.toString() || "1",
+        eventTypeId: match.marketData.eventTypeId?.toString() || "4",
+        marketType: match.marketData.marketType || "odds",
         selectionId: match.marketData.selectionId,
-        marketName: match.marketData.marketName || marketName,
-        runnerName: match.marketData.runnerName || runnerName,
+        selectionName,
+        marketName,
         odds: oddsAmount,
         stake: stakeAmount,
         type: match.marketData.type as "back" | "lay",
+        runners,
       });
 
       toast.success("Bet placed.");

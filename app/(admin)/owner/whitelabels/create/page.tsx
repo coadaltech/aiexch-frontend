@@ -11,7 +11,7 @@ export default function CreateWhitelabelPage() {
 
   const handleSave = async (formData: Whitelabel) => {
     const formDataToSend = new FormData();
-    formDataToSend.append('userId', formData.userId.toString());
+    formDataToSend.append('userId', formData.userId);
     formDataToSend.append('whitelabelType', formData.whitelabelType);
     formDataToSend.append('name', formData.name);
     formDataToSend.append('domain', formData.domain);
@@ -39,6 +39,7 @@ export default function CreateWhitelabelPage() {
     formDataToSend.append('config', JSON.stringify(formData.config));
     formDataToSend.append('preferences', JSON.stringify(formData.preferences));
     formDataToSend.append('permissions', JSON.stringify(formData.permissions));
+    console.log(formData.userId)
 
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/owner/whitelabels`, {

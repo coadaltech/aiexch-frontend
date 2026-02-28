@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ownerApi } from "@/lib/api";
 
 interface Domain {
-  id: number;
+  id: string;
   name: string;
   status: string;
   createdAt: string;
@@ -32,7 +32,7 @@ export const useDomains = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: any }) =>
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
       ownerApi.updateDomain(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["domains"] });
@@ -60,7 +60,7 @@ export const useDomains = () => {
       });
     },
     updateDomain: (
-      id: number,
+      id: string,
       data: any,
       options?: { onSuccess?: () => void }
     ) => {

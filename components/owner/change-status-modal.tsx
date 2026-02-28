@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
 export interface ChangeStatusModalUser {
-  id: number;
+  id: string;
   username: string;
   accountStatus?: boolean;
   betStatus?: boolean;

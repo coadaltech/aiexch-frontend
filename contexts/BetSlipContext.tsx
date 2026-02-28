@@ -4,7 +4,7 @@ import { useAuth } from "./AuthContext";
 import { toast } from "sonner";
 
 export interface Bet {
-  id: number;
+  id: string;
   teams: string;
   market: string;
   odds: string;
@@ -23,8 +23,8 @@ export interface Bet {
 interface BetSlipContextType {
   bets: Bet[];
   addToBetSlip: (bet: Bet) => void;
-  removeBet: (id: number) => void;
-  updateStake: (id: number, stake: string) => void;
+  removeBet: (id: string) => void;
+  updateStake: (id: string, stake: string) => void;
   clearBets: () => void;
 }
 
@@ -49,16 +49,16 @@ export function BetSlipProvider({ children }: { children: ReactNode }) {
       type: bet.type ?? (isLay ? "lay" : "back"),
       matchId: bet.matchId || "1001",
       marketId: bet.marketId || bet.market.toLowerCase().replace(/\s+/g, "_"),
-      selectionId: bet.selectionId || bet.id.toString(),
+      selectionId: bet.selectionId || String(bet.id),
     };
     setBets((prev) => [...prev, enhancedBet]);
   };
 
-  const removeBet = (id: number) => {
+  const removeBet = (id: string) => {
     setBets((prev) => prev.filter((bet) => bet.id !== id));
   };
 
-  const updateStake = (id: number, newStake: string) => {
+  const updateStake = (id: string, newStake: string) => {
     setBets((prev) =>
       prev.map((bet) =>
         bet.id === id

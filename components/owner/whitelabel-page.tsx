@@ -131,7 +131,7 @@ export function WhitelabelPage({
   const [showValidationDialog, setShowValidationDialog] = useState(false);
 
   const [formData, setFormData] = useState<Whitelabel>({
-    userId: 0,
+    userId: "",
     whitelabelType: "B2C",
     name: "",
     domain: "",
@@ -218,7 +218,7 @@ export function WhitelabelPage({
   const validateForm = (): { isValid: boolean; errors: string[] } => {
     const errors: string[] = [];
 
-    if (!formData.userId || formData.userId === 0) {
+    if (!formData.userId) {
       errors.push("User selection is required");
     }
     if (!formData.whitelabelType) {
@@ -248,7 +248,7 @@ export function WhitelabelPage({
 
   const handleCreateClick = () => {
     const validation = validateForm();
-    
+
     if (!validation.isValid) {
       setValidationErrors(validation.errors);
       setShowValidationDialog(true);

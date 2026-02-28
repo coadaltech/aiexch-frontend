@@ -11,7 +11,7 @@ export interface FAQCategory {
 }
 
 export interface GameProvider {
-  id: number;
+  id: string;
   name: string;
   logo: string;
 }
@@ -52,7 +52,7 @@ export interface AuthFormData {
 }
 
 export interface Game {
-  id?: number;
+  id?: string;
   name: string;
   image: string;
   link: string;
@@ -135,7 +135,7 @@ export type ThemeProviderState = {
 };
 
 export interface HomeSection {
-  id: number;
+  id: string;
   title: string;
   subtitle?: string;
   type: GameType;
@@ -144,7 +144,7 @@ export interface HomeSection {
 }
 
 export interface Banner {
-  id: number;
+  id: string;
   title: string;
   imageUrl: string;
   linkUrl?: string;
@@ -153,7 +153,7 @@ export interface Banner {
 }
 
 export interface Promotion {
-  id: number;
+  id: string;
   title: string;
   description?: string;
   type: string;
@@ -194,7 +194,7 @@ export interface Bonus {
 }
 
 export interface Notification {
-  id: number;
+  id: string;
   title: string;
   message: string;
   type: "bonus" | "transaction" | "security" | "system" | "promotion";
@@ -218,7 +218,7 @@ export interface UserData {
 }
 
 export interface PromoCode {
-  id: number;
+  id: string;
   code: string;
   title: string;
   description: string;

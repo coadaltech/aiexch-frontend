@@ -53,7 +53,7 @@ export default function KYCPage() {
 
   const handleApproveKyc = (id: string, notes?: string) => {
     updateKycMutation.mutate({
-      id: parseInt(id),
+      id,
       status: "approved",
       reviewNotes: notes,
     });
@@ -62,18 +62,18 @@ export default function KYCPage() {
 
   const handleRejectKyc = (id: string, notes: string) => {
     updateKycMutation.mutate({
-      id: parseInt(id),
+      id,
       status: "rejected",
       reviewNotes: notes,
     });
     kycModal.close();
   };
 
-  const quickApprove = (id: number) => {
+  const quickApprove = (id: string) => {
     updateKycMutation.mutate({ id, status: "approved" });
   };
 
-  const quickReject = (id: number) => {
+  const quickReject = (id: string) => {
     updateKycMutation.mutate({ id, status: "rejected" });
   };
 

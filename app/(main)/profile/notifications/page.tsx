@@ -89,7 +89,7 @@ export default function Notifications() {
     }
   };
 
-  const markAsRead = (id: number) => {
+  const markAsRead = (id: string) => {
     markAsReadMutation.mutate(id);
   };
 

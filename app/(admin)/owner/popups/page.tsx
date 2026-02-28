@@ -33,7 +33,7 @@ export default function PopupsPage() {
     // Hook will automatically invalidate queries
   };
 
-  const handleDeletePopup = (id: number) => {
+  const handleDeletePopup = (id: string) => {
     confirmDialog.confirm(
       "Delete Popup",
       "Are you sure you want to delete this popup? This action cannot be undone.",

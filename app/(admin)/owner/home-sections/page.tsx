@@ -30,7 +30,7 @@ export default function HomeSectionsPage() {
     setSectionModalOpen(true);
   };
 
-  const handleDeleteSection = (id: number) => {
+  const handleDeleteSection = (id: string) => {
     confirmDialog.confirm(
       "Delete Section",
       "Are you sure you want to delete this section? This action cannot be undone.",

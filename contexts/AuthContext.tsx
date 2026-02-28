@@ -8,7 +8,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 export const DEMO_BALANCE = "5000";
 
 export interface User {
-  id: number;
+  id: string;
   username: string;
   email: string;
   membership: string;
@@ -17,11 +17,13 @@ export interface User {
   role?: string;
   upline?: string;
   downline?: string;
+  groupId?: number | null;
+  currencyId?: string | null;
 }
 
 /** Creates a new demo user (cached per session). Each call gets a unique id/email. */
 export function createDemoUser(): User {
-  const id = Date.now();
+  const id = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `demo-${Date.now()}`;
   return {
     id,
     username: "Demo User",

@@ -45,7 +45,7 @@ export default function QrCodesPage() {
     qrCodeModal.open(qrCode);
   };
 
-  const handleDeleteQrCode = (id: number) => {
+  const handleDeleteQrCode = (id: string) => {
     confirmDialog.confirm(
       "Delete QR Code",
       "Are you sure you want to delete this QR code? This action cannot be undone.",

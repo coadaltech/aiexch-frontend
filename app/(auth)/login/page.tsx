@@ -38,7 +38,7 @@ export default function LoginPage() {
       {
         onSuccess: (response) => {
           if (response.data.success && response.data.user) {
-            const user = response.data.user as { id: number; username: string; email: string; membership: string; balance?: string; role?: string };
+            const user = response.data.user as { id: string; username: string; email: string; membership: string; balance?: string; role?: string };
             login({
               id: user.id,
               username: user.username,

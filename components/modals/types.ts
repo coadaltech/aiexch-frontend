@@ -1,3 +1,9 @@
+export interface BettingModalRunner {
+  id: string;
+  name: string;
+  price: number;
+}
+
 export interface BettingModalProps {
   open: boolean;
   onClose: () => void;
@@ -9,10 +15,12 @@ export interface BettingModalProps {
       matchId: string;
       marketId: string;
       selectionId: string;
+      selectionName?: string;
       eventTypeId?: string | number;
       marketName?: string;
-      runnerName?: string;
+      marketType?: string;
       type: string;
+      runners?: BettingModalRunner[];
     };
   };
 }

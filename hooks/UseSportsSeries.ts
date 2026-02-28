@@ -22,6 +22,7 @@ export function UseSportsSeries(eventTypeId: string | null) {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}/api/sports/getAllSeries/${eventTypeId}`,
       );
+      console.log(response)
 
       // console.log("response", response.data);
       if (response.data.success && response.data.data) {

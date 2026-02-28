@@ -8,7 +8,7 @@ export const useWhitelabelInfo = () => {
     queryKey: ["whitelabel-info"],
     queryFn: async () => {
       const { data } = await publicApi.getWhitelabelInfo();
-      return data?.data as { whitelabelType: WhitelabelType; id: number | null; name: string | null };
+      return data?.data as { whitelabelType: WhitelabelType; id: string | null; name: string | null };
     },
     staleTime: 5 * 60 * 1000,
   });

@@ -110,14 +110,13 @@ export function BetSlip() {
 /** Table row for current (placed) bets: Matched Bet (left), Odds (center), Stake (right); Back = green, Lay = maroon */
 function CurrentBetTableRow({ bet }: { bet: any }) {
   const matchedBetLabel =
-    bet.runnerName && bet.marketName
-      ? `${bet.runnerName} - ${bet.marketName}`
-      : bet.runnerName || bet.marketName || "Bet";
+    bet.selectionName && bet.marketName
+      ? `${bet.selectionName} - ${bet.marketName}`
+      : bet.selectionName || bet.marketName || "Bet";
   const stakeFormatted =
     bet.stake != null ? Number(bet.stake).toFixed(2) : "-";
   const oddsFormatted = bet.odds != null ? String(Number(bet.odds)) : "-";
-
-  const isLay = bet.type === "lay";
+  const isLay = bet.betType === "lay";
   const rowBg = isLay
     ? "bg-[#39111A]/40 text-foreground"
     : "bg-green-900/40 text-foreground";

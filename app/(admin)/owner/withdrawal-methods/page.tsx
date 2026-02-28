@@ -47,7 +47,7 @@ export default function WithdrawalMethodsPage() {
     methodModal.open(method);
   };
 
-  const handleDeleteMethod = (id: number) => {
+  const handleDeleteMethod = (id: string) => {
     confirmDialog.confirm(
       "Delete Withdrawal Method",
       "Are you sure you want to delete this withdrawal method? This action cannot be undone.",

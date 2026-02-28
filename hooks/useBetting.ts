@@ -5,20 +5,27 @@ import { getDemoBets } from "@/lib/demo-bets";
 
 type BetType = "back" | "lay";
 
-interface PlaceBetParams {
+export interface BetRunner {
+  id: string;
+  name: string;
+  price: number;
+}
+
+export interface PlaceBetParams {
   matchId: string;
   marketId: string;
   eventTypeId: string;
+  marketType?: string;
   selectionId: string;
+  selectionName?: string;
   marketName?: string;
-  runnerName?: string;
   odds: number;
   stake: number;
   type: BetType;
+  runners: BetRunner[];
 }
 
 export const useBetting = () => {
-  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const placeBetMutation = useMutation({

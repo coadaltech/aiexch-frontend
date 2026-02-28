@@ -139,7 +139,7 @@ export function SessionsList({
                     onClick={() =>
                       canTrade &&
                       addToBetSlip({
-                        id: Date.now() + idx + 1000,
+                        id: `slip-${Date.now()}-${idx}-lay`,
                         teams: session.RunnerName,
                         market: `${session.RunnerName} - Lay`,
                         odds: session.LayPrice1.toString(),
@@ -173,7 +173,7 @@ export function SessionsList({
                     onClick={() =>
                       canTrade &&
                       addToBetSlip({
-                        id: Date.now() + idx,
+                        id: `slip-${Date.now()}-${idx}`,
                         teams: session.RunnerName,
                         market: `${session.RunnerName} - Back`,
                         odds: session.BackPrice1.toString(),

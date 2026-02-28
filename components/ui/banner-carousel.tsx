@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 
 interface Banner {
-  id: number;
+  id: string;
   title: string;
   imageUrl: string;
   linkUrl?: string;

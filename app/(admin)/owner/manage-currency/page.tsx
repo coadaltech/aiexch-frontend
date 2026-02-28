@@ -79,7 +79,7 @@ export default function ManageCurrencyPage() {
     );
   };
 
-  const handleStartEdit = (row: { id: number; value: string }) => {
+  const handleStartEdit = (row: { id: string; value: string }) => {
     setEditingId(row.id);
     setEditValue(String(row.value));
   };

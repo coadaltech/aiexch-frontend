@@ -68,7 +68,7 @@ export default function PromocodesPage() {
     promocodeModal.close();
   };
 
-  const handleDeletePromocode = (id: number) => {
+  const handleDeletePromocode = (id: string) => {
     confirmDialog.confirm(
       "Delete Promocode",
       "Are you sure you want to delete this promocode? This action cannot be undone.",

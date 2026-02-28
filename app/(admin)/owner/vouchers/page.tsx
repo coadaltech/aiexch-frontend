@@ -55,7 +55,7 @@ export default function VouchersPage() {
 
 
 
-  const handleUpdateStatus = (id: number, status: string) => {
+  const handleUpdateStatus = (id: string, status: string) => {
     updateVoucherMutation.mutate({ id, status });
   };
 

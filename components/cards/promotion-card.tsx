@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import { Button } from "../ui/button";
 
 interface Promotion {
-  id: number;
+  id: string;
   title: string;
   description?: string;
   type: string;

@@ -70,7 +70,7 @@ export default function PromotionsPage() {
     // Hook will automatically invalidate queries
   };
 
-  const handleDeletePromotion = (id: number) => {
+  const handleDeletePromotion = (id: string) => {
     confirmDialog.confirm(
       "Delete Promotion",
       "Are you sure you want to delete this promotion? This action cannot be undone.",

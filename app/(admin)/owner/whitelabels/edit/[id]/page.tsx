@@ -9,8 +9,8 @@ export default function EditWhitelabelPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
-  
-  const { data: whitelabel, isLoading } = useWhitelabel(parseInt(id));
+
+  const { data: whitelabel, isLoading } = useWhitelabel(id);
   const updateMutation = useUpdateWhitelabel();
 
   const handleSave = async (formData: Whitelabel) => {

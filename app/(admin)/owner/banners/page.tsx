@@ -62,7 +62,7 @@ export default function BannersPage() {
     // The mutation hooks already handle invalidation, but this ensures immediate refresh
   };
 
-  const handleDeleteBanner = (id: number) => {
+  const handleDeleteBanner = (id: string) => {
     confirmDialog.confirm(
       "Delete Banner",
       "Are you sure you want to delete this banner? This action cannot be undone.",

@@ -107,7 +107,7 @@ export function PremiumFancyList({
                     onClick={() =>
                       fancy.GameStatus === "ACTIVE" &&
                       addToBetSlip({
-                        id: Date.now() + idx,
+                        id: `slip-${Date.now()}-${idx}`,
                         teams: fancy.RunnerName,
                         market: `${fancy.RunnerName} - Back`,
                         odds: fancy.BackPrice1.toString(),
@@ -143,7 +143,7 @@ export function PremiumFancyList({
                     onClick={() =>
                       fancy.GameStatus === "ACTIVE" &&
                       addToBetSlip({
-                        id: Date.now() + idx + 1000,
+                        id: `slip-${Date.now()}-${idx}-lay`,
                         teams: fancy.RunnerName,
                         market: `${fancy.RunnerName} - Lay`,
                         odds: fancy.LayPrice1.toString(),

@@ -201,10 +201,10 @@ function SeriesCard({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h3 className="font-bold text-base text-foreground">{series.name}</h3>
-            <span className="flex items-center gap-1 px-2 py-1 bg-red-600 text-white text-xs font-bold rounded-full">
-              <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
-              LIVE
-            </span>
+            {/* <span className="flex items-center gap-1 px-2 py-1 bg-red-600 text-white text-xs font-bold rounded-full"> */}
+            {/*   <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div> */}
+            {/*   LIVE */}
+            {/* </span> */}
           </div>
           {/* <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded"> */}
           {/*   ID: {series.id} */}
@@ -223,7 +223,7 @@ function SeriesCard({
               href={`/sports/${sport}/${series.id}/${match.id}`}
               className="block"
             >
-              <div className="flex items-center justify-between p-3 rounded-md bg-background/50 hover:bg-background/80 transition-colors">
+              <div className="flex items-center justify-between p-2 rounded-md border-b-2 hover:bg-secondary transition-colors">
                 <div className="flex-1">
                   <div className="flex items-center gap-1.5 mb-1">
                     <h4 className="font-semibold text-sm text-foreground">

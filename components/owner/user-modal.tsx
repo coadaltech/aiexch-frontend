@@ -22,6 +22,7 @@ import { Switch } from "@/components/ui/switch";
 import { User, UserModalProps } from "./types";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWhitelabelInfo } from "@/hooks/useAuth";
+import { useCurrencies } from "@/hooks/useOwner";
 import { decode_payload_from_token } from "@/lib/token-utils";
 import {
   User as UserIcon,
@@ -70,7 +71,9 @@ export function UserModal({
 }: UserModalProps) {
   const { user: currentUser } = useAuth();
   const { data: whitelabelInfo } = useWhitelabelInfo();
+  const { data: currencies = [] } = useCurrencies();
   const isB2C = String(whitelabelInfo?.whitelabelType ?? "").toUpperCase() === "B2C";
+  console.log(currentUser)
 
   const [currentUserRole, setCurrentUserRole] = useState<string | undefined>(currentUser?.role);
 
@@ -110,13 +113,14 @@ export function UserModal({
     user || {
       username: "",
       email: "",
-      role: availableRoles[availableRoles.length - 1] || "user", // Default to lowest role
+      role: availableRoles[availableRoles.length - 1] || "user",
       membership: "bronze",
       accountStatus: true,
       betStatus: true,
       balance: "0.00",
       upline: "0.00",
       downline: "0.00",
+      currencyId: null,
       firstName: "",
       lastName: "",
       phone: "",
@@ -229,9 +233,12 @@ export function UserModal({
       toast.error(error);
       return;
     }
+    console.log("formdata", formData)
+    console.log("currencyId", currentUser.currencyId)
     onSave({
       ...formData,
       balance: formData.balance.toString(),
+      currencyId: formData.currencyId ?? currentUser.currencyId,
     });
   };
 
@@ -398,7 +405,7 @@ export function UserModal({
                   </div>
                 </div>
 
-                {user && currentUser?.id != null && user.createdBy != null && Number(user.createdBy) === Number(currentUser.id) && (
+                {user && currentUser?.id != null && user.createdBy != null && String(user.createdBy) === String(currentUser.id) && (
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-foreground">
@@ -452,6 +459,42 @@ export function UserModal({
                       className="bg-background border-input text-foreground h-10 focus:ring-2 focus:ring-primary/20"
                       placeholder="0.00"
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
+                      Currency
+                    </Label>
+                    {currentUserRole === "owner" ? (
+                      <Select
+                        value={formData.currencyId || ""}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, currencyId: value || null })
+                        }
+                      >
+                        <SelectTrigger className="bg-background border-input text-foreground h-10">
+                          <SelectValue placeholder="Select currency" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(currencies as any[]).map((c: any) => (
+                            <SelectItem key={c.id} value={c.id}>
+                              {c.code} — {c.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input
+                        readOnly
+                        value={
+                          (() => {
+                            const cur = (currencies as any[]).find((c: any) => c.id === (formData.currencyId).toString());
+                            return cur ? `${cur.code} — ${cur.name}` : "—";
+                          })()
+                        }
+                        className="bg-muted border-input text-foreground h-10 cursor-not-allowed"
+                      />
+                    )}
                   </div>
                 </div>
               </div>

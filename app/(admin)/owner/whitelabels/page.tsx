@@ -24,7 +24,7 @@ export default function WhitelabelsPage() {
     router.push(`/owner/whitelabels/edit/${whitelabel.id}`);
   };
 
-  const handleDeleteWhitelabel = (id: number) => {
+  const handleDeleteWhitelabel = (id: string) => {
     confirmDialog.confirm(
       "Delete White Label",
       "Are you sure you want to delete this white label? This action cannot be undone.",

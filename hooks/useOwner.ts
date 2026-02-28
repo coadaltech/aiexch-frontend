@@ -37,7 +37,7 @@ export const useUpdatePromotion = () => {
 export const useDeletePromotion = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => ownerApi.deletePromotion(id),
+    mutationFn: (id: string) => ownerApi.deletePromotion(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["promotions"] });
       toast.success("Promotion deleted successfully");
@@ -81,7 +81,7 @@ export const useUpdatePromocode = () => {
 export const useDeletePromocode = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => ownerApi.deletePromocode(id),
+    mutationFn: (id: string) => ownerApi.deletePromocode(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["owner-promocodes"] });
       toast.success("Promocode deleted successfully");
@@ -149,7 +149,7 @@ export const useUpdateBanner = () => {
 export const useDeleteBanner = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => ownerApi.deleteBanner(id),
+    mutationFn: (id: string) => ownerApi.deleteBanner(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["banners"] });
       toast.success("Banner deleted successfully");
@@ -213,7 +213,7 @@ export const useUpdatePopup = () => {
 export const useDeletePopup = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => ownerApi.deletePopup(id),
+    mutationFn: (id: string) => ownerApi.deletePopup(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["popups"] });
       toast.success("Popup deleted successfully");
@@ -230,7 +230,7 @@ export const useWhitelabels = () => {
   });
 };
 
-export const useWhitelabel = (id: number) => {
+export const useWhitelabel = (id: string) => {
   return useQuery({
     queryKey: ["whitelabel", id],
     queryFn: () =>
@@ -268,7 +268,7 @@ export const useUpdateWhitelabel = () => {
 export const useDeleteWhitelabel = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => ownerApi.deleteWhitelabel(id),
+    mutationFn: (id: string) => ownerApi.deleteWhitelabel(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["whitelabels"] });
       toast.success("Whitelabel deleted successfully");
@@ -436,7 +436,7 @@ export const useCreateNotification = () => {
 export const useDeleteNotification = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => {
+    mutationFn: (id: string) => {
       console.log("Deleting notification with ID:", id, typeof id);
       return ownerApi.deleteNotification(id);
     },
@@ -489,7 +489,7 @@ export const useUpdateQrCode = () => {
 export const useDeleteQrCode = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => ownerApi.deleteQrCode(id),
+    mutationFn: (id: string) => ownerApi.deleteQrCode(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["owner-qrcodes"] });
       toast.success("QR code deleted successfully");
@@ -526,7 +526,7 @@ export const useSportsGames = () => {
   });
 
   const deleteGame = useMutation({
-    mutationFn: (id: number) => ownerApi.deleteSportsGame(id),
+    mutationFn: (id: string) => ownerApi.deleteSportsGame(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sports-games"] });
       toast.success("Sports game deleted successfully");
@@ -577,7 +577,7 @@ export const useUpdateHomeSection = () => {
 export const useDeleteHomeSection = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => ownerApi.deleteHomeSection(id),
+    mutationFn: (id: string) => ownerApi.deleteHomeSection(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["home-sections"] });
       toast.success("Home section deleted successfully");
@@ -586,7 +586,7 @@ export const useDeleteHomeSection = () => {
   });
 };
 
-export const useSectionGames = (sectionId: number) => {
+export const useSectionGames = (sectionId: string) => {
   return useQuery({
     queryKey: ["section-games", sectionId],
     queryFn: () =>
@@ -676,7 +676,7 @@ export const useUpdateWithdrawalMethod = () => {
 export const useDeleteWithdrawalMethod = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => ownerApi.deleteWithdrawalMethod(id),
+    mutationFn: (id: string) => ownerApi.deleteWithdrawalMethod(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["withdrawal-methods"] });
       toast.success("Withdrawal method deleted successfully");
@@ -717,7 +717,7 @@ export const useCreateCurrency = () => {
 export const useUpdateCurrency = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, value }: { id: number; value: string | number }) =>
+    mutationFn: ({ id, value }: { id: string; value: string | number }) =>
       ownerApi.updateCurrency(id, { value }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["owner-currencies"] });
@@ -727,7 +727,7 @@ export const useUpdateCurrency = () => {
   });
 };
 
-export const useCurrencyHistory = (currencyId: number | null) => {
+export const useCurrencyHistory = (currencyId: string | null) => {
   return useQuery({
     queryKey: ["owner-currency-history", currencyId],
     queryFn: () => ownerApi.getCurrencyHistory(currencyId!).then((res) => res.data.data),

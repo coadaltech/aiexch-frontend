@@ -7,7 +7,7 @@ import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 import { usePublicPopups } from "@/hooks/useUserQueries";
 
 interface Popup {
-  id: number;
+  id: string;
   title: string;
   imageUrl: string;
   targetPage: string;

@@ -108,7 +108,8 @@ export default function SeriesMatchesPage({
       </div>
 
       {liveMatches.length > 0 && (
-        <div className="space-y-3 w-full h-full">
+        <div className="space-y-3 w-full">
+          <h2>Live matches</h2>
           {liveMatches.map((match: any) => {
             if (new Date(match.openDate).getDate() < new Date().getDate()) {
               return null;
@@ -124,6 +125,7 @@ export default function SeriesMatchesPage({
 
       {nonLiveMatches.length > 0 && (
         <div className="space-y-3">
+          <h2>Upcoming matches</h2>
           {liveMatches.length > 0 && <div className="border-t my-4"></div>}
           {nonLiveMatches.map((match: any) => (
             <div key={match.id} onClick={() => handleMatchClick(match.id)}>

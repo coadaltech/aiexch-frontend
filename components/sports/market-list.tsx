@@ -228,7 +228,7 @@ function renderOdds({
               onClick={() => {
                 if (isLocked || !canTrade) return;
                 addToBetSlip({
-                  id: Date.now() + idx + (isBack ? 0 : 1000),
+                  id: `slip-${Date.now()}-${idx}-${isBack ? "back" : "lay"}`,
                   teams: market.marketName,
                   market: `${runner.runnerName} - ${type}`,
                   odds: pricePoint.price.toString(),

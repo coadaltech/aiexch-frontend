@@ -41,7 +41,7 @@ export interface PaginationProps {
 }
 
 export interface Popup {
-  id?: number;
+  id?: string;
   title: string;
   imageUrl: string;
   targetPage: string;
@@ -56,7 +56,7 @@ export interface PopupModalProps {
 }
 
 export interface Promocode {
-  id?: number;
+  id?: string;
   code: string;
   type: string;
   value: string;
@@ -78,7 +78,7 @@ export interface Promotion {
   title: string;
   description?: string;
   type: string;
-  imageUrl: string | File ;
+  imageUrl: string | File;
   status: string;
 }
 
@@ -109,7 +109,7 @@ export interface VoucherModalProps {
 }
 
 export interface User {
-  id?: number;
+  id?: string;
   username: string;
   email: string;
   role: string;
@@ -118,17 +118,19 @@ export interface User {
   betStatus?: boolean;
   parentAccountStatus?: boolean;
   parentBetStatus?: boolean;
-  createdBy?: number | null;
+  createdBy?: string | null;
   balance?: string;
   upline?: string | number;
   downline?: string | number;
-  whitelabelId?: number | null;
+  whitelabelId?: string | null;
+  groupId?: number | null;
+  currencyId?: string | null;
   firstName?: string;
   lastName?: string;
   phone?: string;
   country?: string;
   password?: string;
-  type?: "user" | "profile"; // Used to distinguish between user account update and profile update
+  type?: "user" | "profile";
 }
 
 export interface UserModalProps {
@@ -177,7 +179,7 @@ export type WhitelabelType = "B2B" | "B2C";
 
 export interface Whitelabel {
   id?: number;
-  userId: number;
+  userId: string;
   whitelabelType: WhitelabelType;
   name: string;
   domain: string;

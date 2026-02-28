@@ -13,7 +13,7 @@ import { useConfirm } from "@/hooks/useConfirm";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface Domain {
-  id: number;
+  id: string;
   name: string;
   status: "active" | "inactive" | "pending";
   createdAt: string;

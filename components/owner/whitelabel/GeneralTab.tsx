@@ -37,9 +37,9 @@ export function GeneralTab({ formData, setFormData }: GeneralTabProps) {
       <div>
         <Label className="text-muted-foreground">Select User *</Label>
         <Select
-          value={formData.userId && formData.userId > 0 ? formData.userId.toString() : undefined}
+          value={formData.userId}
           onValueChange={(value) => {
-            const userId = parseInt(value, 10);
+            const userId = value;
             setFormData({ ...formData, userId });
             validateField("userId", userId);
           }}
@@ -53,7 +53,7 @@ export function GeneralTab({ formData, setFormData }: GeneralTabProps) {
             {users.map((user: any) => (
               <SelectItem
                 key={user.id}
-                value={user.id.toString()}
+                value={user.id}
                 className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black"
               >
                 {user.username} ({user.email})

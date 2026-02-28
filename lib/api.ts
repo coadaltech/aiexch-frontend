@@ -96,11 +96,13 @@ export interface Transaction {
 export interface AuthResponse {
   success: boolean;
   user: {
-    id: number;
+    id: string;
     username: string;
     email: string;
     membership: string;
     balance: string;
+    groupId?: number | null;
+    currencyId?: string | null;
   };
 }
 
@@ -140,18 +142,18 @@ export const ownerApi = {
     api.post("/owner/banners", data, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
-  updateBanner: (id: number, data: any) =>
+  updateBanner: (id: string, data: any) =>
     api.put(`/owner/banners/${id}`, data, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
-  deleteBanner: (id: number) => api.delete(`/owner/banners/${id}`),
+  deleteBanner: (id: string) => api.delete(`/owner/banners/${id}`),
 
   // Whitelabels
   getWhitelabels: () => api.get("/owner/whitelabels"),
   createWhitelabel: (data: any) => api.post("/owner/whitelabels", data),
-  updateWhitelabel: (id: number, data: any) =>
+  updateWhitelabel: (id: string, data: any) =>
     api.put(`/owner/whitelabels/${id}`, data),
-  deleteWhitelabel: (id: number) => api.delete(`/owner/whitelabels/${id}`),
+  deleteWhitelabel: (id: string) => api.delete(`/owner/whitelabels/${id}`),
 
   // Promotions
   getPromotions: () => api.get("/owner/promotions"),
@@ -159,16 +161,16 @@ export const ownerApi = {
     api.post("/owner/promotions", data, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
-  updatePromotion: (id: number, data: any) =>
+  updatePromotion: (id: string, data: any) =>
     api.put(`/owner/promotions/${id}`, data, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
-  deletePromotion: (id: number) => api.delete(`/owner/promotions/${id}`),
+  deletePromotion: (id: string) => api.delete(`/owner/promotions/${id}`),
 
   // Users
   getUsers: () => api.get("/owner/users"),
   createUser: (data: any) => api.post("/owner/users", data),
-  updateUser: (id: number, data: any) => api.put(`/owner/users/${id}`, data),
+  updateUser: (id: string, data: any) => api.put(`/owner/users/${id}`, data),
 
   // Popups
   getPopups: () => api.get("/owner/popups"),
@@ -176,28 +178,28 @@ export const ownerApi = {
     api.post("/owner/popups", data, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
-  updatePopup: (id: number, data: any) =>
+  updatePopup: (id: string, data: any) =>
     api.put(`/owner/popups/${id}`, data, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
-  deletePopup: (id: number) => api.delete(`/owner/popups/${id}`),
+  deletePopup: (id: string) => api.delete(`/owner/popups/${id}`),
 
   // Promocodes
   getPromocodes: () => api.get("/owner/promocodes"),
   createPromocode: (data: any) => api.post("/owner/promocodes", data),
-  updatePromocode: (id: number, data: any) =>
+  updatePromocode: (id: string, data: any) =>
     api.put(`/owner/promocodes/${id}`, data),
-  deletePromocode: (id: number) => api.delete(`/owner/promocodes/${id}`),
+  deletePromocode: (id: string) => api.delete(`/owner/promocodes/${id}`),
 
   // Vouchers
   getVouchers: () => api.get("/owner/vouchers"),
   createVoucher: (data: any) => api.post("/owner/vouchers", data),
-  updateVoucher: (id: number, data: any) =>
+  updateVoucher: (id: string, data: any) =>
     api.put(`/owner/vouchers/${id}`, data),
 
   // KYC
   getKycDocuments: () => api.get("/owner/kyc"),
-  updateKycStatus: (id: number, data: any) => api.put(`/owner/kyc/${id}`, data),
+  updateKycStatus: (id: string, data: any) => api.put(`/owner/kyc/${id}`, data),
 
   // Settings
   getSettings: () => api.get("/owner/settings"),
@@ -206,9 +208,9 @@ export const ownerApi = {
   // Notifications
   getNotifications: () => api.get("/owner/notifications"),
   createNotification: (data: any) => api.post("/owner/notifications", data),
-  updateNotification: (id: number, data: any) =>
+  updateNotification: (id: string, data: any) =>
     api.put(`/owner/notifications/${id}`, data),
-  deleteNotification: (id: number) => api.delete(`/owner/notifications/${id}`),
+  deleteNotification: (id: string) => api.delete(`/owner/notifications/${id}`),
 
   // QR Codes
   getQrCodes: () => api.get("/owner/qrcodes"),
@@ -216,34 +218,34 @@ export const ownerApi = {
     api.post("/owner/qrcodes", data, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
-  updateQrCode: (id: number, data: any) =>
+  updateQrCode: (id: string, data: any) =>
     api.put(`/owner/qrcodes/${id}`, data, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
-  deleteQrCode: (id: number) => api.delete(`/owner/qrcodes/${id}`),
+  deleteQrCode: (id: string) => api.delete(`/owner/qrcodes/${id}`),
 
   // Sports Games
   getSportsGames: () => api.get("/owner/sports-games"),
   createSportsGame: (data: any) => api.post("/owner/sports-games", data),
-  updateSportsGame: (id: number, data: any) =>
+  updateSportsGame: (id: string, data: any) =>
     api.put(`/owner/sports-games/${id}`, data),
-  deleteSportsGame: (id: number) => api.delete(`/owner/sports-games/${id}`),
+  deleteSportsGame: (id: string) => api.delete(`/owner/sports-games/${id}`),
 
   // Home Sections
   getHomeSections: () => api.get("/owner/home-sections"),
   createHomeSection: (data: any) => api.post("/owner/home-sections", data),
-  updateHomeSection: (id: number, data: any) =>
+  updateHomeSection: (id: string, data: any) =>
     api.put(`/owner/home-sections/${id}`, data),
-  deleteHomeSection: (id: number) => api.delete(`/owner/home-sections/${id}`),
+  deleteHomeSection: (id: string) => api.delete(`/owner/home-sections/${id}`),
 
   // Section Games
-  getSectionGames: (sectionId: number) =>
+  getSectionGames: (sectionId: string) =>
     api.get(`/owner/home-sections/${sectionId}/games`),
-  createSectionGame: (sectionId: number, data: any) =>
+  createSectionGame: (sectionId: string, data: any) =>
     api.post(`/owner/home-sections/${sectionId}/games`, data, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
-  updateSectionGame: (gameId: number, data: any) => {
+  updateSectionGame: (gameId: string, data: any) => {
     // Extract body if data is wrapped in an object
     const actualData = data?.body || data;
 
@@ -251,33 +253,33 @@ export const ownerApi = {
       headers: { "Content-Type": "multipart/form-data" },
     });
   },
-  deleteSectionGame: (gameId: number) =>
+  deleteSectionGame: (gameId: string) =>
     api.delete(`/owner/home-sections/games/${gameId}`),
 
   // Withdrawal Methods
   getWithdrawalMethods: () => api.get("/owner/withdrawal-methods"),
   createWithdrawalMethod: (data: any) =>
     api.post("/owner/withdrawal-methods", data),
-  updateWithdrawalMethod: (id: number, data: any) =>
+  updateWithdrawalMethod: (id: string, data: any) =>
     api.put(`/owner/withdrawal-methods/${id}`, data),
-  deleteWithdrawalMethod: (id: number) =>
+  deleteWithdrawalMethod: (id: string) =>
     api.delete(`/owner/withdrawal-methods/${id}`),
 
   // Domains
   getDomains: () => api.get("/owner/domains"),
   createDomain: (data: any) => api.post("/owner/domains", data),
-  updateDomain: (id: number, data: any) =>
+  updateDomain: (id: string, data: any) =>
     api.put(`/owner/domains/${id}`, data),
-  deleteDomain: (id: number) => api.delete(`/owner/domains/${id}`),
+  deleteDomain: (id: string) => api.delete(`/owner/domains/${id}`),
 
   // Currencies (owner-only)
   getAvailableCurrencies: () => api.get("/owner/currencies/available"),
   getCurrencies: () => api.get("/owner/currencies"),
   createCurrency: (data: { code: string; name: string; countryName: string; value: string | number }) =>
     api.post("/owner/currencies", data),
-  updateCurrency: (id: number, data: { value: string | number }) =>
+  updateCurrency: (id: string, data: { value: string | number }) =>
     api.put(`/owner/currencies/${id}`, data),
-  getCurrencyHistory: (id: number) => api.get(`/owner/currencies/${id}/history`),
+  getCurrencyHistory: (id: string) => api.get(`/owner/currencies/${id}/history`),
 };
 
 export interface BetRecord {
@@ -474,4 +476,6 @@ export const sportsApi = {
     api.post("/sports/results/fancy", { eventTypeId, marketIds }),
   getMatchDetails: (eventTypeId: string, eventId: string) =>
     api.post(`/sports/matchDetails/${eventTypeId}/${eventId}`),
+  getNewResult: (eventId: string) =>
+    api.get(`/sports/new-result/${eventId}`),
 };
