@@ -166,16 +166,26 @@ export function UserModal({
     }));
   }, [open, user]);
 
-  // Upline always comes from parent (100% for admin, parent's downline for others). Only downline is editable; downline ≤ upline.
+  // Upline always comes from parent (100% for admin/user, parent's downline for others). Only downline is editable; downline ≤ upline.
   const isCreatingAdmin = !user && formData.role === "admin";
+  const isCreatingUserRole = !user && formData.role === "user";
   const creatorDownlineNum = parseFloat(String(currentUser?.downline ?? "0")) || 0;
-  const maxDownlineCreate = isCreatingAdmin ? 100 : creatorDownlineNum;
+  const maxDownlineCreate = (isCreatingAdmin || isCreatingUserRole) ? 100 : creatorDownlineNum;
   const uplineNum = parseFloat(String(formData.upline ?? "0")) || 0;
-  const maxDownlineAllowed = user ? uplineNum : maxDownlineCreate; // In edit: max = user's upline; in create: max = 100 for admin or creator's downline
+  const maxDownlineAllowed = user ? uplineNum : maxDownlineCreate;
+
+  // Max balance the current user can assign (no limit for owner)
+  const currentUserBalance = parseFloat(String(currentUser?.balance ?? "0")) || 0;
+  const hasBalanceLimit = currentUserRole !== "owner";
 
   // When role changes in create mode, set upline (from parent) and clamp downline to ≤ upline
   useEffect(() => {
     if (!open || user) return;
+    // For "user" role: both upline and downline are fixed at 100%
+    if (formData.role === "user") {
+      setFormData((prev) => ({ ...prev, upline: "100", downline: "100" }));
+      return;
+    }
     const uplineForRole = formData.role === "admin" ? "100" : (currentUser?.downline ?? "0.00");
     const maxD = formData.role === "admin" ? 100 : creatorDownlineNum;
     const currentDownline = parseFloat(String(formData.downline ?? "0")) || 0;
@@ -196,6 +206,12 @@ export function UserModal({
       return "Password must be at least 6 characters";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
       return "Invalid email format";
+    // Balance must not exceed current user's balance (owner has no limit)
+    if (hasBalanceLimit) {
+      const balanceVal = parseFloat(String(formData.balance ?? "0")) || 0;
+      if (balanceVal > currentUserBalance)
+        return `Balance cannot exceed your available balance (${currentUserBalance})`;
+    }
     // Downline must always be ≤ upline (upline comes from parent)
     const uplineVal = parseFloat(String(formData.upline ?? "0")) || 0;
     const downlineVal = parseFloat(String(formData.downline ?? "0")) || 0;
@@ -452,13 +468,26 @@ export function UserModal({
                       type="number"
                       step="0.01"
                       min="0"
+                      max={hasBalanceLimit ? currentUserBalance : undefined}
                       value={formData.balance || "0.00"}
-                      onChange={(e) =>
-                        setFormData({ ...formData, balance: e.target.value })
-                      }
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        if (hasBalanceLimit) {
+                          const num = parseFloat(v) || 0;
+                          const clamped = num > currentUserBalance ? String(currentUserBalance) : v;
+                          setFormData({ ...formData, balance: clamped });
+                        } else {
+                          setFormData({ ...formData, balance: v });
+                        }
+                      }}
                       className="bg-background border-input text-foreground h-10 focus:ring-2 focus:ring-primary/20"
                       placeholder="0.00"
                     />
+                    {hasBalanceLimit && (
+                      <p className="text-xs text-muted-foreground">
+                        Available: {currentUserBalance}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label className="text-sm font-medium text-foreground flex items-center gap-2">
@@ -604,7 +633,7 @@ export function UserModal({
                         placeholder="0.00"
                       />
                       <p className="text-xs text-muted-foreground">
-                        Set by parent (100% for admin, parent’s downline for others)
+                        {isCreatingUserRole ? "Fixed at 100% for user role" : "Set by parent (100% for admin, parent’s downline for others)"}
                       </p>
                     </div>
                     <div className="space-y-2">
@@ -617,17 +646,19 @@ export function UserModal({
                         min="0"
                         max={maxDownlineAllowed}
                         value={formData.downline ?? "0.00"}
+                        readOnly={isCreatingUserRole}
                         onChange={(e) => {
+                          if (isCreatingUserRole) return;
                           const v = e.target.value;
                           const num = parseFloat(v) || 0;
                           const clamped = v === "" ? "" : (num > maxDownlineAllowed ? String(maxDownlineAllowed) : v);
                           setFormData({ ...formData, downline: clamped });
                         }}
-                        className="bg-background border-input text-foreground h-10 focus:ring-2 focus:ring-primary/20"
+                        className={isCreatingUserRole ? "bg-muted border-input text-foreground h-10 cursor-not-allowed" : "bg-background border-input text-foreground h-10 focus:ring-2 focus:ring-primary/20"}
                         placeholder="0.00"
                       />
                       <p className="text-xs text-muted-foreground">
-                        Editable; must be ≤ upline ({maxDownlineAllowed}%)
+                        {isCreatingUserRole ? "Fixed at 100% for user role" : `Editable; must be ≤ upline (${maxDownlineAllowed}%)`}
                       </p>
                     </div>
                   </div>
