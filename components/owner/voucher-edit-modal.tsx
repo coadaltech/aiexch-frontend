@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -27,18 +28,14 @@ export function VoucherEditModal({
 }: VoucherEditModalProps) {
   const [formData, setFormData] = useState({
     status: "",
-    method: "",
-    reference: "",
-    txnHash: "",
+    remarks: "",
   });
 
   React.useEffect(() => {
     if (open && voucher) {
       setFormData({
         status: voucher.status || "",
-        method: voucher.method || "",
-        reference: voucher.reference || "",
-        txnHash: voucher.txnHash || "",
+        remarks: voucher.remarks || "",
       });
     }
   }, [open, voucher]);
@@ -76,10 +73,22 @@ export function VoucherEditModal({
               </SelectTrigger>
               <SelectContent className="bg-card border">
                 <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="failed">Failed</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div>
+            <Label className="text-muted-foreground">Remarks</Label>
+            <Textarea
+              value={formData.remarks}
+              onChange={(e) =>
+                setFormData({ ...formData, remarks: e.target.value })
+              }
+              className="bg-input border text-foreground w-full min-h-[80px]"
+              placeholder="Optional remarks"
+            />
           </div>
         </div>
 

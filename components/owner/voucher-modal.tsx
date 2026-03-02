@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -18,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Loader2 } from "lucide-react";
 import { VoucherModalProps } from "./types";
 import { useOwnerUsers } from "@/hooks/useOwner";
 
@@ -25,45 +27,35 @@ export function VoucherModal({
   open,
   onClose,
   onSave,
-}: VoucherModalProps) {
+  isLoading,
+}: VoucherModalProps & { isLoading?: boolean }) {
   const { data: users = [], isLoading: usersLoading } = useOwnerUsers();
   const [formData, setFormData] = useState({
     userId: "",
-    type: "deposit",
+    type: "limit",
     amount: "",
-    currency: "INR",
     method: "",
     reference: "",
-    status: "completed", // Default to completed so balance is added immediately
-    txnHash: "",
+    remarks: "",
+    status: "approved",
   });
+  const [error, setError] = useState<string | null>(null);
 
   // Reset form when modal closes
   React.useEffect(() => {
     if (!open) {
       setFormData({
         userId: "",
-        type: "deposit",
+        type: "limit",
         amount: "",
-        currency: "INR",
         method: "",
         reference: "",
-        status: "completed",
-        txnHash: "",
+        remarks: "",
+        status: "approved",
       });
+      setError(null);
     }
   }, [open]);
-
-  // Update currency when method changes
-  React.useEffect(() => {
-    if (formData.method === "crypto") {
-      setFormData((prev) => ({ ...prev, currency: "USDT" }));
-    } else if (formData.method === "bank") {
-      setFormData((prev) => ({ ...prev, currency: "USD" }));
-    } else if (formData.method === "admin_credits") {
-      setFormData((prev) => ({ ...prev, currency: "INR" }));
-    }
-  }, [formData.method]);
 
   const validateForm = () => {
     if (!formData.userId) return "Please select a user";
@@ -74,27 +66,25 @@ export function VoucherModal({
   };
 
   const handleSave = () => {
-    const error = validateForm();
-    if (error) {
-      alert(error);
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
       return;
     }
+    setError(null);
 
     const voucherData: any = {
-      userId: parseInt(formData.userId, 10),
-      type: formData.type === "withdrawal" ? "withdraw" : formData.type, // Normalize type to match backend
-      amount: formData.amount.toString(), // Backend expects string
+      userId: formData.userId,
+      type: formData.type,
+      amount: formData.amount.toString(),
+      status: formData.status,
     };
 
-    // Only include optional fields if they have values
-    if (formData.currency) voucherData.currency = formData.currency;
     if (formData.method) voucherData.method = formData.method;
     if (formData.reference) voucherData.reference = formData.reference;
-    if (formData.txnHash) voucherData.txnHash = formData.txnHash;
-    if (formData.status) voucherData.status = formData.status;
+    if (formData.remarks) voucherData.remarks = formData.remarks;
 
     onSave(voucherData);
-    // Form will reset when modal closes (handled by useEffect)
   };
 
   return (
@@ -110,6 +100,12 @@ export function VoucherModal({
         </DialogHeader>
 
         <div className="px-6 py-6 overflow-y-auto max-h-[calc(95vh-180px)]">
+          {error && (
+            <div className="mb-4 p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+              {error}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Left Column */}
             <div className="space-y-5">
@@ -135,7 +131,7 @@ export function VoucherModal({
                     {users.map((user: any) => (
                       <SelectItem
                         key={user.id}
-                        value={user.id.toString()}
+                        value={user.id}
                         className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black"
                       >
                         {user.username} ({user.email})
@@ -163,12 +159,22 @@ export function VoucherModal({
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent className="bg-card border">
+                    <SelectItem value="limit">Limit</SelectItem>
+                    <SelectItem value="credit">Credit</SelectItem>
+                    <SelectItem value="debit">Debit</SelectItem>
                     <SelectItem value="deposit">Deposit</SelectItem>
-                    <SelectItem value="withdrawal">Withdrawal</SelectItem>
+                    <SelectItem value="withdraw">Withdrawal</SelectItem>
                     <SelectItem value="bonus">Bonus</SelectItem>
-                    <SelectItem value="refund">Refund</SelectItem>
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {formData.type === "limit" && "Adds to user's credit limit"}
+                  {formData.type === "credit" && "Adds to user's cash balance"}
+                  {formData.type === "debit" && "Deducts from user's cash balance"}
+                  {formData.type === "deposit" && "Adds to user's cash balance"}
+                  {formData.type === "withdraw" && "Deducts from user's cash balance"}
+                  {formData.type === "bonus" && "Adds to user's cash balance"}
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -188,45 +194,6 @@ export function VoucherModal({
                   placeholder="0.00"
                   required
                 />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="currency-select" className="text-foreground font-medium text-sm">
-                  Currency
-                </Label>
-                <Select
-                  value={formData.currency}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, currency: value })
-                  }
-                >
-                  <SelectTrigger
-                    id="currency-select"
-                    className="bg-input border text-foreground h-10 w-full"
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border">
-                    {formData.method === "crypto" ? (
-                      <>
-                        <SelectItem value="USDT">USDT</SelectItem>
-                        <SelectItem value="BNB">BNB</SelectItem>
-                        <SelectItem value="TRX">TRX</SelectItem>
-                      </>
-                    ) : formData.method === "admin_credits" ? (
-                      <>
-                        <SelectItem value="INR">INR</SelectItem>
-                      </>
-                    ) : (
-                      <>
-                        <SelectItem value="INR">INR</SelectItem>
-                        <SelectItem value="USD">USD</SelectItem>
-                        <SelectItem value="EUR">EUR</SelectItem>
-                        <SelectItem value="GBP">GBP</SelectItem>
-                      </>
-                    )}
-                  </SelectContent>
-                </Select>
               </div>
             </div>
 
@@ -256,22 +223,20 @@ export function VoucherModal({
                 </Select>
               </div>
 
-              {formData.method === "bank" && (
-                <div className="space-y-2">
-                  <Label htmlFor="reference-input" className="text-foreground font-medium text-sm">
-                    Reference
-                  </Label>
-                  <Input
-                    id="reference-input"
-                    value={formData.reference}
-                    onChange={(e) =>
-                      setFormData({ ...formData, reference: e.target.value })
-                    }
-                    className="bg-input border text-foreground h-10 w-full"
-                    placeholder="Transaction reference"
-                  />
-                </div>
-              )}
+              <div className="space-y-2">
+                <Label htmlFor="reference-input" className="text-foreground font-medium text-sm">
+                  Reference
+                </Label>
+                <Input
+                  id="reference-input"
+                  value={formData.reference}
+                  onChange={(e) =>
+                    setFormData({ ...formData, reference: e.target.value })
+                  }
+                  className="bg-input border text-foreground h-10 w-full"
+                  placeholder="Transaction reference"
+                />
+              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="status-select" className="text-foreground font-medium text-sm">
@@ -290,36 +255,26 @@ export function VoucherModal({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-card border">
-                    <SelectItem value="pending">Pending (Balance not added)</SelectItem>
-                    <SelectItem value="completed">Completed (Balance added immediately)</SelectItem>
-                    <SelectItem value="failed">Failed</SelectItem>
+                    <SelectItem value="approved">Approved (Ledger updated immediately)</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
                   </SelectContent>
                 </Select>
-                {formData.type === "deposit" || formData.type === "bonus" ? (
-                  <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
-                    {formData.status === "completed"
-                      ? "Balance will be added to user account immediately"
-                      : "Balance will be added when status is changed to completed"}
-                  </p>
-                ) : null}
               </div>
 
-              {formData.method === "crypto" && (
-                <div className="space-y-2">
-                  <Label htmlFor="txn-hash-input" className="text-foreground font-medium text-sm">
-                    Transaction Hash
-                  </Label>
-                  <Input
-                    id="txn-hash-input"
-                    value={formData.txnHash || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, txnHash: e.target.value })
-                    }
-                    className="bg-input border text-foreground h-10 w-full"
-                    placeholder="Transaction hash"
-                  />
-                </div>
-              )}
+              <div className="space-y-2">
+                <Label htmlFor="remarks-input" className="text-foreground font-medium text-sm">
+                  Remarks
+                </Label>
+                <Textarea
+                  id="remarks-input"
+                  value={formData.remarks}
+                  onChange={(e) =>
+                    setFormData({ ...formData, remarks: e.target.value })
+                  }
+                  className="bg-input border text-foreground w-full min-h-[80px]"
+                  placeholder="Optional remarks"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -328,15 +283,24 @@ export function VoucherModal({
           <Button
             variant="ghost"
             onClick={onClose}
+            disabled={isLoading}
             className="text-foreground h-10 w-full sm:w-auto order-2 sm:order-1"
           >
             Cancel
           </Button>
           <Button
             onClick={handleSave}
+            disabled={isLoading}
             className="bg-primary text-primary-foreground hover:bg-primary/90 h-10 w-full sm:w-auto order-1 sm:order-2"
           >
-            Create Voucher
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              "Create Voucher"
+            )}
           </Button>
         </div>
       </DialogContent>

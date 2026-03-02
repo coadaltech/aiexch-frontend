@@ -68,6 +68,9 @@ export default function VouchersPage() {
       onSuccess: () => {
         createModal.close();
       },
+      onError: () => {
+        // Error toast is handled by the hook; modal stays open
+      },
     });
   };
 
@@ -82,12 +85,12 @@ export default function VouchersPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "completed":
-        return <Badge className="bg-green-600">Completed</Badge>;
+      case "approved":
+        return <Badge className="bg-green-600">Approved</Badge>;
       case "pending":
         return <Badge variant="secondary">Pending</Badge>;
-      case "failed":
-        return <Badge variant="destructive">Failed</Badge>;
+      case "rejected":
+        return <Badge variant="destructive">Rejected</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -95,9 +98,15 @@ export default function VouchersPage() {
 
   const getTypeBadge = (type: string) => {
     switch (type) {
+      case "limit":
+        return <Badge className="bg-indigo-600">Limit</Badge>;
+      case "credit":
+        return <Badge className="bg-green-600">Credit</Badge>;
+      case "debit":
+        return <Badge className="bg-red-600">Debit</Badge>;
       case "deposit":
         return <Badge className="bg-blue-600">Deposit</Badge>;
-      case "withdrawal":
+      case "withdraw":
         return <Badge className="bg-orange-600">Withdrawal</Badge>;
       case "bonus":
         return <Badge className="bg-purple-600">Bonus</Badge>;
@@ -140,8 +149,8 @@ export default function VouchersPage() {
                   <SelectContent className="bg-white border text-black">
                     <SelectItem value="all" className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black">All Status</SelectItem>
                     <SelectItem value="pending" className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black">Pending</SelectItem>
-                    <SelectItem value="completed" className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black">Completed</SelectItem>
-                    <SelectItem value="failed" className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black">Failed</SelectItem>
+                    <SelectItem value="approved" className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black">Approved</SelectItem>
+                    <SelectItem value="rejected" className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black">Rejected</SelectItem>
                   </SelectContent>
                 </Select>
 
@@ -151,6 +160,9 @@ export default function VouchersPage() {
                   </SelectTrigger>
                   <SelectContent className="bg-white border text-black">
                     <SelectItem value="all" className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black">All Types</SelectItem>
+                    <SelectItem value="limit" className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black">Limit</SelectItem>
+                    <SelectItem value="credit" className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black">Credit</SelectItem>
+                    <SelectItem value="debit" className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black">Debit</SelectItem>
                     <SelectItem value="deposit" className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black">Deposit</SelectItem>
                     <SelectItem value="withdraw" className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black">Withdraw</SelectItem>
                     <SelectItem value="bonus" className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black">Bonus</SelectItem>
@@ -267,7 +279,7 @@ export default function VouchersPage() {
                       <td className="py-3 px-2 text-muted-foreground text-sm hidden sm:table-cell">{voucher.userId}</td>
                       <td className="py-3 px-2">{getTypeBadge(voucher.type)}</td>
                       <td className="py-3 px-2 text-foreground font-medium text-sm">
-                        {voucher.amount} {voucher.currency}
+                        {voucher.amount}
                         <div className="md:hidden text-xs text-muted-foreground">{voucher.method || "N/A"}</div>
                       </td>
                       <td className="py-3 px-2 text-muted-foreground text-sm hidden md:table-cell">{voucher.method || "N/A"}</td>
@@ -320,7 +332,7 @@ export default function VouchersPage() {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => handleUpdateStatus(voucher.id, "completed")}
+                                onClick={() => handleUpdateStatus(voucher.id, "approved")}
                                 title="Approve"
                                 className="h-8 w-8 p-0 text-green-500 hover:text-green-400"
                               >
@@ -329,7 +341,7 @@ export default function VouchersPage() {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => handleUpdateStatus(voucher.id, "failed")}
+                                onClick={() => handleUpdateStatus(voucher.id, "rejected")}
                                 title="Reject"
                                 className="h-8 w-8 p-0 text-red-500 hover:text-red-400"
                               >
@@ -367,6 +379,7 @@ export default function VouchersPage() {
         open={createModal.isOpen}
         onClose={createModal.close}
         onSave={handleSaveVoucher}
+        isLoading={createVoucherMutation.isPending}
       />
 
       <VoucherEditModal
@@ -407,7 +420,7 @@ export default function VouchersPage() {
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Amount</label>
-                  <p className="text-foreground">{detailsModal.data.amount} {detailsModal.data.currency}</p>
+                  <p className="text-foreground">{detailsModal.data.amount}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Method</label>
