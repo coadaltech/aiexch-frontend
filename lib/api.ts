@@ -343,6 +343,7 @@ export const userApi = {
     withdrawalAddress?: string;
   }) => api.post("/profile/withdraw", data),
   getBalance: () => api.get("/profile/balance"),
+  getLedgerInfo: () => api.get("/betting/ledger-info"),
 };
 
 export const publicApi = {

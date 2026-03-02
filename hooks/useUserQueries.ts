@@ -57,6 +57,25 @@ export const useBalance = (enabled = true) => {
   });
 };
 
+export const useLedger = (enabled = true) => {
+  return useQuery({
+    queryKey: ["ledger"],
+    queryFn: () => userApi.getLedgerInfo(),
+    select: (data) => data.data.data as {
+      userId: string;
+      userBalance: string;
+      userLimit: string;
+      limitConsumed: string;
+      limitConsumedAfterDeclare: string;
+      finalLimit: string;
+    } | null,
+    enabled,
+    staleTime: 5000,
+    refetchOnWindowFocus: true,
+    refetchInterval: 10000,
+  });
+};
+
 export const usePublicPopups = (path?: string) => {
   const page = path === "/" ? "home" : path?.replace("/", "") || "";
   return useQuery({

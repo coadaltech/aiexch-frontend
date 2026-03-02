@@ -27,6 +27,7 @@ type QuickBetData = {
   allRunners: RunnerSummary[];
   eventName: string;
   odds: string;
+  run?: string | null;
   isLay: boolean;
 };
 
@@ -339,7 +340,7 @@ export default function MatchPage() {
     });
   };
 
-  const handleBackClick = (market: any, runner: any, odds: number | string) => {
+  const handleBackClick = (market: any, runner: any, odds: number | string, run?: string | null) => {
     const o = typeof odds === "number" ? odds : parseFloat(String(odds));
     if (o === 0 && odds !== "0") return;
     setQuickBetStake("");
@@ -351,11 +352,12 @@ export default function MatchPage() {
       allRunners: buildAllRunners(market, runner, o),
       eventName: matchInfo?.eventName || "Match",
       odds: String(odds),
+      run: run ?? null,
       isLay: false,
     });
   };
 
-  const handleLayClick = (market: any, runner: any, odds: number | string) => {
+  const handleLayClick = (market: any, runner: any, odds: number | string, run?: string | null) => {
     const o = typeof odds === "number" ? odds : parseFloat(String(odds));
     if (o === 0 && odds !== "0") return;
     setQuickBetStake("");
@@ -367,6 +369,7 @@ export default function MatchPage() {
       allRunners: buildAllRunners(market, runner, o),
       eventName: matchInfo?.eventName || "Match",
       odds: String(odds),
+      run: run ?? null,
       isLay: true,
     });
   };
@@ -380,7 +383,6 @@ export default function MatchPage() {
     const stakeNum = parseFloat(stake);
     const oddsNum = parseFloat(oddsValue) || 0;
     const marketType = toMarketType(market.bettingType);
-    const isLineBet = market.bettingType === "LINE";
 
     const minBet = parseFloat(market?.marketCondition?.minBet) || 0;
     const maxBet = parseFloat(market?.marketCondition?.maxBet) || 0;
@@ -393,10 +395,8 @@ export default function MatchPage() {
       return;
     }
 
-    // For LINE: potentialWin = stake + stake*(rate/100), for others: stake*odds
-    const potentialWin = isLineBet
-      ? (stakeNum + stakeNum * (oddsNum / 100)).toFixed(2)
-      : (stakeNum * oddsNum).toFixed(2);
+    // potentialWin = stake × odds for all market types
+    const potentialWin = (stakeNum * oddsNum).toFixed(2);
 
     const betPayload = {
       id: `slip-${Date.now()}-${market?.marketId ?? ""}-${runner?.selectionId ?? ""}`,
@@ -450,6 +450,7 @@ export default function MatchPage() {
           marketName,
           odds: oddsNum,
           stake: stakeNum,
+          run: quickBet.run != null ? parseFloat(quickBet.run) : null,
           type: isLay ? "lay" : "back",
           runners: allRunners,
         });
@@ -666,7 +667,11 @@ export default function MatchPage() {
                                 item ? (
                                   <button
                                     key={`back-${posIdx}`}
-                                    onClick={() => handleBackClick(market, runner, item.price)}
+                                    onClick={() => handleBackClick(
+                                      market,
+                                      runner,
+                                      market.bettingType === "BOOKMAKER" ? 1 + item.price / 100 : item.price
+                                    )}
                                     className={`${oddsBtnClass} hover:bg-green-900 transition-colors bg-green-900/70 w-20`}
                                   >
                                     <span className={oddsPriceClass}>{item.price}</span>
@@ -688,7 +693,11 @@ export default function MatchPage() {
                               ? runner.lay.map((layItem: any, layIdx: number) => (
                                   <button
                                     key={layIdx}
-                                    onClick={() => handleLayClick(market, runner, layItem.price)}
+                                    onClick={() => handleLayClick(
+                                      market,
+                                      runner,
+                                      market.bettingType === "BOOKMAKER" ? 1 + layItem.price / 100 : layItem.price
+                                    )}
                                     className={`${oddsBtnClass} hover:bg-[#39111A] transition-colors bg-[#39111A]/70 w-20`}
                                   >
                                     <span className={oddsPriceClass}>{layItem.price ? layItem.price : "0"}</span>
@@ -761,7 +770,7 @@ export default function MatchPage() {
                                   <button
                                     key={layIdx}
                                     onClick={() =>
-                                      handleLayClick(market, runner, String(layItem.line ?? layItem.price))
+                                      handleLayClick(market, runner, layItem.price, String(layItem.line ?? ""))
                                     }
                                     className={`${oddsBtnClass} hover:bg-green-900 transition-colors bg-green-900/70 w-20`}
                                   >
@@ -784,7 +793,7 @@ export default function MatchPage() {
                                   <button
                                     key={backIdx}
                                     onClick={() =>
-                                      handleBackClick(market, runner, String(backItem.line ?? backItem.price))
+                                      handleBackClick(market, runner, backItem.price, String(backItem.line ?? ""))
                                     }
                                     className={`${oddsBtnClass} hover:bg-[#39111A] transition-colors bg-[#39111A]/70 w-20`}
                                   >

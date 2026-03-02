@@ -26,7 +26,7 @@ import { useState, lazy, Suspense } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ProfileDashboardSkeleton } from "@/components/skeletons/profile-skeletons";
 import { formatBalance } from "@/lib/format-balance";
-import { useBalance } from "@/hooks/useUserQueries";
+import { useLedger } from "@/hooks/useUserQueries";
 
 const TransactionModal = lazy(
   () => import("@/components/modals/transaction-modal")
@@ -34,7 +34,7 @@ const TransactionModal = lazy(
 
 export default function DashboardContent() {
   const { user, isLoggedIn, logout, isLoading } = useAuth();
-  const { data: balance, isLoading: balanceLoading } = useBalance(
+  const { data: ledger, isLoading: ledgerLoading } = useLedger(
     isLoggedIn && !user?.isDemo
   );
   const [transactionModalType, setTransactionModalType] = useState<
@@ -43,7 +43,10 @@ export default function DashboardContent() {
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const router = useRouter();
 
-  const formattedBalance = formatBalance(balance || user?.balance || "0.00");
+  // finalLimit from ledger = available credit (userLimit - limitConsumed)
+  const displayBalance = ledger?.finalLimit ?? "0.00";
+  const formattedBalance = formatBalance(displayBalance);
+  const formattedExposure = formatBalance(ledger?.limitConsumed ?? "0.00");
 
   if (!isLoggedIn) {
     return <ProfileDashboardSkeleton />;
@@ -86,14 +89,25 @@ export default function DashboardContent() {
                   Available Balance
                 </span>
               </div>
-              {isLoading || balanceLoading ? (
-                <div className="animate-pulse">
+              {isLoading || ledgerLoading ? (
+                <div className="animate-pulse space-y-2">
                   <div className="h-6 lg:h-8 bg-primary/20 rounded w-24 lg:w-32"></div>
+                  <div className="h-4 bg-primary/10 rounded w-20 lg:w-24"></div>
                 </div>
               ) : (
-                <div className="text-2xl lg:text-4xl font-bold text-primary">
-                  ₹{formattedBalance.inr}
-                </div>
+                <>
+                  <div className="text-2xl lg:text-4xl font-bold text-primary">
+                    ₹{formattedBalance.inr}
+                  </div>
+                  {ledger && (
+                    <div className="flex items-center gap-1 mt-1 lg:mt-2">
+                      <span className="text-xs text-muted-foreground">Exposure:</span>
+                      <span className="text-xs font-semibold text-destructive">
+                        ₹{formattedExposure.inr}
+                      </span>
+                    </div>
+                  )}
+                </>
               )}
             </Card>
           </div>

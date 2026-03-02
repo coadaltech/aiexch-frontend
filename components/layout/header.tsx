@@ -23,7 +23,7 @@ import { AuthModal } from "../modals/auth-modal";
 import TransactionModal from "../modals/transaction-modal";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { useBalance } from "@/hooks/useUserQueries";
+import { useLedger } from "@/hooks/useUserQueries";
 import { formatBalance } from "@/lib/format-balance";
 import Logo from "./logo";
 import { useSettings } from "@/hooks/usePublic";
@@ -55,7 +55,7 @@ export default function Header() {
   const [authModal, setAuthModal] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const { user, isLoggedIn, logout, isLoading } = useAuth();
-  const { data: balance, isLoading: balanceLoading } = useBalance(
+  const { data: ledger, isLoading: ledgerLoading } = useLedger(
     isLoggedIn && !user?.isDemo
   );
 
@@ -140,19 +140,43 @@ export default function Header() {
                       </Button>
                     </div>
 
-                    {/* Balance Display - Always visible but compact on mobile */}
+                    {/* Balance + Exposure Display */}
                     <Button
                       size="sm"
                       onClick={() => router.push("/profile")}
-                      className="h-7 sm:h-8 bg-slate-700/50 hover:bg-slate-700 text-white font-medium px-2 sm:px-3 rounded-lg text-xs sm:text-sm touch-manipulation min-w-0"
+                      className="h-auto py-0.5 bg-slate-700/50 hover:bg-slate-700 text-white font-medium px-2 sm:px-3 rounded-lg text-xs sm:text-sm touch-manipulation min-w-0"
                     >
                       <Wallet className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5 flex-shrink-0" />
-                      {isLoading || balanceLoading ? (
+                      {isLoading || ledgerLoading ? (
                         <span className="animate-pulse">...</span>
                       ) : (
-                        <span className="truncate max-w-[60px] sm:max-w-none">
-                          ₹{formatBalance(balance || user?.balance || "0.00").inr}
-                        </span>
+                        <div className="flex flex-col items-start leading-tight">
+                          <span className="truncate max-w-[70px] sm:max-w-none font-semibold py-1">
+                            ₹{formatBalance(ledger?.finalLimit ?? "0.00").inr}
+                          </span>
+                          {/* <span className="text-[10px] text-amber-400 font-normal truncate max-w-[70px] sm:max-w-none">
+                            Exp: ₹{formatBalance(ledger?.limitConsumed ?? "0.00").inr}
+                          </span> */}
+                        </div>
+                      )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => router.push("/profile")}
+                      className="h-auto py-0.5 bg-slate-700/50 hover:bg-slate-700 text-white font-medium px-2 sm:px-3 rounded-lg text-xs sm:text-sm touch-manipulation min-w-0"
+                    >
+                      {/* <Wallet className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5 flex-shrink-0" /> */}
+                      {isLoading || ledgerLoading ? (
+                        <span className="animate-pulse">...</span>
+                      ) : (
+                        <div className="flex flex-col items-start leading-tight">
+                          {/* <span className="truncate max-w-[70px] sm:max-w-none font-semibold">
+                            ₹{formatBalance(ledger?.finalLimit ?? "0.00").inr}
+                          </span> */}
+                          <span className="truncate max-w-[70px] sm:max-w-none font-semibold py-1">
+                            Exp: ₹{formatBalance(ledger?.limitConsumed ?? "0.00").inr}
+                          </span>
+                        </div>
                       )}
                     </Button>
 
@@ -334,7 +358,7 @@ function SearchOverlay({
 
         const allGames = await Promise.all(
           activeSections.map(async (section) => {
-            const gamesRes = await publicApi.getSectionGames(section.id);
+            const gamesRes = await publicApi.getSectionGames(Number(section.id));
             const sectionGames: Game[] = gamesRes.data.data || [];
             return sectionGames
               .filter((g) => g.status === "active")

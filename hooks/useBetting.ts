@@ -21,6 +21,7 @@ export interface PlaceBetParams {
   marketName?: string;
   odds: number;
   stake: number;
+  run?: number | null;
   type: BetType;
   runners: BetRunner[];
 }

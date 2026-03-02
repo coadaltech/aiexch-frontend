@@ -36,7 +36,8 @@ import {
   MapPin,
   Handshake,
   Save,
-  Loader2
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -109,6 +110,8 @@ export function UserModal({
     return getAvailableRoles(currentUserRole);
   }, [currentUserRole, isB2C]);
 
+  const [formError, setFormError] = useState<string | null>(null);
+
   const [formData, setFormData] = useState<User>(
     user || {
       username: "",
@@ -117,7 +120,6 @@ export function UserModal({
       membership: "bronze",
       accountStatus: true,
       betStatus: true,
-      balance: "0.00",
       upline: "0.00",
       downline: "0.00",
       currencyId: null,
@@ -174,10 +176,6 @@ export function UserModal({
   const uplineNum = parseFloat(String(formData.upline ?? "0")) || 0;
   const maxDownlineAllowed = user ? uplineNum : maxDownlineCreate;
 
-  // Max balance the current user can assign (no limit for owner)
-  const currentUserBalance = parseFloat(String(currentUser?.balance ?? "0")) || 0;
-  const hasBalanceLimit = currentUserRole !== "owner";
-
   // When role changes in create mode, set upline (from parent) and clamp downline to ≤ upline
   useEffect(() => {
     if (!open || user) return;
@@ -206,12 +204,6 @@ export function UserModal({
       return "Password must be at least 6 characters";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
       return "Invalid email format";
-    // Balance must not exceed current user's balance (owner has no limit)
-    if (hasBalanceLimit) {
-      const balanceVal = parseFloat(String(formData.balance ?? "0")) || 0;
-      if (balanceVal > currentUserBalance)
-        return `Balance cannot exceed your available balance (${currentUserBalance})`;
-    }
     // Downline must always be ≤ upline (upline comes from parent)
     const uplineVal = parseFloat(String(formData.upline ?? "0")) || 0;
     const downlineVal = parseFloat(String(formData.downline ?? "0")) || 0;
@@ -223,12 +215,13 @@ export function UserModal({
   const handleSaveUserInfo = () => {
     const error = validateForm();
     if (error) {
+      setFormError(error);
       toast.error(error);
       return;
     }
+    setFormError(null);
     const payload: User & { type?: "user" | "profile" } = {
       ...formData,
-      balance: formData.balance.toString(),
       type: "user",
     };
     if (formData.accountStatus !== undefined) payload.accountStatus = formData.accountStatus;
@@ -237,6 +230,7 @@ export function UserModal({
   };
 
   const handleSaveProfileInfo = () => {
+    setFormError(null);
     onSave({
       ...formData,
       type: "profile",
@@ -246,20 +240,19 @@ export function UserModal({
   const handleCreateUser = () => {
     const error = validateForm();
     if (error) {
+      setFormError(error);
       toast.error(error);
       return;
     }
-    console.log("formdata", formData)
-    console.log("currencyId", currentUser.currencyId)
+    setFormError(null);
     onSave({
       ...formData,
-      balance: formData.balance.toString(),
       currencyId: formData.currencyId ?? currentUser.currencyId,
     });
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) setFormError(null); onClose(); }}>
       <DialogContent className="bg-card border max-w-7xl max-h-[95vh] overflow-hidden flex flex-col p-0">
         {/* Header */}
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
@@ -458,73 +451,41 @@ export function UserModal({
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-foreground flex items-center gap-2">
-                      <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
-                      Balance
-                    </Label>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-foreground flex items-center gap-2">
+                    <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
+                    Currency
+                  </Label>
+                  {currentUserRole === "owner" ? (
+                    <Select
+                      value={formData.currencyId || ""}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, currencyId: value || null })
+                      }
+                    >
+                      <SelectTrigger className="bg-background border-input text-foreground h-10">
+                        <SelectValue placeholder="Select currency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(currencies as any[]).map((c: any) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.code} — {c.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
                     <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      max={hasBalanceLimit ? currentUserBalance : undefined}
-                      value={formData.balance || "0.00"}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        if (hasBalanceLimit) {
-                          const num = parseFloat(v) || 0;
-                          const clamped = num > currentUserBalance ? String(currentUserBalance) : v;
-                          setFormData({ ...formData, balance: clamped });
-                        } else {
-                          setFormData({ ...formData, balance: v });
-                        }
-                      }}
-                      className="bg-background border-input text-foreground h-10 focus:ring-2 focus:ring-primary/20"
-                      placeholder="0.00"
+                      readOnly
+                      value={
+                        (() => {
+                          const cur = (currencies as any[]).find((c: any) => c.id === (formData.currencyId)?.toString());
+                          return cur ? `${cur.code} — ${cur.name}` : "—";
+                        })()
+                      }
+                      className="bg-muted border-input text-foreground h-10 cursor-not-allowed"
                     />
-                    {hasBalanceLimit && (
-                      <p className="text-xs text-muted-foreground">
-                        Available: {currentUserBalance}
-                      </p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-foreground flex items-center gap-2">
-                      <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
-                      Currency
-                    </Label>
-                    {currentUserRole === "owner" ? (
-                      <Select
-                        value={formData.currencyId || ""}
-                        onValueChange={(value) =>
-                          setFormData({ ...formData, currencyId: value || null })
-                        }
-                      >
-                        <SelectTrigger className="bg-background border-input text-foreground h-10">
-                          <SelectValue placeholder="Select currency" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {(currencies as any[]).map((c: any) => (
-                            <SelectItem key={c.id} value={c.id}>
-                              {c.code} — {c.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <Input
-                        readOnly
-                        value={
-                          (() => {
-                            const cur = (currencies as any[]).find((c: any) => c.id === (formData.currencyId).toString());
-                            return cur ? `${cur.code} — ${cur.name}` : "—";
-                          })()
-                        }
-                        className="bg-muted border-input text-foreground h-10 cursor-not-allowed"
-                      />
-                    )}
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -670,6 +631,12 @@ export function UserModal({
 
         {/* Footer Actions */}
         <div className="border-t border-border px-6 py-4 bg-muted/30">
+          {formError && (
+            <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-md px-3 py-2 mb-3">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              {formError}
+            </div>
+          )}
           <div className="flex items-center justify-end gap-3">
             <Button
               variant="outline"
