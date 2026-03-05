@@ -179,6 +179,15 @@ function toMarketType(bettingType: string): string {
   }
 }
 
+// Convert price to international decimal odds.
+// Non-decimal prices (whole numbers like 150, 100) are Indian format → divide by 100.
+// Prices already in decimal (e.g. 1.50, 2.40) are passed through as-is.
+function toDecimalOdds(price: number): number {
+  const str = price.toString();
+  if (str.includes('.')) return price; // already decimal
+  return price / 100;
+}
+
 // Calculate net P&L for runner R if it wins, across all bets in a market
 function calcExistingPnl(bets: any[], runnerId: string): number {
   return bets.reduce((sum: number, bet: any) => {
@@ -259,11 +268,11 @@ export default function MatchPage() {
   const config = getSportConfig(sport);
   const { seriesData } = UseSportsSeries(config?.eventTypeId ?? null);
   const { status, isConnected, markets } = useMarketWebSocket(matchId);
-  markets.map((m)=>{
-    if(m.bettingType == "LINE"){
-      console.log(m)
-    }
-  })
+  // markets.map((m)=>{
+  //   if(m.bettingType == "LINE"){
+  //     console.log(m)
+  //   }
+  // })
 
   const [matchInfo, setMatchInfo] = useState<any>(null);
   const [pageStatus, setPageStatus] = useState<
@@ -456,10 +465,34 @@ export default function MatchPage() {
         });
         toast.success("Bet placed.");
       } catch (err: unknown) {
-        const message =
-          (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+        const axiosErr = err as {
+          response?: { status?: number; data?: { error?: string; message?: string } };
+          message?: string;
+        };
+
+        const status = axiosErr.response?.status;
+        const rawMessage =
+          axiosErr.response?.data?.error ||
+          axiosErr.response?.data?.message ||
           (err instanceof Error ? err.message : "Failed to place bet");
-        toast.error(message);
+
+        let friendlyMessage = rawMessage;
+
+        // Handle DB trigger / limit-related messages
+        if (rawMessage && rawMessage.includes("Bet rejected")) {
+          if (rawMessage.includes("no available limit")) {
+            friendlyMessage = "You have no available limit to place this bet.";
+          } else if (rawMessage.includes("exceeds your available limit")) {
+            friendlyMessage = "Insufficient limit to place this bet.";
+          } else {
+            friendlyMessage = "Bet rejected due to insufficient limit.";
+          }
+        } else if (!rawMessage || (status && status >= 500)) {
+          // Hide low-level DB / insert errors behind a generic message
+          friendlyMessage = "Failed to place bet. Please try again.";
+        }
+
+        toast.error(friendlyMessage);
       } finally {
         setIsPlacing(false);
         handleQuickBetClose();
@@ -670,7 +703,7 @@ export default function MatchPage() {
                                     onClick={() => handleBackClick(
                                       market,
                                       runner,
-                                      market.bettingType === "BOOKMAKER" ? 1 + item.price / 100 : item.price
+                                      toDecimalOdds(item.price)
                                     )}
                                     className={`${oddsBtnClass} hover:bg-green-900 transition-colors bg-green-900/70 w-20`}
                                   >
@@ -696,7 +729,7 @@ export default function MatchPage() {
                                     onClick={() => handleLayClick(
                                       market,
                                       runner,
-                                      market.bettingType === "BOOKMAKER" ? 1 + layItem.price / 100 : layItem.price
+                                      toDecimalOdds(layItem.price)
                                     )}
                                     className={`${oddsBtnClass} hover:bg-[#39111A] transition-colors bg-[#39111A]/70 w-20`}
                                   >
@@ -770,7 +803,7 @@ export default function MatchPage() {
                                   <button
                                     key={layIdx}
                                     onClick={() =>
-                                      handleLayClick(market, runner, layItem.price, String(layItem.line ?? ""))
+                                      handleLayClick(market, runner, toDecimalOdds(layItem.price), String(layItem.line ?? ""))
                                     }
                                     className={`${oddsBtnClass} hover:bg-green-900 transition-colors bg-green-900/70 w-20`}
                                   >
@@ -793,7 +826,7 @@ export default function MatchPage() {
                                   <button
                                     key={backIdx}
                                     onClick={() =>
-                                      handleBackClick(market, runner, backItem.price, String(backItem.line ?? ""))
+                                      handleBackClick(market, runner, toDecimalOdds(backItem.price), String(backItem.line ?? ""))
                                     }
                                     className={`${oddsBtnClass} hover:bg-[#39111A] transition-colors bg-[#39111A]/70 w-20`}
                                   >
