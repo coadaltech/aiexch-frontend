@@ -115,8 +115,8 @@ export const useCreateBanner = () => {
     onError: (error: any) => {
       toast.error(
         error.message ||
-          error.response?.data?.error ||
-          "Failed to create banner"
+        error.response?.data?.error ||
+        "Failed to create banner"
       );
     },
   });
@@ -139,8 +139,8 @@ export const useUpdateBanner = () => {
     onError: (error: any) => {
       toast.error(
         error.message ||
-          error.response?.data?.error ||
-          "Failed to update banner"
+        error.response?.data?.error ||
+        "Failed to update banner"
       );
     },
   });
@@ -732,5 +732,124 @@ export const useCurrencyHistory = (currencyId: string | null) => {
     queryKey: ["owner-currency-history", currencyId],
     queryFn: () => ownerApi.getCurrencyHistory(currencyId!).then((res) => res.data.data),
     enabled: !!currencyId,
+  });
+};
+
+// ═══════════════════════════════════════════════════════════
+//  Market Management
+// ═══════════════════════════════════════════════════════════
+
+export const useEventSettings = (eventId: string | null) => {
+  return useQuery({
+    queryKey: ["event-settings", eventId],
+    queryFn: () =>
+      ownerApi.getEventSettings(eventId!).then((res) => res.data.data),
+    enabled: !!eventId,
+  });
+};
+
+export const useUpdateEventSettings = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ eventId, ...data }: any) =>
+      ownerApi.updateEventSettings(eventId, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["event-settings", variables.eventId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["market-settings"] });
+      toast.success("Event settings updated");
+    },
+    onError: () => toast.error("Failed to update event settings"),
+  });
+};
+
+export const useMarketsByEvent = (eventId: string | null) => {
+  return useQuery({
+    queryKey: ["market-settings", eventId],
+    queryFn: () =>
+      ownerApi
+        .getMarketsByEvent(eventId || undefined)
+        .then((res) => res.data.data),
+    enabled: !!eventId,
+  });
+};
+
+export const useUpdateMarketSettings = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ marketId, ...data }: any) =>
+      ownerApi.updateMarketSettings(marketId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["market-settings"] });
+      toast.success("Market settings updated");
+    },
+    onError: () => toast.error("Failed to update market settings"),
+  });
+};
+
+export const useCreateCustomMarket = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: any) => ownerApi.createCustomMarket(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["market-settings"] });
+      toast.success("Custom market created");
+    },
+    onError: (e) => toast.error("Failed to create custom market", e),
+  });
+};
+
+export const useCustomMarketDetails = (marketId: string | null) => {
+  return useQuery({
+    queryKey: ["custom-market-details", marketId],
+    queryFn: () =>
+      ownerApi.getCustomMarketDetails(marketId!).then((res) => res.data.data),
+    enabled: !!marketId,
+  });
+};
+
+export const useUpdateCustomOdds = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ marketId, ...data }: any) =>
+      ownerApi.updateCustomOdds(marketId, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["market-settings"] });
+      queryClient.invalidateQueries({
+        queryKey: ["custom-market-details", variables.marketId],
+      });
+      toast.success("Custom odds updated");
+    },
+    onError: () => toast.error("Failed to update custom odds"),
+  });
+};
+
+export const useDeleteCustomMarket = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (marketId: string) => ownerApi.deleteCustomMarket(marketId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["market-settings"] });
+      toast.success("Custom market deleted");
+    },
+    onError: () => toast.error("Failed to delete custom market"),
+  });
+};
+
+export const useOddsHistory = (
+  params: {
+    marketId?: string;
+    eventId?: string;
+    from?: string;
+    to?: string;
+    limit?: string;
+  } | null
+) => {
+  return useQuery({
+    queryKey: ["odds-history", params],
+    queryFn: () =>
+      ownerApi.getOddsHistory(params!).then((res) => res.data.data),
+    enabled: !!params && !!(params.marketId || params.eventId),
   });
 };

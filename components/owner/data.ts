@@ -14,6 +14,7 @@ import {
   Wallet,
   Image,
   Banknote,
+  LineChart,
 } from "lucide-react";
 
 export const navigation: {
@@ -26,6 +27,7 @@ export const navigation: {
   { name: "Dashboard", href: "/owner", icon: BarChart3 },
   { name: "Users", href: "/owner/users", icon: Users },
   { name: "Sports Games", href: "/owner/sports-games", icon: Trophy },
+  { name: "Market Management", href: "/owner/market-management", icon: LineChart },
   { name: "Home Sections", href: "/owner/home-sections", icon: Image },
   {
     name: "Marketing",

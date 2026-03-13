@@ -324,9 +324,10 @@ export default function VouchersPage() {
                               <Image className="h-3 w-3" />
                             </Button>
                           )}
-                          <Button size="sm" variant="ghost" onClick={() => handleEditVoucher(voucher)} title="Edit" className="h-8 w-8 p-0">
+                         { voucher.status !== "approved" &&                          
+                         <Button size="sm" variant="ghost" onClick={() => handleEditVoucher(voucher)} title="Edit" className="h-8 w-8 p-0">
                             <Edit className="h-3 w-3" />
-                          </Button>
+                          </Button>}
                           {voucher.status === "pending" && (
                             <>
                               <Button

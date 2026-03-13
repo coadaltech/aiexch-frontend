@@ -101,11 +101,10 @@ export default function SportsPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <div
-                    className={`px-3 py-1 rounded-full text-sm ${
-                      sport.isActive
+                    className={`px-3 py-1 rounded-full text-sm ${sport.isActive
                         ? "bg-green-100 text-green-800"
                         : "bg-gray-100 text-gray-800"
-                    }`}
+                      }`}
                   >
                     {sport.isActive ? "Active" : "Inactive"}
                   </div>

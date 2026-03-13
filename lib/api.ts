@@ -280,6 +280,35 @@ export const ownerApi = {
   updateCurrency: (id: string, data: { value: string | number }) =>
     api.put(`/owner/currencies/${id}`, data),
   getCurrencyHistory: (id: string) => api.get(`/owner/currencies/${id}/history`),
+
+  // Market Management
+  getEventSettings: (eventId: string) =>
+    api.get(`/owner/market-management/events/${eventId}`),
+  updateEventSettings: (eventId: string, data: any) =>
+    api.put(`/owner/market-management/events/${eventId}`, data),
+  getMarketsByEvent: (eventId?: string) =>
+    api.get(`/owner/market-management/markets${eventId ? `?eventId=${eventId}` : ""}`),
+  getMarketSettings: (marketId: string) =>
+    api.get(`/owner/market-management/markets/${marketId}`),
+  updateMarketSettings: (marketId: string, data: any) =>
+    api.put(`/owner/market-management/markets/${marketId}`, data),
+  createCustomMarket: (data: any) =>
+    api.post("/owner/market-management/custom-markets", data),
+  updateCustomOdds: (marketId: string, data: any) =>
+    api.put(`/owner/market-management/custom-markets/${marketId}/odds`, data),
+  getCustomMarketDetails: (marketId: string) =>
+    api.get(`/owner/market-management/custom-markets/${marketId}`),
+  deleteCustomMarket: (marketId: string) =>
+    api.delete(`/owner/market-management/custom-markets/${marketId}`),
+  getOddsHistory: (params: { marketId?: string; eventId?: string; from?: string; to?: string; limit?: string }) => {
+    const query = new URLSearchParams();
+    if (params.marketId) query.append("marketId", params.marketId);
+    if (params.eventId) query.append("eventId", params.eventId);
+    if (params.from) query.append("from", params.from);
+    if (params.to) query.append("to", params.to);
+    if (params.limit) query.append("limit", params.limit);
+    return api.get(`/owner/market-management/odds-history?${query}`);
+  },
 };
 
 export interface BetRecord {

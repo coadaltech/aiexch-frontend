@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useBetSlip } from "@/contexts/BetSlipContext";
@@ -38,6 +38,8 @@ function QuickBetPanel({
   onClose,
   onPlaceBet,
   isLoading,
+  betDelayRemaining,
+  onCancelDelay,
 }: {
   data: QuickBetData;
   stake: string;
@@ -45,6 +47,8 @@ function QuickBetPanel({
   onClose: () => void;
   onPlaceBet: (stake: string, odds: string) => void;
   isLoading?: boolean;
+  betDelayRemaining?: number;
+  onCancelDelay?: () => void;
 }) {
   const { market, runner, odds } = data;
   const marketName = market?.marketName || "";
@@ -63,16 +67,36 @@ function QuickBetPanel({
     : null;
 
   const quickStakes = [100, 500, 1000, 5000, 10000, 50000];
+  const isDelaying = betDelayRemaining != null && betDelayRemaining > 0;
 
   const handleStake = (val: string) => {
     const n = parseFloat(val) || 0;
     onStakeChange(n > 0 ? String(n) : "");
   };
 
-  const canPlace = !!stake && stakeNum > 0 && !stakeError && !isLoading;
+  const canPlace = !!stake && stakeNum > 0 && !stakeError && !isLoading && !isDelaying;
 
   return (
     <div className="px-2 sm:px-3 py-3 border-t border-teal-600 bg-gradient-to-b from-sky-200/90 via-sky-100/80 to-white dark:from-sky-900/40 dark:via-sky-800/30 dark:to-gray-900">
+      {/* Bet delay countdown banner */}
+      {isDelaying && (
+        <div className="mb-2 px-3 py-2 bg-amber-100 dark:bg-amber-900/40 border border-amber-300 dark:border-amber-700 rounded-lg flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin inline-block" />
+            <span className="text-xs sm:text-sm font-medium text-amber-800 dark:text-amber-200">
+              Placing in {betDelayRemaining}s...
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={onCancelDelay}
+            className="px-2 py-0.5 text-xs bg-amber-200 dark:bg-amber-800 hover:bg-amber-300 dark:hover:bg-amber-700 text-amber-800 dark:text-amber-200 rounded transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
       {/* Top Section: Label, Odds, Stake */}
       <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-3 justify-end mb-3">
         <div className="text-black dark:text-white font-bold text-xs sm:text-sm truncate max-w-full sm:max-w-none text-right sm:text-left">
@@ -96,24 +120,27 @@ function QuickBetPanel({
               onChange={(e) => handleStake(e.target.value)}
               placeholder="1"
               autoFocus
+              disabled={isDelaying}
               className={`w-14 sm:w-16 bg-white dark:bg-gray-800 text-black dark:text-white text-[10px] sm:text-xs py-1.5 px-2 text-center border rounded focus:ring-1 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
                 stakeError
                   ? "border-red-500 focus:ring-red-500"
                   : "border-gray-300 dark:border-gray-600 focus:ring-blue-500"
-              }`}
+              } ${isDelaying ? "opacity-50" : ""}`}
             />
             <div className="flex flex-col ml-0.5">
               <button
                 type="button"
+                disabled={isDelaying}
                 onClick={() => handleStake(String((parseFloat(stake) || 0) + 1))}
-                className="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1 py-0.5 text-[10px] hover:bg-gray-300 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-t"
+                className="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1 py-0.5 text-[10px] hover:bg-gray-300 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-t disabled:opacity-50"
               >
                 ▲
               </button>
               <button
                 type="button"
+                disabled={isDelaying}
                 onClick={() => handleStake(String(Math.max(0, (parseFloat(stake) || 0) - 1)))}
-                className="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1 py-0.5 text-[10px] hover:bg-gray-300 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 border-t-0 rounded-b"
+                className="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1 py-0.5 text-[10px] hover:bg-gray-300 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 border-t-0 rounded-b disabled:opacity-50"
               >
                 ▼
               </button>
@@ -132,8 +159,9 @@ function QuickBetPanel({
             <button
               key={amount}
               type="button"
+              disabled={isDelaying}
               onClick={() => onStakeChange(String(amount))}
-              className="px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-semibold rounded bg-teal-600 hover:bg-teal-700 text-white transition-colors"
+              className="px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-semibold rounded bg-teal-600 hover:bg-teal-700 text-white transition-colors disabled:opacity-50"
             >
               {amount >= 1000 ? amount / 1000 + "K" : amount}
             </button>
@@ -152,13 +180,15 @@ function QuickBetPanel({
                 <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" />
                 Placing...
               </>
+            ) : isDelaying ? (
+              `Waiting ${betDelayRemaining}s...`
             ) : (
               "Place Bet"
             )}
           </button>
           <button
             type="button"
-            onClick={onClose}
+            onClick={isDelaying ? onCancelDelay : onClose}
             disabled={isLoading}
             className="px-4 sm:px-5 py-1.5 sm:py-2 rounded text-xs sm:text-sm font-semibold bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors"
           >
@@ -248,6 +278,9 @@ export default function MatchPage() {
   const [quickBet, setQuickBet] = useState<QuickBetData | null>(null);
   const [quickBetStake, setQuickBetStake] = useState("");
   const [isPlacing, setIsPlacing] = useState(false);
+  const [betDelayRemaining, setBetDelayRemaining] = useState(0);
+  const betDelayTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const betDelayResolveRef = useRef<(() => void) | null>(null);
   const queryClient = useQueryClient();
   const { user, updateDemoBalance } = useAuth();
   const { placeBetAsync } = useBetting();
@@ -268,11 +301,48 @@ export default function MatchPage() {
   const config = getSportConfig(sport);
   const { seriesData } = UseSportsSeries(config?.eventTypeId ?? null);
   const { status, isConnected, markets } = useMarketWebSocket(matchId);
-  // markets.map((m)=>{
-  //   if(m.bettingType == "LINE"){
-  //     console.log(m)
-  //   }
-  // })
+
+  // Keep a ref to latest markets for price-change detection during bet delay
+  const marketsRef = useRef(markets);
+  useEffect(() => {
+    marketsRef.current = markets;
+  }, [markets]);
+
+  // Cleanup bet delay timer on unmount
+  useEffect(() => {
+    return () => {
+      if (betDelayTimerRef.current) clearInterval(betDelayTimerRef.current);
+    };
+  }, []);
+
+  const cancelBetDelay = useCallback(() => {
+    if (betDelayTimerRef.current) {
+      clearInterval(betDelayTimerRef.current);
+      betDelayTimerRef.current = null;
+    }
+    setBetDelayRemaining(0);
+    betDelayResolveRef.current = null;
+    setIsPlacing(false);
+  }, []);
+  // Auto-close QuickBetPanel if the selected market becomes suspended or ball-running
+  useEffect(() => {
+    if (!quickBet) return;
+    const liveMarket = markets.find((m: any) => m.marketId === quickBet.marketId);
+    if (!liveMarket) return;
+    if (liveMarket.status === "SUSPENDED" || liveMarket.sportingEvent) {
+      const reason = liveMarket.status === "SUSPENDED" ? "market suspended" : "ball running";
+      cancelBetDelay();
+      setQuickBet(null);
+      setQuickBetStake("");
+      toast.error(`Bet panel closed — ${reason}`);
+    }
+  }, [markets, quickBet, cancelBetDelay]);
+
+  // Filter out admin-disabled/hidden markets for user-facing view
+  const visibleMarkets = useMemo(
+    () => markets.filter((m: any) => !m.adminDisabled && !m.adminHidden),
+    [markets]
+  );
 
   const [matchInfo, setMatchInfo] = useState<any>(null);
   const [pageStatus, setPageStatus] = useState<
@@ -309,6 +379,7 @@ export default function MatchPage() {
   }, [status, isConnected, markets]);
 
   const handleQuickBetClose = () => {
+    cancelBetDelay();
     setQuickBet(null);
     setQuickBetStake("");
   };
@@ -352,6 +423,12 @@ export default function MatchPage() {
   const handleBackClick = (market: any, runner: any, odds: number | string, run?: string | null) => {
     const o = typeof odds === "number" ? odds : parseFloat(String(odds));
     if (o === 0 && odds !== "0") return;
+    // Block if market is suspended or ball running
+    const mktStatus = isMarketBlocked(market.marketId);
+    if (mktStatus.blocked) {
+      toast.error(mktStatus.reason);
+      return;
+    }
     setQuickBetStake("");
     setQuickBet({
       marketId: market.marketId,
@@ -369,6 +446,12 @@ export default function MatchPage() {
   const handleLayClick = (market: any, runner: any, odds: number | string, run?: string | null) => {
     const o = typeof odds === "number" ? odds : parseFloat(String(odds));
     if (o === 0 && odds !== "0") return;
+    // Block if market is suspended or ball running
+    const mktStatus = isMarketBlocked(market.marketId);
+    if (mktStatus.blocked) {
+      toast.error(mktStatus.reason);
+      return;
+    }
     setQuickBetStake("");
     setQuickBet({
       marketId: market.marketId,
@@ -383,15 +466,178 @@ export default function MatchPage() {
     });
   };
 
+  // Helper: get current live price for a runner from WebSocket markets ref
+  const getLivePrice = useCallback(
+    (marketId: string, selectionId: string, isLay: boolean): string | null => {
+      const liveMarket = marketsRef.current.find(
+        (m: any) => m.marketId === marketId
+      );
+      if (!liveMarket) return null;
+      const liveRunner = liveMarket.runners?.find(
+        (r: any) => r.selectionId?.toString() === selectionId
+      );
+      if (!liveRunner) return null;
+      const prices = isLay ? liveRunner.lay : liveRunner.back;
+      if (!prices || prices.length === 0) return null;
+      return String(prices[0]?.price ?? prices[0]?.[0] ?? null);
+    },
+    []
+  );
+
+  // Core bet placement logic (called directly or after delay completes)
+  const executeBetPlacement = useCallback(
+    async (qb: QuickBetData, stakeStr: string, oddsValue: string) => {
+      const { market, runner, allRunners, isLay } = qb;
+
+      // Final pre-placement check: market status
+      const liveMarket = marketsRef.current.find((m: any) => m.marketId === market.marketId);
+      if (liveMarket) {
+        if (liveMarket.status === "SUSPENDED") {
+          toast.error("Bet cancelled — market is suspended");
+          return;
+        }
+        if (liveMarket.sportingEvent) {
+          toast.error("Bet cancelled — ball is running");
+          return;
+        }
+      }
+
+      // Final pre-placement check: price change
+      const selId = runner.selectionId?.toString() ?? "";
+      const currentPrice = getLivePrice(market.marketId, selId, isLay);
+      if (currentPrice !== null && currentPrice !== oddsValue) {
+        toast.error(`Bet cancelled — price changed from ${oddsValue} to ${currentPrice}`);
+        return;
+      }
+
+      const marketName = market?.marketName || "";
+      const runnerName = runner?.name || "";
+      const stakeNum = parseFloat(stakeStr);
+      const oddsNum = parseFloat(oddsValue) || 0;
+      const marketType = toMarketType(market.bettingType);
+      const potentialWin = (stakeNum * oddsNum).toFixed(2);
+
+      const betPayload = {
+        id: `slip-${Date.now()}-${market?.marketId ?? ""}-${runner?.selectionId ?? ""}`,
+        teams: `${qb.eventName} - ${runnerName}`,
+        market: isLay ? `LAY ${marketName}` : marketName,
+        odds: oddsValue,
+        stake: stakeStr,
+        potentialWin,
+        matchId,
+        marketId: market.marketId,
+        selectionId: runner.selectionId?.toString() ?? "",
+        marketName,
+        runnerName,
+        type: (isLay ? "lay" : "back") as "back" | "lay",
+        eventTypeId: config?.eventTypeId?.toString(),
+      };
+      addToBetSlip(betPayload);
+
+      if (user?.isDemo) {
+        const demoBet: DemoBet = {
+          id: `demo-${betPayload.id}`,
+          type: isLay ? "lay" : "back",
+          status: "pending",
+          stake: stakeNum,
+          odds: oddsNum,
+          marketName,
+          runnerName,
+          potentialWin: stakeNum * oddsNum,
+          createdAt: new Date().toISOString(),
+          matchId,
+          marketId: market.marketId,
+          selectionId: runner.selectionId?.toString(),
+        };
+        addDemoBets([demoBet]);
+        const userBalance = parseFloat(user?.balance || "0");
+        updateDemoBalance((userBalance - stakeNum).toFixed(2));
+        queryClient.invalidateQueries({ queryKey: ["my-bets"] });
+        toast.success("Bet placed. Balance updated.");
+      } else {
+        try {
+          await placeBetAsync({
+            matchId,
+            marketId: market.marketId,
+            eventTypeId: config?.eventTypeId?.toString() || "4",
+            marketType,
+            selectionId: runner.selectionId?.toString() ?? "",
+            selectionName: runnerName,
+            marketName,
+            odds: oddsNum,
+            stake: stakeNum,
+            run: qb.run != null ? parseFloat(qb.run) : null,
+            type: isLay ? "lay" : "back",
+            runners: allRunners,
+          });
+          toast.success("Bet placed.");
+        } catch (err: unknown) {
+          const axiosErr = err as {
+            response?: {
+              status?: number;
+              data?: { error?: string; message?: string };
+            };
+            message?: string;
+          };
+
+          const errStatus = axiosErr.response?.status;
+          const rawMessage =
+            axiosErr.response?.data?.error ||
+            axiosErr.response?.data?.message ||
+            (err instanceof Error ? err.message : "Failed to place bet");
+
+          let friendlyMessage = rawMessage;
+
+          if (rawMessage && rawMessage.includes("Bet rejected")) {
+            if (rawMessage.includes("no available limit")) {
+              friendlyMessage =
+                "You have no available limit to place this bet.";
+            } else if (rawMessage.includes("exceeds your available limit")) {
+              friendlyMessage = "Insufficient limit to place this bet.";
+            } else {
+              friendlyMessage = "Bet rejected due to insufficient limit.";
+            }
+          } else if (!rawMessage || (errStatus && errStatus >= 500)) {
+            friendlyMessage = "Failed to place bet. Please try again.";
+          }
+
+          toast.error(friendlyMessage);
+        }
+      }
+    },
+    [
+      matchId,
+      config,
+      user,
+      addToBetSlip,
+      placeBetAsync,
+      queryClient,
+      updateDemoBalance,
+      getLivePrice,
+    ]
+  );
+
   const handleQuickBetPlace = async (stake: string, odds: string) => {
     if (!quickBet || !stake || parseFloat(stake) <= 0) return;
-    const { market, runner, allRunners, isLay } = quickBet;
+    const { market, runner, isLay } = quickBet;
     const oddsValue = odds || quickBet.odds;
-    const marketName = market?.marketName || "";
-    const runnerName = runner?.name || "";
     const stakeNum = parseFloat(stake);
-    const oddsNum = parseFloat(oddsValue) || 0;
-    const marketType = toMarketType(market.bettingType);
+
+    // Pre-flight: check market status before anything
+    const preCheck = isMarketBlocked(market.marketId);
+    if (preCheck.blocked) {
+      toast.error(`Cannot place bet — ${preCheck.reason}`);
+      handleQuickBetClose();
+      return;
+    }
+
+    // Pre-flight: check if price has changed since panel was opened
+    const livePriceNow = getLivePrice(market.marketId, runner.selectionId?.toString() ?? "", isLay);
+    if (livePriceNow !== null && livePriceNow !== oddsValue) {
+      toast.error(`Price changed from ${oddsValue} to ${livePriceNow}. Please try again.`);
+      handleQuickBetClose();
+      return;
+    }
 
     const minBet = parseFloat(market?.marketCondition?.minBet) || 0;
     const maxBet = parseFloat(market?.marketCondition?.maxBet) || 0;
@@ -404,100 +650,86 @@ export default function MatchPage() {
       return;
     }
 
-    // potentialWin = stake × odds for all market types
-    const potentialWin = (stakeNum * oddsNum).toFixed(2);
-
-    const betPayload = {
-      id: `slip-${Date.now()}-${market?.marketId ?? ""}-${runner?.selectionId ?? ""}`,
-      teams: `${quickBet.eventName} - ${runnerName}`,
-      market: isLay ? `LAY ${marketName}` : marketName,
-      odds: oddsValue,
-      stake,
-      potentialWin,
-      matchId,
-      marketId: market.marketId,
-      selectionId: runner.selectionId?.toString() ?? "",
-      marketName,
-      runnerName,
-      type: (isLay ? "lay" : "back") as "back" | "lay",
-      eventTypeId: config?.eventTypeId?.toString(),
-    };
-    addToBetSlip(betPayload);
+    const betDelay = parseFloat(market?.marketCondition?.betDelay) || 0;
 
     setIsPlacing(true);
-    if (user?.isDemo) {
-      const demoBet: DemoBet = {
-        id: `demo-${betPayload.id}`,
-        type: isLay ? "lay" : "back",
-        status: "pending",
-        stake: stakeNum,
-        odds: oddsNum,
-        marketName,
-        runnerName,
-        potentialWin: stakeNum * oddsNum,
-        createdAt: new Date().toISOString(),
-        matchId,
-        marketId: market.marketId,
-        selectionId: runner.selectionId?.toString(),
-      };
-      addDemoBets([demoBet]);
-      const userBalance = parseFloat(user?.balance || "0");
-      updateDemoBalance((userBalance - stakeNum).toFixed(2));
-      queryClient.invalidateQueries({ queryKey: ["my-bets"] });
-      toast.success("Bet placed. Balance updated.");
-      setIsPlacing(false);
-      handleQuickBetClose();
-    } else {
-      try {
-        await placeBetAsync({
-          matchId,
-          marketId: market.marketId,
-          eventTypeId: config?.eventTypeId?.toString() || "4",
-          marketType,
-          selectionId: runner.selectionId?.toString() ?? "",
-          selectionName: runnerName,
-          marketName,
-          odds: oddsNum,
-          stake: stakeNum,
-          run: quickBet.run != null ? parseFloat(quickBet.run) : null,
-          type: isLay ? "lay" : "back",
-          runners: allRunners,
-        });
-        toast.success("Bet placed.");
-      } catch (err: unknown) {
-        const axiosErr = err as {
-          response?: { status?: number; data?: { error?: string; message?: string } };
-          message?: string;
-        };
 
-        const status = axiosErr.response?.status;
-        const rawMessage =
-          axiosErr.response?.data?.error ||
-          axiosErr.response?.data?.message ||
-          (err instanceof Error ? err.message : "Failed to place bet");
+    // If betDelay > 0, start countdown and monitor for price changes
+    if (betDelay > 0) {
+      const selId = runner.selectionId?.toString() ?? "";
+      const mktId = market.marketId;
+      let remaining = Math.ceil(betDelay);
+      setBetDelayRemaining(remaining);
 
-        let friendlyMessage = rawMessage;
+      // Store references for the async delay
+      const qbSnapshot = { ...quickBet };
+      const stakeSnapshot = stake;
+      const oddsSnapshot = oddsValue;
 
-        // Handle DB trigger / limit-related messages
-        if (rawMessage && rawMessage.includes("Bet rejected")) {
-          if (rawMessage.includes("no available limit")) {
-            friendlyMessage = "You have no available limit to place this bet.";
-          } else if (rawMessage.includes("exceeds your available limit")) {
-            friendlyMessage = "Insufficient limit to place this bet.";
-          } else {
-            friendlyMessage = "Bet rejected due to insufficient limit.";
+      await new Promise<void>((resolve) => {
+        betDelayResolveRef.current = resolve;
+
+        betDelayTimerRef.current = setInterval(() => {
+          remaining--;
+          setBetDelayRemaining(remaining);
+
+          // Check if market became suspended or ball running during delay
+          const delayMarket = marketsRef.current.find((m: any) => m.marketId === mktId);
+          if (delayMarket && (delayMarket.status === "SUSPENDED" || delayMarket.sportingEvent)) {
+            if (betDelayTimerRef.current)
+              clearInterval(betDelayTimerRef.current);
+            betDelayTimerRef.current = null;
+            setBetDelayRemaining(0);
+            setIsPlacing(false);
+            betDelayResolveRef.current = null;
+            const reason = delayMarket.status === "SUSPENDED" ? "market suspended" : "ball running";
+            toast.error(`Bet cancelled — ${reason}`);
+            resolve();
+            return;
           }
-        } else if (!rawMessage || (status && status >= 500)) {
-          // Hide low-level DB / insert errors behind a generic message
-          friendlyMessage = "Failed to place bet. Please try again.";
-        }
 
-        toast.error(friendlyMessage);
-      } finally {
-        setIsPlacing(false);
-        handleQuickBetClose();
-      }
+          // Check if price changed during delay
+          const currentPrice = getLivePrice(mktId, selId, isLay);
+          if (currentPrice !== null && currentPrice !== oddsSnapshot) {
+            // Price changed — cancel the bet
+            if (betDelayTimerRef.current)
+              clearInterval(betDelayTimerRef.current);
+            betDelayTimerRef.current = null;
+            setBetDelayRemaining(0);
+            setIsPlacing(false);
+            betDelayResolveRef.current = null;
+            toast.error(
+              `Bet cancelled — price changed from ${oddsSnapshot} to ${currentPrice}`
+            );
+            resolve();
+            return;
+          }
+
+          if (remaining <= 0) {
+            // Delay complete, price unchanged — proceed with placement
+            if (betDelayTimerRef.current)
+              clearInterval(betDelayTimerRef.current);
+            betDelayTimerRef.current = null;
+            setBetDelayRemaining(0);
+            betDelayResolveRef.current = null;
+
+            executeBetPlacement(qbSnapshot, stakeSnapshot, oddsSnapshot)
+              .finally(() => {
+                setIsPlacing(false);
+                handleQuickBetClose();
+              });
+            resolve();
+          }
+        }, 1000);
+      });
+
+      return;
     }
+
+    // No delay — place immediately
+    await executeBetPlacement(quickBet, stake, oddsValue);
+    setIsPlacing(false);
+    handleQuickBetClose();
   };
 
   if (pageStatus === "error") {
@@ -558,21 +790,30 @@ export default function MatchPage() {
     );
   }
 
+  // Check if a market is currently suspended or ball-running from live WS data
+  const isMarketBlocked = useCallback((marketId: string): { blocked: boolean; reason: string } => {
+    const liveMarket = marketsRef.current.find((m: any) => m.marketId === marketId);
+    if (!liveMarket) return { blocked: false, reason: "" };
+    if (liveMarket.status === "SUSPENDED") return { blocked: true, reason: "Market is suspended" };
+    if (liveMarket.sportingEvent) return { blocked: true, reason: "Ball is running" };
+    return { blocked: false, reason: "" };
+  }, []);
+
   const backLayOverlay = (market: any) => {
     const show = market?.sportingEvent || market?.status === "SUSPENDED";
     if (!show) return null;
     const label = market?.status === "SUSPENDED" ? "Suspended" : "Ball Running";
     return (
       <div
-        className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[70%] min-w-[4rem] flex items-center justify-center pointer-events-none z-10"
+        className="absolute inset-0 flex items-center justify-center z-10 cursor-not-allowed"
         style={{
           background:
             "repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(0,0,0,0.12) 6px, rgba(0,0,0,0.12) 12px)",
           backgroundColor: "rgba(0,0,0,0.35)",
-          cursor: "not-allowed",
         }}
+        onClick={(e) => e.stopPropagation()}
       >
-        <span className="text-red-500 font-bold text-sm sm:text-base drop-shadow-sm" style={{ pointerEvents: "auto" }}>
+        <span className="text-red-500 font-bold text-sm sm:text-base drop-shadow-sm">
           {label}
         </span>
       </div>
@@ -652,7 +893,7 @@ export default function MatchPage() {
       )}
 
       <div className="bg-gray-900 space-y-1">
-        {markets.map(
+        {visibleMarkets.map(
           (market) =>
             (market.bettingType == "ODDS" || market.bettingType == "BOOKMAKER") && (
               <div
@@ -761,6 +1002,8 @@ export default function MatchPage() {
                       onClose={handleQuickBetClose}
                       onPlaceBet={handleQuickBetPlace}
                       isLoading={isPlacing}
+                      betDelayRemaining={betDelayRemaining}
+                      onCancelDelay={cancelBetDelay}
                     />
                   )}
               </div>
@@ -779,7 +1022,7 @@ export default function MatchPage() {
               YES
             </div>
           </div>
-          {markets.map(
+          {visibleMarkets.map(
             (market) =>
               market.bettingType == "LINE" && (
                 <div key={market.marketId} className="border-b border-gray-700 last:border-b-0">
@@ -859,6 +1102,8 @@ export default function MatchPage() {
                       onClose={handleQuickBetClose}
                       onPlaceBet={handleQuickBetPlace}
                       isLoading={isPlacing}
+                      betDelayRemaining={betDelayRemaining}
+                      onCancelDelay={cancelBetDelay}
                     />
                   )}
                 </div>
