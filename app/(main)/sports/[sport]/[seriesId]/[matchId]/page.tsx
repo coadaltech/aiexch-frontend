@@ -29,6 +29,7 @@ type QuickBetData = {
   odds: string;
   run?: string | null;
   isLay: boolean;
+  priceIndex: number;
 };
 
 function QuickBetPanel({
@@ -420,7 +421,7 @@ export default function MatchPage() {
     });
   };
 
-  const handleBackClick = (market: any, runner: any, odds: number | string, run?: string | null) => {
+  const handleBackClick = (market: any, runner: any, odds: number | string, run?: string | null, priceIndex: number = 0) => {
     const o = typeof odds === "number" ? odds : parseFloat(String(odds));
     if (o === 0 && odds !== "0") return;
     // Block if market is suspended or ball running
@@ -440,10 +441,11 @@ export default function MatchPage() {
       odds: String(odds),
       run: run ?? null,
       isLay: false,
+      priceIndex,
     });
   };
 
-  const handleLayClick = (market: any, runner: any, odds: number | string, run?: string | null) => {
+  const handleLayClick = (market: any, runner: any, odds: number | string, run?: string | null, priceIndex: number = 0) => {
     const o = typeof odds === "number" ? odds : parseFloat(String(odds));
     if (o === 0 && odds !== "0") return;
     // Block if market is suspended or ball running
@@ -463,12 +465,13 @@ export default function MatchPage() {
       odds: String(odds),
       run: run ?? null,
       isLay: true,
+      priceIndex,
     });
   };
 
-  // Helper: get current live price for a runner from WebSocket markets ref
+  // Helper: get current live price for a specific runner's back/lay slot
   const getLivePrice = useCallback(
-    (marketId: string, selectionId: string, isLay: boolean): string | null => {
+    (marketId: string, selectionId: string, isLay: boolean, priceIndex: number = 0): string | null => {
       const liveMarket = marketsRef.current.find(
         (m: any) => m.marketId === marketId
       );
@@ -479,7 +482,12 @@ export default function MatchPage() {
       if (!liveRunner) return null;
       const prices = isLay ? liveRunner.lay : liveRunner.back;
       if (!prices || prices.length === 0) return null;
-      return String(prices[0]?.price ?? prices[0]?.[0] ?? null);
+      const item = prices[priceIndex];
+      if (!item) return null;
+      const rawPrice = item?.price ?? item?.[0] ?? null;
+      if (rawPrice == null) return null;
+      // Convert to decimal odds to match the stored format
+      return String(toDecimalOdds(parseFloat(String(rawPrice))));
     },
     []
   );
@@ -502,9 +510,9 @@ export default function MatchPage() {
         }
       }
 
-      // Final pre-placement check: price change
+      // Final pre-placement check: price change on the exact slot user clicked
       const selId = runner.selectionId?.toString() ?? "";
-      const currentPrice = getLivePrice(market.marketId, selId, isLay);
+      const currentPrice = getLivePrice(market.marketId, selId, isLay, qb.priceIndex);
       if (currentPrice !== null && currentPrice !== oddsValue) {
         toast.error(`Bet cancelled — price changed from ${oddsValue} to ${currentPrice}`);
         return;
@@ -632,7 +640,7 @@ export default function MatchPage() {
     }
 
     // Pre-flight: check if price has changed since panel was opened
-    const livePriceNow = getLivePrice(market.marketId, runner.selectionId?.toString() ?? "", isLay);
+    const livePriceNow = getLivePrice(market.marketId, runner.selectionId?.toString() ?? "", isLay, quickBet.priceIndex);
     if (livePriceNow !== null && livePriceNow !== oddsValue) {
       toast.error(`Price changed from ${oddsValue} to ${livePriceNow}. Please try again.`);
       handleQuickBetClose();
@@ -689,7 +697,7 @@ export default function MatchPage() {
           }
 
           // Check if price changed during delay
-          const currentPrice = getLivePrice(mktId, selId, isLay);
+          const currentPrice = getLivePrice(mktId, selId, isLay, qbSnapshot.priceIndex);
           if (currentPrice !== null && currentPrice !== oddsSnapshot) {
             // Price changed — cancel the bet
             if (betDelayTimerRef.current)
@@ -731,6 +739,15 @@ export default function MatchPage() {
     setIsPlacing(false);
     handleQuickBetClose();
   };
+
+  // Check if a market is currently suspended or ball-running from live WS data
+  const isMarketBlocked = useCallback((marketId: string): { blocked: boolean; reason: string } => {
+    const liveMarket = marketsRef.current.find((m: any) => m.marketId === marketId);
+    if (!liveMarket) return { blocked: false, reason: "" };
+    if (liveMarket.status === "SUSPENDED") return { blocked: true, reason: "Market is suspended" };
+    if (liveMarket.sportingEvent) return { blocked: true, reason: "Ball is running" };
+    return { blocked: false, reason: "" };
+  }, []);
 
   if (pageStatus === "error") {
     return (
@@ -789,15 +806,6 @@ export default function MatchPage() {
       </div>
     );
   }
-
-  // Check if a market is currently suspended or ball-running from live WS data
-  const isMarketBlocked = useCallback((marketId: string): { blocked: boolean; reason: string } => {
-    const liveMarket = marketsRef.current.find((m: any) => m.marketId === marketId);
-    if (!liveMarket) return { blocked: false, reason: "" };
-    if (liveMarket.status === "SUSPENDED") return { blocked: true, reason: "Market is suspended" };
-    if (liveMarket.sportingEvent) return { blocked: true, reason: "Ball is running" };
-    return { blocked: false, reason: "" };
-  }, []);
 
   const backLayOverlay = (market: any) => {
     const show = market?.sportingEvent || market?.status === "SUSPENDED";
@@ -944,7 +952,9 @@ export default function MatchPage() {
                                     onClick={() => handleBackClick(
                                       market,
                                       runner,
-                                      toDecimalOdds(item.price)
+                                      toDecimalOdds(item.price),
+                                      null,
+                                      2 - posIdx
                                     )}
                                     className={`${oddsBtnClass} hover:bg-green-900 transition-colors bg-green-900/70 w-20`}
                                   >
@@ -970,7 +980,9 @@ export default function MatchPage() {
                                     onClick={() => handleLayClick(
                                       market,
                                       runner,
-                                      toDecimalOdds(layItem.price)
+                                      toDecimalOdds(layItem.price),
+                                      null,
+                                      layIdx
                                     )}
                                     className={`${oddsBtnClass} hover:bg-[#39111A] transition-colors bg-[#39111A]/70 w-20`}
                                   >
@@ -1046,7 +1058,7 @@ export default function MatchPage() {
                                   <button
                                     key={layIdx}
                                     onClick={() =>
-                                      handleLayClick(market, runner, toDecimalOdds(layItem.price), String(layItem.line ?? ""))
+                                      handleLayClick(market, runner, toDecimalOdds(layItem.price), String(layItem.line ?? ""), layIdx)
                                     }
                                     className={`${oddsBtnClass} hover:bg-green-900 transition-colors bg-green-900/70 w-20`}
                                   >
@@ -1069,7 +1081,7 @@ export default function MatchPage() {
                                   <button
                                     key={backIdx}
                                     onClick={() =>
-                                      handleBackClick(market, runner, toDecimalOdds(backItem.price), String(backItem.line ?? ""))
+                                      handleBackClick(market, runner, toDecimalOdds(backItem.price), String(backItem.line ?? ""), backIdx)
                                     }
                                     className={`${oddsBtnClass} hover:bg-[#39111A] transition-colors bg-[#39111A]/70 w-20`}
                                   >

@@ -739,6 +739,16 @@ export const useCurrencyHistory = (currencyId: string | null) => {
 //  Market Management
 // ═══════════════════════════════════════════════════════════
 
+export const useSearchEvents = (query: string) => {
+  return useQuery({
+    queryKey: ["search-events", query],
+    queryFn: () =>
+      ownerApi.searchEvents(query).then((res) => res.data.data),
+    enabled: query.trim().length >= 2,
+    staleTime: 30_000,
+  });
+};
+
 export const useEventSettings = (eventId: string | null) => {
   return useQuery({
     queryKey: ["event-settings", eventId],
@@ -796,7 +806,7 @@ export const useCreateCustomMarket = () => {
       queryClient.invalidateQueries({ queryKey: ["market-settings"] });
       toast.success("Custom market created");
     },
-    onError: (e) => toast.error("Failed to create custom market", e),
+    onError: () => toast.error("Failed to create custom market"),
   });
 };
 

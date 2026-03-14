@@ -19,9 +19,13 @@ export default function SportsPage() {
   useEffect(() => {
     const fetchSports = async () => {
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/sports-list`,
+          { signal: controller.signal },
         );
+        clearTimeout(timeoutId);
         const data = await response.json();
 
         if (Array.isArray(data)) {

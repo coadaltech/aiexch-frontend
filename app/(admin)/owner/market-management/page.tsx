@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useMarketWebSocket } from "@/hooks/useMarketWebSocket";
 import {
   useEventSettings,
@@ -11,6 +11,7 @@ import {
   useDeleteCustomMarket,
   useUpdateCustomOdds,
   useOddsHistory,
+  useSearchEvents,
 } from "@/hooks/useOwner";
 import { toast } from "sonner";
 
@@ -92,6 +93,7 @@ function formatAmount(n: number | string | undefined) {
   if (n == null || n === "") return "0";
   const num = typeof n === "string" ? parseFloat(n) : n;
   if (isNaN(num)) return "0";
+  if (num >= 100000) return (num / 100000).toFixed(1) + "L";
   if (num >= 1000) return (num / 1000).toFixed(1) + "K";
   return num.toFixed(0);
 }
@@ -100,13 +102,27 @@ function formatAmount(n: number | string | undefined) {
 function PriceCell({
   price,
   size,
+  line,
   type,
+  bettingType,
 }: {
   price?: number | string;
   size?: number | string;
+  line?: number | string;
   type: "back" | "lay";
+  bettingType?: string;
 }) {
-  const isEmpty = !price && price !== 0;
+  const isLine = bettingType === "LINE";
+
+  // For LINE markets: top = line, bottom = formatAmount(price)
+  // For ODDS/BOOKMAKER: top = price, bottom = formatAmount(size)
+  const topValue = isLine ? line : price;
+  const bottomValue = isLine ? price : size;
+
+  const isEmpty = !topValue && topValue !== 0;
+
+  // For LINE: NO side uses lay color (red), YES side uses back color (green)
+  // In LINE the left column = lay items shown as NO (red), right column = back items shown as YES (green)
   const bgClass =
     type === "back" ? "bg-green-900" : "bg-[#39111A]";
 
@@ -117,10 +133,10 @@ function PriceCell({
       }`}
     >
       <span className="text-white font-bold text-[10px] sm:text-xs">
-        {isEmpty ? "-" : price}
+        {isEmpty ? "-" : topValue}
       </span>
       <span className="text-gray-400 font-medium text-[8px] sm:text-[9px]">
-        {isEmpty ? "-" : formatAmount(size)}
+        {isEmpty ? "-" : formatAmount(bottomValue)}
       </span>
     </div>
   );
@@ -132,11 +148,15 @@ function RunnerOddsRow({
   isCustom,
   marketId,
   isSuspended,
+  bettingType,
+  displayName,
 }: {
   runner: any;
   isCustom: boolean;
   marketId: string;
   isSuspended: boolean;
+  bettingType?: string;
+  displayName?: string;
 }) {
   const updateOdds = useUpdateCustomOdds();
   const [editing, setEditing] = useState(false);
@@ -330,12 +350,14 @@ function RunnerOddsRow({
     );
   }
 
+  const isLine = bettingType === "LINE";
+
   return (
     <div className="px-2 sm:px-3 py-1 grid grid-cols-3 gap-1 sm:gap-2 items-center min-h-0">
-      {/* Runner name */}
+      {/* Runner name (LINE markets show market name via displayName) */}
       <div className="min-w-0 pr-1 flex items-center gap-1.5">
         <span className="text-gray-800 font-semibold text-[11px] sm:text-xs truncate block leading-tight">
-          {runner.name}
+          {displayName ?? runner.name}
         </span>
         {isCustom && (
           <button
@@ -350,32 +372,75 @@ function RunnerOddsRow({
 
       {/* Back + Lay cells */}
       <div className="col-span-2 gap-2 relative flex min-h-[2.25rem]">
-        {/* Back prices (right-aligned, reversed order) */}
-        <div className="flex-1 flex flex-col items-end min-w-0">
-          <div className="gap-1 flex justify-end items-center">
-            {backSlots.map((item, posIdx) => (
-              <PriceCell
-                key={`back-${posIdx}`}
-                price={item?.price}
-                size={item?.size}
-                type="back"
-              />
-            ))}
-          </div>
-        </div>
-        {/* Lay prices (left-aligned) */}
-        <div className="flex-1 flex flex-col items-start min-w-0">
-          <div className="gap-1 flex justify-start items-center">
-            {laySlots.map((item, posIdx) => (
-              <PriceCell
-                key={`lay-${posIdx}`}
-                price={item?.price}
-                size={item?.size}
-                type="lay"
-              />
-            ))}
-          </div>
-        </div>
+        {isLine ? (
+          <>
+            {/* LINE: Left = NO (lay items, red bg), Right = YES (back items, green bg) */}
+            <div className="flex-1 flex flex-col items-end min-w-0">
+              <div className="gap-1 flex justify-end items-center">
+                {layItems.length > 0 ? (
+                  layItems.map((item: any, idx: number) => (
+                    <PriceCell
+                      key={`no-${idx}`}
+                      price={item?.price}
+                      line={item?.line}
+                      type="lay"
+                      bettingType="LINE"
+                    />
+                  ))
+                ) : (
+                  <PriceCell type="lay" bettingType="LINE" />
+                )}
+              </div>
+            </div>
+            <div className="flex-1 flex flex-col items-start min-w-0">
+              <div className="gap-1 flex justify-start items-center">
+                {backItems.length > 0 ? (
+                  backItems.map((item: any, idx: number) => (
+                    <PriceCell
+                      key={`yes-${idx}`}
+                      price={item?.price}
+                      line={item?.line}
+                      type="back"
+                      bettingType="LINE"
+                    />
+                  ))
+                ) : (
+                  <PriceCell type="back" bettingType="LINE" />
+                )}
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* ODDS/BOOKMAKER: Left = Back (reversed order), Right = Lay */}
+            <div className="flex-1 flex flex-col items-end min-w-0">
+              <div className="gap-1 flex justify-end items-center">
+                {backSlots.map((item, posIdx) => (
+                  <PriceCell
+                    key={`back-${posIdx}`}
+                    price={item?.price}
+                    size={item?.size}
+                    type="back"
+                    bettingType={bettingType}
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="flex-1 flex flex-col items-start min-w-0">
+              <div className="gap-1 flex justify-start items-center">
+                {laySlots.map((item, posIdx) => (
+                  <PriceCell
+                    key={`lay-${posIdx}`}
+                    price={item?.price}
+                    size={item?.size}
+                    type="lay"
+                    bettingType={bettingType}
+                  />
+                ))}
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Suspended overlay */}
         {isSuspended && (
@@ -476,12 +541,12 @@ function MarketCard({ market }: { market: any }) {
       {/* Status color bar */}
       <div className={`h-1 ${statusColor}`} />
 
-      {/* Market header: name + back/lay labels */}
+      {/* Market header: name + back/lay or NO/YES labels */}
       <div className="grid grid-cols-3 gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 border-b border-gray-100 bg-gray-50/80 items-center">
         <div className="min-w-0 flex flex-col gap-0.5">
           <div className="flex items-center gap-1.5 flex-wrap">
             <h3 className="font-semibold text-gray-800 text-[11px] sm:text-xs truncate leading-tight">
-              {market.marketName}
+              {market.bettingType === "LINE" ? "Fancy" : market.marketName}
             </h3>
             <span
               className={`px-1 py-0.5 rounded text-[8px] font-medium ${
@@ -519,12 +584,25 @@ function MarketCard({ market }: { market: any }) {
             Min: {condition.minBet ?? "-"} / Max: {condition.maxBet ?? "-"} / Delay: {condition.betDelay ?? 0}s
           </p>
         </div>
-        <div className="justify-self-end font-semibold uppercase bg-green-900 text-white text-[10px] sm:text-xs py-0.5 px-1.5 rounded">
-          Back
-        </div>
-        <div className="font-semibold uppercase bg-[#39111A] text-white text-[10px] sm:text-xs py-0.5 px-1.5 rounded w-fit">
-          Lay
-        </div>
+        {market.bettingType === "LINE" ? (
+          <>
+            <div className="justify-self-end font-semibold uppercase bg-[#39111A] text-white text-[10px] sm:text-xs py-0.5 px-1.5 rounded w-fit">
+              NO
+            </div>
+            <div className="w-fit font-semibold uppercase bg-green-900 text-white text-[10px] sm:text-xs py-0.5 px-1.5 rounded">
+              YES
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="justify-self-end font-semibold uppercase bg-green-900 text-white text-[10px] sm:text-xs py-0.5 px-1.5 rounded">
+              Back
+            </div>
+            <div className="font-semibold uppercase bg-[#39111A] text-white text-[10px] sm:text-xs py-0.5 px-1.5 rounded w-fit">
+              Lay
+            </div>
+          </>
+        )}
       </div>
 
       {/* Runners with back/lay prices */}
@@ -536,6 +614,8 @@ function MarketCard({ market }: { market: any }) {
             isCustom={isCustom}
             marketId={market.marketId}
             isSuspended={isSuspended}
+            bettingType={market.bettingType}
+            displayName={market.bettingType === "LINE" ? market.marketName : undefined}
           />
         ))}
       </div>
@@ -1174,13 +1254,17 @@ function OddsHistoryPanel({ eventId }: { eventId: string }) {
 //  MAIN PAGE
 // ═══════════════════════════════════════════════════════════
 export default function MarketManagementPage() {
-  const [eventId, setEventId] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [activeEventId, setActiveEventId] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [activeTab, setActiveTab] = useState<"markets" | "history">("markets");
   const [filter, setFilter] = useState<"all" | "active" | "custom" | "disabled">(
     "all"
   );
+  const [showDropdown, setShowDropdown] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  const { data: searchResults, isLoading: isSearching } = useSearchEvents(searchQuery);
 
   const { markets: rawMarkets, isConnected, status } = useMarketWebSocket(
     activeEventId || ""
@@ -1188,14 +1272,36 @@ export default function MarketManagementPage() {
 
   const { data: savedMarkets } = useMarketsByEvent(activeEventId || null);
 
-  const handleLoadEvent = useCallback(() => {
-    const trimmed = eventId.trim();
-    if (!trimmed) {
-      toast.error("Enter an Event ID");
-      return;
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
     }
-    setActiveEventId(trimmed);
-  }, [eventId]);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelectEvent = useCallback((eventId: string, eventName: string) => {
+    setSearchQuery(eventName);
+    setActiveEventId(eventId);
+    setShowDropdown(false);
+  }, []);
+
+  const handleSearchKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      // If the input looks like a raw event ID (all digits), load it directly
+      const trimmed = searchQuery.trim();
+      if (trimmed && /^\d+$/.test(trimmed)) {
+        setActiveEventId(trimmed);
+        setShowDropdown(false);
+      } else if (searchResults && searchResults.length > 0) {
+        // Auto-select first result on Enter
+        handleSelectEvent(searchResults[0].eventId, searchResults[0].name);
+      }
+    }
+  }, [searchQuery, searchResults, handleSelectEvent]);
 
   const markets = rawMarkets.filter((m: any) => {
     if (filter === "active") return !m.adminDisabled && !m.adminHidden;
@@ -1223,22 +1329,92 @@ export default function MarketManagementPage() {
           </p>
         </div>
 
-        {/* Event ID Input */}
-        <div className="flex gap-2 mb-6">
-          <input
-            type="text"
-            value={eventId}
-            onChange={(e) => setEventId(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleLoadEvent()}
-            placeholder="Enter Event ID (Match ID) e.g. 34110895"
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <button
-            onClick={handleLoadEvent}
-            className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Load
-          </button>
+        {/* Event Search */}
+        <div className="relative mb-6" ref={searchRef}>
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowDropdown(true);
+                }}
+                onFocus={() => searchQuery.trim().length >= 2 && setShowDropdown(true)}
+                onKeyDown={handleSearchKeyDown}
+                placeholder="Search by team name, event name, or Event ID..."
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              {isSearching && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500">
+                  <Spinner size={16} />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Search Results Dropdown */}
+          {showDropdown && searchQuery.trim().length >= 2 && (
+            <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-y-auto">
+              {isSearching ? (
+                <div className="px-4 py-3 text-sm text-gray-500 flex items-center gap-2">
+                  <Spinner size={14} /> Searching...
+                </div>
+              ) : searchResults && searchResults.length > 0 ? (
+                searchResults.map((event: any) => (
+                  <button
+                    key={event.eventId}
+                    onClick={() => handleSelectEvent(event.eventId, event.name)}
+                    className="w-full text-left px-4 py-2.5 hover:bg-blue-50 border-b border-gray-100 last:border-0 transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium text-gray-800 text-sm truncate">
+                          {event.name}
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-xs text-gray-500">
+                            {event.sportName}
+                          </span>
+                          <span className="text-gray-300">|</span>
+                          <span className="text-xs text-gray-500 truncate">
+                            {event.seriesName}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 ml-3 shrink-0">
+                        {event.inPlay && (
+                          <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-green-100 text-green-700 rounded">
+                            LIVE
+                          </span>
+                        )}
+                        <span className="text-xs text-gray-400 font-mono">
+                          {event.eventId}
+                        </span>
+                      </div>
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="px-4 py-3 text-sm text-gray-500">
+                  No events found for &quot;{searchQuery}&quot;
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Active Event Area */}
@@ -1376,11 +1552,10 @@ export default function MarketManagementPage() {
               </svg>
             </div>
             <h3 className="text-gray-700 font-medium text-lg">
-              Enter an Event ID to get started
+              Search for an event to get started
             </h3>
             <p className="text-gray-500 text-sm mt-1">
-              You will see live markets, can customize settings, create custom
-              markets, and view price history
+              Search by team name, event name, or enter an Event ID directly
             </p>
           </div>
         )}

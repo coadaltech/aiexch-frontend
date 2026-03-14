@@ -21,6 +21,7 @@ export function UseSportsSeries(eventTypeId: string | null) {
       setLoading(true);
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}/api/sports/getAllSeries/${eventTypeId}`,
+        { timeout: 30000 },
       );
       console.log(response)
 

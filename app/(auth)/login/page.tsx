@@ -5,10 +5,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
 import { useLogin, useWhitelabelInfo } from "@/hooks/useAuth";
 import { useAuth, createDemoUser, DEMO_BALANCE } from "@/contexts/AuthContext";
-import { Eye, EyeOff, Sparkles } from "lucide-react";
+import { Eye, EyeOff, Sparkles, Mail, Lock } from "lucide-react";
 import { Captcha } from "@/components/modals/auth/captcha";
 
 const PANEL_ROLES = ["owner", "admin", "super", "master", "agent"];
@@ -38,7 +37,14 @@ export default function LoginPage() {
       {
         onSuccess: (response) => {
           if (response.data.success && response.data.user) {
-            const user = response.data.user as { id: string; username: string; email: string; membership: string; balance?: string; role?: string };
+            const user = response.data.user as {
+              id: string;
+              username: string;
+              email: string;
+              membership: string;
+              balance?: string;
+              role?: string;
+            };
             login({
               id: user.id,
               username: user.username,
@@ -65,116 +71,137 @@ export default function LoginPage() {
   };
 
   return (
-    <Card className="h-full lg:h-auto p-6 lg:p-8 border-0 lg:border lg:border-border/50 shadow-none lg:shadow-xl rounded-none lg:rounded-lg flex flex-col justify-center">
+    <>
+      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-foreground mb-2">
           Welcome Back
         </h1>
-        <p className="text-muted-foreground">Sign in to continue</p>
+        <p className="text-muted-foreground text-sm">
+          Sign in to your account to continue
+        </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 flex items-center gap-2">
+            <div className="w-1.5 h-1.5 bg-destructive rounded-full flex-shrink-0" />
             <p className="text-destructive text-sm">{error}</p>
           </div>
         )}
 
-        <Input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="h-12"
-          required
-        />
-
-        <div className="relative">
-          <Input
-            type={showPassword ? "text" : "password"}
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="h-12 pr-12"
-            required
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-          >
-            {showPassword ? (
-              <EyeOff className="w-5 h-5" />
-            ) : (
-              <Eye className="w-5 h-5" />
-            )}
-          </button>
+        {/* Email */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-muted-foreground">
+            Email
+          </label>
+          <div className="relative">
+            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/70" />
+            <Input
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="h-12 pl-11"
+              required
+            />
+          </div>
         </div>
 
+        {/* Password */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-muted-foreground">
+            Password
+          </label>
+          <div className="relative">
+            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/70" />
+            <Input
+              type={showPassword ? "text" : "password"}
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="h-12 pl-11 pr-12"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {showPassword ? (
+                <EyeOff className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Captcha */}
         <Captcha onValidate={setCaptchaValid} />
 
+        {/* Submit */}
         <Button
           type="submit"
-          className="w-full h-12"
+          className="w-full h-12 bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300"
           disabled={loginMutation.isPending || !captchaValid}
         >
           {loginMutation.isPending ? "Signing in..." : "Sign In"}
         </Button>
 
-        <div className="relative">
+        {/* Divider */}
+        <div className="relative py-1">
           <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-border" />
+            <div className="w-full border-t border-border/40" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">Or</span>
+            <span className="bg-background px-3 text-muted-foreground/70">
+              Or
+            </span>
           </div>
         </div>
+
+        {/* Demo button */}
         <Button
           type="button"
           variant="outline"
-          className="w-full h-12 text-white border-dashed border-primary/50 hover:bg-primary/10"
+          className="w-full h-11 border-dashed border-primary/30 hover:bg-primary/5 hover:border-primary/50 transition-all"
           onClick={() => {
             const demoUser = createDemoUser();
             login(demoUser);
             router.push("/");
           }}
         >
-          <Sparkles className="w-4 h-4 mr-2" />
-          Try demo account (₹{DEMO_BALANCE} balance)
+          <Sparkles className="w-4 h-4 text-primary" />
+          <span className="ml-1">Try Demo</span>
+          <span className="ml-1.5 px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full font-medium">
+            ₹{DEMO_BALANCE}
+          </span>
         </Button>
       </form>
 
-      <div className="mt-6 space-y-3">
-        <div className="text-center">
+      {/* Footer links */}
+      <div className="mt-6 text-center space-y-2">
+        <div>
           <Link
             href="/forgot-password"
-            className="text-sm text-primary hover:underline"
+            className="text-sm text-muted-foreground hover:text-primary transition-colors"
           >
-            Forgot password?
+            Forgot your password?
           </Link>
         </div>
         {isB2C && (
-          <>
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">Or</span>
-              </div>
-            </div>
-            <p className="text-center text-sm text-muted-foreground">
-              Don't have an account?{" "}
-              <Link
-                href="/signup"
-                className="text-primary hover:underline font-semibold"
-              >
-                Sign up
-              </Link>
-            </p>
-          </>
+          <p className="text-sm text-muted-foreground">
+            Don&apos;t have an account?{" "}
+            <Link
+              href="/signup"
+              className="text-primary hover:underline font-semibold"
+            >
+              Sign up
+            </Link>
+          </p>
         )}
       </div>
-    </Card>
+    </>
   );
 }

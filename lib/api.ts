@@ -282,6 +282,8 @@ export const ownerApi = {
   getCurrencyHistory: (id: string) => api.get(`/owner/currencies/${id}/history`),
 
   // Market Management
+  searchEvents: (q: string) =>
+    api.get(`/owner/market-management/events/search?q=${encodeURIComponent(q)}`),
   getEventSettings: (eventId: string) =>
     api.get(`/owner/market-management/events/${eventId}`),
   updateEventSettings: (eventId: string, data: any) =>
