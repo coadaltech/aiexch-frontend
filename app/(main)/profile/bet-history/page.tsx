@@ -155,7 +155,7 @@ export default function BetHistoryPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1">
                     <h3 className="font-semibold text-foreground text-sm sm:text-base">
-                      {bet.type === "back" ? "Back" : "Lay"} Bet
+                      {bet.betType === 0 || bet.betType === "back" ? "Back" : "Lay"} Bet
                     </h3>
                     <Badge variant="outline" className="text-xs shrink-0">
                       #{bet.id}

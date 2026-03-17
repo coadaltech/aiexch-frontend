@@ -9,8 +9,7 @@ import { useLogin, useWhitelabelInfo } from "@/hooks/useAuth";
 import { useAuth, createDemoUser, DEMO_BALANCE } from "@/contexts/AuthContext";
 import { Eye, EyeOff, Sparkles, Mail, Lock } from "lucide-react";
 import { Captcha } from "@/components/modals/auth/captcha";
-
-const PANEL_ROLES = ["owner", "admin", "super", "master", "agent"];
+import { normalizeRole, normalizeMembership, PANEL_ROLE_IDS, PANEL_ROLE_STRINGS } from "@/types/enums";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -41,20 +40,24 @@ export default function LoginPage() {
               id: string;
               username: string;
               email: string;
-              membership: string;
+              membership: string | number;
               balance?: string;
-              role?: string;
+              role?: string | number;
             };
+            const roleStr = normalizeRole(user.role);
             login({
               id: user.id,
               username: user.username,
               email: user.email,
-              membership: user.membership,
+              membership: normalizeMembership(user.membership),
               balance: user.balance ?? "0",
-              role: user.role ?? "user",
+              role: roleStr,
             });
-            const role = (user.role ?? "user").toLowerCase();
-            if (PANEL_ROLES.includes(role)) {
+            // Check panel access: support both numeric and string role from API
+            const isPanelRole = typeof user.role === "number"
+              ? PANEL_ROLE_IDS.includes(user.role)
+              : PANEL_ROLE_STRINGS.includes(roleStr);
+            if (isPanelRole) {
               router.push("/owner");
             } else {
               router.push("/");

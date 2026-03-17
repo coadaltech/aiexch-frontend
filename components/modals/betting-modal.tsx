@@ -60,6 +60,7 @@ export function BettingModal({ open, onClose, match }: BettingModalProps) {
         matchId: match.marketData.matchId,
         marketId: match.marketData.marketId || "default-market",
         eventTypeId: match.marketData.eventTypeId?.toString() || "4",
+        competitionId: match.marketData.competitionId ?? null,
         marketType: match.marketData.marketType || "odds",
         selectionId: match.marketData.selectionId,
         selectionName,

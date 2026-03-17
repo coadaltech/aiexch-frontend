@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ownerApi, uploadFile, api } from "@/lib/api";
 import { toast } from "sonner";
+import { normalizeRole, normalizeMembership } from "@/types/enums";
 
 // Promotions
 export const usePromotions = () => {
@@ -281,7 +282,14 @@ export const useDeleteWhitelabel = () => {
 export const useOwnerUsers = () => {
   return useQuery({
     queryKey: ["owner-users"],
-    queryFn: () => ownerApi.getUsers().then((res) => res.data.data),
+    queryFn: () =>
+      ownerApi.getUsers().then((res) =>
+        (res.data.data as any[]).map((u: any) => ({
+          ...u,
+          role: normalizeRole(u.role),
+          membership: normalizeMembership(u.membership),
+        }))
+      ),
   });
 };
 

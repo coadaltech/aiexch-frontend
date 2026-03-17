@@ -17,6 +17,7 @@ export interface BettingModalProps {
       selectionId: string;
       selectionName?: string;
       eventTypeId?: string | number;
+      competitionId?: string | null;
       marketName?: string;
       marketType?: string;
       type: string;

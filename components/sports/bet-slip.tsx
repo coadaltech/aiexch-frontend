@@ -116,7 +116,7 @@ function CurrentBetTableRow({ bet }: { bet: any }) {
   const stakeFormatted =
     bet.stake != null ? Number(bet.stake).toFixed(2) : "-";
   const oddsFormatted = bet.odds != null ? String(Number(bet.odds)) : "-";
-  const isLay = bet.betType === "lay";
+  const isLay = bet.betType === 1 || bet.betType === "lay";
   const rowBg = isLay
     ? "bg-[#39111A]/40 text-foreground"
     : "bg-green-900/40 text-foreground";

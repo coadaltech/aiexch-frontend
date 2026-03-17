@@ -15,6 +15,7 @@ export interface PlaceBetParams {
   matchId: string;
   marketId: string;
   eventTypeId: string;
+  competitionId?: string | null;
   marketType?: string;
   selectionId: string;
   selectionName?: string;

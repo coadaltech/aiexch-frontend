@@ -26,7 +26,7 @@ export async function middleware(request: NextRequest) {
   // console.log("token", token);
   // console.log("[MIDDLEWARE] Token:", token ? "exists" : "missing");
 
-  let userRole: string | null = null;
+  let userRole: string | number | null = null;
 
   // Redirect to home if no token
   if (token) {
@@ -42,8 +42,14 @@ export async function middleware(request: NextRequest) {
 
   const response = NextResponse.next();
 
-  const PANEL_ROLES = ["owner", "admin", "super", "master", "agent"];
-  const isPanelRole = userRole && PANEL_ROLES.includes(userRole.toLowerCase());
+  // Panel roles: support both numeric (new JWT) and string (old cached JWT) values
+  const PANEL_ROLES_NUM = [0, 3, 4, 5, 6]; // Owner, Admin, Super, Master, Agent
+  const PANEL_ROLES_STR = ["owner", "admin", "super", "master", "agent"];
+  const isPanelRole = userRole != null && (
+    typeof userRole === "number"
+      ? PANEL_ROLES_NUM.includes(userRole)
+      : PANEL_ROLES_STR.includes(String(userRole).toLowerCase())
+  );
   const isAuthRoute = pathname.startsWith("/login") || pathname.startsWith("/signup") || pathname.startsWith("/forgot-password");
 
   if (isAuth && userRole) {

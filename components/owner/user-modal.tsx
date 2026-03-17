@@ -21,6 +21,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { User, UserModalProps } from "./types";
 import { useAuth } from "@/contexts/AuthContext";
+import { normalizeRole } from "@/types/enums";
 import { useWhitelabelInfo } from "@/hooks/useAuth";
 import { useCurrencies } from "@/hooks/useOwner";
 import { decode_payload_from_token } from "@/lib/token-utils";
@@ -89,8 +90,8 @@ export function UserModal({
       const accessToken = cookies.find((c) => c.startsWith("accessToken="))?.split("=")[1];
       if (accessToken) {
         const decoded = decode_payload_from_token(accessToken);
-        if (decoded.success && decoded.payload?.role) {
-          setCurrentUserRole(decoded.payload.role);
+        if (decoded.success && decoded.payload?.role != null) {
+          setCurrentUserRole(normalizeRole(decoded.payload.role));
         }
       }
     }

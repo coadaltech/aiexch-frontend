@@ -2,6 +2,7 @@
 
 import { api } from "@/lib/api";
 import { clearDemoBets } from "@/lib/demo-bets";
+import { normalizeRole, normalizeMembership } from "@/types/enums";
 import { useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
 
@@ -89,9 +90,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           withCredentials: true,
         });
         if (data.loggedIn && data.user) {
-          setUser(data.user);
+          const u = {
+            ...data.user,
+            role: normalizeRole(data.user.role),
+            membership: normalizeMembership(data.user.membership),
+          };
+          setUser(u);
           setIsLoggedIn(true);
-          localStorage.setItem("user", JSON.stringify(data.user));
+          localStorage.setItem("user", JSON.stringify(u));
         } else {
           localStorage.removeItem("user");
           setUser(null);
@@ -142,9 +148,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { data } = await api.get("/profile/me", { withCredentials: true });
       if (data.loggedIn && data.user) {
-        setUser(data.user);
+        const u = {
+          ...data.user,
+          role: normalizeRole(data.user.role),
+          membership: normalizeMembership(data.user.membership),
+        };
+        setUser(u);
         setIsLoggedIn(true);
-        localStorage.setItem("user", JSON.stringify(data.user));
+        localStorage.setItem("user", JSON.stringify(u));
       } else {
         logout();
       }

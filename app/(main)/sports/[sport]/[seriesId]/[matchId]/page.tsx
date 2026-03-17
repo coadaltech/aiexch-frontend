@@ -231,7 +231,7 @@ function calcExistingPnl(bets: any[], runnerId: string): number {
       return sum + (-k);
     }
     const isSelected = bet.selectionId?.toString() === runnerId;
-    if (betType === "back") {
+    if (betType === "back" || betType === 0) {
       return sum + (isSelected ? k * (o - 1) : -k);
     } else {
       return sum + (isSelected ? -(k * (o - 1)) : k);
@@ -568,6 +568,7 @@ export default function MatchPage() {
             matchId,
             marketId: market.marketId,
             eventTypeId: config?.eventTypeId?.toString() || "4",
+            competitionId: seriesId,
             marketType,
             selectionId: runner.selectionId?.toString() ?? "",
             selectionName: runnerName,
