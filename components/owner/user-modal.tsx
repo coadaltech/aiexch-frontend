@@ -43,7 +43,7 @@ import { toast } from "sonner";
 
 // Helper function to get available roles based on current user's role
 const getAvailableRoles = (currentUserRole: string | undefined): string[] => {
-  // alert(currentUserRole);
+  // alert(currentUserRole)
   if (!currentUserRole) return ["user"];
 
   switch (currentUserRole) {
@@ -414,7 +414,7 @@ export function UserModal({
                   </div>
                 </div>
 
-                {user && currentUser?.id != null && user.createdBy != null && String(user.createdBy) === String(currentUser.id) && (
+                {user && currentUser?.id != null && user.addedBy != null && String(user.addedBy) === String(currentUser.id) && (
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-foreground">

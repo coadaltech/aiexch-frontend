@@ -74,7 +74,7 @@ export default function UsersPage() {
 
   const { sortedData, requestSort, getSortIcon } = useTableSort({
     data: filteredData,
-    initialSort: { key: "createdAt", direction: "desc" },
+    initialSort: { key: "addedDate", direction: "desc" },
   });
 
   const {
@@ -527,7 +527,7 @@ export default function UsersPage() {
                         </Badge>
                       </td>
                       <td className="py-3 px-2 hidden lg:table-cell text-sm text-muted-foreground">
-                        {(user as { createdByUsername?: string | null }).createdByUsername ?? "Owner"}
+                        {(user as { addedByUsername?: string | null }).addedByUsername ?? "Owner"}
                       </td>
                       <td className="py-3 px-2 hidden lg:table-cell text-sm text-muted-foreground">
                         {(user as { whitelabelName?: string | null }).whitelabelName ?? "—"}

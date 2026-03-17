@@ -23,13 +23,13 @@ export function useFilters<T extends Record<string, any>>({
         // Handle date range filters
         if (key.includes('From')) {
           const dateKey = key.replace('From', '').toLowerCase();
-          const itemDate = new Date(item[dateKey] || item.createdAt);
+          const itemDate = new Date(item[dateKey] || item.addedDate);
           return itemDate >= new Date(value);
         }
-        
+
         if (key.includes('To')) {
           const dateKey = key.replace('To', '').toLowerCase();
-          const itemDate = new Date(item[dateKey] || item.createdAt);
+          const itemDate = new Date(item[dateKey] || item.addedDate);
           return itemDate <= new Date(value + 'T23:59:59');
         }
 

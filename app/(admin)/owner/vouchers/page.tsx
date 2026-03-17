@@ -45,7 +45,7 @@ export default function VouchersPage() {
 
   const { sortedData, requestSort, getSortIcon } = useTableSort({
     data: filteredData,
-    initialSort: { key: "createdAt", direction: "desc" }
+    initialSort: { key: "addedDate", direction: "desc" }
   });
 
   const { items: paginatedVouchers, totalPages, currentPage, goToPage } = usePagination({
@@ -255,11 +255,11 @@ export default function VouchersPage() {
                       {getSortIcon('status') === 'desc' && <ChevronDown className="w-3 h-3" />}
                     </div>
                   </th>
-                  <th className="text-left py-3 px-2 text-muted-foreground text-sm hidden lg:table-cell cursor-pointer hover:text-foreground" onClick={() => requestSort('createdAt')}>
+                  <th className="text-left py-3 px-2 text-muted-foreground text-sm hidden lg:table-cell cursor-pointer hover:text-foreground" onClick={() => requestSort('addedDate')}>
                     <div className="flex items-center gap-1">
                       Date
-                      {getSortIcon('createdAt') === 'asc' && <ChevronUp className="w-3 h-3" />}
-                      {getSortIcon('createdAt') === 'desc' && <ChevronDown className="w-3 h-3" />}
+                      {getSortIcon('addedDate') === 'asc' && <ChevronUp className="w-3 h-3" />}
+                      {getSortIcon('addedDate') === 'desc' && <ChevronDown className="w-3 h-3" />}
                     </div>
                   </th>
                   <th className="text-left py-3 px-2 text-muted-foreground text-sm">Actions</th>
@@ -274,7 +274,7 @@ export default function VouchersPage() {
                       <td className="py-3 px-2">
                         <div className="font-medium text-foreground text-sm">#{voucher.id}</div>
                         <div className="sm:hidden text-xs text-muted-foreground">ID: {voucher.userId}</div>
-                        <div className="lg:hidden text-xs text-muted-foreground">{new Date(voucher.createdAt).toLocaleDateString()}</div>
+                        <div className="lg:hidden text-xs text-muted-foreground">{new Date(voucher.addedDate).toLocaleDateString()}</div>
                       </td>
                       <td className="py-3 px-2 text-muted-foreground text-sm hidden sm:table-cell">{voucher.userId}</td>
                       <td className="py-3 px-2">{getTypeBadge(voucher.type)}</td>
@@ -300,7 +300,7 @@ export default function VouchersPage() {
                       </td>
                       <td className="py-3 px-2">{getStatusBadge(voucher.status)}</td>
                       <td className="py-3 px-2 text-muted-foreground text-sm hidden lg:table-cell">
-                        {new Date(voucher.createdAt).toLocaleDateString()}
+                        {new Date(voucher.addedDate).toLocaleDateString()}
                       </td>
                       <td className="py-3 px-2">
                         <div className="flex gap-1">
@@ -433,7 +433,7 @@ export default function VouchersPage() {
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Date</label>
-                  <p className="text-foreground">{new Date(detailsModal.data.createdAt).toLocaleString()}</p>
+                  <p className="text-foreground">{new Date(detailsModal.data.addedDate).toLocaleString()}</p>
                 </div>
               </div>
 

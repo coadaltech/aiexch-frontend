@@ -16,7 +16,7 @@ interface Domain {
   id: string;
   name: string;
   status: "active" | "inactive" | "pending";
-  createdAt: string;
+  addedDate: string;
 }
 
 export default function DomainsPage() {
@@ -113,7 +113,7 @@ export default function DomainsPage() {
                     <div>
                       <p className="font-medium">{domain.name}</p>
                       <p className="text-sm text-muted-foreground">
-                        Created: {domain.createdAt}
+                        Created: {domain.addedDate}
                       </p>
                     </div>
                   </div>

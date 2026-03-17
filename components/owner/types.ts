@@ -118,7 +118,7 @@ export interface User {
   betStatus?: boolean;
   parentAccountStatus?: boolean;
   parentBetStatus?: boolean;
-  createdBy?: string | null;
+  addedBy?: string | null;
   balance?: string;
   upline?: string | number;
   downline?: string | number;

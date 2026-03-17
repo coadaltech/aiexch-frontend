@@ -552,7 +552,7 @@ export default function MatchPage() {
           marketName,
           runnerName,
           potentialWin: stakeNum * oddsNum,
-          createdAt: new Date().toISOString(),
+          addedDate: new Date().toISOString(),
           matchId,
           marketId: market.marketId,
           selectionId: runner.selectionId?.toString(),

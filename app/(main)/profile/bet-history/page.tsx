@@ -33,7 +33,7 @@ export default function BetHistoryPage() {
     })
     .sort(
       (a: any, b: any) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        new Date(b.addedDate).getTime() - new Date(a.addedDate).getTime()
     );
 
   const totalBets = betHistory.length;
@@ -216,7 +216,7 @@ export default function BetHistoryPage() {
                 <div>
                   <div className="text-muted-foreground">Date</div>
                   <div className="font-semibold text-foreground">
-                    {formatDate(bet.createdAt)}
+                    {formatDate(bet.addedDate)}
                   </div>
                 </div>
               </div>

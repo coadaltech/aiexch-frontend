@@ -10,7 +10,7 @@ export interface DemoBet {
   runnerName?: string;
   potentialWin: number;
   payout?: number;
-  createdAt: string;
+  addedDate: string;
   matchId?: string;
   marketId?: string;
   selectionId?: string;

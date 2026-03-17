@@ -48,7 +48,7 @@ export default function Notifications() {
     })
     .sort(
       (a: Notification, b: Notification) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        new Date(b.addedDate).getTime() - new Date(a.addedDate).getTime()
     );
 
   const unreadCount = notifications.filter(
@@ -227,7 +227,7 @@ export default function Notifications() {
                         </p>
                         <div className="flex items-center gap-4">
                           <span className="text-xs text-muted-foreground">
-                            {formatTimestamp(notification.createdAt)}
+                            {formatTimestamp(notification.addedDate)}
                           </span>
                           {notification.actionUrl && (
                             <Button

@@ -52,7 +52,7 @@ export default function AdminDashboard() {
   const pendingKyc = kycDocuments.filter((k) => k.status === "pending").length;
   const todayVouchers = vouchers.filter((t) => {
     const today = new Date().toDateString();
-    return new Date(t.createdAt).toDateString() === today;
+    return new Date(t.addedDate).toDateString() === today;
   });
   const todayVolume = todayVouchers.reduce(
     (sum, t) => sum + parseFloat(t.amount || "0"),
@@ -120,7 +120,7 @@ export default function AdminDashboard() {
       icon: Users,
       color: "text-blue-500",
       message: `New user registered: ${u.username}`,
-      time: new Date(u.createdAt).toLocaleDateString(),
+      time: new Date(u.addedDate).toLocaleDateString(),
     })),
     ...kycDocuments
       .filter((k) => k.status === "pending")
@@ -129,7 +129,7 @@ export default function AdminDashboard() {
         icon: Shield,
         color: "text-yellow-500",
         message: `KYC document submitted (ID: ${k.id})`,
-        time: new Date(k.createdAt).toLocaleDateString(),
+        time: new Date(k.addedDate).toLocaleDateString(),
       })),
     ...vouchers
       .filter((t) => t.status === "pending")
@@ -138,7 +138,7 @@ export default function AdminDashboard() {
         icon: CreditCard,
         color: "text-orange-500",
         message: `${t.type} request: $${t.amount}`,
-        time: new Date(t.createdAt).toLocaleDateString(),
+        time: new Date(t.addedDate).toLocaleDateString(),
       })),
   ].slice(0, 6);
 

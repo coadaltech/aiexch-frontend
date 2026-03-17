@@ -34,7 +34,7 @@ export default function KYCPage() {
 
   const { sortedData, requestSort, getSortIcon } = useTableSort({
     data: filteredData,
-    initialSort: { key: "createdAt", direction: "desc" },
+    initialSort: { key: "addedDate", direction: "desc" },
   });
 
   const {
@@ -186,14 +186,14 @@ export default function KYCPage() {
                   </th>
                   <th
                     className="text-left py-3 text-muted-foreground cursor-pointer hover:text-foreground"
-                    onClick={() => requestSort("createdAt")}
+                    onClick={() => requestSort("addedDate")}
                   >
                     <div className="flex items-center gap-1">
                       Submitted
-                      {getSortIcon("createdAt") === "asc" && (
+                      {getSortIcon("addedDate") === "asc" && (
                         <ChevronUp className="w-3 h-3" />
                       )}
-                      {getSortIcon("createdAt") === "desc" && (
+                      {getSortIcon("addedDate") === "desc" && (
                         <ChevronDown className="w-3 h-3" />
                       )}
                     </div>
@@ -243,7 +243,7 @@ export default function KYCPage() {
                         </Badge>
                       </td>
                       <td className="py-4 text-muted-foreground">
-                        {new Date(submission.createdAt).toLocaleDateString()}
+                        {new Date(submission.addedDate).toLocaleDateString()}
                       </td>
                       <td className="py-4">
                         <div className="flex gap-2">

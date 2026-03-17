@@ -187,7 +187,7 @@ export default function NotificationsPage() {
                           {notification.message}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {new Date(notification.createdAt).toLocaleString()}
+                          {new Date(notification.addedDate).toLocaleString()}
                         </p>
                       </div>
                       <Button

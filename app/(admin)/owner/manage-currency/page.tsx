@@ -370,8 +370,8 @@ export default function ManageCurrencyPage() {
                       {entry.value}
                     </span>
                     <span className="text-muted-foreground text-xs">
-                      {entry.createdAt
-                        ? new Date(entry.createdAt).toLocaleString()
+                      {entry.addedDate
+                        ? new Date(entry.addedDate).toLocaleString()
                         : "—"}
                     </span>
                   </li>

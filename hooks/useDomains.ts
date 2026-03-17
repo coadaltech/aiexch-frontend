@@ -5,7 +5,7 @@ interface Domain {
   id: string;
   name: string;
   status: string;
-  createdAt: string;
+  addedDate: string;
 }
 
 export const useDomains = () => {

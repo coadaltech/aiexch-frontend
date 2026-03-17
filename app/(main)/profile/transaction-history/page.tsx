@@ -33,7 +33,7 @@ export default function TransactionHistory() {
         tx.currency?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         tx.reference?.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const txDate = new Date(tx.createdAt);
+      const txDate = new Date(tx.addedDate);
       const matchesDateFrom = !dateFrom || txDate >= new Date(dateFrom);
       const matchesDateTo = !dateTo || txDate <= new Date(dateTo + "T23:59:59");
 
@@ -41,7 +41,7 @@ export default function TransactionHistory() {
     })
     .sort(
       (a: any, b: any) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        new Date(b.addedDate).getTime() - new Date(a.addedDate).getTime()
     );
 
   const formatDate = (dateString: string) => {
@@ -193,7 +193,7 @@ export default function TransactionHistory() {
                         </div>
                         <div className="text-xs sm:text-sm text-muted-foreground mb-1 break-words">
                           {transaction.method || "N/A"} •{" "}
-                          {formatDate(transaction.createdAt)}
+                          {formatDate(transaction.addedDate)}
                         </div>
                         {/* {transaction.reference && (
                           <div className="text-xs text-casino-secondary-text mb-1">

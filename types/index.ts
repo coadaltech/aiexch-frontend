@@ -198,7 +198,7 @@ export interface Notification {
   title: string;
   message: string;
   type: "bonus" | "transaction" | "security" | "system" | "promotion";
-  createdAt: string;
+  addedDate: string;
   isRead: boolean | null;
   readAt: string | null;
   actionUrl?: string;
