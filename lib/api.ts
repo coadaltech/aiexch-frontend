@@ -489,7 +489,7 @@ export const sportsApi = {
     api.get(`/sports/premium/${eventTypeId}/${matchId}`),
   getScore: (eventTypeId: string, matchId: string) =>
     api.get(`/sports/score/${eventTypeId}/${matchId}`),
-  getSeries: (eventTypeId: string) => api.get(`/sports/series/${eventTypeId}`),
+  getSeries: (eventTypeId: string) => api.get(`/api/sports/getAllSeries/${eventTypeId}`),
   getMatches: (eventTypeId: string, competitionId: string) =>
     api.get(`/sports/matches/${eventTypeId}/${competitionId}`),
   getMarkets: (eventTypeId: string, eventId: string) =>

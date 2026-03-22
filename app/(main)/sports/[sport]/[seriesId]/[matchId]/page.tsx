@@ -6,8 +6,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useBetSlip } from "@/contexts/BetSlipContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBetting, useMyBets } from "@/hooks/useBetting";
-import { useMarketWebSocket } from "@/hooks/useMarketWebSocket";
-import { UseSportsSeries } from "@/hooks/UseSportsSeries";
+import { useLiveMatch } from "@/hooks/useLiveMatch";
+import { useSeries } from "@/hooks/useSportsApi";
+import { sportsApi } from "@/lib/api";
 import { getSportConfig } from "@/lib/sports-config";
 import { addDemoBets } from "@/lib/demo-bets";
 import type { DemoBet } from "@/lib/demo-bets";
@@ -204,8 +205,8 @@ function QuickBetPanel({
 // Map bettingType to marketType expected by backend
 function toMarketType(bettingType: string): string {
   switch (bettingType?.toUpperCase()) {
-    case "BOOKMAKER": return "bookmakers";
-    case "LINE": return "sessions";
+    case "BOOKMAKER": return "bookmaker";
+    case "LINE": return "line";
     default: return "odds";
   }
 }
@@ -226,8 +227,8 @@ function calcExistingPnl(bets: any[], runnerId: string): number {
     const k = typeof bet.stake === "number" ? bet.stake : parseFloat(bet.stake);
     const o = typeof bet.odds === "number" ? bet.odds : parseFloat(bet.odds);
     if (!k || !o) return sum;
-    // LINE (sessions) bets: show -(stake) as potential loss
-    if (bet.marketType === "sessions") {
+    // LINE bets: show -(stake) as potential loss
+    if (bet.marketType === "line") {
       return sum + (-k);
     }
     const isSelected = bet.selectionId?.toString() === runnerId;
@@ -300,8 +301,159 @@ export default function MatchPage() {
   }, [myBetsData, matchId]);
 
   const config = getSportConfig(sport);
-  const { seriesData } = UseSportsSeries(config?.eventTypeId ?? null);
-  const { status, isConnected, markets } = useMarketWebSocket(matchId);
+  const eventTypeId = config?.eventTypeId ?? "4";
+  const { data: seriesData = [] } = useSeries(config?.eventTypeId ?? null);
+  const { status, isConnected, matchOdds: wsMarkets, bookmakers: wsBookmakers, sessions: wsSessions } = useLiveMatch(matchId, eventTypeId);
+
+  // Initial REST fetch for immediate data (no waiting for WebSocket)
+  const [initialData, setInitialData] = useState<any>(null);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const initialFetchDone = useRef(false);
+
+  useEffect(() => {
+    if (initialFetchDone.current) return;
+    initialFetchDone.current = true;
+
+    sportsApi
+      .getMatchDetails(eventTypeId, matchId)
+      .then((res: any) => {
+        const data = res.data || res;
+        setInitialData(data);
+      })
+      .catch(() => {})
+      .finally(() => setInitialLoading(false));
+  }, [eventTypeId, matchId]);
+
+  // Normalize bookmaker data into the same format as matchOdds
+  const normalizeBookmakers = useCallback((bookmakers: any[]): any[] => {
+    if (!bookmakers || bookmakers.length === 0) return [];
+    return bookmakers
+      .filter((bm: any) => {
+        const st = bm.odds?.status || "";
+        return st !== "CLOSED" && st !== "INACTIVE";
+      })
+      .map((bm: any) => {
+        const odds = bm.odds;
+        const st = odds?.status || "OPEN";
+        return {
+          marketId: bm.marketId,
+          marketName: bm.marketName || odds?.mname || "Bookmaker",
+          marketType: "BOOKMAKER",
+          status: st === "SUSPENDED" ? "SUSPENDED" : st,
+          inPlay: odds?.inplay ?? true,
+          bettingType: "BOOKMAKER",
+          marketCondition: {
+            marketId: bm.marketId,
+            betDelay: odds?.betDelay || 0,
+            minBet: parseFloat(odds?.min || "100"),
+            maxBet: parseFloat(odds?.max || "50000"),
+            maxProfit: 0,
+            betLock: false,
+          },
+          sportingEvent: false,
+          runners: (odds?.runners || []).map((r: any) => ({
+            selectionId: r.selectionId,
+            name: r.runnerName,
+            status: r.status || "ACTIVE",
+            back: r.back?.map((b: any) => ({
+              price: b.price,
+              size: parseFloat(b.size) || b.size || 0,
+            })) || null,
+            lay: r.lay?.map((l: any) => ({
+              price: l.price,
+              size: parseFloat(l.size) || l.size || 0,
+            })) || null,
+          })),
+        };
+      });
+  }, []);
+
+  // Normalize session/fancy data into LINE format
+  const normalizeSessions = useCallback((sessions: any[]): any[] => {
+    if (!sessions || sessions.length === 0) return [];
+    return sessions
+      .filter((s: any) => {
+        const gs = (s.GameStatus || "").toUpperCase();
+        return gs !== "CLOSED" && gs !== "INACTIVE" && gs !== "COMPLETE";
+      })
+      .map((s: any) => {
+        const gameStatus = s.GameStatus || "";
+        const isSuspended = gameStatus.toUpperCase() === "SUSPENDED";
+        const isBallRunning =
+          gameStatus === "Ball Running" ||
+          gameStatus === "BALL RUNNING" ||
+          (s.ballsess && s.ballsess === 1);
+
+        let st = "OPEN";
+        if (isSuspended) st = "SUSPENDED";
+        else if (isBallRunning) st = "SUSPENDED";
+
+        return {
+          marketId: `session-${s.SelectionId}`,
+          marketName: s.RunnerName,
+          marketType: "SESSION",
+          status: st,
+          inPlay: true,
+          bettingType: "LINE",
+          marketCondition: {
+            marketId: `session-${s.SelectionId}`,
+            betDelay: 0,
+            minBet: parseFloat(s.min || "100"),
+            maxBet: parseFloat(s.max || "25000"),
+            maxProfit: 0,
+            betLock: false,
+          },
+          sportingEvent: isBallRunning,
+          runners: [
+            {
+              selectionId: s.SelectionId,
+              name: s.RunnerName,
+              status: isSuspended || isBallRunning ? "SUSPENDED" : "ACTIVE",
+              back: s.BackPrice1
+                ? [{ line: s.BackPrice1, price: s.BackSize1 || 100, size: s.BackSize1 || 100 }]
+                : null,
+              lay: s.LayPrice1
+                ? [{ line: s.LayPrice1, price: s.LaySize1 || 100, size: s.LaySize1 || 100 }]
+                : null,
+            },
+          ],
+        };
+      });
+  }, []);
+
+  // Merge all market sources: WebSocket live data takes priority, initial REST data as fallback
+  const markets = useMemo(() => {
+    // If we have WebSocket data, use it (it's the most up-to-date)
+    const hasWsData = wsMarkets.length > 0 || wsBookmakers.length > 0 || wsSessions.length > 0;
+
+    let matchOdds: any[] = [];
+    let bookmakerMarkets: any[] = [];
+    let sessionMarkets: any[] = [];
+
+    if (hasWsData) {
+      matchOdds = wsMarkets;
+      bookmakerMarkets = normalizeBookmakers(wsBookmakers);
+      sessionMarkets = normalizeSessions(wsSessions);
+    } else if (initialData) {
+      // Use initial REST data as fallback
+      matchOdds = initialData.matchOdds || [];
+      bookmakerMarkets = normalizeBookmakers(initialData.bookmakers || []);
+      sessionMarkets = normalizeSessions(initialData.sessions || []);
+    }
+
+    // Deduplicate by marketId (matchOdds may already include some bookmaker-type markets)
+    const seenIds = new Set(matchOdds.map((m: any) => m.marketId));
+    const deduped = [
+      ...matchOdds,
+      ...bookmakerMarkets.filter((m: any) => !seenIds.has(m.marketId)),
+      ...sessionMarkets,
+    ];
+
+    // Filter out CLOSED and INACTIVE
+    return deduped.filter(
+      (m: any) => m.status !== "CLOSED" && m.status !== "INACTIVE"
+    );
+  }, [wsMarkets, wsBookmakers, wsSessions, initialData, normalizeBookmakers, normalizeSessions]);
 
   // Keep a ref to latest markets for price-change detection during bet delay
   const marketsRef = useRef(markets);
@@ -351,33 +503,53 @@ export default function MatchPage() {
   >("connecting");
 
   const series = useMemo(
-    () => seriesData.find((s: { id: string }) => s.id === seriesId),
+    () => seriesData.find((s: { id: string }) => String(s.id) === String(seriesId)),
     [seriesData, seriesId]
   );
   const matchFromSeries = useMemo(
-    () => series?.matches?.find((m: { id: string }) => m.id === matchId),
+    () => series?.matches?.find((m: { id: string }) => String(m.id) === String(matchId)),
     [series, matchId]
   );
 
   useEffect(() => {
-    if (status === "error") {
-      setPageStatus("error");
-    } else if (status === "disconnected" || status === "connecting") {
-      setPageStatus("connecting");
-    } else if (isConnected && markets.length > 0) {
+    // If we have markets from any source (REST or WS), show them immediately
+    if (visibleMarkets.length > 0) {
       setMatchInfo({
         eventName: markets[0]?.eventName || "Match",
         sport: markets[0]?.sport || "Cricket",
         startTime: markets[0]?.startTime,
       });
       setPageStatus("success");
-    } else if (isConnected && markets.length === 0) {
-      const timeout = setTimeout(() => {
-        if (markets.length === 0) setPageStatus("no-data");
-      }, 4000);
-      return () => clearTimeout(timeout);
+      return;
     }
-  }, [status, isConnected, markets]);
+
+    // Still loading initial data
+    if (initialLoading) {
+      setPageStatus("connecting");
+      return;
+    }
+
+    // Initial data loaded but no markets + WS still connecting
+    if (!initialLoading && !isConnected && visibleMarkets.length === 0) {
+      // Wait briefly for WS to connect and provide data
+      if (status === "connecting" || status === "disconnected") {
+        const timeout = setTimeout(() => {
+          setPageStatus("no-data");
+        }, 3000);
+        return () => clearTimeout(timeout);
+      }
+    }
+
+    // WS connected but no markets from any source
+    if (!initialLoading && visibleMarkets.length === 0) {
+      setPageStatus("no-data");
+      return;
+    }
+
+    if (status === "error" && visibleMarkets.length === 0) {
+      setPageStatus("error");
+    }
+  }, [status, isConnected, markets, visibleMarkets.length, initialLoading]);
 
   const handleQuickBetClose = () => {
     cancelBetDelay();
@@ -752,19 +924,21 @@ export default function MatchPage() {
 
   if (pageStatus === "error") {
     return (
-      <div className="rounded-lg bg-gray-900 flex items-center justify-center">
-        <div className="text-center max-w-md">
-          <div className="w-20 h-20 mx-auto bg-red-900/20 rounded-full flex items-center justify-center mb-4">
-            <span className="text-red-400 text-4xl">⚠️</span>
+      <div className="px-2 py-1">
+        <div className="rounded-lg bg-gray-900 flex items-center justify-center py-16">
+          <div className="text-center max-w-md">
+            <div className="w-16 h-16 mx-auto bg-red-900/20 rounded-full flex items-center justify-center mb-3">
+              <span className="text-red-400 text-3xl">!</span>
+            </div>
+            <h2 className="text-lg font-semibold text-white mb-2">Connection Failed</h2>
+            <p className="text-gray-400 text-sm mb-4">Unable to connect to the live data server.</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 text-sm"
+            >
+              Retry
+            </button>
           </div>
-          <h2 className="text-xl font-semibold text-white mb-2">Connection Failed</h2>
-          <p className="text-gray-400 mb-4">Unable to connect to server</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700"
-          >
-            Retry
-          </button>
         </div>
       </div>
     );
@@ -772,10 +946,12 @@ export default function MatchPage() {
 
   if (pageStatus === "connecting" || pageStatus === "connected") {
     return (
-      <div className="mt-30 rounded-lg flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 mx-auto border-4 border-gray-700 border-t-blue-500 rounded-full animate-spin mb-4"></div>
-          <p className="text-gray-400">Loading match data...</p>
+      <div className="px-2 py-1">
+        <div className="rounded-lg bg-gray-900 flex items-center justify-center py-16">
+          <div className="text-center">
+            <div className="w-12 h-12 mx-auto border-4 border-gray-700 border-t-blue-500 rounded-full animate-spin mb-3"></div>
+            <p className="text-gray-400 text-sm">Loading match data...</p>
+          </div>
         </div>
       </div>
     );
@@ -783,25 +959,31 @@ export default function MatchPage() {
 
   if (pageStatus === "no-data") {
     return (
-      <div className="px-2 py-1 h-full">
-        <div className="h-full rounded-lg bg-gray-900 flex items-center justify-center">
-          <div className="text-center max-w-md">
-            <div className="w-20 h-20 mx-auto bg-gray-800 rounded-full flex items-center justify-center mb-4">
-              <span className="text-gray-400 text-3xl">📊</span>
-            </div>
-            <h2 className="text-xl font-semibold text-white mb-2">No Open Markets</h2>
-            <p className="text-gray-400 mb-2">This match has no active markets</p>
-            <p className="text-sm text-gray-600">Markets will appear when available</p>
-            {matchInfo && (
-              <div className="mt-6 p-4 bg-gray-800/50 rounded-lg">
-                <div className="text-sm text-gray-400">Match ID: {matchId}</div>
-                {matchInfo.startTime && (
-                  <div className="text-sm text-gray-400 mt-1">
-                    Start: {formatDate(matchInfo.startTime)}
-                  </div>
-                )}
+      <div className="px-2 py-1">
+        {/* Show match header if available */}
+        {(matchInfo || series || matchFromSeries) && (
+          <div className="bg-gray-800 border border-gray-700 rounded-lg px-3 sm:px-4 py-3 mb-2">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-white font-semibold text-base sm:text-lg truncate">
+                  {[series?.name, matchFromSeries?.name || matchInfo?.eventName || "Match"]
+                    .filter(Boolean)
+                    .join(" - ")}
+                </h1>
               </div>
-            )}
+              {(matchFromSeries?.openDate || matchInfo?.startTime) && (
+                <span className="text-gray-400 text-xs sm:text-sm shrink-0">
+                  {formatDate(matchFromSeries?.openDate || matchInfo?.startTime)}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+        <div className="rounded-lg bg-gray-900 flex items-center justify-center py-16">
+          <div className="text-center max-w-md">
+            <h2 className="text-lg font-semibold text-white mb-2">No Active Markets</h2>
+            <p className="text-gray-400 text-sm mb-1">This match currently has no open markets.</p>
+            <p className="text-xs text-gray-500">Markets will appear automatically when they become available.</p>
           </div>
         </div>
       </div>
@@ -1023,6 +1205,7 @@ export default function MatchPage() {
             )
         )}
 
+        {visibleMarkets.some((m) => m.bettingType === "LINE") && (
         <div className="bg-gray-800 border border-gray-700 rounded overflow-hidden">
           <div className="grid grid-cols-3 gap-1 sm:gap-2 px-2 sm:px-3 py-1 border-b border-gray-700 bg-gray-900/50 items-center">
             <h3 className="font-semibold text-white text-[11px] sm:text-xs truncate leading-tight">
@@ -1123,6 +1306,7 @@ export default function MatchPage() {
               )
           )}
         </div>
+        )}
       </div>
     </div>
   );

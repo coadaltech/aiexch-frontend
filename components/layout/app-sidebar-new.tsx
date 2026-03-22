@@ -31,7 +31,7 @@ import { MenuGroup, MenuItem } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { Series } from "@/components/sports/types";
 import axios from "axios";
-import { UseSportsSeries } from "@/hooks/UseSportsSeries";
+import { useSeries } from "@/hooks/useSportsApi";
 import { SPORT_ROUTES, type SportSlug } from "@/lib/sports-config";
 
 type SportRouteKey = SportSlug;
@@ -207,7 +207,7 @@ export function AppSidebar() {
 
   // Fetch series data for current sport route
   const sportConfig = sportRoute ? SPORT_ROUTES[sportRoute] : null;
-  const { seriesData, loading: loadingSeries } = UseSportsSeries(
+  const { data: seriesData = [], isLoading: loadingSeries } = useSeries(
     sportConfig?.eventTypeId || null
   );
 

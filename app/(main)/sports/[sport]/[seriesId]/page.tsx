@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Series } from "@/components/sports/types";
 import { formatToIST } from "@/lib/date-utils";
-import { UseSportsSeries } from "@/hooks/UseSportsSeries";
+import { useSeries } from "@/hooks/useSportsApi";
 import { getSportConfig, isValidSportSlug } from "@/lib/sports-config";
 
 export default function SeriesMatchesPage({
@@ -32,10 +32,10 @@ export default function SeriesMatchesPage({
     );
   }
 
-  const { seriesData, loading, error, refetch } = UseSportsSeries(config.eventTypeId);
+  const { data: seriesData = [], isLoading: loading, error, refetch } = useSeries(config.eventTypeId);
 
   const series = useMemo(() => {
-    return seriesData.find((s: Series) => s.id === seriesId);
+    return seriesData.find((s: Series) => String(s.id) === String(seriesId));
   }, [seriesData, seriesId]);
 
   if (loading) {
@@ -54,9 +54,9 @@ export default function SeriesMatchesPage({
       <Card className="p-8 text-center">
         <div className="text-red-500 mb-2">
           <p className="font-semibold">Error Loading Data</p>
-          <p className="text-sm">{error}</p>
+          <p className="text-sm">{error?.message || "Failed to fetch data"}</p>
         </div>
-        <Button onClick={refetch} className="mt-4">
+        <Button onClick={() => refetch()} className="mt-4">
           Retry
         </Button>
       </Card>

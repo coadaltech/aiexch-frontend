@@ -4,7 +4,7 @@ import { use, useMemo } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Trophy } from "lucide-react";
-import { UseSportsSeries } from "@/hooks/UseSportsSeries";
+import { useSeries } from "@/hooks/useSportsApi";
 import { getSportConfig, isValidSportSlug } from "@/lib/sports-config";
 
 export interface Series {
@@ -103,17 +103,15 @@ export default function SportPage({
     );
   }
 
-  const { seriesData, loading, error, refetch } = UseSportsSeries(config.eventTypeId);
+  const { data: seriesData = [], isLoading: loading, error, refetch } = useSeries(config.eventTypeId);
 
-  const seriesWithLiveMatches = useMemo(() => {
+  const seriesWithMatches = useMemo(() => {
     return seriesData
-      .filter((series) => {
-        if (!series.matches || series.matches.length === 0) return false;
-        return series.matches.some((match) => match.inPlay === true);
-      })
+      .filter((series) => series.matches && series.matches.length > 0)
       .map((series) => {
-        const liveMatches = series.matches.filter((match) => match.inPlay === true);
-        return { ...series, liveMatches };
+        const liveMatches = series.matches.filter((match: Match) => match.inPlay === true);
+        const upcomingMatches = series.matches.filter((match: Match) => !match.inPlay);
+        return { ...series, liveMatches, upcomingMatches };
       })
       .sort((a, b) => b.liveMatches.length - a.liveMatches.length);
   }, [seriesData]);
@@ -134,7 +132,7 @@ export default function SportPage({
       <Card className="p-8 text-center border border-destructive/20 bg-destructive/5">
         <div className="text-destructive mb-2">
           <p className="font-semibold">Error Loading Data</p>
-          <p className="text-sm">{error}</p>
+          <p className="text-sm">{error?.message || "Failed to fetch data"}</p>
         </div>
         <button
           onClick={() => refetch()}
@@ -146,7 +144,7 @@ export default function SportPage({
     );
   }
 
-  if (seriesWithLiveMatches.length === 0) {
+  if (seriesWithMatches.length === 0) {
     return (
       <Card className="p-8  mx-4 text-center border bg-card">
         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
@@ -161,7 +159,7 @@ export default function SportPage({
   return (
     <div className="w-full h-full px-4 py-1">
       <div className="">
-        {seriesWithLiveMatches.map((series) => (
+        {seriesWithMatches.map((series) => (
           <SeriesCard key={series.id} series={series} sport={sport} />
         ))}
       </div>
@@ -173,7 +171,7 @@ function SeriesCard({
   series,
   sport,
 }: {
-  series: Series & { liveMatches: Match[] };
+  series: Series & { liveMatches: Match[]; upcomingMatches: Match[] };
   sport: string;
 }) {
   const formatToIST = (dateString: string | null): string => {
@@ -212,8 +210,10 @@ function SeriesCard({
         </div>
         <div className="flex items-center gap-4 text-sm">
           <span className="text-muted-foreground">
-            {series.liveMatches.length} live match
-            {series.liveMatches.length !== 1 ? "es" : ""}
+            {series.matches.length} match{series.matches.length !== 1 ? "es" : ""}
+            {series.liveMatches.length > 0 && (
+              <> · {series.liveMatches.length} live</>
+            )}
           </span>
         </div>
         <div className="space-y-3 pt-2 border-t border-border/50 ">
@@ -233,9 +233,34 @@ function SeriesCard({
                       LIVE
                     </span>
                   </div>
-                  {/* <div className="flex items-center gap-2 text-xs text-muted-foreground"> */}
-                  {/*   <span>Match ID: {match.id}</span> */}
-                  {/* </div> */}
+                  {match.openDate && (
+                    <p className="text-xs font-medium text-muted-foreground mt-1">
+                      {formatToIST(match.openDate)}
+                    </p>
+                  )}
+                </div>
+                <div className="text-xs bg-gray-100 dark:bg-gray-800 rounded-md px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ml-4">
+                  View →
+                </div>
+              </div>
+            </Link>
+          ))}
+          {series.upcomingMatches.map((match) => (
+            <Link
+              key={match.id}
+              href={`/sports/${sport}/${series.id}/${match.id}`}
+              className="block"
+            >
+              <div className="flex items-center justify-between p-2 rounded-md border-b-2 hover:bg-secondary transition-colors">
+                <div className="flex-1">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <h4 className="font-semibold text-sm text-foreground">
+                      {match.name}
+                    </h4>
+                    <span className="text-[10px] bg-blue-500 text-white px-1.5 py-0.5 rounded">
+                      UPCOMING
+                    </span>
+                  </div>
                   {match.openDate && (
                     <p className="text-xs font-medium text-muted-foreground mt-1">
                       {formatToIST(match.openDate)}

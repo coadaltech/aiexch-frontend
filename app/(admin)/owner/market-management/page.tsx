@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { useMarketWebSocket } from "@/hooks/useMarketWebSocket";
+import { useLiveMatch } from "@/hooks/useLiveMatch";
 import {
   useEventSettings,
   useUpdateEventSettings,
@@ -1256,6 +1256,7 @@ function OddsHistoryPanel({ eventId }: { eventId: string }) {
 export default function MarketManagementPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeEventId, setActiveEventId] = useState("");
+  const [activeEventTypeId, setActiveEventTypeId] = useState("4");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [activeTab, setActiveTab] = useState<"markets" | "history">("markets");
   const [filter, setFilter] = useState<"all" | "active" | "custom" | "disabled">(
@@ -1266,8 +1267,8 @@ export default function MarketManagementPage() {
 
   const { data: searchResults, isLoading: isSearching } = useSearchEvents(searchQuery);
 
-  const { markets: rawMarkets, isConnected, status } = useMarketWebSocket(
-    activeEventId || ""
+  const { matchOdds: rawMarkets, isConnected, status } = useLiveMatch(
+    activeEventId || "", activeEventTypeId
   );
 
   const { data: savedMarkets } = useMarketsByEvent(activeEventId || null);
@@ -1283,9 +1284,10 @@ export default function MarketManagementPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSelectEvent = useCallback((eventId: string, eventName: string) => {
+  const handleSelectEvent = useCallback((eventId: string, eventName: string, eventTypeId?: string) => {
     setSearchQuery(eventName);
     setActiveEventId(eventId);
+    if (eventTypeId) setActiveEventTypeId(eventTypeId);
     setShowDropdown(false);
   }, []);
 
@@ -1298,7 +1300,7 @@ export default function MarketManagementPage() {
         setShowDropdown(false);
       } else if (searchResults && searchResults.length > 0) {
         // Auto-select first result on Enter
-        handleSelectEvent(searchResults[0].eventId, searchResults[0].name);
+        handleSelectEvent(searchResults[0].eventId, searchResults[0].name, searchResults[0].eventTypeId);
       }
     }
   }, [searchQuery, searchResults, handleSelectEvent]);
@@ -1377,7 +1379,7 @@ export default function MarketManagementPage() {
                 searchResults.map((event: any) => (
                   <button
                     key={event.eventId}
-                    onClick={() => handleSelectEvent(event.eventId, event.name)}
+                    onClick={() => handleSelectEvent(event.eventId, event.name, event.eventTypeId)}
                     className="w-full text-left px-4 py-2.5 hover:bg-blue-50 border-b border-gray-100 last:border-0 transition-colors"
                   >
                     <div className="flex items-center justify-between">
