@@ -17,6 +17,7 @@ export interface PlaceBetParams {
   eventTypeId: string;
   competitionId?: string | null;
   marketType?: string;
+  bettingType?: string;
   selectionId: string;
   selectionName?: string;
   marketName?: string;
@@ -38,6 +39,8 @@ export const useBetting = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-bets"] });
       queryClient.invalidateQueries({ queryKey: ["balance"] });
+      queryClient.invalidateQueries({ queryKey: ["ledger"] });
+      queryClient.invalidateQueries({ queryKey: ["market-exposure"] });
       queryClient.refetchQueries({ queryKey: ["balance"] });
     },
   });
@@ -49,6 +52,9 @@ export const useBetting = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-bets"] });
+      queryClient.invalidateQueries({ queryKey: ["balance"] });
+      queryClient.invalidateQueries({ queryKey: ["ledger"] });
+      queryClient.invalidateQueries({ queryKey: ["market-exposure"] });
     },
   });
 
@@ -90,5 +96,35 @@ export const useBalance = () => {
       return response.data;
     },
     enabled: !!user,
+  });
+};
+
+// Fetch per-runner profit/loss from DB function
+// Returns a nested map: marketId → runnerId → profit (positive = profit, negative = loss)
+export const useMarketExposure = (enabled = true) => {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["market-exposure"],
+    queryFn: async () => {
+      const response = await api.get("/betting/market-exposure");
+      return response.data;
+    },
+    select: (data) => {
+      const rows: { market_id: string; runner_id: string; runner_profit: string }[] = data.data || [];
+      const map = new Map<string, Map<string, number>>();
+      for (const row of rows) {
+        const mId = String(row.market_id);
+        const rId = String(row.runner_id);
+        const profit = parseFloat(row.runner_profit) || 0;
+        if (!map.has(mId)) map.set(mId, new Map());
+        map.get(mId)!.set(rId, profit);
+      }
+      return map;
+    },
+    enabled: enabled && !!user && !user.isDemo,
+    staleTime: 5000,
+    refetchOnWindowFocus: true,
+    refetchInterval: 10000,
   });
 };

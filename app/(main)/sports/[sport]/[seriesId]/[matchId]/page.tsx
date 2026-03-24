@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useBetSlip } from "@/contexts/BetSlipContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useBetting, useMyBets } from "@/hooks/useBetting";
+import { useBetting, useMyBets, useMarketExposure } from "@/hooks/useBetting";
 import { useLiveMatch } from "@/hooks/useLiveMatch";
 import { useSeries } from "@/hooks/useSportsApi";
 import { sportsApi } from "@/lib/api";
@@ -203,10 +203,10 @@ function QuickBetPanel({
 }
 
 // Map bettingType to marketType expected by backend
-function toMarketType(bettingType: string): string {
+function toBettingType(bettingType: string): string {
   switch (bettingType?.toUpperCase()) {
     case "BOOKMAKER": return "bookmaker";
-    case "LINE": return "line";
+    case "LINE": return "fancy";
     default: return "odds";
   }
 }
@@ -218,57 +218,6 @@ function toDecimalOdds(price: number): number {
   const str = price.toString();
   if (str.includes('.')) return price; // already decimal
   return price / 100;
-}
-
-// Calculate net P&L for runner R if it wins, across all bets in a market
-function calcExistingPnl(bets: any[], runnerId: string): number {
-  return bets.reduce((sum: number, bet: any) => {
-    const betType = bet.betType || bet.type;
-    const k = typeof bet.stake === "number" ? bet.stake : parseFloat(bet.stake);
-    const o = typeof bet.odds === "number" ? bet.odds : parseFloat(bet.odds);
-    if (!k || !o) return sum;
-    // LINE bets: show -(stake) as potential loss
-    if (bet.marketType === "line") {
-      return sum + (-k);
-    }
-    const isSelected = bet.selectionId?.toString() === runnerId;
-    if (betType === "back" || betType === 0) {
-      return sum + (isSelected ? k * (o - 1) : -k);
-    } else {
-      return sum + (isSelected ? -(k * (o - 1)) : k);
-    }
-  }, 0);
-}
-
-
-// Calculate profit for a runner given the active quickBet + stake
-function calcRunnerProfit(
-  runnerId: string,
-  quickBet: QuickBetData,
-  stake: string
-): number | null {
-  const stakeNum = parseFloat(stake) || 0;
-  const oddsNum = parseFloat(quickBet.odds) || 0;
-  if (!stakeNum || !oddsNum) return null;
-
-  // LINE markets: show -(stake) as potential loss only
-  if (quickBet.bettingType === "LINE") {
-    return -stakeNum;
-  }
-
-  const isSelected = runnerId === quickBet.runner.selectionId?.toString();
-
-  if (quickBet.isLay) {
-    // Lay on selected runner:
-    // selected wins → user loses stake*(odds-1)
-    // selected loses (other wins) → user wins stake
-    return isSelected ? -(stakeNum * (oddsNum - 1)) : stakeNum;
-  } else {
-    // Back on selected runner:
-    // selected wins → profit = stake*(odds-1)
-    // other wins → loss = -stake
-    return isSelected ? stakeNum * (oddsNum - 1) : -stakeNum;
-  }
 }
 
 export default function MatchPage() {
@@ -286,19 +235,8 @@ export default function MatchPage() {
   const queryClient = useQueryClient();
   const { user, updateDemoBalance } = useAuth();
   const { placeBetAsync } = useBetting();
-  const { data: myBetsData } = useMyBets("matched");
-
-  // Map of marketId → active bets for this match (used for P&L display)
-  const activeBetsByMarket = useMemo(() => {
-    const bets: any[] = myBetsData?.data ?? [];
-    const map = new Map<string, any[]>();
-    for (const bet of bets) {
-      if (bet.matchId !== matchId) continue;
-      if (!map.has(bet.marketId)) map.set(bet.marketId, []);
-      map.get(bet.marketId)!.push(bet);
-    }
-    return map;
-  }, [myBetsData, matchId]);
+  useMyBets("matched");
+  const { data: marketExposureMap } = useMarketExposure();
 
   const config = getSportConfig(sport);
   const eventTypeId = config?.eventTypeId ?? "4";
@@ -694,7 +632,7 @@ export default function MatchPage() {
       const runnerName = runner?.name || "";
       const stakeNum = parseFloat(stakeStr);
       const oddsNum = parseFloat(oddsValue) || 0;
-      const marketType = toMarketType(market.bettingType);
+      const marketType = toBettingType(market.bettingType);
       const potentialWin = (stakeNum * oddsNum).toFixed(2);
 
       const betPayload = {
@@ -741,7 +679,8 @@ export default function MatchPage() {
             marketId: market.marketId,
             eventTypeId: config?.eventTypeId?.toString() || "4",
             competitionId: seriesId,
-            marketType,
+            marketType: market.marketType || marketType,
+            bettingType: marketType,
             selectionId: runner.selectionId?.toString() ?? "",
             selectionName: runnerName,
             marketName,
@@ -1016,45 +955,32 @@ export default function MatchPage() {
   const oddsPriceClass = "text-white font-bold text-[10px] sm:text-xs";
   const oddsSizeClass = "text-gray-400 font-medium text-[8px] sm:text-[9px]";
 
-  // Runner name cell: shows name + cumulative P&L (existing bets + current quickBet preview)
+  // Runner name cell: shows name + per-runner P&L from DB function
   const RunnerNameCell = ({
     runner,
     marketId,
-    bets,
     displayName,
   }: {
     runner: any;
     marketId: string;
-    bets: any[];
     displayName?: string;
   }) => {
     const runnerId = runner.selectionId?.toString() ?? "";
-    const isActiveMarket = quickBet?.marketId === marketId;
-    const hasExistingBets = bets.length > 0;
-    const hasActiveQuickBet =
-      isActiveMarket && !!quickBetStake && parseFloat(quickBetStake) > 0;
-
-    const existingPnl = calcExistingPnl(bets, runnerId);
-    const quickBetPnl = isActiveMarket
-      ? calcRunnerProfit(runnerId, quickBet!, quickBetStake)
-      : null;
-
-    const showPnl = hasExistingBets || hasActiveQuickBet;
-    const totalPnl = showPnl ? existingPnl + (quickBetPnl ?? 0) : null;
+    const marketRunners = marketExposureMap?.get(String(marketId));
+    const pnl = marketRunners?.get(runnerId) ?? null;
 
     return (
       <div className="min-w-0 pr-1 flex flex-col gap-0.5">
         <span className="text-white font-semibold text-[11px] sm:text-xs truncate block leading-tight">
           {displayName ?? runner.name}
         </span>
-        {totalPnl !== null && (
+        {pnl !== null && (
           <span
             className={`text-[9px] sm:text-[10px] font-semibold leading-tight ${
-              totalPnl >= 0 ? "text-green-400" : "text-red-400"
+              pnl >= 0 ? "text-green-400" : "text-red-400"
             }`}
           >
-            {totalPnl >= 0 ? "+" : ""}
-            {totalPnl.toFixed(2)}
+            {pnl >= 0 ? "+" : ""}{pnl.toFixed(2)}
           </span>
         )}
       </div>
@@ -1117,7 +1043,6 @@ export default function MatchPage() {
                       <RunnerNameCell
                         runner={runner}
                         marketId={market.marketId}
-                        bets={activeBetsByMarket.get(market.marketId) ?? []}
                       />
                       <div className="col-span-2 gap-2 relative flex min-h-[2.25rem]">
                         <div className="flex-1 flex flex-col items-end min-w-0">
@@ -1231,7 +1156,6 @@ export default function MatchPage() {
                         <RunnerNameCell
                           runner={runner}
                           marketId={market.marketId}
-                          bets={activeBetsByMarket.get(market.marketId) ?? []}
                           displayName={market.marketName}
                         />
                         <div className="col-span-2 gap-2 relative flex min-h-[2.25rem]">
