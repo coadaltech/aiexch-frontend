@@ -38,6 +38,7 @@ import { useMemo, useState } from "react";
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [updatingUserId, setUpdatingUserId] = useState<number | null>(null);
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
   const userModal = useModal<any>();
   const [statusModalUser, setStatusModalUser] = useState<ChangeStatusModalUser | null>(null);
 
@@ -139,6 +140,7 @@ export default function UsersPage() {
       }
     } else {
       // Create new user
+      setIsCreatingUser(true);
       try {
         const newUserData = {
           username: userData.username,
@@ -166,6 +168,8 @@ export default function UsersPage() {
         const errorMessage = error.response?.data?.message || "Failed to create user";
         toast.error(errorMessage);
         console.error("Create user error:", error);
+      } finally {
+        setIsCreatingUser(false);
       }
     }
   };
@@ -631,7 +635,7 @@ export default function UsersPage() {
         onClose={userModal.close}
         user={userModal.data}
         onSave={handleSaveUser}
-        isUpdating={updateUserMutation.isPending}
+        isUpdating={updateUserMutation.isPending || isCreatingUser}
         isUpdatingProfile={updateProfileMutation.isPending}
       />
     </div>

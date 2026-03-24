@@ -480,7 +480,9 @@ export function UserModal({
                       readOnly
                       value={
                         (() => {
-                          const cur = (currencies as any[]).find((c: any) => c.id === (formData.currencyId)?.toString());
+                          const effectiveCurrencyId = formData.currencyId ?? currentUser?.currencyId;
+                          if (!effectiveCurrencyId) return "—";
+                          const cur = (currencies as any[]).find((c: any) => String(c.id) === String(effectiveCurrencyId));
                           return cur ? `${cur.code} — ${cur.name}` : "—";
                         })()
                       }

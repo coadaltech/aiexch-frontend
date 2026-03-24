@@ -19,7 +19,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Loader2, ChevronsUpDown, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { VoucherModalProps } from "./types";
 import { useOwnerUsers } from "@/hooks/useOwner";
 
@@ -30,6 +44,7 @@ export function VoucherModal({
   isLoading,
 }: VoucherModalProps & { isLoading?: boolean }) {
   const { data: users = [], isLoading: usersLoading } = useOwnerUsers();
+  const [userSearchOpen, setUserSearchOpen] = useState(false);
   const [formData, setFormData] = useState({
     userId: "",
     type: "limit",
@@ -54,6 +69,7 @@ export function VoucherModal({
         status: "approved",
       });
       setError(null);
+      setUserSearchOpen(false);
     }
   }, [open]);
 
@@ -113,32 +129,55 @@ export function VoucherModal({
                 <Label htmlFor="user-select" className="text-foreground font-medium text-sm">
                   Select User <span className="text-destructive">*</span>
                 </Label>
-                <Select
-                  value={formData.userId}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, userId: value })
-                  }
-                  required
-                  disabled={usersLoading}
-                >
-                  <SelectTrigger
-                    id="user-select"
-                    className="bg-input border text-foreground h-10 w-full"
-                  >
-                    <SelectValue placeholder={usersLoading ? "Loading users..." : "Select a user"} />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border max-h-[300px]">
-                    {users.map((user: any) => (
-                      <SelectItem
-                        key={user.id}
-                        value={user.id}
-                        className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black"
-                      >
-                        {user.username} ({user.email})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={userSearchOpen} onOpenChange={setUserSearchOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={userSearchOpen}
+                      disabled={usersLoading}
+                      className="bg-input border text-foreground h-10 w-full justify-between font-normal"
+                    >
+                      {usersLoading
+                        ? "Loading users..."
+                        : formData.userId
+                          ? (() => {
+                              const selected = users.find((u: any) => u.id === formData.userId);
+                              return selected ? `${selected.username} (${selected.email})` : "Select a user";
+                            })()
+                          : "Select a user"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Search by username or email..." />
+                      <CommandList>
+                        <CommandEmpty>No user found.</CommandEmpty>
+                        <CommandGroup>
+                          {users.map((user: any) => (
+                            <CommandItem
+                              key={user.id}
+                              value={`${user.username} ${user.email}`}
+                              onSelect={() => {
+                                setFormData({ ...formData, userId: user.id });
+                                setUserSearchOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  formData.userId === user.id ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              <span className="truncate">{user.username} ({user.email})</span>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div className="space-y-2">
@@ -160,11 +199,10 @@ export function VoucherModal({
                   </SelectTrigger>
                   <SelectContent className="bg-card border">
                     <SelectItem value="limit">Limit</SelectItem>
-                    <SelectItem value="credit">Credit</SelectItem>
-                    <SelectItem value="debit">Debit</SelectItem>
+                    {/* <SelectItem value="credit">Credit</SelectItem> */}
+                    {/* <SelectItem value="debit">Debit</SelectItem> */}
                     <SelectItem value="deposit">Deposit</SelectItem>
                     <SelectItem value="withdraw">Withdrawal</SelectItem>
-                    <SelectItem value="bonus">Bonus</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -173,7 +211,6 @@ export function VoucherModal({
                   {formData.type === "debit" && "Deducts from user's cash balance"}
                   {formData.type === "deposit" && "Adds to user's cash balance"}
                   {formData.type === "withdraw" && "Deducts from user's cash balance"}
-                  {formData.type === "bonus" && "Adds to user's cash balance"}
                 </p>
               </div>
 

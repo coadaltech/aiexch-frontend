@@ -39,7 +39,16 @@ export const navigation: {
       { name: "Popups", href: "/owner/popups" },
     ],
   },
-  { name: "Vouchers", href: "/owner/vouchers", icon: CreditCard },
+  {
+    name: "Vouchers",
+    icon: CreditCard,
+    subItems: [
+      { name: "All Vouchers", href: "/owner/vouchers" },
+      { name: "Limit Voucher", href: "/owner/vouchers/limit" },
+      { name: "Deposit Voucher", href: "/owner/vouchers/deposit" },
+      { name: "Withdraw Voucher", href: "/owner/vouchers/withdraw" },
+    ],
+  },
   { name: "Notifications", href: "/owner/notifications", icon: Bell },
   { name: "QR Codes", href: "/owner/qrcodes", icon: QrCode },
   {

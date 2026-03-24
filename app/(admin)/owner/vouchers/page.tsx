@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Eye, CheckCircle, XCircle, Plus, Edit, Image, ChevronUp, ChevronDown } from "lucide-react";
+import { Search, Eye, CheckCircle, XCircle, Plus, Edit, Image, ChevronUp, ChevronDown, AlertTriangle, RefreshCw } from "lucide-react";
 import { useVouchers, useUpdateVoucher, useCreateVoucher } from "@/hooks/useOwner";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useFilters } from "@/hooks/useFilters";
@@ -117,8 +117,28 @@ export default function VouchersPage() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-red-500">Error loading vouchers</div>
+      <div className="flex items-center justify-center min-h-[400px] p-6">
+        <Card className="bg-card border max-w-md w-full">
+          <CardContent className="flex flex-col items-center text-center py-10 px-6 space-y-4">
+            <div className="p-3 rounded-full bg-destructive/10">
+              <AlertTriangle className="h-8 w-8 text-destructive" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-lg font-semibold text-foreground">Failed to Load Vouchers</h3>
+              <p className="text-sm text-muted-foreground">
+                Something went wrong while fetching voucher data. Please try again.
+              </p>
+            </div>
+            <Button
+              onClick={() => window.location.reload()}
+              variant="outline"
+              className="mt-2"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -130,10 +150,10 @@ export default function VouchersPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Vouchers</h1>
           <p className="text-muted-foreground">Monitor and manage user vouchers</p>
         </div>
-        <Button onClick={handleCreateVoucher} className="bg-primary text-primary-foreground w-full sm:w-auto">
+        {/* <Button onClick={handleCreateVoucher} className="bg-primary text-primary-foreground w-full sm:w-auto">
           <Plus className="h-4 w-4 mr-2" />
           Add Voucher
-        </Button>
+        </Button> */}
       </div>
 
       <Card className="bg-card border">
@@ -165,7 +185,7 @@ export default function VouchersPage() {
                     <SelectItem value="debit" className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black">Debit</SelectItem>
                     <SelectItem value="deposit" className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black">Deposit</SelectItem>
                     <SelectItem value="withdraw" className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black">Withdraw</SelectItem>
-                    <SelectItem value="bonus" className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black">Bonus</SelectItem>
+                    {/* <SelectItem value="bonus" className="hover:bg-gray-100 hover:text-black focus:bg-gray-100 focus:text-black">Bonus</SelectItem> */}
                   </SelectContent>
                 </Select>
 
@@ -218,18 +238,18 @@ export default function VouchersPage() {
             <table className="w-full min-w-[900px]">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left py-3 px-2 text-muted-foreground text-sm cursor-pointer hover:text-foreground" onClick={() => requestSort('id')}>
+                  {/* <th className="text-left py-3 px-2 text-muted-foreground text-sm cursor-pointer hover:text-foreground" onClick={() => requestSort('id')}> */}
+                  {/*   <div className="flex items-center gap-1"> */}
+                  {/*     Reference */}
+                  {/*     {getSortIcon('id') === 'asc' && <ChevronUp className="w-3 h-3" />} */}
+                  {/*     {getSortIcon('id') === 'desc' && <ChevronDown className="w-3 h-3" />} */}
+                  {/*   </div> */}
+                  {/* </th> */}
+                  <th className="text-left py-3 px-2 text-muted-foreground text-sm hidden sm:table-cell cursor-pointer hover:text-foreground" onClick={() => requestSort('username')}>
                     <div className="flex items-center gap-1">
-                      Reference
-                      {getSortIcon('id') === 'asc' && <ChevronUp className="w-3 h-3" />}
-                      {getSortIcon('id') === 'desc' && <ChevronDown className="w-3 h-3" />}
-                    </div>
-                  </th>
-                  <th className="text-left py-3 px-2 text-muted-foreground text-sm hidden sm:table-cell cursor-pointer hover:text-foreground" onClick={() => requestSort('userId')}>
-                    <div className="flex items-center gap-1">
-                      User ID
-                      {getSortIcon('userId') === 'asc' && <ChevronUp className="w-3 h-3" />}
-                      {getSortIcon('userId') === 'desc' && <ChevronDown className="w-3 h-3" />}
+                      User
+                      {getSortIcon('username') === 'asc' && <ChevronUp className="w-3 h-3" />}
+                      {getSortIcon('username') === 'desc' && <ChevronDown className="w-3 h-3" />}
                     </div>
                   </th>
                   <th className="text-left py-3 px-2 text-muted-foreground text-sm cursor-pointer hover:text-foreground" onClick={() => requestSort('type')}>
@@ -271,12 +291,12 @@ export default function VouchersPage() {
                 <tbody>
                   {paginatedVouchers.map((voucher) => (
                     <tr key={voucher.id} className="border-b border-border/50">
-                      <td className="py-3 px-2">
-                        <div className="font-medium text-foreground text-sm">#{voucher.id}</div>
-                        <div className="sm:hidden text-xs text-muted-foreground">ID: {voucher.userId}</div>
-                        <div className="lg:hidden text-xs text-muted-foreground">{new Date(voucher.addedDate).toLocaleDateString()}</div>
-                      </td>
-                      <td className="py-3 px-2 text-muted-foreground text-sm hidden sm:table-cell">{voucher.userId}</td>
+                      {/* <td className="py-3 px-2"> */}
+                      {/*   <div className="font-medium text-foreground text-sm">#{voucher.id?.slice(0, 8)}</div> */}
+                      {/*   <div className="sm:hidden text-xs text-muted-foreground">{voucher.username || "Unknown"}</div> */}
+                      {/*   <div className="lg:hidden text-xs text-muted-foreground">{new Date(voucher.addedDate).toLocaleDateString()}</div> */}
+                      {/* </td> */}
+                      <td className="py-3 px-2 text-foreground text-sm hidden sm:table-cell">{voucher.username || "Unknown"}</td>
                       <td className="py-3 px-2">{getTypeBadge(voucher.type)}</td>
                       <td className="py-3 px-2 text-foreground font-medium text-sm">
                         {voucher.amount}
@@ -324,10 +344,10 @@ export default function VouchersPage() {
                               <Image className="h-3 w-3" />
                             </Button>
                           )}
-                         { voucher.status !== "approved" &&                          
-                         <Button size="sm" variant="ghost" onClick={() => handleEditVoucher(voucher)} title="Edit" className="h-8 w-8 p-0">
-                            <Edit className="h-3 w-3" />
-                          </Button>}
+                          {voucher.status !== "approved" &&
+                            <Button size="sm" variant="ghost" onClick={() => handleEditVoucher(voucher)} title="Edit" className="h-8 w-8 p-0">
+                              <Edit className="h-3 w-3" />
+                            </Button>}
                           {voucher.status === "pending" && (
                             <>
                               <Button
@@ -409,65 +429,82 @@ export default function VouchersPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Voucher ID</label>
-                  <p className="text-foreground">{detailsModal.data.id}</p>
+                  <p className="text-foreground font-mono text-sm">{detailsModal.data.id}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">User ID</label>
-                  <p className="text-foreground">{detailsModal.data.userId}</p>
+                  <label className="text-sm font-medium text-muted-foreground">User</label>
+                  <p className="text-foreground">{detailsModal.data.username || "Unknown"}</p>
+                  <p className="text-xs text-muted-foreground">{detailsModal.data.userId}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Type</label>
-                  <p className="text-foreground">{detailsModal.data.type}</p>
+                  <div className="mt-1">{getTypeBadge(detailsModal.data.type)}</div>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Amount</label>
-                  <p className="text-foreground">{detailsModal.data.amount}</p>
+                  <p className="text-foreground font-semibold">{detailsModal.data.amount}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Method</label>
-                  <p className="text-foreground">{detailsModal.data.method}</p>
+                  <p className="text-foreground">{detailsModal.data.method || "N/A"}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Status</label>
-                  <p className="text-foreground">{detailsModal.data.status}</p>
+                  <div className="mt-1">{getStatusBadge(detailsModal.data.status)}</div>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Date</label>
                   <p className="text-foreground">{new Date(detailsModal.data.addedDate).toLocaleString()}</p>
                 </div>
+                {detailsModal.data.remarks && (
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Remarks</label>
+                    <p className="text-foreground">{detailsModal.data.remarks}</p>
+                  </div>
+                )}
               </div>
 
-              {detailsModal.data.type === 'withdraw' && detailsModal.data.reference && (() => {
-                try {
-                  const parsed = JSON.parse(detailsModal.data.reference);
-                  if (parsed.accountName) {
-                    return (
-                      <div className="border-t pt-4">
-                        <h4 className="font-medium text-foreground mb-3">Bank Details</h4>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-sm font-medium text-muted-foreground">Account Holder</label>
-                            <p className="text-foreground">{parsed.accountName}</p>
-                          </div>
-                          <div>
-                            <label className="text-sm font-medium text-muted-foreground">Account Number</label>
-                            <p className="text-foreground font-mono">{parsed.accountNumber}</p>
-                          </div>
-                          <div>
-                            <label className="text-sm font-medium text-muted-foreground">IFSC Code</label>
-                            <p className="text-foreground">{parsed.ifscCode}</p>
-                          </div>
-                          <div>
-                            <label className="text-sm font-medium text-muted-foreground">Bank Name</label>
-                            <p className="text-foreground">{parsed.bankName}</p>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  }
-                } catch {}
-                return null;
-              })()}
+              {detailsModal.data.reference && (
+                <div className="border-t pt-4">
+                  {detailsModal.data.type === 'withdraw' && (() => {
+                    try {
+                      const parsed = JSON.parse(detailsModal.data.reference);
+                      if (parsed.accountName) {
+                        return (
+                          <>
+                            <h4 className="font-medium text-foreground mb-3">Bank Details</h4>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="text-sm font-medium text-muted-foreground">Account Holder</label>
+                                <p className="text-foreground">{parsed.accountName}</p>
+                              </div>
+                              <div>
+                                <label className="text-sm font-medium text-muted-foreground">Account Number</label>
+                                <p className="text-foreground font-mono">{parsed.accountNumber}</p>
+                              </div>
+                              <div>
+                                <label className="text-sm font-medium text-muted-foreground">IFSC Code</label>
+                                <p className="text-foreground">{parsed.ifscCode}</p>
+                              </div>
+                              <div>
+                                <label className="text-sm font-medium text-muted-foreground">Bank Name</label>
+                                <p className="text-foreground">{parsed.bankName}</p>
+                              </div>
+                            </div>
+                          </>
+                        );
+                      }
+                    } catch { }
+                    return null;
+                  })()}
+                  {!(detailsModal.data.type === 'withdraw' && (() => { try { return JSON.parse(detailsModal.data.reference)?.accountName; } catch { return false; } })()) && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Reference</label>
+                      <p className="text-foreground font-mono text-sm break-all">{detailsModal.data.reference}</p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {detailsModal.data.withdrawalAddress && (
                 <div className="border-t pt-4">
