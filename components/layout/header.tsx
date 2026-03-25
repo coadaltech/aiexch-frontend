@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -16,6 +16,8 @@ import {
   Clock,
   ChevronDown,
   Bell,
+  History,
+  FileText,
 } from "lucide-react";
 import { Game, HomeSection } from "@/types";
 import { GameCard } from "../cards/game-card";
@@ -54,6 +56,8 @@ export default function Header() {
   const [isSearchActive, setIsSearchActive] = React.useState(false);
   const [authModal, setAuthModal] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const userDropdownRef = useRef<HTMLDivElement>(null);
   const { user, isLoggedIn, logout, isLoading } = useAuth();
   const { data: ledger, isLoading: ledgerLoading } = useLedger(
     isLoggedIn && !user?.isDemo
@@ -95,6 +99,20 @@ export default function Header() {
       setCurrentTime(getCurrentTime());
     }, 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  // Close user dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        userDropdownRef.current &&
+        !userDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsUserDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   if (pathname.includes("/owner")) return null;
@@ -180,44 +198,91 @@ export default function Header() {
                       )}
                     </Button>
 
-                    {/* User Info - Hidden on mobile, visible on tablet+ */}
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => router.push("/profile")}
-                      className="hidden md:flex h-7 sm:h-8 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg px-2 sm:px-3 text-xs sm:text-sm touch-manipulation"
+                    {/* User Dropdown */}
+                    <div
+                      ref={userDropdownRef}
+                      className="relative"
+                      onMouseEnter={() => setIsUserDropdownOpen(true)}
+                      onMouseLeave={() => setIsUserDropdownOpen(false)}
                     >
-                      <User className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5" />
-                      <span className="truncate max-w-[80px] lg:max-w-none">
-                        {user?.username}
-                        {user?.isDemo && (
-                          <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-medium">
-                            Demo
-                          </span>
-                        )}
-                      </span>
-                    </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                        className="flex h-7 sm:h-8 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg px-2 sm:px-3 text-xs sm:text-sm touch-manipulation items-center gap-1"
+                      >
+                        <User className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                        <span className="hidden sm:inline truncate max-w-[80px] lg:max-w-none">
+                          {user?.username}
+                          {user?.isDemo && (
+                            <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-medium">
+                              Demo
+                            </span>
+                          )}
+                        </span>
+                        <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isUserDropdownOpen ? "rotate-180" : ""}`} />
+                      </Button>
 
-                    {/* Settings - Hidden on very small screens */}
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="hidden xs:flex h-7 w-7 sm:h-8 sm:w-8 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg p-0 touch-manipulation"
-                      aria-label="Settings"
-                    >
-                      <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                    </Button>
+                      {/* Dropdown Menu */}
+                      {isUserDropdownOpen && (
+                        <div className="absolute right-0 top-full mt-1 w-48 sm:w-56 bg-slate-800 border border-slate-700/50 rounded-xl shadow-xl shadow-black/20 py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                          {/* User info header */}
+                          <div className="px-3 py-2 border-b border-slate-700/50">
+                            <p className="text-sm font-semibold text-white truncate">
+                              {user?.username}
+                            </p>
+                            {user?.isDemo && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-medium">
+                                Demo
+                              </span>
+                            )}
+                          </div>
 
-                    {/* Logout - Hidden on mobile */}
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={logout}
-                      className="hidden md:flex h-7 sm:h-8 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg touch-manipulation"
-                      aria-label="Logout"
-                    >
-                      <LogOut className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                    </Button>
+                          {/* Menu Items */}
+                          <div className="py-1">
+                            <button
+                              onClick={() => { router.push("/profile"); setIsUserDropdownOpen(false); }}
+                              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700/50 transition-colors cursor-pointer"
+                            >
+                              <User className="h-4 w-4 flex-shrink-0" />
+                              Profile
+                            </button>
+                            <button
+                              onClick={() => { router.push("/profile/bet-history"); setIsUserDropdownOpen(false); }}
+                              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700/50 transition-colors cursor-pointer"
+                            >
+                              <History className="h-4 w-4 flex-shrink-0" />
+                              Bet History
+                            </button>
+                            <button
+                              onClick={() => { router.push("/profile/account-statement"); setIsUserDropdownOpen(false); }}
+                              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700/50 transition-colors cursor-pointer"
+                            >
+                              <FileText className="h-4 w-4 flex-shrink-0" />
+                              Account Statement
+                            </button>
+                            <button
+                              onClick={() => { router.push("/settings"); setIsUserDropdownOpen(false); }}
+                              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700/50 transition-colors cursor-pointer"
+                            >
+                              <Settings className="h-4 w-4 flex-shrink-0" />
+                              Settings
+                            </button>
+                          </div>
+
+                          {/* Logout */}
+                          <div className="border-t border-slate-700/50 pt-1">
+                            <button
+                              onClick={() => { logout(); setIsUserDropdownOpen(false); }}
+                              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-slate-700/50 transition-colors cursor-pointer"
+                            >
+                              <LogOut className="h-4 w-4 flex-shrink-0" />
+                              Logout
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </>
                 ) : (
                   <>

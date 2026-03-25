@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useBetSlip } from "@/contexts/BetSlipContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useBetting, useMyBets, useMarketExposure } from "@/hooks/useBetting";
+import { useBetting, useMyBets, useMarketExposure, useFancyMarketExposure } from "@/hooks/useBetting";
 import { useLiveMatch } from "@/hooks/useLiveMatch";
 import { useSeries } from "@/hooks/useSportsApi";
 import { sportsApi } from "@/lib/api";
@@ -237,6 +237,7 @@ export default function MatchPage() {
   const { placeBetAsync } = useBetting();
   useMyBets("matched");
   const { data: marketExposureMap } = useMarketExposure();
+  const { data: fancyExposureMap } = useFancyMarketExposure();
 
   const config = getSportConfig(sport);
   const eventTypeId = config?.eventTypeId ?? "4";
@@ -960,14 +961,24 @@ export default function MatchPage() {
     runner,
     marketId,
     displayName,
+    isFancy,
   }: {
     runner: any;
     marketId: string;
     displayName?: string;
+    isFancy?: boolean;
   }) => {
     const runnerId = runner.selectionId?.toString() ?? "";
-    const marketRunners = marketExposureMap?.get(String(marketId));
-    const pnl = marketRunners?.get(runnerId) ?? null;
+    let pnl: number | null = null;
+
+    if (isFancy) {
+      // Fancy markets: per-market worst-case P&L (not per-runner)
+      pnl = fancyExposureMap?.get(String(marketId)) ?? null;
+    } else {
+      // Odds/bookmaker markets: per-runner P&L
+      const marketRunners = marketExposureMap?.get(String(marketId));
+      pnl = marketRunners?.get(runnerId) ?? null;
+    }
 
     return (
       <div className="min-w-0 pr-1 flex flex-col gap-0.5">
@@ -1157,6 +1168,7 @@ export default function MatchPage() {
                           runner={runner}
                           marketId={market.marketId}
                           displayName={market.marketName}
+                          isFancy
                         />
                         <div className="col-span-2 gap-2 relative flex min-h-[2.25rem]">
                           <div className="flex-1 flex flex-col items-end min-w-0">

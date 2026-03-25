@@ -83,26 +83,26 @@ export default function Dropheader({ leftMenu, rightMenu }: HeaderProps) {
         </nav>
 
         {/* RIGHT SECTION - User Menu */}
-        {
-          isLoggedIn &&
-          <nav className="hidden md:flex items-center gap-1 flex-shrink-0">
-            {rightMenu.map((item, index) => {
-              const active = isActive(item.link);
-              return (
-                <button
-                  key={index}
-                  onClick={() => handleNavigation(item.link)}
-                  className={`px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all duration-200 rounded-lg touch-manipulation whitespace-nowrap cursor-pointer ${active
-                    ? "text-white bg-slate-700/40"
-                    : "text-slate-300 hover:text-white hover:bg-slate-700/40"
-                    }`}
-                >
-                  {item.label}
-                </button>
-              );
-            })}
-          </nav>
-        }
+        {/* { */}
+        {/*   isLoggedIn && */}
+        {/*   <nav className="hidden md:flex items-center gap-1 flex-shrink-0"> */}
+        {/*     {rightMenu.map((item, index) => { */}
+        {/*       const active = isActive(item.link); */}
+        {/*       return ( */}
+        {/*         <button */}
+        {/*           key={index} */}
+        {/*           onClick={() => handleNavigation(item.link)} */}
+        {/*           className={`px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all duration-200 rounded-lg touch-manipulation whitespace-nowrap cursor-pointer ${active */}
+        {/*             ? "text-white bg-slate-700/40" */}
+        {/*             : "text-slate-300 hover:text-white hover:bg-slate-700/40" */}
+        {/*             }`} */}
+        {/*         > */}
+        {/*           {item.label} */}
+        {/*         </button> */}
+        {/*       ); */}
+        {/*     })} */}
+        {/*   </nav> */}
+        {/* } */}
       </div>
     </div >
   );

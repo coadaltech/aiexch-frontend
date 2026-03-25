@@ -41,6 +41,7 @@ export const useBetting = () => {
       queryClient.invalidateQueries({ queryKey: ["balance"] });
       queryClient.invalidateQueries({ queryKey: ["ledger"] });
       queryClient.invalidateQueries({ queryKey: ["market-exposure"] });
+      queryClient.invalidateQueries({ queryKey: ["market-exposure-fancy"] });
       queryClient.refetchQueries({ queryKey: ["balance"] });
     },
   });
@@ -55,6 +56,7 @@ export const useBetting = () => {
       queryClient.invalidateQueries({ queryKey: ["balance"] });
       queryClient.invalidateQueries({ queryKey: ["ledger"] });
       queryClient.invalidateQueries({ queryKey: ["market-exposure"] });
+      queryClient.invalidateQueries({ queryKey: ["market-exposure-fancy"] });
     },
   });
 
@@ -99,7 +101,7 @@ export const useBalance = () => {
   });
 };
 
-// Fetch per-runner profit/loss from DB function
+// Fetch per-runner profit/loss from DB function (for odds/bookmaker markets, market_type <> 4)
 // Returns a nested map: marketId → runnerId → profit (positive = profit, negative = loss)
 export const useMarketExposure = (enabled = true) => {
   const { user } = useAuth();
@@ -119,6 +121,34 @@ export const useMarketExposure = (enabled = true) => {
         const profit = parseFloat(row.runner_profit) || 0;
         if (!map.has(mId)) map.set(mId, new Map());
         map.get(mId)!.set(rId, profit);
+      }
+      return map;
+    },
+    enabled: enabled && !!user && !user.isDemo,
+    staleTime: 5000,
+    refetchOnWindowFocus: true,
+    refetchInterval: 10000,
+  });
+};
+
+// Fetch per-market worst-case profit/loss for fancy/session markets (market_type = 4)
+// Returns a map: marketId → profit (min across all run scenarios)
+export const useFancyMarketExposure = (enabled = true) => {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["market-exposure-fancy"],
+    queryFn: async () => {
+      const response = await api.get("/betting/market-exposure-fancy");
+      return response.data;
+    },
+    select: (data) => {
+      const rows: { market_id: string; runner_profit: string }[] = data.data || [];
+      const map = new Map<string, number>();
+      for (const row of rows) {
+        const mId = String(row.market_id);
+        const profit = parseFloat(row.runner_profit) || 0;
+        map.set(mId, profit);
       }
       return map;
     },
