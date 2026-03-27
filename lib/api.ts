@@ -169,6 +169,7 @@ export const ownerApi = {
 
   // Users
   getUsers: () => api.get("/owner/users"),
+  getUserCreatedUsers: (id: string) => api.get(`/owner/users/${id}/created-users`),
   createUser: (data: any) => api.post("/owner/users", data),
   updateUser: (id: string, data: any) => api.put(`/owner/users/${id}`, data),
 
@@ -294,8 +295,18 @@ export const ownerApi = {
     api.get(`/owner/market-management/markets/${marketId}`),
   updateMarketSettings: (marketId: string, data: any) =>
     api.put(`/owner/market-management/markets/${marketId}`, data),
+  listCustomMarkets: (params?: { search?: string; status?: string; limit?: number; offset?: number }) => {
+    const query = new URLSearchParams();
+    if (params?.search) query.append("search", params.search);
+    if (params?.status) query.append("status", params.status);
+    if (params?.limit) query.append("limit", String(params.limit));
+    if (params?.offset) query.append("offset", String(params.offset));
+    return api.get(`/owner/market-management/custom-markets?${query}`);
+  },
   createCustomMarket: (data: any) =>
     api.post("/owner/market-management/custom-markets", data),
+  updateCustomMarketDetails: (marketId: string, data: any) =>
+    api.put(`/owner/market-management/custom-markets/${marketId}`, data),
   updateCustomOdds: (marketId: string, data: any) =>
     api.put(`/owner/market-management/custom-markets/${marketId}/odds`, data),
   getCustomMarketDetails: (marketId: string) =>
@@ -311,6 +322,18 @@ export const ownerApi = {
     if (params.limit) query.append("limit", params.limit);
     return api.get(`/owner/market-management/odds-history?${query}`);
   },
+
+  // Matka Shifts
+  getMatkaShifts: (date?: string) =>
+    api.get(`/owner/matka/shifts${date ? `?date=${date}` : ""}`),
+  createMatkaShift: (data: any) => api.post("/owner/matka/shifts", data),
+  updateMatkaShift: (id: string, data: any) =>
+    api.put(`/owner/matka/shifts/${id}`, data),
+  deleteMatkaShift: (id: string) => api.delete(`/owner/matka/shifts/${id}`),
+  setMatkaResult: (id: string, result: number) =>
+    api.post(`/owner/matka/shifts/${id}/result`, { result }),
+  getMatkaJantri: (shiftId: string) =>
+    api.get(`/owner/matka/shifts/${shiftId}/jantri`),
 };
 
 export interface BetRecord {
@@ -510,4 +533,14 @@ export const sportsApi = {
     api.post(`/sports/matchDetails/${eventTypeId}/${eventId}`),
   getNewResult: (eventId: string) =>
     api.get(`/sports/new-result/${eventId}`),
+};
+
+export const matkaApi = {
+  getShifts: (date?: string) =>
+    api.get(`/matka/shifts${date ? `?date=${date}` : ""}`),
+  getShift: (id: string) => api.get(`/matka/shifts/${id}`),
+  getJantri: (shiftId: string) => api.get(`/matka/shifts/${shiftId}/jantri`),
+  placeBet: (data: { shiftId: string; bets: { number: string; numberType: number; amount: number }[] }) =>
+    api.post("/matka/place", data),
+  getMyBets: () => api.get("/matka/my-bets"),
 };

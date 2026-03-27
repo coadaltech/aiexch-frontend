@@ -7,12 +7,12 @@ import {
   useUpdateEventSettings,
   useUpdateMarketSettings,
   useMarketsByEvent,
-  useCreateCustomMarket,
   useDeleteCustomMarket,
   useUpdateCustomOdds,
   useOddsHistory,
   useSearchEvents,
 } from "@/hooks/useOwner";
+
 import { toast } from "sonner";
 
 // ─── Spinner ───
@@ -804,338 +804,6 @@ function EventSettingsPanel({
     </div>
   );
 }
-
-// ─── Create Custom Market Modal ───
-function CreateCustomMarketForm({
-  eventId,
-  onClose,
-}: {
-  eventId: string;
-  onClose: () => void;
-}) {
-  const createCustom = useCreateCustomMarket();
-  const [marketName, setMarketName] = useState("");
-  const [bettingType, setBettingType] = useState("ODDS");
-  const [minBet, setMinBet] = useState("100");
-  const [maxBet, setMaxBet] = useState("50000");
-  const [betDelay, setBetDelay] = useState("0");
-  const [runners, setRunners] = useState([
-    {
-      name: "",
-      back: [{ price: "", size: "" }] as { price: string; size: string }[],
-      lay: [{ price: "", size: "" }] as { price: string; size: string }[],
-    },
-    {
-      name: "",
-      back: [{ price: "", size: "" }] as { price: string; size: string }[],
-      lay: [{ price: "", size: "" }] as { price: string; size: string }[],
-    },
-  ]);
-
-  const addRunner = () => {
-    setRunners([
-      ...runners,
-      { name: "", back: [{ price: "", size: "" }], lay: [{ price: "", size: "" }] },
-    ]);
-  };
-
-  const removeRunner = (idx: number) => {
-    if (runners.length <= 1) return;
-    setRunners(runners.filter((_, i) => i !== idx));
-  };
-
-  const updateRunnerName = (idx: number, name: string) => {
-    const updated = [...runners];
-    updated[idx] = { ...updated[idx], name };
-    setRunners(updated);
-  };
-
-  const addPriceRow = (runnerIdx: number, type: "back" | "lay") => {
-    const updated = [...runners];
-    if (updated[runnerIdx][type].length < 3) {
-      updated[runnerIdx] = {
-        ...updated[runnerIdx],
-        [type]: [...updated[runnerIdx][type], { price: "", size: "" }],
-      };
-      setRunners(updated);
-    }
-  };
-
-  const removePriceRow = (runnerIdx: number, type: "back" | "lay", priceIdx: number) => {
-    const updated = [...runners];
-    if (updated[runnerIdx][type].length > 1) {
-      updated[runnerIdx] = {
-        ...updated[runnerIdx],
-        [type]: updated[runnerIdx][type].filter((_, i) => i !== priceIdx),
-      };
-      setRunners(updated);
-    }
-  };
-
-  const updatePriceField = (
-    runnerIdx: number,
-    type: "back" | "lay",
-    priceIdx: number,
-    field: "price" | "size",
-    value: string
-  ) => {
-    const updated = [...runners];
-    const prices = [...updated[runnerIdx][type]];
-    prices[priceIdx] = { ...prices[priceIdx], [field]: value };
-    updated[runnerIdx] = { ...updated[runnerIdx], [type]: prices };
-    setRunners(updated);
-  };
-
-  const handleCreate = () => {
-    if (!marketName.trim()) {
-      toast.error("Market name is required");
-      return;
-    }
-    const validRunners = runners.filter((r) => r.name.trim());
-    if (validRunners.length < 1) {
-      toast.error("At least 1 runner is required");
-      return;
-    }
-
-    createCustom.mutate(
-      {
-        eventId,
-        marketName,
-        bettingType,
-        minBet: parseFloat(minBet) || 100,
-        maxBet: parseFloat(maxBet) || 50000,
-        betDelay: parseInt(betDelay) || 0,
-        runners: validRunners.map((r) => ({
-          name: r.name,
-          back: r.back
-            .filter((b) => b.price)
-            .map((b) => ({ price: parseFloat(b.price), size: parseFloat(b.size) || 0 })),
-          lay: r.lay
-            .filter((l) => l.price)
-            .map((l) => ({ price: parseFloat(l.price), size: parseFloat(l.size) || 0 })),
-        })),
-      },
-      { onSuccess: () => onClose() }
-    );
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl max-w-5xl w-full max-h-[90vh] overflow-y-auto p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-800">
-            Create Custom Market
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-xl"
-          >
-            &times;
-          </button>
-        </div>
-
-        <div className="space-y-3">
-          <div>
-            <label className="text-sm text-gray-600 block mb-1">Market Name</label>
-            <input
-              type="text"
-              value={marketName}
-              onChange={(e) => setMarketName(e.target.value)}
-              placeholder="e.g. Custom Bookmaker"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            />
-          </div>
-
-          <div className="grid grid-cols-4 gap-3">
-            <div>
-              <label className="text-sm text-gray-600 block mb-1">Type</label>
-              <select
-                value={bettingType}
-                onChange={(e) => setBettingType(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              >
-                <option value="ODDS">ODDS</option>
-                <option value="BOOKMAKER">BOOKMAKER</option>
-                <option value="LINE">LINE</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-sm text-gray-600 block mb-1">Min Bet</label>
-              <input
-                type="number"
-                value={minBet}
-                onChange={(e) => setMinBet(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="text-sm text-gray-600 block mb-1">Max Bet</label>
-              <input
-                type="number"
-                value={maxBet}
-                onChange={(e) => setMaxBet(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="text-sm text-gray-600 block mb-1">Delay (s)</label>
-              <input
-                type="number"
-                value={betDelay}
-                onChange={(e) => setBetDelay(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              />
-            </div>
-          </div>
-
-          {/* Runners */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-sm text-gray-600 font-medium">
-                Runners (min 1)
-              </label>
-              <button
-                onClick={addRunner}
-                className="text-xs text-blue-600 hover:text-blue-700"
-              >
-                + Add Runner
-              </button>
-            </div>
-            <div className="space-y-3">
-              {runners.map((runner, rIdx) => (
-                <div key={rIdx} className="border border-gray-200 rounded-lg p-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <input
-                      type="text"
-                      value={runner.name}
-                      onChange={(e) => updateRunnerName(rIdx, e.target.value)}
-                      placeholder={`Runner ${rIdx + 1} name`}
-                      className="flex-1 px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:outline-none"
-                    />
-                    <button
-                      onClick={() => removeRunner(rIdx)}
-                      disabled={runners.length <= 1}
-                      className="text-red-400 hover:text-red-600 disabled:opacity-30 text-lg"
-                    >
-                      &times;
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    {/* Back */}
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-[11px] text-green-700 font-medium">
-                          Back ({runner.back.length}/3)
-                        </span>
-                        {runner.back.length < 3 && (
-                          <button
-                            onClick={() => addPriceRow(rIdx, "back")}
-                            className="text-[10px] text-green-600 hover:text-green-700"
-                          >
-                            + Add
-                          </button>
-                        )}
-                      </div>
-                      {runner.back.map((b, bIdx) => (
-                        <div key={bIdx} className="flex items-center gap-1 mb-1">
-                          <input
-                            type="number"
-                            value={b.price}
-                            onChange={(e) => updatePriceField(rIdx, "back", bIdx, "price", e.target.value)}
-                            placeholder="Price"
-                            step="0.01"
-                            className="flex-1 px-1.5 py-1 text-xs border border-green-300 rounded focus:ring-1 focus:ring-green-500 focus:outline-none"
-                          />
-                          <input
-                            type="number"
-                            value={b.size}
-                            onChange={(e) => updatePriceField(rIdx, "back", bIdx, "size", e.target.value)}
-                            placeholder="Size"
-                            className="flex-1 px-1.5 py-1 text-xs border border-green-300 rounded focus:ring-1 focus:ring-green-500 focus:outline-none"
-                          />
-                          {runner.back.length > 1 && (
-                            <button
-                              onClick={() => removePriceRow(rIdx, "back", bIdx)}
-                              className="text-red-400 hover:text-red-600 text-sm"
-                            >
-                              &times;
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                    {/* Lay */}
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-[11px] text-red-700 font-medium">
-                          Lay ({runner.lay.length}/3)
-                        </span>
-                        {runner.lay.length < 3 && (
-                          <button
-                            onClick={() => addPriceRow(rIdx, "lay")}
-                            className="text-[10px] text-red-600 hover:text-red-700"
-                          >
-                            + Add
-                          </button>
-                        )}
-                      </div>
-                      {runner.lay.map((l, lIdx) => (
-                        <div key={lIdx} className="flex items-center gap-1 mb-1">
-                          <input
-                            type="number"
-                            value={l.price}
-                            onChange={(e) => updatePriceField(rIdx, "lay", lIdx, "price", e.target.value)}
-                            placeholder="Price"
-                            step="0.01"
-                            className="flex-1 px-1.5 py-1 text-xs border border-red-300 rounded focus:ring-1 focus:ring-red-500 focus:outline-none"
-                          />
-                          <input
-                            type="number"
-                            value={l.size}
-                            onChange={(e) => updatePriceField(rIdx, "lay", lIdx, "size", e.target.value)}
-                            placeholder="Size"
-                            className="flex-1 px-1.5 py-1 text-xs border border-red-300 rounded focus:ring-1 focus:ring-red-500 focus:outline-none"
-                          />
-                          {runner.lay.length > 1 && (
-                            <button
-                              onClick={() => removePriceRow(rIdx, "lay", lIdx)}
-                              className="text-red-400 hover:text-red-600 text-sm"
-                            >
-                              &times;
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-2 mt-5">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleCreate}
-            disabled={createCustom.isPending}
-            className="px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center gap-2"
-          >
-            {createCustom.isPending && <Spinner size={14} />}
-            {createCustom.isPending ? "Creating..." : "Create Market"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ─── Odds History Panel ───
 function OddsHistoryPanel({ eventId }: { eventId: string }) {
   const [selectedMarketId, setSelectedMarketId] = useState("");
@@ -1257,9 +925,8 @@ export default function MarketManagementPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeEventId, setActiveEventId] = useState("");
   const [activeEventTypeId, setActiveEventTypeId] = useState("4");
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [activeTab, setActiveTab] = useState<"markets" | "history">("markets");
-  const [filter, setFilter] = useState<"all" | "active" | "custom" | "disabled">(
+  const [filter, setFilter] = useState<"all" | "active" | "disabled">(
     "all"
   );
   const [showDropdown, setShowDropdown] = useState(false);
@@ -1307,14 +974,10 @@ export default function MarketManagementPage() {
 
   const markets = rawMarkets.filter((m: any) => {
     if (filter === "active") return !m.adminDisabled && !m.adminHidden;
-    if (filter === "custom") return m.isCustom || m.marketType === "CUSTOM";
     if (filter === "disabled") return m.adminDisabled || m.adminHidden;
     return true;
   });
 
-  const customCount = rawMarkets.filter(
-    (m: any) => m.isCustom || m.marketType === "CUSTOM"
-  ).length;
   const disabledCount = rawMarkets.filter(
     (m: any) => m.adminDisabled || m.adminHidden
   ).length;
@@ -1326,8 +989,7 @@ export default function MarketManagementPage() {
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-800">Market Management</h1>
           <p className="text-gray-600 mt-1">
-            View live markets, manage settings, create custom markets, and review
-            odds history
+            View live markets, manage settings, and review odds history
           </p>
         </div>
 
@@ -1419,10 +1081,34 @@ export default function MarketManagementPage() {
           )}
         </div>
 
+        {/* Tabs - always visible */}
+        <div className="flex gap-1 mb-4 border-b border-gray-200">
+          <button
+            onClick={() => setActiveTab("markets")}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === "markets"
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Markets {activeEventId ? `(${rawMarkets.length})` : ""}
+          </button>
+          <button
+            onClick={() => setActiveTab("history")}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === "history"
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Odds History
+          </button>
+        </div>
+
         {/* Active Event Area */}
         {activeEventId && (
           <>
-            {/* Connection Status + Actions */}
+            {/* Connection Status */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <span
@@ -1436,36 +1122,9 @@ export default function MarketManagementPage() {
                     : `${status} - Event ${activeEventId}`}
                 </span>
               </div>
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-              >
-                + Custom Market
-              </button>
-            </div>
-
-            {/* Tabs */}
-            <div className="flex gap-1 mb-4 border-b border-gray-200">
-              <button
-                onClick={() => setActiveTab("markets")}
-                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === "markets"
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                Markets ({rawMarkets.length})
-              </button>
-              <button
-                onClick={() => setActiveTab("history")}
-                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === "history"
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                Odds History
-              </button>
+              <span className="text-xs text-gray-400 font-mono">
+                ID: {activeEventId}
+              </span>
             </div>
 
             {activeTab === "markets" && (
@@ -1492,7 +1151,6 @@ export default function MarketManagementPage() {
                         key: "active",
                         label: `Active (${rawMarkets.length - disabledCount})`,
                       },
-                      { key: "custom", label: `Custom (${customCount})` },
                       { key: "disabled", label: `Disabled (${disabledCount})` },
                     ] as const
                   ).map(({ key, label }) => (
@@ -1560,14 +1218,6 @@ export default function MarketManagementPage() {
               Search by team name, event name, or enter an Event ID directly
             </p>
           </div>
-        )}
-
-        {/* Create Custom Market Modal */}
-        {showCreateModal && activeEventId && (
-          <CreateCustomMarketForm
-            eventId={activeEventId}
-            onClose={() => setShowCreateModal(false)}
-          />
         )}
       </div>
     </div>

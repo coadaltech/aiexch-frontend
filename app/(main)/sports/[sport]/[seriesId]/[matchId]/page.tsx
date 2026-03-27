@@ -244,7 +244,27 @@ export default function MatchPage() {
   const { data: seriesData = [] } = useSeries(config?.eventTypeId ?? null);
   const { status, isConnected, matchOdds: wsMarkets, bookmakers: wsBookmakers, sessions: wsSessions } = useLiveMatch(matchId, eventTypeId);
 
-  // Initial REST fetch for immediate data (no waiting for WebSocket)
+  // Try to use cached odds data from the sport listing page for instant display
+  const cachedOdds = queryClient.getQueryData<any[]>(["match-odds-list", matchId]);
+
+  // Fast lightweight fetch — just match odds (shows markets quickly)
+  const [fastOdds, setFastOdds] = useState<any[] | null>(null);
+  const fastFetchDone = useRef(false);
+
+  useEffect(() => {
+    if (fastFetchDone.current || cachedOdds) return;
+    fastFetchDone.current = true;
+
+    sportsApi
+      .getMarketsWithOdds(eventTypeId, matchId)
+      .then((res: any) => {
+        const data = res.data?.data ?? res.data ?? [];
+        if (data.length > 0) setFastOdds(data);
+      })
+      .catch(() => {});
+  }, [eventTypeId, matchId, cachedOdds]);
+
+  // Full REST fetch for all data (bookmakers, sessions, etc.)
   const [initialData, setInitialData] = useState<any>(null);
   const [initialLoading, setInitialLoading] = useState(true);
   const initialFetchDone = useRef(false);
@@ -360,9 +380,10 @@ export default function MatchPage() {
       });
   }, []);
 
-  // Merge all market sources: WebSocket live data takes priority, initial REST data as fallback
+  // Merge all market sources: WebSocket > REST full > fast odds > cached odds
+  const lastGoodMarkets = useRef<any[]>(cachedOdds && cachedOdds.length > 0 ? cachedOdds : []);
+
   const markets = useMemo(() => {
-    // If we have WebSocket data, use it (it's the most up-to-date)
     const hasWsData = wsMarkets.length > 0 || wsBookmakers.length > 0 || wsSessions.length > 0;
 
     let matchOdds: any[] = [];
@@ -374,13 +395,15 @@ export default function MatchPage() {
       bookmakerMarkets = normalizeBookmakers(wsBookmakers);
       sessionMarkets = normalizeSessions(wsSessions);
     } else if (initialData) {
-      // Use initial REST data as fallback
       matchOdds = initialData.matchOdds || [];
       bookmakerMarkets = normalizeBookmakers(initialData.bookmakers || []);
       sessionMarkets = normalizeSessions(initialData.sessions || []);
+    } else if (fastOdds && fastOdds.length > 0) {
+      // Fast lightweight endpoint returned before the full fetch
+      matchOdds = fastOdds;
     }
 
-    // Deduplicate by marketId (matchOdds may already include some bookmaker-type markets)
+    // Deduplicate by marketId
     const seenIds = new Set(matchOdds.map((m: any) => m.marketId));
     const deduped = [
       ...matchOdds,
@@ -388,11 +411,17 @@ export default function MatchPage() {
       ...sessionMarkets,
     ];
 
-    // Filter out CLOSED and INACTIVE
-    return deduped.filter(
+    const result = deduped.filter(
       (m: any) => m.status !== "CLOSED" && m.status !== "INACTIVE"
     );
-  }, [wsMarkets, wsBookmakers, wsSessions, initialData, normalizeBookmakers, normalizeSessions]);
+
+    // Never go empty if we had data before — keep last good markets until new data arrives
+    if (result.length > 0) {
+      lastGoodMarkets.current = result;
+      return result;
+    }
+    return lastGoodMarkets.current;
+  }, [wsMarkets, wsBookmakers, wsSessions, initialData, fastOdds, normalizeBookmakers, normalizeSessions]);
 
   // Keep a ref to latest markets for price-change detection during bet delay
   const marketsRef = useRef(markets);
@@ -437,9 +466,10 @@ export default function MatchPage() {
   );
 
   const [matchInfo, setMatchInfo] = useState<any>(null);
+  // If cached odds exist from sport listing page, start as "success" to avoid any blink
   const [pageStatus, setPageStatus] = useState<
     "connecting" | "connected" | "no-data" | "error" | "success"
-  >("connecting");
+  >(() => (cachedOdds && cachedOdds.length > 0 ? "success" : "connecting"));
 
   const series = useMemo(
     () => seriesData.find((s: { id: string }) => String(s.id) === String(seriesId)),
@@ -450,9 +480,12 @@ export default function MatchPage() {
     [series, matchId]
   );
 
+  const hasEverHadMarkets = useRef(!!(cachedOdds && cachedOdds.length > 0));
+
   useEffect(() => {
-    // If we have markets from any source (REST or WS), show them immediately
+    // If we have markets from any source (REST, WS, or cache), show them immediately
     if (visibleMarkets.length > 0) {
+      hasEverHadMarkets.current = true;
       setMatchInfo({
         eventName: markets[0]?.eventName || "Match",
         sport: markets[0]?.sport || "Cricket",
@@ -462,31 +495,33 @@ export default function MatchPage() {
       return;
     }
 
-    // Still loading initial data
+    // Once we've shown markets, never regress to loading/no-data (WS may momentarily send empty)
+    if (hasEverHadMarkets.current) return;
+
+    // Still loading initial data — keep showing loading
     if (initialLoading) {
       setPageStatus("connecting");
       return;
     }
 
-    // Initial data loaded but no markets + WS still connecting
-    if (!initialLoading && !isConnected && visibleMarkets.length === 0) {
-      // Wait briefly for WS to connect and provide data
-      if (status === "connecting" || status === "disconnected") {
-        const timeout = setTimeout(() => {
-          setPageStatus("no-data");
-        }, 3000);
-        return () => clearTimeout(timeout);
-      }
-    }
-
-    // WS connected but no markets from any source
-    if (!initialLoading && visibleMarkets.length === 0) {
-      setPageStatus("no-data");
+    // Connection error and no data at all
+    if (status === "error") {
+      setPageStatus("error");
       return;
     }
 
-    if (status === "error" && visibleMarkets.length === 0) {
-      setPageStatus("error");
+    // Data sources still loading (WS connecting) — keep showing loading
+    if (!isConnected && (status === "connecting" || status === "disconnected")) {
+      setPageStatus("connecting");
+      const timeout = setTimeout(() => {
+        setPageStatus((prev) => (prev === "connecting" ? "no-data" : prev));
+      }, 8000);
+      return () => clearTimeout(timeout);
+    }
+
+    // WS connected but genuinely no markets
+    if (isConnected && visibleMarkets.length === 0) {
+      setPageStatus("no-data");
     }
   }, [status, isConnected, markets, visibleMarkets.length, initialLoading]);
 
@@ -936,15 +971,10 @@ export default function MatchPage() {
     const label = market?.status === "SUSPENDED" ? "Suspended" : "Ball Running";
     return (
       <div
-        className="absolute inset-0 flex items-center justify-center z-10 cursor-not-allowed"
-        style={{
-          background:
-            "repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(0,0,0,0.12) 6px, rgba(0,0,0,0.12) 12px)",
-          backgroundColor: "rgba(0,0,0,0.35)",
-        }}
+        className="absolute inset-0 flex items-center justify-center z-10 cursor-not-allowed bg-white/60 dark:bg-black/40"
         onClick={(e) => e.stopPropagation()}
       >
-        <span className="text-red-500 font-bold text-sm sm:text-base drop-shadow-sm">
+        <span className="text-red-600 font-bold text-sm sm:text-base">
           {label}
         </span>
       </div>
@@ -952,9 +982,9 @@ export default function MatchPage() {
   };
 
   const oddsBtnClass =
-    "min-w-[28px] sm:min-w-[34px] md:min-w-[40px] px-1 py-1 flex flex-col items-center justify-center border-none rounded cursor-pointer leading-tight";
-  const oddsPriceClass = "text-white font-bold text-[10px] sm:text-xs";
-  const oddsSizeClass = "text-gray-400 font-medium text-[8px] sm:text-[9px]";
+    "flex-1 min-w-0 px-1 py-1 flex flex-col items-center justify-center border-none rounded cursor-pointer leading-tight";
+  const oddsPriceClass = "text-black font-bold text-[10px] sm:text-xs";
+  const oddsSizeClass = "text-black/50 font-medium text-[8px] sm:text-[9px]";
 
   // Runner name cell: shows name + per-runner P&L from DB function
   const RunnerNameCell = ({
@@ -982,13 +1012,13 @@ export default function MatchPage() {
 
     return (
       <div className="min-w-0 pr-1 flex flex-col gap-0.5">
-        <span className="text-white font-semibold text-[11px] sm:text-xs truncate block leading-tight">
+        <span className="text-black dark:text-white font-semibold text-[11px] sm:text-xs truncate block leading-tight">
           {displayName ?? runner.name}
         </span>
         {pnl !== null && (
           <span
             className={`text-[9px] sm:text-[10px] font-semibold leading-tight ${
-              pnl >= 0 ? "text-green-400" : "text-red-400"
+              pnl >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
             }`}
           >
             {pnl >= 0 ? "+" : ""}{pnl.toFixed(2)}
@@ -999,7 +1029,7 @@ export default function MatchPage() {
   };
 
   return (
-    <div className="px-1 sm:px-2 py-1 w-full max-w-full min-w-0">
+    <div className="px-1 sm:px-2 py-1 w-full max-w-full min-w-0 bg-gray-50 dark:bg-gray-900 min-h-full ">
       {/* Match header */}
       {(matchInfo || series || matchFromSeries) && (
         <div className="bg-gray-800 border border-gray-700 rounded-lg px-3 sm:px-4 py-3 mb-2">
@@ -1020,13 +1050,13 @@ export default function MatchPage() {
         </div>
       )}
 
-      <div className="bg-gray-900 space-y-1">
+      <div className="space-y-1">
         {visibleMarkets.map(
           (market) =>
             (market.bettingType == "ODDS" || market.bettingType == "BOOKMAKER") && (
               <div
                 key={market.marketId}
-                className="bg-gray-800 border border-gray-700 rounded overflow-hidden"
+                className="rounded overflow-hidden border border-gray-300 dark:border-gray-700"
               >
                 <div className="grid grid-cols-3 gap-1 sm:gap-2 px-2 sm:px-3 py-1 border-b border-gray-700 bg-gray-900/50 items-center">
                   <div className="min-w-0 flex flex-col gap-0.5">
@@ -1038,18 +1068,18 @@ export default function MatchPage() {
                       {market.marketCondition?.["maxBet"] ?? "-"}
                     </p>
                   </div>
-                  <div className="justify-self-end font-semibold uppercase bg-green-900 text-white text-[10px] sm:text-xs py-0.5 px-1.5 rounded">
+                  <div className="justify-self-end font-semibold uppercase bg-[#72BBEF] text-black text-[10px] sm:text-xs py-0.5 px-1.5 rounded">
                     Back
                   </div>
-                  <div className="font-semibold uppercase bg-[#39111A] text-white text-[10px] sm:text-xs py-0.5 px-1.5 rounded w-fit">
+                  <div className="font-semibold uppercase bg-[#FAA9BA] text-black text-[10px] sm:text-xs py-0.5 px-1.5 rounded w-fit">
                     Lay
                   </div>
                 </div>
-                <div className="divide-y divide-gray-700">
+                <div className="divide-y divide-gray-200 dark:divide-gray-700">
                   {market.runners.map((runner: any) => (
                     <div
                       key={runner.selectionId}
-                      className="px-2 sm:px-3 py-1 grid grid-cols-3 gap-1 sm:gap-2 items-center min-h-0"
+                      className="px-2 sm:px-3 py-1 grid grid-cols-3 gap-1 sm:gap-2 items-center min-h-0 bg-white dark:bg-gray-800"
                     >
                       <RunnerNameCell
                         runner={runner}
@@ -1075,13 +1105,13 @@ export default function MatchPage() {
                                       null,
                                       2 - posIdx
                                     )}
-                                    className={`${oddsBtnClass} hover:bg-green-900 transition-colors bg-green-900/70 w-20`}
+                                    className={`${oddsBtnClass} hover:bg-[#60ADDF] transition-colors bg-[#72BBEF] w-20`}
                                   >
                                     <span className={oddsPriceClass}>{item.price}</span>
                                     <span className={oddsSizeClass}>{formatAmount(item.size)}</span>
                                   </button>
                                 ) : (
-                                  <button key={`empty-back-${posIdx}`} className={`${oddsBtnClass} bg-green-900/70 w-20`} disabled>
+                                  <button key={`empty-back-${posIdx}`} className={`${oddsBtnClass} bg-[#a8d8f0] w-20`} disabled>
                                     <span className={oddsPriceClass}>-</span>
                                     <span className={oddsSizeClass}>-</span>
                                   </button>
@@ -1103,7 +1133,7 @@ export default function MatchPage() {
                                       null,
                                       layIdx
                                     )}
-                                    className={`${oddsBtnClass} hover:bg-[#39111A] transition-colors bg-[#39111A]/70 w-20`}
+                                    className={`${oddsBtnClass} hover:bg-[#E898A8] transition-colors bg-[#FAA9BA] w-20`}
                                   >
                                     <span className={oddsPriceClass}>{layItem.price ? layItem.price : "0"}</span>
                                     <span className={oddsSizeClass}>{formatAmount(layItem.size)}</span>
@@ -1111,7 +1141,7 @@ export default function MatchPage() {
                                 ))
                               : null}
                             {Array.from({ length: Math.max(0, 3 - (runner.lay?.length || 0)) }).map((_, emptyIdx) => (
-                              <button key={`empty-lay-${emptyIdx}`} className={`${oddsBtnClass} bg-[#39111A]/70 w-20`} disabled>
+                              <button key={`empty-lay-${emptyIdx}`} className={`${oddsBtnClass} bg-[#f5c9d3] w-20`} disabled>
                                 <span className={oddsPriceClass}>-</span>
                                 <span className={oddsSizeClass}>-</span>
                               </button>
@@ -1142,27 +1172,27 @@ export default function MatchPage() {
         )}
 
         {visibleMarkets.some((m) => m.bettingType === "LINE") && (
-        <div className="bg-gray-800 border border-gray-700 rounded overflow-hidden">
+        <div className="rounded overflow-hidden border border-gray-300 dark:border-gray-700">
           <div className="grid grid-cols-3 gap-1 sm:gap-2 px-2 sm:px-3 py-1 border-b border-gray-700 bg-gray-900/50 items-center">
             <h3 className="font-semibold text-white text-[11px] sm:text-xs truncate leading-tight">
               Fancy
             </h3>
-            <div className="justify-self-end font-semibold uppercase bg-[#39111A] text-white text-[10px] sm:text-xs py-0.5 px-1.5 rounded w-fit">
+            <div className="justify-self-end font-semibold uppercase bg-[#72BBEF] text-black text-[10px] sm:text-xs py-0.5 px-1.5 rounded w-fit">
               NO
             </div>
-            <div className="w-fit font-semibold uppercase bg-green-900 text-white text-[10px] sm:text-xs py-0.5 px-1.5 rounded">
+            <div className="w-fit font-semibold uppercase bg-[#FAA9BA] text-black text-[10px] sm:text-xs py-0.5 px-1.5 rounded">
               YES
             </div>
           </div>
           {visibleMarkets.map(
             (market) =>
               market.bettingType == "LINE" && (
-                <div key={market.marketId} className="border-b border-gray-700 last:border-b-0">
-                  <div className="divide-y divide-gray-700">
+                <div key={market.marketId} className="border-b border-gray-200 dark:border-gray-700 last:border-b-0">
+                  <div className="divide-y divide-gray-200 dark:divide-gray-700">
                     {market.runners.map((runner: any) => (
                       <div
                         key={runner.selectionId}
-                        className="px-2 sm:px-3 py-1 grid grid-cols-3 gap-1 sm:gap-2 items-center min-h-0"
+                        className="px-2 sm:px-3 py-1 grid grid-cols-3 gap-1 sm:gap-2 items-center min-h-0 bg-white dark:bg-gray-800"
                       >
                         <RunnerNameCell
                           runner={runner}
@@ -1180,14 +1210,14 @@ export default function MatchPage() {
                                     onClick={() =>
                                       handleLayClick(market, runner, toDecimalOdds(layItem.price), String(layItem.line ?? ""), layIdx)
                                     }
-                                    className={`${oddsBtnClass} hover:bg-green-900 transition-colors bg-green-900/70 w-20`}
+                                    className={`${oddsBtnClass} hover:bg-[#60ADDF] transition-colors bg-[#72BBEF] w-20`}
                                   >
                                     <span className={oddsPriceClass}>{layItem.line}</span>
                                     <span className={oddsSizeClass}>{formatAmount(layItem.price)}</span>
                                   </button>
                                 ))
                               ) : (
-                                <button className={`${oddsBtnClass} bg-green-900/70 w-20`} disabled>
+                                <button className={`${oddsBtnClass} bg-[#a8d8f0] w-20`} disabled>
                                   <span className={oddsPriceClass}>-</span>
                                   <span className={oddsSizeClass}>-</span>
                                 </button>
@@ -1203,22 +1233,22 @@ export default function MatchPage() {
                                     onClick={() =>
                                       handleBackClick(market, runner, toDecimalOdds(backItem.price), String(backItem.line ?? ""), backIdx)
                                     }
-                                    className={`${oddsBtnClass} hover:bg-[#39111A] transition-colors bg-[#39111A]/70 w-20`}
+                                    className={`${oddsBtnClass} hover:bg-[#E898A8] transition-colors bg-[#FAA9BA] w-20`}
                                   >
                                     <span className={oddsPriceClass}>{backItem.line}</span>
                                     <span className={oddsSizeClass}>{formatAmount(backItem.price)}</span>
                                   </button>
                                 ))
                               ) : (
-                                <button className={`${oddsBtnClass} bg-[#39111A]/70 w-20`} disabled>
+                                <button className={`${oddsBtnClass} bg-[#f5c9d3] w-20`} disabled>
                                   <span className={oddsPriceClass}>-</span>
                                   <span className={oddsSizeClass}>-</span>
                                 </button>
                               )}
                             </div>
-                            <div className="hidden sm:flex flex-col text-[9px] text-gray-400 leading-tight text-right shrink-0">
-                              <span>Min: {market.marketCondition?.["minBet"] ?? "-"}</span>
-                              <span>Max: {market.marketCondition?.["maxBet"] ?? "-"}</span>
+                            <div className="hidden sm:flex flex-col text-[9px] text-black/50 dark:text-gray-400 leading-tight text-right shrink-0">
+                              <span>Max:{market.marketCondition?.["maxBet"] ?? "-"}</span>
+                              <span>MKT:{market.marketCondition?.["potLimit"] ?? market.marketCondition?.["maxProfit"] ?? "-"}</span>
                             </div>
                           </div>
                           {backLayOverlay(market)}

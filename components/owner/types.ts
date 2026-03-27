@@ -213,7 +213,6 @@ export interface Whitelabel {
     dateFormat: string;
     enableLiveChat: boolean;
     enableNotifications: boolean;
-    maintenanceMode: boolean;
   };
   permissions?: {
     casino: boolean;

@@ -125,13 +125,14 @@ function SidebarContent({
                         key={subItem.name}
                         href={subItem.href}
                         className={cn(
-                          "block rounded-lg px-3 py-2 text-sm transition-all duration-200",
+                          "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200",
                           pathname === subItem.href
                             ? "bg-sidebar-primary text-sidebar-primary-foreground"
                             : "text-sidebar-foreground hover:bg-sidebar-accent"
                         )}
                         onClick={() => setOpen?.(false)}
                       >
+                        <subItem.icon className="h-4 w-4 flex-shrink-0" />
                         {subItem.name}
                       </Link>
                     ))}

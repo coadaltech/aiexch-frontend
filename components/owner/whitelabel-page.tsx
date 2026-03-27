@@ -163,7 +163,6 @@ export function WhitelabelPage({
       dateFormat: "MM/DD/YYYY",
       enableLiveChat: true,
       enableNotifications: true,
-      maintenanceMode: false,
     },
     permissions: {
       casino: true,
@@ -191,16 +190,6 @@ export function WhitelabelPage({
       ]);
     }
   }, [whitelabel]);
-
-  const tabs = [
-    "general",
-    "theme",
-    "layout",
-    "config",
-    "preferences",
-    "permissions",
-    "preview",
-  ];
 
   const validateTab = (tab: string): boolean => {
     if (tab === "general")
@@ -268,27 +257,10 @@ export function WhitelabelPage({
   };
 
   const handleTabChange = (value: string) => {
-    const currentIndex = tabs.indexOf(activeTab);
-    const targetIndex = tabs.indexOf(value);
-
-    if (
-      targetIndex > currentIndex &&
-      !completedTabs.includes(tabs[targetIndex - 1])
-    ) {
-      return;
-    }
-
     if (validateTab(activeTab) && !completedTabs.includes(activeTab)) {
       setCompletedTabs([...completedTabs, activeTab]);
     }
-
     setActiveTab(value);
-  };
-
-  const isTabDisabled = (tab: string): boolean => {
-    const tabIndex = tabs.indexOf(tab);
-    if (tabIndex === 0) return false;
-    return !completedTabs.includes(tabs[tabIndex - 1]);
   };
 
   const updateTheme = (key: keyof WhitelabelTheme, value: string) => {
@@ -408,33 +380,13 @@ export function WhitelabelPage({
             className="w-full"
           >
             <TabsList className="grid w-full grid-cols-7">
-              <TabsTrigger value="general" disabled={isTabDisabled("general")}>
-                General
-              </TabsTrigger>
-              <TabsTrigger value="theme" disabled={isTabDisabled("theme")}>
-                Theme
-              </TabsTrigger>
-              <TabsTrigger value="layout" disabled={isTabDisabled("layout")}>
-                Layout
-              </TabsTrigger>
-              <TabsTrigger value="config" disabled={isTabDisabled("config")}>
-                Config
-              </TabsTrigger>
-              <TabsTrigger
-                value="preferences"
-                disabled={isTabDisabled("preferences")}
-              >
-                Preferences
-              </TabsTrigger>
-              <TabsTrigger
-                value="permissions"
-                disabled={isTabDisabled("permissions")}
-              >
-                Permissions
-              </TabsTrigger>
-              <TabsTrigger value="preview" disabled={isTabDisabled("preview")}>
-                Preview
-              </TabsTrigger>
+              <TabsTrigger value="general">General</TabsTrigger>
+              <TabsTrigger value="theme">Theme</TabsTrigger>
+              <TabsTrigger value="layout">Layout</TabsTrigger>
+              <TabsTrigger value="config">Config</TabsTrigger>
+              <TabsTrigger value="preferences">Preferences</TabsTrigger>
+              <TabsTrigger value="permissions">Permissions</TabsTrigger>
+              <TabsTrigger value="preview">Preview</TabsTrigger>
             </TabsList>
 
             <TabsContent value="general" className="mt-6">

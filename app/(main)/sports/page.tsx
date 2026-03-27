@@ -21,6 +21,10 @@ const sportLinkMapping: Record<string, string> = {
   "7": "/sports/horse-racing",
   "1": "/sports/soccer",
   "2": "/sports/tennis",
+  "matka": "/matka",
+  "lotry": "/lotry",
+  "skil-games": "/skil-games",
+  "jambo": "/jambo",
 };
 
 const getSportIcon = (sportName: string): string => {
@@ -32,8 +36,19 @@ const getSportIcon = (sportName: string): string => {
   if (name.includes("greyhound")) return "jumping-dog.svg";
   if (name.includes("kabaddi")) return "kabaddi.svg";
   if (name.includes("virtual")) return "t10.svg";
+  if (name.includes("matka")) return "matka-icon.svg";
+  if (name.includes("lotry")) return "play-button.svg";
+  if (name.includes("skil")) return "play-button.svg";
+  if (name.includes("jambo")) return "play-button.svg";
   return "play-button.svg";
 };
+
+const matkaItem: Sport = { eventType: "matka", name: "Matka" };
+const extraGames: Sport[] = [
+  { eventType: "lotry", name: "Lotry" },
+  { eventType: "skil-games", name: "Skil Games" },
+  { eventType: "jambo", name: "Jambo" },
+];
 
 export default function SportsPage() {
   const [sports, setSports] = useState<Sport[]>([]);
@@ -46,7 +61,7 @@ export default function SportsPage() {
         setLoading(true);
         const response = await api.get("/api/sports/sports-list");
         const data = response.data.data || [];
-        setSports(data);
+        setSports([...data, matkaItem, ...extraGames]);
       } catch (err) {
         console.error("Error fetching sports:", err);
         setError("Failed to load sports");
@@ -59,6 +74,8 @@ export default function SportsPage() {
           { eventType: "7", name: "Horse Racing" },
           { eventType: "1", name: "Football" },
           { eventType: "2", name: "Tennis" },
+          matkaItem,
+          ...extraGames,
         ]);
       } finally {
         setLoading(false);
@@ -108,7 +125,7 @@ export default function SportsPage() {
       )}
 
       {/* Sports Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-4 md:gap-6">
         {sports.map((sport, index) => {
           const sportName = getSportName(sport);
           const sportLink = getSportLink(sport);

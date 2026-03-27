@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Whitelabel, WhitelabelType } from "../types";
 import { useOwnerUsers } from "@/hooks/useOwner";
+import { Search } from "lucide-react";
 
 interface GeneralTabProps {
   formData: Whitelabel;
@@ -21,6 +22,19 @@ interface GeneralTabProps {
 export function GeneralTab({ formData, setFormData }: GeneralTabProps) {
   const { data: users = [], isLoading: usersLoading } = useOwnerUsers();
   const [errors, setErrors] = React.useState<Record<string, string>>({});
+  const [userSearch, setUserSearch] = React.useState("");
+
+  // Filter to only show admin users
+  const adminUsers = React.useMemo(() => {
+    const admins = users.filter((user: any) => user.role === "admin");
+    if (!userSearch.trim()) return admins;
+    const query = userSearch.toLowerCase();
+    return admins.filter(
+      (user: any) =>
+        user.username?.toLowerCase().includes(query) ||
+        user.email?.toLowerCase().includes(query)
+    );
+  }, [users, userSearch]);
 
   const validateField = (field: string, value: string | number) => {
     const newErrors = { ...errors };
@@ -35,7 +49,7 @@ export function GeneralTab({ formData, setFormData }: GeneralTabProps) {
   return (
     <div className="space-y-4">
       <div>
-        <Label className="text-muted-foreground">Select User *</Label>
+        <Label className="text-muted-foreground">Select Admin User *</Label>
         <Select
           value={formData.userId}
           onValueChange={(value) => {
@@ -47,10 +61,27 @@ export function GeneralTab({ formData, setFormData }: GeneralTabProps) {
           disabled={usersLoading}
         >
           <SelectTrigger className={`bg-input border text-foreground ${errors.userId ? "border-red-500" : ""}`}>
-            <SelectValue placeholder={usersLoading ? "Loading users..." : "Select a user"} />
+            <SelectValue placeholder={usersLoading ? "Loading users..." : "Select an admin user"} />
           </SelectTrigger>
           <SelectContent className="bg-card border max-h-[300px]">
-            {users.map((user: any) => (
+            <div className="px-2 pb-2 sticky top-0 bg-card z-10">
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name or email..."
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                  className="pl-8 h-8 bg-input border text-sm"
+                  onKeyDown={(e) => e.stopPropagation()}
+                />
+              </div>
+            </div>
+            {adminUsers.length === 0 && (
+              <div className="px-2 py-1.5 text-sm text-muted-foreground text-center">
+                {userSearch ? "No matching admin users" : "No admin users found"}
+              </div>
+            )}
+            {adminUsers.map((user: any) => (
               <SelectItem
                 key={user.id}
                 value={user.id}

@@ -41,6 +41,15 @@ export default function AdminDashboard() {
   const isLoading =
     usersLoading || promotionsLoading || vouchersLoading || kycLoading;
 
+  // Calculate user counts by role
+  const roleCounts = [
+    { role: "Admin", count: users.filter((u: any) => u.role === "admin").length, color: "text-black" },
+    { role: "Super", count: users.filter((u: any) => u.role === "super").length, color: "text-black" },
+    { role: "Master", count: users.filter((u: any) => u.role === "master").length, color: "text-black" },
+    { role: "Agent", count: users.filter((u: any) => u.role === "agent").length, color: "text-black" },
+    { role: "User", count: users.filter((u: any) => u.role === "user").length, color: "text-black" },
+  ];
+
   // Calculate real stats
   const totalUsers = users.length;
   const activeUsers = users.filter(
@@ -151,6 +160,46 @@ export default function AdminDashboard() {
         <p className="text-muted-foreground">Welcome to the owner panel</p>
       </div>
 
+      {/* Users by Role */}
+      {isLoading ? (
+        <DashboardActivitySkeleton />
+      ) : (
+        <Card className="bg-card border">
+          <CardHeader>
+            <CardTitle className="text-foreground flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Users by Role
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Role</th>
+                    <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Count</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {roleCounts.map((item) => (
+                    <tr key={item.role} className="border-b border-border/50 hover:bg-muted/50 transition-colors">
+                      <td className={`py-3 px-4 text-sm font-medium ${item.color}`}>{item.role}</td>
+                      <td className="py-3 px-4 text-sm text-foreground text-right font-semibold">{item.count}</td>
+                    </tr>
+                  ))}
+                  <tr className="bg-muted/30">
+                    <td className="py-3 px-4 text-sm font-semibold text-foreground">Total</td>
+                    <td className="py-3 px-4 text-sm text-foreground text-right font-bold">
+                      {roleCounts.reduce((sum, r) => sum + r.count, 0)}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {isLoading ? (
         <DashboardStatsSkeleton />
       ) : (
@@ -179,6 +228,8 @@ export default function AdminDashboard() {
           })}
         </div>
       )}
+
+      
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         <Card className="bg-card border">

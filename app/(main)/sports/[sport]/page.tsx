@@ -4,81 +4,36 @@ import { use, useMemo } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Trophy } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useSeries } from "@/hooks/useSportsApi";
+import { sportsApi } from "@/lib/api";
 import { getSportConfig, isValidSportSlug } from "@/lib/sports-config";
 
-export interface Series {
-  id: string;
-  name: string;
-  eventTypeId: string;
-  matches: Match[];
-}
+const formatToIST = (dateString: string | null): string => {
+  if (!dateString) return "TBD";
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: "Asia/Kolkata",
+    });
+  } catch {
+    return "";
+  }
+};
 
-export interface Match {
+interface FlatMatch {
   id: string;
   name: string;
   openDate: string | null;
   status: string;
   inPlay: boolean;
-  odds: Odds[];
-}
-
-export interface Odds {
-  marketId: string;
-  marketTime: string;
-  marketType: string;
-  bettingType: string;
-  marketName: string;
-  provider: string;
-  status: string;
-  inPlay: boolean;
-  marketCondition: MarketCondition;
-  runners: Runner[];
-  odds: MarketOdds | null;
-}
-
-export interface MarketCondition {
-  marketId: string;
-  betLock: boolean;
-  minBet: number;
-  maxBet: number;
-  maxProfit: number;
-  betDelay: number;
-  mtp: number;
-  allowUnmatchBet: boolean;
-  potLimit: number;
-  volume: number;
-}
-
-export interface Runner {
-  id: number;
-  name: string;
-  sortPriority: number;
-  metadata: any;
-}
-
-export interface MarketOdds {
-  marketId: string;
-  betDelay: number;
-  status: string;
-  inPlay: boolean;
-  lastMatchTime: string | null;
-  updateTime: number;
-  sportingEvent: boolean;
-  runners: OddsRunner[];
-}
-
-export interface OddsRunner {
-  selectionId: number;
-  status: string;
-  back: PriceSize[];
-  lay: PriceSize[];
-  pnl: number;
-}
-
-export interface PriceSize {
-  price: number;
-  size: number;
+  seriesId: string;
+  seriesName: string;
 }
 
 export default function SportPage({
@@ -105,15 +60,30 @@ export default function SportPage({
 
   const { data: seriesData = [], isLoading: loading, error, refetch } = useSeries(config.eventTypeId);
 
-  const seriesWithMatches = useMemo(() => {
-    return seriesData
-      .filter((series) => series.matches && series.matches.length > 0)
-      .map((series) => {
-        const liveMatches = series.matches.filter((match: Match) => match.inPlay === true);
-        const upcomingMatches = series.matches.filter((match: Match) => !match.inPlay);
-        return { ...series, liveMatches, upcomingMatches };
-      })
-      .sort((a, b) => b.liveMatches.length - a.liveMatches.length);
+  // Flatten all matches, sorted: live first then by date
+  const allMatches: FlatMatch[] = useMemo(() => {
+    const matches: FlatMatch[] = [];
+    for (const series of seriesData) {
+      if (!series.matches) continue;
+      for (const match of series.matches) {
+        matches.push({
+          id: match.id || match.event?.id,
+          name: match.name || match.event?.name || "Unknown",
+          openDate: match.openDate || match.event?.openDate || null,
+          status: match.status || "UNKNOWN",
+          inPlay: match.inPlay ?? false,
+          seriesId: series.id,
+          seriesName: series.name,
+        });
+      }
+    }
+    return matches.sort((a, b) => {
+      if (a.inPlay && !b.inPlay) return -1;
+      if (!a.inPlay && b.inPlay) return 1;
+      const dateA = a.openDate ? new Date(a.openDate).getTime() : 0;
+      const dateB = b.openDate ? new Date(b.openDate).getTime() : 0;
+      return dateA - dateB;
+    });
   }, [seriesData]);
 
   if (loading) {
@@ -144,9 +114,9 @@ export default function SportPage({
     );
   }
 
-  if (seriesWithMatches.length === 0) {
+  if (allMatches.length === 0) {
     return (
-      <Card className="p-8  mx-4 text-center border bg-card">
+      <Card className="p-8 mx-4 text-center border bg-card">
         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
           <Trophy className="h-8 w-8 text-muted-foreground" />
         </div>
@@ -157,124 +127,167 @@ export default function SportPage({
   }
 
   return (
-    <div className="w-full h-full px-4 py-1">
-      <div className="">
-        {seriesWithMatches.map((series) => (
-          <SeriesCard key={series.id} series={series} sport={sport} />
+    <div className="w-full h-full px-2 sm:px-4 py-1">
+      {/* Header row */}
+      <div className="flex items-center bg-[#2AABA4] text-white text-[10px] sm:text-xs font-bold rounded-t-lg overflow-hidden">
+        <div className="flex-1 py-2 px-3" />
+        <div className="w-[88px] sm:w-[120px] text-center py-2">1</div>
+        <div className="w-[88px] sm:w-[120px] text-center py-2 hidden sm:block">x</div>
+        <div className="w-[88px] sm:w-[120px] text-center py-2">2</div>
+      </div>
+
+      {/* Match rows */}
+      <div className="border border-border/30 rounded-b-lg overflow-hidden divide-y divide-border/20">
+        {allMatches.map((match) => (
+          <MatchRow
+            key={match.id}
+            match={match}
+            sport={sport}
+            eventTypeId={config.eventTypeId}
+          />
         ))}
       </div>
     </div>
   );
 }
 
-function SeriesCard({
-  series,
+/** Each match row fetches its own odds */
+function MatchRow({
+  match,
   sport,
+  eventTypeId,
 }: {
-  series: Series & { liveMatches: Match[]; upcomingMatches: Match[] };
+  match: FlatMatch;
   sport: string;
+  eventTypeId: string;
 }) {
-  const formatToIST = (dateString: string | null): string => {
-    if (!dateString) return "TBD";
-    try {
-      const date = new Date(dateString);
-      const istDate = new Date(date.getTime() + 5.5 * 60 * 60 * 1000);
-      const options: Intl.DateTimeFormatOptions = {
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-        timeZone: "Asia/Kolkata",
-      };
-      return istDate.toLocaleString("en-IN", options);
-    } catch {
-      return "Invalid Date";
-    }
+  // Fetch odds for this match
+  const { data: marketsData } = useQuery({
+    queryKey: ["match-odds-list", match.id],
+    queryFn: async () => {
+      const res = await sportsApi.getMarketsWithOdds(eventTypeId, match.id);
+      return (res.data?.data ?? res.data ?? []) as any[];
+    },
+    staleTime: 30 * 1000,
+    refetchInterval: 30 * 1000,
+  });
+
+  // Find the Match Odds market
+  const matchOddsMarket = marketsData?.find(
+    (m: any) => m.marketName === "Match Odds" || m.marketType === "MATCH_ODDS"
+  );
+
+  // Hide row if no market data or no Match Odds with actual prices
+  const hasAnyPrice = matchOddsMarket?.runners?.some(
+    (r: any) => (r.back?.[0]?.price != null) || (r.lay?.[0]?.price != null)
+  );
+  if (!marketsData || marketsData.length === 0 || !hasAnyPrice) return null;
+
+  const hasBookmaker = marketsData?.some(
+    (m: any) =>
+      m.marketType === "BOOKMAKER" ||
+      m.marketName?.toLowerCase().includes("bookmaker")
+  );
+  const hasFancy = marketsData?.some(
+    (m: any) =>
+      m.bettingType === "LINE" ||
+      m.marketName?.toLowerCase().includes("fancy") ||
+      m.marketName?.toLowerCase().includes("session")
+  );
+
+  const runners = matchOddsMarket?.runners || [];
+
+  // Build price data: positions 0=team1, 1=draw, 2=team2
+  // For 2-runner markets (cricket), draw column stays empty
+  const getRunnerPrice = (index: number) => {
+    const runner = runners[index];
+    if (!runner) return { back: null, lay: null };
+    return {
+      back: runner.back?.[0]?.price ?? null,
+      lay: runner.lay?.[0]?.price ?? null,
+    };
   };
 
+  const team1 = getRunnerPrice(0);
+  const draw = runners.length >= 3 ? getRunnerPrice(1) : { back: null, lay: null };
+  const team2 = getRunnerPrice(runners.length >= 3 ? 2 : 1);
+
   return (
-    <Card className="bg-secondary/40 backdrop-blur-2xl border rounded-lg p-4 hover:bg-secondary/60 transition-all duration-300 cursor-pointer">
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h3 className="font-bold text-base text-foreground">{series.name}</h3>
-            {/* <span className="flex items-center gap-1 px-2 py-1 bg-red-600 text-white text-xs font-bold rounded-full"> */}
-            {/*   <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div> */}
-            {/*   LIVE */}
-            {/* </span> */}
-          </div>
-          {/* <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded"> */}
-          {/*   ID: {series.id} */}
-          {/* </span> */}
-        </div>
-        <div className="flex items-center gap-4 text-sm">
-          <span className="text-muted-foreground">
-            {series.matches.length} match{series.matches.length !== 1 ? "es" : ""}
-            {series.liveMatches.length > 0 && (
-              <> · {series.liveMatches.length} live</>
+    <Link
+      href={`/sports/${sport}/${match.seriesId}/${match.id}`}
+      className="block bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+    >
+      <div className="flex items-center">
+        {/* Match info */}
+        <div className="flex-1 min-w-0 py-2 px-3">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">
+              {formatToIST(match.openDate)}
+            </span>
+            <span className="text-muted-foreground text-[10px]">|</span>
+            {match.inPlay && (
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                <span className="text-[10px] text-green-400 font-semibold hidden sm:inline">
+                  {match.seriesName}
+                </span>
+              </span>
             )}
-          </span>
+            {!match.inPlay && (
+              <span className="text-[10px] text-muted-foreground hidden sm:inline">
+                {match.seriesName}
+              </span>
+            )}
+            {match.inPlay && (
+              <span className="text-[10px] text-red-500 font-bold ml-1">Live Now</span>
+            )}
+          </div>
+          <h4 className="font-semibold text-xs sm:text-sm text-foreground truncate mt-0.5">
+            {match.name}
+          </h4>
+          {/* Market badges */}
+          <div className="flex gap-1 mt-0.5">
+            {matchOddsMarket && (
+              <span className="text-[8px] sm:text-[9px] bg-sky-600/80 text-white px-1 py-0.5 rounded font-medium">O</span>
+            )}
+            {hasBookmaker && (
+              <span className="text-[8px] sm:text-[9px] bg-emerald-600/80 text-white px-1 py-0.5 rounded font-medium">BM</span>
+            )}
+            {hasFancy && (
+              <span className="text-[8px] sm:text-[9px] bg-orange-500/80 text-white px-1 py-0.5 rounded font-medium">F</span>
+            )}
+          </div>
         </div>
-        <div className="space-y-3 pt-2 border-t border-border/50 ">
-          {series.liveMatches.map((match) => (
-            <Link
-              key={match.id}
-              href={`/sports/${sport}/${series.id}/${match.id}`}
-              className="block"
-            >
-              <div className="flex items-center justify-between p-2 rounded-md border-b-2 hover:bg-secondary transition-colors">
-                <div className="flex-1">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <h4 className="font-semibold text-sm text-foreground">
-                      {match.name}
-                    </h4>
-                    <span className="text-[10px] bg-red-500 text-white px-1.5 py-0.5 rounded animate-pulse">
-                      LIVE
-                    </span>
-                  </div>
-                  {match.openDate && (
-                    <p className="text-xs font-medium text-muted-foreground mt-1">
-                      {formatToIST(match.openDate)}
-                    </p>
-                  )}
-                </div>
-                <div className="text-xs bg-gray-100 dark:bg-gray-800 rounded-md px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ml-4">
-                  View →
-                </div>
-              </div>
-            </Link>
-          ))}
-          {series.upcomingMatches.map((match) => (
-            <Link
-              key={match.id}
-              href={`/sports/${sport}/${series.id}/${match.id}`}
-              className="block"
-            >
-              <div className="flex items-center justify-between p-2 rounded-md border-b-2 hover:bg-secondary transition-colors">
-                <div className="flex-1">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <h4 className="font-semibold text-sm text-foreground">
-                      {match.name}
-                    </h4>
-                    <span className="text-[10px] bg-blue-500 text-white px-1.5 py-0.5 rounded">
-                      UPCOMING
-                    </span>
-                  </div>
-                  {match.openDate && (
-                    <p className="text-xs font-medium text-muted-foreground mt-1">
-                      {formatToIST(match.openDate)}
-                    </p>
-                  )}
-                </div>
-                <div className="text-xs bg-gray-100 dark:bg-gray-800 rounded-md px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ml-4">
-                  View →
-                </div>
-              </div>
-            </Link>
-          ))}
+
+        {/* Runner 1 (team 1) */}
+        <OddsCell back={team1.back} lay={team1.lay} />
+
+        {/* Draw (hidden on small screens) */}
+        <div className="hidden sm:flex w-[120px] shrink-0">
+          <div className="flex-1 bg-[#72BBEF] text-center py-3 text-xs font-bold text-black border-l border-white/30">
+            {draw.back ?? "-"}
+          </div>
+          <div className="flex-1 bg-[#FAA9BA] text-center py-3 text-xs font-bold text-black border-l border-white/30">
+            {draw.lay ?? "-"}
+          </div>
         </div>
+
+        {/* Runner 2 (team 2) */}
+        <OddsCell back={team2.back} lay={team2.lay} />
       </div>
-    </Card>
+    </Link>
+  );
+}
+
+function OddsCell({ back, lay }: { back: number | null; lay: number | null }) {
+  return (
+    <div className="flex w-[88px] sm:w-[120px] shrink-0">
+      <div className="flex-1 bg-[#72BBEF] text-center py-3 text-[11px] sm:text-xs font-bold text-black border-l border-white/30">
+        {back ?? "-"}
+      </div>
+      <div className="flex-1 bg-[#FAA9BA] text-center py-3 text-[11px] sm:text-xs font-bold text-black border-l border-white/30">
+        {lay ?? "-"}
+      </div>
+    </div>
   );
 }

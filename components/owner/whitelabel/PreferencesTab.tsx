@@ -2,6 +2,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Whitelabel } from "../types";
+import { useCurrencies } from "@/hooks/useOwner";
+import { Loader2 } from "lucide-react";
 
 interface PreferencesTabProps {
   formData: Whitelabel;
@@ -9,6 +11,8 @@ interface PreferencesTabProps {
 }
 
 export function PreferencesTab({ formData, setFormData }: PreferencesTabProps) {
+  const { data: currencies = [], isLoading: currenciesLoading } = useCurrencies();
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-4">
@@ -39,15 +43,29 @@ export function PreferencesTab({ formData, setFormData }: PreferencesTabProps) {
             onValueChange={(value) =>
               setFormData({ ...formData, preferences: { ...formData.preferences!, currency: value } })
             }
+            disabled={currenciesLoading}
           >
-            <SelectTrigger className="bg-input border text-foreground">
-              <SelectValue />
+            <SelectTrigger className="bg-input border text-foreground min-w-[160px]">
+              {currenciesLoading ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Loading...</span>
+                </div>
+              ) : (
+                <SelectValue placeholder="Select currency" />
+              )}
             </SelectTrigger>
             <SelectContent className="bg-card border">
-              <SelectItem value="USD">USD ($)</SelectItem>
-              <SelectItem value="EUR">EUR (€)</SelectItem>
-              <SelectItem value="GBP">GBP (£)</SelectItem>
-              <SelectItem value="BTC">BTC (₿)</SelectItem>
+              {currencies.map((currency: any) => (
+                <SelectItem key={currency.id} value={currency.code}>
+                  {currency.code} - {currency.name}
+                </SelectItem>
+              ))}
+              {!currenciesLoading && currencies.length === 0 && (
+                <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                  No currencies created yet
+                </div>
+              )}
             </SelectContent>
           </Select>
         </div>
@@ -96,7 +114,6 @@ export function PreferencesTab({ formData, setFormData }: PreferencesTabProps) {
         {[
           { key: "enableLiveChat", label: "Enable Live Chat" },
           { key: "enableNotifications", label: "Enable Notifications" },
-          { key: "maintenanceMode", label: "Maintenance Mode" },
         ].map(({ key, label }) => (
           <div key={key} className="flex items-center space-x-2">
             <Switch

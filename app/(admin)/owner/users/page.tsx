@@ -10,9 +10,11 @@ import {
   ChevronUp,
   ChevronDown,
   User2Icon,
+  Info,
 } from "lucide-react";
 import { UserModal } from "@/components/owner/user-modal";
 import { ChangeStatusModal, type ChangeStatusModalUser } from "@/components/owner/change-status-modal";
+import { UserChildrenModal } from "@/components/owner/user-children-modal";
 import { Pagination } from "@/components/owner/pagination";
 import {
   Select,
@@ -41,6 +43,7 @@ export default function UsersPage() {
   const [isCreatingUser, setIsCreatingUser] = useState(false);
   const userModal = useModal<any>();
   const [statusModalUser, setStatusModalUser] = useState<ChangeStatusModalUser | null>(null);
+  const [childrenModalUser, setChildrenModalUser] = useState<{ id: string; username: string } | null>(null);
 
   const { data: users = [], isLoading, error } = useOwnerUsers();
   const updateUserMutation = useUpdateUser();
@@ -50,17 +53,23 @@ export default function UsersPage() {
 
   const debouncedSearch = useDebounce(searchTerm, 300);
 
+  // Only show users directly created by the current logged-in user
+  const myUsers = useMemo(
+    () => currentUser?.id ? users.filter((u: any) => (u.createdBy ?? u.addedBy) === currentUser.id) : users,
+    [users, currentUser?.id]
+  );
+
   // Derive status for filtering (active = account + parent account both active)
   const usersWithFilterStatus = useMemo(
     () =>
-      users.map((u) => ({
+      myUsers.map((u) => ({
         ...u,
         status:
           (u.accountStatus !== false && u.parentAccountStatus !== false)
             ? "active"
             : "suspended",
       })),
-    [users]
+    [myUsers]
   );
 
   const { filters, filteredData, updateFilter } = useFilters({
@@ -531,7 +540,7 @@ export default function UsersPage() {
                         </Badge>
                       </td>
                       <td className="py-3 px-2 hidden lg:table-cell text-sm text-muted-foreground">
-                        {(user as { addedByUsername?: string | null }).addedByUsername ?? "Owner"}
+                        {(user as { addedByUsername?: string | null }).addedByUsername ?? "System"}
                       </td>
                       <td className="py-3 px-2 hidden lg:table-cell text-sm text-muted-foreground">
                         {(user as { whitelabelName?: string | null }).whitelabelName ?? "—"}
@@ -592,6 +601,18 @@ export default function UsersPage() {
                           >
                             <Edit className="h-3 w-3" />
                           </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setChildrenModalUser({ id: user.id, username: user.username });
+                            }}
+                            title="View users created by this user"
+                            className="h-8 w-8 p-0"
+                          >
+                            <Info className="h-3 w-3" />
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -637,6 +658,12 @@ export default function UsersPage() {
         onSave={handleSaveUser}
         isUpdating={updateUserMutation.isPending || isCreatingUser}
         isUpdatingProfile={updateProfileMutation.isPending}
+      />
+
+      <UserChildrenModal
+        open={childrenModalUser != null}
+        onClose={() => setChildrenModalUser(null)}
+        user={childrenModalUser}
       />
     </div>
   );

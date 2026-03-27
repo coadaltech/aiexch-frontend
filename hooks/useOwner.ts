@@ -305,6 +305,21 @@ export const useUpdateUser = () => {
   });
 };
 
+export const useUserCreatedUsers = (userId: string | null) => {
+  return useQuery({
+    queryKey: ["user-created-users", userId],
+    queryFn: () =>
+      ownerApi.getUserCreatedUsers(userId!).then((res) =>
+        (res.data.data as any[]).map((u: any) => ({
+          ...u,
+          role: normalizeRole(u.role),
+          membership: normalizeMembership(u.membership),
+        }))
+      ),
+    enabled: !!userId,
+  });
+};
+
 // Vouchers
 export const useVouchers = () => {
   return useQuery({
@@ -806,12 +821,35 @@ export const useUpdateMarketSettings = () => {
   });
 };
 
+export const useListCustomMarkets = (params?: { search?: string; status?: string; limit?: number; offset?: number }) => {
+  return useQuery({
+    queryKey: ["custom-markets-list", params],
+    queryFn: () =>
+      ownerApi.listCustomMarkets(params).then((res) => res.data.data),
+  });
+};
+
+export const useUpdateCustomMarketDetails = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ marketId, ...data }: any) =>
+      ownerApi.updateCustomMarketDetails(marketId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["custom-markets-list"] });
+      queryClient.invalidateQueries({ queryKey: ["custom-market-details"] });
+      toast.success("Custom market updated");
+    },
+    onError: () => toast.error("Failed to update custom market"),
+  });
+};
+
 export const useCreateCustomMarket = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: any) => ownerApi.createCustomMarket(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["market-settings"] });
+      queryClient.invalidateQueries({ queryKey: ["custom-markets-list"] });
       toast.success("Custom market created");
     },
     onError: () => toast.error("Failed to create custom market"),
@@ -849,6 +887,7 @@ export const useDeleteCustomMarket = () => {
     mutationFn: (marketId: string) => ownerApi.deleteCustomMarket(marketId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["market-settings"] });
+      queryClient.invalidateQueries({ queryKey: ["custom-markets-list"] });
       toast.success("Custom market deleted");
     },
     onError: () => toast.error("Failed to delete custom market"),
@@ -869,5 +908,63 @@ export const useOddsHistory = (
     queryFn: () =>
       ownerApi.getOddsHistory(params!).then((res) => res.data.data),
     enabled: !!params && !!(params.marketId || params.eventId),
+  });
+};
+
+// ── Matka Shifts ────────────────────────────────────────────────────────────
+export const useOwnerMatkaShifts = (date?: string) => {
+  return useQuery({
+    queryKey: ["owner-matka-shifts", date],
+    queryFn: () =>
+      ownerApi.getMatkaShifts(date).then((res) => res.data.data),
+  });
+};
+
+export const useCreateMatkaShift = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: any) => ownerApi.createMatkaShift(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["owner-matka-shifts"] });
+      toast.success("Shift created successfully");
+    },
+    onError: () => toast.error("Failed to create shift"),
+  });
+};
+
+export const useUpdateMatkaShift = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...data }: any) => ownerApi.updateMatkaShift(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["owner-matka-shifts"] });
+      toast.success("Shift updated successfully");
+    },
+    onError: () => toast.error("Failed to update shift"),
+  });
+};
+
+export const useDeleteMatkaShift = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => ownerApi.deleteMatkaShift(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["owner-matka-shifts"] });
+      toast.success("Shift deleted successfully");
+    },
+    onError: () => toast.error("Failed to delete shift"),
+  });
+};
+
+export const useSetMatkaResult = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, result }: { id: string; result: number }) =>
+      ownerApi.setMatkaResult(id, result),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["owner-matka-shifts"] });
+      toast.success("Result set successfully");
+    },
+    onError: () => toast.error("Failed to set result"),
   });
 };

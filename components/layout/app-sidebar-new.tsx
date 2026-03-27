@@ -8,6 +8,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import {
   Trophy,
@@ -26,36 +27,33 @@ import {
   Dice6,
   ChevronDown,
   ChevronRight,
+  PanelLeftClose,
+  Loader2,
 } from "lucide-react";
 import { MenuGroup, MenuItem } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
-import { Series } from "@/components/sports/types";
+import { Series, Match } from "@/components/sports/types";
 import axios from "axios";
 import { useSeries } from "@/hooks/useSportsApi";
-import { SPORT_ROUTES, type SportSlug } from "@/lib/sports-config";
-
-type SportRouteKey = SportSlug;
+import { SPORT_ROUTES } from "@/lib/sports-config";
 
 // Sport link mapping derived from shared config
-const SPORT_LINK_MAPPING: Record<string, string> = Object.fromEntries(
-  Object.entries(SPORT_ROUTES).map(([, config]) => [
-    config.eventTypeId,
-    `/sports/${config.basePath}`,
-  ])
-);
-// Keep fallbacks for other event types that may come from API
-SPORT_LINK_MAPPING["-4"] = "/sports/-4";
-SPORT_LINK_MAPPING["-17"] = "/sports/-17";
+const SPORT_LINK_MAPPING: Record<string, { basePath: string; eventTypeId: string }> =
+  Object.fromEntries(
+    Object.entries(SPORT_ROUTES).map(([, config]) => [
+      config.eventTypeId,
+      { basePath: config.basePath, eventTypeId: config.eventTypeId },
+    ])
+  );
 
-// Helper: Get menu groups
-const getMenuGroups = (isLoggedIn: boolean, games: any[]): MenuGroup[] => {
+// Helper: Get menu groups (without Sport sub-items since accordion handles that)
+const getMenuGroups = (isLoggedIn: boolean): MenuGroup[] => {
   const baseGroups: MenuGroup[] = [
     {
       title: "",
       items: [
         { title: "Home", icon: Home, link: "/" },
         { title: "Casino", icon: Dice6, link: "/casino" },
-        { title: "Sport", icon: Trophy, link: "/sports", subItems: games },
         { title: "Promotions", icon: Gift, link: "/promotions" },
       ],
     },
@@ -92,103 +90,216 @@ const getMenuGroups = (isLoggedIn: boolean, games: any[]): MenuGroup[] => {
   ];
 };
 
-// Helper: Detect sport route
-const detectSportRoute = (pathname: string): SportRouteKey | null => {
-  for (const [key, config] of Object.entries(SPORT_ROUTES)) {
-    const { basePath, eventTypeId } = config;
-    if (
-      pathname === `/sports/${basePath}` ||
-      pathname.startsWith(`/sports/${basePath}/`) ||
-      pathname.startsWith(`/sports/${eventTypeId}/`)
-    ) {
-      return key as SportRouteKey;
-    }
-  }
-  return null;
-};
-
-// Helper: Check if sports list route
-const isSportsListRoute = (pathname: string): boolean => {
-  if (pathname === "/sports" || pathname === "/sports/all" || pathname === "/live") {
-    return true;
-  }
-
-  const segments = pathname.split("/").filter(Boolean);
-  if (segments.length !== 2 || segments[0] !== "sports") {
-    return false;
-  }
-
-  // Check if it's not a known sport route
-  return !Object.values(SPORT_ROUTES).some(
-    (config) => segments[1] === config.basePath || segments[1] === config.eventTypeId
-  );
-};
-
-// Helper: Get match ID from path
-const getMatchIdFromPath = (pathname: string, basePath: string, eventTypeId: string): string | null => {
-  const segments = pathname.split("/").filter(Boolean);
-  const isMatchByName = segments.length === 4 && segments[0] === "sports" && segments[1] === basePath;
-  const isMatchById = segments.length === 4 && segments[0] === "sports" && segments[1] === eventTypeId;
-  return isMatchByName || isMatchById ? segments[3] : null;
-};
-
 // Helper: Check if item is active
 const isItemActive = (itemLink: string | undefined, pathname: string): boolean => {
   if (!itemLink) return false;
   return pathname === itemLink || pathname.startsWith(itemLink + "/");
 };
 
-// Helper: Check if series is active
-const isSeriesActive = (
-  series: Series,
-  pathname: string,
-  basePath: string,
-  eventTypeId: string
-): boolean => {
-  const matchId = getMatchIdFromPath(pathname, basePath, eventTypeId);
-  return (
-    pathname === `/sports/${basePath}/${series.id}` ||
-    pathname === `/sports/${eventTypeId}/${series.id}` ||
-    (matchId !== null &&
-      series.matches?.some(
-        (match) => (match as any).id === matchId || match.event?.id === matchId
-      )) ||
-    false
+/** Accordion item for a single sport — fetches series on expand */
+function SportAccordionItem({
+  sport,
+  pathname,
+}: {
+  sport: { title: string; eventTypeId: string; basePath: string };
+  pathname: string;
+}) {
+  const router = useRouter();
+  const [expanded, setExpanded] = useState(false);
+  const [expandedSeries, setExpandedSeries] = useState<string[]>([]);
+
+  const { data: seriesData = [], isLoading } = useSeries(
+    sport.eventTypeId,
+    expanded // only fetch when expanded
   );
-};
+
+  // Auto-expand sport if the current path is within this sport
+  useEffect(() => {
+    if (
+      pathname.startsWith(`/sports/${sport.basePath}`) ||
+      pathname.startsWith(`/sports/${sport.eventTypeId}`)
+    ) {
+      setExpanded(true);
+    }
+  }, [pathname, sport.basePath, sport.eventTypeId]);
+
+  // Auto-expand the series that contains the current match
+  useEffect(() => {
+    if (!expanded || seriesData.length === 0) return;
+    const segments = pathname.split("/").filter(Boolean);
+    // /sports/{sport}/{seriesId}/...
+    if (segments.length >= 3 && segments[0] === "sports") {
+      const seriesId = segments[2];
+      if (seriesId && !expandedSeries.includes(seriesId)) {
+        setExpandedSeries((prev) => [...prev, seriesId]);
+      }
+    }
+  }, [expanded, seriesData, pathname, expandedSeries]);
+
+  const isSportActive =
+    pathname.startsWith(`/sports/${sport.basePath}`) ||
+    pathname.startsWith(`/sports/${sport.eventTypeId}`);
+
+  const toggleSeries = (seriesId: string) => {
+    setExpandedSeries((prev) =>
+      prev.includes(seriesId)
+        ? prev.filter((id) => id !== seriesId)
+        : [...prev, seriesId]
+    );
+  };
+
+  return (
+    <div>
+      {/* Sport Header */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer ${
+          isSportActive
+            ? "bg-[#3730a3] text-white shadow-md"
+            : "text-white/90 hover:bg-[#3730a3]/20"
+        }`}
+      >
+        <Trophy className="h-4 w-4 flex-shrink-0" />
+        <span className="flex-1 text-left">{sport.title}</span>
+        {expanded ? (
+          <ChevronDown className="h-3.5 w-3.5 text-white/60" />
+        ) : (
+          <ChevronRight className="h-3.5 w-3.5 text-white/60" />
+        )}
+      </button>
+
+      {/* Series List */}
+      {expanded && (
+        <div className="ml-3 mt-0.5 border-l border-white/10 pl-2">
+          {isLoading ? (
+            <div className="flex items-center gap-2 px-3 py-2 text-xs text-white/50">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Loading...
+            </div>
+          ) : seriesData.length === 0 ? (
+            <div className="px-3 py-2 text-xs text-white/40">No matches available</div>
+          ) : (
+            seriesData.map((series: Series) => {
+              const isSeriesExpanded = expandedSeries.includes(series.id);
+              const isSeriesActive =
+                pathname.includes(`/${series.id}`) && isSportActive;
+
+              return (
+                <div key={series.id}>
+                  {/* Series Header */}
+                  <button
+                    onClick={() => toggleSeries(series.id)}
+                    className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-xs font-medium transition-all duration-200 cursor-pointer ${
+                      isSeriesActive
+                        ? "bg-[#3730a3]/50 text-white"
+                        : "text-white/75 hover:bg-[#3730a3]/15 hover:text-white"
+                    }`}
+                  >
+                    <span className="flex-1 text-left truncate">{series.name}</span>
+                    {series.matches && series.matches.length > 0 && (
+                      isSeriesExpanded ? (
+                        <ChevronDown className="h-3 w-3 text-white/50 flex-shrink-0" />
+                      ) : (
+                        <ChevronRight className="h-3 w-3 text-white/50 flex-shrink-0" />
+                      )
+                    )}
+                  </button>
+
+                  {/* Matches List */}
+                  {isSeriesExpanded && series.matches && series.matches.length > 0 && (
+                    <div className="ml-2 border-l border-white/10 pl-2 mb-1">
+                      {series.matches.map((match: Match) => {
+                        const matchId = match.event?.id || (match as any).id || (match as any).bfid;
+                        const matchName =
+                          match.event?.name ||
+                          (match as any).name ||
+                          (match as any).eventName ||
+                          (match as any).matchName ||
+                          (match as any).selections ||
+                          "Unknown Match";
+                        const isMatchActive = pathname.includes(`/${matchId}`);
+
+                        // Split "Team A v Team B" into two lines
+                        const nameParts = matchName.split(/ v | vs /i);
+                        const team1 = nameParts[0]?.trim();
+                        const team2 = nameParts[1]?.trim();
+
+                        return (
+                          <button
+                            key={matchId}
+                            onClick={() =>
+                              router.push(
+                                `/sports/${sport.basePath}/${series.id}/${matchId}`
+                              )
+                            }
+                            className={`w-full text-left px-2.5 py-1.5 rounded text-[11px] transition-all duration-150 cursor-pointer ${
+                              isMatchActive
+                                ? "bg-[#3730a3]/40 text-white font-medium"
+                                : "text-white/60 hover:text-white hover:bg-white/5"
+                            }`}
+                            title={matchName}
+                          >
+                            {team2 ? (
+                              <div className="flex flex-col leading-tight">
+                                <span className="truncate">{team1}</span>
+                                <span className="truncate text-[10px] opacity-70">v {team2}</span>
+                              </div>
+                            ) : (
+                              <span className="truncate block">{matchName}</span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function AppSidebar() {
   const { isLoggedIn, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const { toggleSidebar } = useSidebar();
 
   const [mounted, setMounted] = useState(false);
-  const [expandedItems, setExpandedItems] = useState<string[]>(["Sport"]);
   const [loadingGames, setLoadingGames] = useState(false);
-  const [games, setGames] = useState<any[]>([]);
+  const [sports, setSports] = useState<
+    { title: string; eventTypeId: string; basePath: string }[]
+  >([]);
 
-  // Detect current route type
-  const sportRoute = detectSportRoute(pathname);
-  const isSportsList = isSportsListRoute(pathname);
   const isOwnerRoute = pathname.includes("/owner");
+  const isSportsPage = pathname.startsWith("/sports");
 
   // Fetch sports list
   useEffect(() => {
     const fetchSportsList = async () => {
       try {
         setLoadingGames(true);
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/sports/sports-list`);
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/sports/sports-list`
+        );
         const data = await response.data.data;
 
         const transformedData = data.map((sport: any) => {
-          const eventType = String(sport.id || sport.eventType || "");
-          const sportName = sport.name || sport.title || sport.displayName || "Unknown Sport";
-          const link = SPORT_LINK_MAPPING[eventType] || `/sports/${eventType}`;
-
-          return { title: sportName, link };
+          const eventTypeId = String(sport.id || sport.eventType || "");
+          const sportName =
+            sport.name || sport.title || sport.displayName || "Unknown Sport";
+          const config = SPORT_LINK_MAPPING[eventTypeId];
+          return {
+            title: sportName,
+            eventTypeId,
+            basePath: config?.basePath || eventTypeId,
+          };
         });
 
-        setGames(transformedData);
+        setSports(transformedData);
       } catch (error) {
         console.error("Error fetching sports list:", error);
       } finally {
@@ -205,16 +316,10 @@ export function AppSidebar() {
     setMounted(true);
   }, []);
 
-  // Fetch series data for current sport route
-  const sportConfig = sportRoute ? SPORT_ROUTES[sportRoute] : null;
-  const { data: seriesData = [], isLoading: loadingSeries } = useSeries(
-    sportConfig?.eventTypeId || null
-  );
-
   // Menu groups
   const menuGroups = useMemo(
-    () => getMenuGroups(mounted ? isLoggedIn : false, games),
-    [mounted, isLoggedIn, games]
+    () => getMenuGroups(mounted ? isLoggedIn : false),
+    [mounted, isLoggedIn]
   );
 
   // Handle item click
@@ -223,15 +328,7 @@ export function AppSidebar() {
       logout();
       return;
     }
-
-    if (item.subItems) {
-      if (item.title === "Sport") router.push("/sports");
-      // setExpandedItems((prev) =>
-      //   prev.includes(item.title)
-      //     ? prev.filter((title) => title !== item.title)
-      //     : [...prev, item.title]
-      // );
-    } else if (item.link) {
+    if (item.link) {
       router.push(item.link);
     }
   };
@@ -240,11 +337,12 @@ export function AppSidebar() {
   if (isOwnerRoute) return null;
 
   // Loading state
-  const isLoading = !mounted || loadingGames || loadingSeries;
+  const isLoading = !mounted || loadingGames;
 
   // Sidebar classes
-  const sidebarClassName = "w-64 fixed h-[calc(100vh-8rem)] ml-2 rounded-2xl bg-[#1a2b47] relative overflow-hidden";
-  const contentClassName = "p-3 pt-4 h-full bg-gradient-to-br from-slate-900 to-slate-800 pb-6";
+  const sidebarClassName = "ml-2 rounded-2xl bg-[#1a2b47] overflow-hidden";
+  const contentClassName =
+    "p-3 pt-2 h-full bg-gradient-to-br from-slate-900 to-slate-800 pb-6";
 
   // Render loading skeleton
   if (isLoading) {
@@ -274,196 +372,170 @@ export function AppSidebar() {
     );
   }
 
-  // Single return statement with all rendering logic
   return (
     <Sidebar className={sidebarClassName}>
       <SidebarContent className={contentClassName}>
-        {/* Sports List View */}
-        {isSportsList && (
-          <>
-            <div className="mb-3 px-2">
-              <h3 className="text-xs font-semibold text-blue-300 uppercase tracking-wider">
-                {pathname === "/live" || pathname === "/sports/all" ? "Live Sports" : "Sports"}
-              </h3>
-            </div>
-            <SidebarMenu className="space-y-1">
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  className={`group relative w-full h-full justify-start px-3 py-3 rounded-lg transition-all duration-200 cursor-pointer ${pathname === "/sports" || pathname === "/sports/all"
-                    ? "bg-[#3730a3] hover:bg-[#3730a3]/80 text-white shadow-md"
-                    : "bg-transparent text-white hover:bg-[#3730a3]/20 border border-transparent"
-                    }`}
-                  onClick={() => router.push("/sports")}
-                >
-                  <div className="relative flex items-center w-full gap-3">
-                    <Trophy className="h-5 w-5 transition-all duration-200 flex-shrink-0 text-white" />
-                    <span className="flex-1 text-sm font-medium transition-colors duration-200 text-white">
-                      All
-                    </span>
-                  </div>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              {games.map((sport) => {
-                const isActive = isItemActive(sport.link, pathname);
-                return (
-                  <SidebarMenuItem key={sport.title}>
-                    <SidebarMenuButton
-                      className={`group relative w-full h-full justify-start px-3 py-3 rounded-lg transition-all duration-200 cursor-pointer ${isActive
-                        ? "bg-[#3730a3] hover:bg-[#3730a3]/80 text-white shadow-md"
-                        : "bg-transparent text-white hover:bg-[#3730a3]/20 border border-transparent"
-                        }`}
-                      onClick={() => router.push(sport.link)}
-                    >
-                      <div className="relative flex items-center w-full gap-3">
-                        <Trophy
-                          className={`h-5 w-5 transition-all duration-200 flex-shrink-0 ${isActive ? "text-white" : "text-white/80 group-hover:text-white"
-                            }`}
-                        />
-                        <span
-                          className={`flex-1 text-sm font-medium transition-colors duration-200 ${isActive ? "text-white" : "text-white/90 group-hover:text-white"
-                            }`}
-                        >
-                          {sport.title}
-                        </span>
-                      </div>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </>
-        )}
+        {/* Close / collapse button */}
+        <div className="flex justify-end mb-1">
+          <button
+            onClick={toggleSidebar}
+            className="p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+            title="Close sidebar"
+          >
+            <PanelLeftClose className="h-4 w-4" />
+          </button>
+        </div>
 
-        {/* Sport Series View */}
-        {sportRoute && sportConfig && (
-          <>
-            <div className="mb-3 px-2">
+        {isSportsPage ? (
+          /* ── Sports pages: only show sports accordion tree ── */
+          <div>
+            <div className="mb-2 px-2">
               <h3 className="text-xs font-semibold text-blue-300 uppercase tracking-wider">
-                {sportConfig.title}
+                Sports
               </h3>
             </div>
-            <SidebarMenu className="space-y-1">
-              {seriesData.length === 0 ? (
-                <div className="px-3 py-2 text-sm text-white/60">{sportConfig.emptyText}</div>
-              ) : (
-                seriesData.map((series: Series) => {
-                  const isActive = isSeriesActive(series, pathname, sportConfig.basePath, sportConfig.eventTypeId);
-                  return (
-                    <SidebarMenuItem key={series.id}>
+            <div className="space-y-0.5">
+              {sports.map((sport) => (
+                <SportAccordionItem
+                  key={sport.eventTypeId}
+                  sport={sport}
+                  pathname={pathname}
+                />
+              ))}
+              {/* Extra game links */}
+              {[
+                { title: "Matka", href: "/matka" },
+                { title: "Lotry", href: "/lotry" },
+                { title: "Skil Games", href: "/skil-games" },
+                { title: "Jambo", href: "/jambo" },
+              ].map((game) => (
+                <button
+                  key={game.title}
+                  onClick={() => router.push(game.href)}
+                  className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer ${
+                    pathname.startsWith(game.href)
+                      ? "bg-[#3730a3] text-white shadow-md"
+                      : "text-white/90 hover:bg-[#3730a3]/20"
+                  }`}
+                >
+                  <Trophy className="h-4 w-4 flex-shrink-0" />
+                  <span className="flex-1 text-left">{game.title}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          /* ── Non-sport pages: full menu ── */
+          <>
+            {/* Navigation Menu */}
+            <div className="space-y-1 mb-4">
+              {menuGroups[0].items.map((item) => {
+                const isActive = isItemActive(item.link, pathname);
+                return (
+                  <SidebarMenu key={item.title} className="space-y-0">
+                    <SidebarMenuItem>
                       <SidebarMenuButton
-                        className={`group relative w-full h-full justify-start px-3 py-3 rounded-lg transition-all duration-200 cursor-pointer ${isActive
-                          ? "bg-[#3730a3] hover:bg-[#3730a3]/80 text-white shadow-md"
-                          : "bg-transparent text-white hover:bg-[#3730a3]/20 border border-transparent"
-                          }`}
-                        onClick={() => router.push(`/sports/${sportConfig.basePath}/${series.id}`)}
+                        className={`group relative w-full h-full justify-start px-3 py-2.5 rounded-lg transition-all duration-200 cursor-pointer ${
+                          isActive
+                            ? "bg-[#3730a3] hover:bg-[#3730a3]/80 text-white shadow-md"
+                            : "bg-transparent text-white hover:bg-[#3730a3]/20 border border-transparent"
+                        }`}
+                        onClick={() => handleItemClick(item)}
                       >
                         <div className="relative flex items-center w-full gap-3">
-                          <Trophy
-                            className={`h-5 w-5 transition-all duration-200 flex-shrink-0 ${isActive ? "text-white" : "text-white/80 group-hover:text-white"
-                              }`}
-                          />
-                          <span
-                            className={`flex-1 text-sm font-medium transition-colors duration-200 ${isActive ? "text-white" : "text-white/90 group-hover:text-white"
-                              }`}
-                          >
-                            {series.name}
+                          <item.icon className="h-5 w-5 flex-shrink-0 text-white" />
+                          <span className="flex-1 text-sm font-medium text-white">
+                            {item.title}
                           </span>
                         </div>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
-                  );
-                })
-              )}
-            </SidebarMenu>
-          </>
-        )}
+                  </SidebarMenu>
+                );
+              })}
+            </div>
 
-        {/* Default Menu View */}
-        {!isSportsList && !sportRoute && (
-          <div className="space-y-1">
-            {menuGroups.map((group) => (
-              <div key={group.title} className="mb-6">
-                {group.title && (
-                  <div className="mb-3 px-2">
-                    <h3 className="text-xs font-semibold text-blue-300 uppercase tracking-wider">
-                      {group.title}
-                    </h3>
-                  </div>
-                )}
-                <SidebarMenu className="space-y-1">
-                  {group.items.map((item) => {
-                    const isActive = isItemActive(item.link, pathname);
-                    const isLogout = item.title === "Logout";
-                    const hasSubItems = item.subItems && item.subItems.length > 0;
-                    const isExpanded = hasSubItems && expandedItems.includes(item.title);
-
-                    return (
-                      <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton
-                          className={`group relative w-full justify-start px-3 py-3 rounded-lg transition-all duration-200 cursor-pointer ${isLogout
-                            ? "bg-[#3730a3]/20 text-white hover:bg-[#3730a3]/30 border border-[#3730a3]/30"
-                            : isActive
-                              ? "bg-[#3730a3] hover:bg-[#3730a3]/80 text-white shadow-md"
-                              : "bg-transparent text-white hover:bg-[#3730a3]/20 border border-transparent"
-                            }`}
-                          onClick={() => handleItemClick(item)}
-                        >
-                          <div className="relative flex items-center w-full gap-3">
-                            <item.icon
-                              className={`h-5 w-5 transition-all duration-200 flex-shrink-0 ${isActive || isLogout
-                                ? "text-white"
-                                : "text-white/80 group-hover:text-white"
-                                }`}
-                            />
-                            <span
-                              className={`flex-1 text-sm font-medium transition-colors duration-200 ${isActive || isLogout
-                                ? "text-white"
-                                : "text-white/90 group-hover:text-white"
-                                }`}
-                            >
-                              {item.title}
-                            </span>
-                            {hasSubItems && item.title !== "Sport" && (
-                              isExpanded ? (
-                                <ChevronDown
-                                  className={`h-4 w-4 transition-transform duration-200 flex-shrink-0 ${isActive ? "text-white" : "text-white/60 group-hover:text-white"
-                                    }`}
-                                />
-                              ) : (
-                                <ChevronRight
-                                  className={`h-4 w-4 transition-transform duration-200 flex-shrink-0 ${isActive ? "text-white" : "text-white/60 group-hover:text-white"
-                                    }`}
-                                />
-                              )
-                            )}
-                          </div>
-                        </SidebarMenuButton>
-                        {hasSubItems && isExpanded && (
-                          <div className="mt-1 ml-4 space-y-0.5 border-l-2 border-[#3730a3]/30 pl-3 py-1">
-                            {item.subItems.map((subItem) => {
-                              const isSubActive = isItemActive(subItem.link, pathname);
-                              return (
-                                <SidebarMenuButton
-                                  key={subItem.title}
-                                  className={`group relative w-full justify-start px-3 py-2 text-sm rounded-md transition-all duration-200 cursor-pointer ${isSubActive
-                                    ? "bg-[#3730a3]/30 text-white border-l-2 border-[#3730a3]"
-                                    : "text-white/70 hover:text-white hover:bg-[#3730a3]/10"
-                                    }`}
-                                  onClick={() => router.push(subItem.link)}
-                                >
-                                  <span className="relative font-normal">{subItem.title}</span>
-                                </SidebarMenuButton>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
+            {/* Sports Accordion Tree */}
+            <div className="mb-4">
+              <div className="mb-2 px-2">
+                <h3 className="text-xs font-semibold text-blue-300 uppercase tracking-wider">
+                  Sports
+                </h3>
               </div>
-            ))}
-          </div>
+              <div className="space-y-0.5">
+                {sports.map((sport) => (
+                  <SportAccordionItem
+                    key={sport.eventTypeId}
+                    sport={sport}
+                    pathname={pathname}
+                  />
+                ))}
+                {/* Extra game links */}
+                {[
+                  { title: "Matka", href: "/matka" },
+                  { title: "Lotry", href: "/lotry" },
+                  { title: "Skil Games", href: "/skil-games" },
+                  { title: "Jambo", href: "/jambo" },
+                ].map((game) => (
+                  <button
+                    key={game.title}
+                    onClick={() => router.push(game.href)}
+                    className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer ${
+                      pathname.startsWith(game.href)
+                        ? "bg-[#3730a3] text-white shadow-md"
+                        : "text-white/90 hover:bg-[#3730a3]/20"
+                    }`}
+                  >
+                    <Trophy className="h-4 w-4 flex-shrink-0" />
+                    <span className="flex-1 text-left">{game.title}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Remaining menu groups (Account, Support, etc.) */}
+            <div className="space-y-1">
+              {menuGroups.slice(1).map((group) => (
+                <div key={group.title} className="mb-4">
+                  {group.title && (
+                    <div className="mb-2 px-2">
+                      <h3 className="text-xs font-semibold text-blue-300 uppercase tracking-wider">
+                        {group.title}
+                      </h3>
+                    </div>
+                  )}
+                  <SidebarMenu className="space-y-0.5">
+                    {group.items.map((item) => {
+                      const isActive = isItemActive(item.link, pathname);
+                      const isLogoutItem = item.title === "Logout";
+
+                      return (
+                        <SidebarMenuItem key={item.title}>
+                          <SidebarMenuButton
+                            className={`group relative w-full justify-start px-3 py-2.5 rounded-lg transition-all duration-200 cursor-pointer ${
+                              isLogoutItem
+                                ? "bg-[#3730a3]/20 text-white hover:bg-[#3730a3]/30 border border-[#3730a3]/30"
+                                : isActive
+                                  ? "bg-[#3730a3] hover:bg-[#3730a3]/80 text-white shadow-md"
+                                  : "bg-transparent text-white hover:bg-[#3730a3]/20 border border-transparent"
+                            }`}
+                            onClick={() => handleItemClick(item)}
+                          >
+                            <div className="relative flex items-center w-full gap-3">
+                              <item.icon className="h-5 w-5 flex-shrink-0 text-white" />
+                              <span className="flex-1 text-sm font-medium text-white">
+                                {item.title}
+                              </span>
+                            </div>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
+                  </SidebarMenu>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </SidebarContent>
     </Sidebar>

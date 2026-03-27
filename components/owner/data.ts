@@ -2,51 +2,67 @@ import {
   BarChart3,
   Bell,
   CreditCard,
+  Dice6,
   Gift,
-  Globe,
   Home as HomeIcon,
-  Palette,
   QrCode,
   Settings,
-  Ticket,
   Trophy,
   Users,
   Wallet,
   Image,
   Banknote,
   LineChart,
+  Megaphone,
+  Ticket,
+  PanelTop,
+  MessageSquare,
+  ListOrdered,
+  ArrowUpCircle,
+  ArrowDownCircle,
+  CreditCard as CreditCardAlt,
+  Globe,
+  Wrench,
 } from "lucide-react";
 
 export const navigation: {
   name: string;
   href?: string;
   icon: React.ComponentType<any>;
-  subItems?: { name: string; href: string }[];
+  subItems?: { name: string; href: string; icon: React.ComponentType<any> }[];
 }[] = [
-  { name: "Home", href: "/", icon: HomeIcon },
+  // { name: "Home", href: "/", icon: HomeIcon },
   { name: "Dashboard", href: "/owner", icon: BarChart3 },
   { name: "Users", href: "/owner/users", icon: Users },
-  { name: "Sports Games", href: "/owner/sports-games", icon: Trophy },
-  { name: "Market Management", href: "/owner/market-management", icon: LineChart },
+  {
+    name: "Sports Games",
+    icon: Trophy,
+    subItems: [
+      { name: "Sports Games", href: "/owner/sports-games", icon: Trophy },
+      { name: "Market Management", href: "/owner/market-management", icon: LineChart },
+      { name: "Custom Markets", href: "/owner/custom-markets", icon: Wrench },
+      { name: "Matka", href: "/owner/matka", icon: Dice6 },
+    ],
+  },
   { name: "Home Sections", href: "/owner/home-sections", icon: Image },
   {
     name: "Marketing",
     icon: Gift,
     subItems: [
-      { name: "Promotions", href: "/owner/promotions" },
-      { name: "Promo Codes", href: "/owner/promocodes" },
-      { name: "Banners", href: "/owner/banners" },
-      { name: "Popups", href: "/owner/popups" },
+      { name: "Promotions", href: "/owner/promotions", icon: Megaphone },
+      { name: "Promo Codes", href: "/owner/promocodes", icon: Ticket },
+      { name: "Banners", href: "/owner/banners", icon: PanelTop },
+      { name: "Popups", href: "/owner/popups", icon: MessageSquare },
     ],
   },
   {
     name: "Vouchers",
     icon: CreditCard,
     subItems: [
-      { name: "All Vouchers", href: "/owner/vouchers" },
-      { name: "Limit Voucher", href: "/owner/vouchers/limit" },
-      { name: "Deposit Voucher", href: "/owner/vouchers/deposit" },
-      { name: "Withdraw Voucher", href: "/owner/vouchers/withdraw" },
+      { name: "All Vouchers", href: "/owner/vouchers", icon: ListOrdered },
+      { name: "Limit Voucher", href: "/owner/vouchers/limit", icon: CreditCardAlt },
+      { name: "Deposit Voucher", href: "/owner/vouchers/deposit", icon: ArrowDownCircle },
+      { name: "Withdraw Voucher", href: "/owner/vouchers/withdraw", icon: ArrowUpCircle },
     ],
   },
   { name: "Notifications", href: "/owner/notifications", icon: Bell },
@@ -61,9 +77,9 @@ export const navigation: {
     name: "Configuration",
     icon: Settings,
     subItems: [
-      { name: "White Labels", href: "/owner/whitelabels" },
+      { name: "White Labels", href: "/owner/whitelabels", icon: Globe },
       // { name: "Domains", href: "/owner/domains" },
-      { name: "Settings", href: "/owner/settings" },
+      { name: "Settings", href: "/owner/settings", icon: Wrench },
     ],
   },
 ];
