@@ -5,6 +5,8 @@ import HomePromotionsSection from "@/components/home-promotions-section";
 import DynamicHomeSections from "@/components/dynamic-home-sections";
 import QuickLinksSection from "@/components/quick-links-section";
 import Footer from '../../components/layout/footer'
+import { CricketMatchesList } from "@/components/sports/cricket-matches-list";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, Suspense } from "react";
 import { toast } from "sonner";
@@ -53,7 +55,29 @@ const Homepage = () => {
 
         <HomeBanner />
 
-        <div className=" px-4 py-4 sm:py-6 w-full">
+        <div className="px-4 py-4 sm:py-6 w-full space-y-6">
+          {/* Cricket Matches Section */}
+          <section>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="w-1 h-6 bg-primary rounded-full" />
+                <h2 className="text-lg sm:text-xl font-bold text-white">
+                  Cricket
+                </h2>
+                <span className="text-xs text-muted-foreground bg-white/5 rounded-full px-2 py-0.5">
+                  Live & Upcoming
+                </span>
+              </div>
+              <Link
+                href="/sports/cricket"
+                className="text-xs sm:text-sm text-primary hover:text-primary/80 font-medium transition-colors"
+              >
+                View All
+              </Link>
+            </div>
+            <CricketMatchesList sport="cricket" eventTypeId="4" />
+          </section>
+
           <HomePromotionsSection />
           <QuickLinksSection />
           <DynamicHomeSections />

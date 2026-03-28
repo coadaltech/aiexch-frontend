@@ -21,13 +21,14 @@ export function MatkaShiftModal({ open, onClose, shift }: Props) {
     name: "",
     shiftDate: new Date().toISOString().split("T")[0],
     endTime: "14:00",
-    shiftOrder: 0,
-    daraRate: 9,
+    daraRate: 100,
     daraCommission: 0,
-    akharRate: 90,
+    akharRate: 10,
     akharCommission: 0,
     mainJantriTime: "",
     isActive: true,
+    nextDayAllow: false,
+    capping: 0,
   });
 
   useEffect(() => {
@@ -36,26 +37,28 @@ export function MatkaShiftModal({ open, onClose, shift }: Props) {
         name: shift.name || "",
         shiftDate: shift.shiftDate || new Date().toISOString().split("T")[0],
         endTime: shift.endTime || "14:00",
-        shiftOrder: shift.shiftOrder ?? 0,
-        daraRate: Number(shift.daraRate) || 9,
+        daraRate: Math.min(Number(shift.daraRate) || 100, 100),
         daraCommission: Number(shift.daraCommission) || 0,
-        akharRate: Number(shift.akharRate) || 90,
+        akharRate: Math.min(Number(shift.akharRate) || 10, 10),
         akharCommission: Number(shift.akharCommission) || 0,
         mainJantriTime: shift.mainJantriTime || "",
         isActive: shift.isActive ?? true,
+        nextDayAllow: shift.nextDayAllow ?? false,
+        capping: Number(shift.capping) || 0,
       });
     } else {
       setForm({
         name: "",
         shiftDate: new Date().toISOString().split("T")[0],
         endTime: "14:00",
-        shiftOrder: 0,
-        daraRate: 9,
+        daraRate: 100,
         daraCommission: 0,
-        akharRate: 90,
+        akharRate: 10,
         akharCommission: 0,
         mainJantriTime: "",
         isActive: true,
+        nextDayAllow: false,
+        capping: 0,
       });
     }
   }, [shift, open]);
@@ -146,15 +149,18 @@ export function MatkaShiftModal({ open, onClose, shift }: Props) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-foreground block mb-1">
-                Dara Rate
+                Dara Rate (max 100)
               </label>
               <Input
                 type="number"
                 step="0.01"
+                min={0}
+                max={100}
                 value={form.daraRate}
-                onChange={(e) =>
-                  setForm({ ...form, daraRate: Number(e.target.value) })
-                }
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setForm({ ...form, daraRate: val > 100 ? 100 : val });
+                }}
               />
             </div>
             <div>
@@ -175,15 +181,18 @@ export function MatkaShiftModal({ open, onClose, shift }: Props) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-foreground block mb-1">
-                Akhar Rate
+                Akhar Rate (max 10)
               </label>
               <Input
                 type="number"
                 step="0.01"
+                min={0}
+                max={10}
                 value={form.akharRate}
-                onChange={(e) =>
-                  setForm({ ...form, akharRate: Number(e.target.value) })
-                }
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setForm({ ...form, akharRate: val > 10 ? 10 : val });
+                }}
               />
             </div>
             <div>
@@ -201,35 +210,55 @@ export function MatkaShiftModal({ open, onClose, shift }: Props) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-foreground block mb-1">
-                Order
-              </label>
-              <Input
-                type="number"
-                value={form.shiftOrder}
-                onChange={(e) =>
-                  setForm({ ...form, shiftOrder: Number(e.target.value) })
-                }
-              />
-            </div>
-            <div className="flex items-end pb-1">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={form.isActive}
-                  onChange={(e) =>
-                    setForm({ ...form, isActive: e.target.checked })
-                  }
-                  className="h-4 w-4 rounded border-border"
-                />
-                <span className="text-sm font-medium text-foreground">
-                  Active
-                </span>
-              </label>
-            </div>
+          <div>
+            <label className="text-sm font-medium text-foreground block mb-1">
+              Capping (User Bet Limit per Shift)
+            </label>
+            <Input
+              type="number"
+              min={0}
+              value={form.capping}
+              onChange={(e) =>
+                setForm({ ...form, capping: Number(e.target.value) })
+              }
+              placeholder="e.g. 2000"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Maximum amount a user can bet on this shift. 0 = no limit.
+            </p>
           </div>
+
+          <div className="flex items-center gap-6">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.nextDayAllow}
+                onChange={(e) =>
+                  setForm({ ...form, nextDayAllow: e.target.checked })
+                }
+                className="h-4 w-4 rounded border-border"
+              />
+              <span className="text-sm font-medium text-foreground">
+                Next Day Allow
+              </span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.isActive}
+                onChange={(e) =>
+                  setForm({ ...form, isActive: e.target.checked })
+                }
+                className="h-4 w-4 rounded border-border"
+              />
+              <span className="text-sm font-medium text-foreground">
+                Active
+              </span>
+            </label>
+          </div>
+          <p className="text-xs text-muted-foreground -mt-2">
+            Next Day Allow: If end time is 3:00 AM and checked, shift runs until tomorrow 3:00 AM.
+          </p>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
             <Button type="button" variant="outline" onClick={onClose}>

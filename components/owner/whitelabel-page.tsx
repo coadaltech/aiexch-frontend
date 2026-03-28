@@ -20,9 +20,6 @@ import { AlertCircle } from "lucide-react";
 import {
   GeneralTab,
   ThemeTab,
-  LayoutTab,
-  ConfigTab,
-  PreferencesTab,
   PermissionsTab,
   PreviewTab,
 } from "./whitelabel";
@@ -148,22 +145,6 @@ export function WhitelabelPage({
       whatsapp: "",
     },
     theme: getDefaultTheme(),
-    layout: {
-      sidebarType: "sidebar-1",
-      bannerType: "banner-1",
-    },
-    config: {
-      dbName: "casino_main",
-      s3FolderName: "casino-assets",
-    },
-    preferences: {
-      language: "en",
-      currency: "USD",
-      timezone: "UTC",
-      dateFormat: "MM/DD/YYYY",
-      enableLiveChat: true,
-      enableNotifications: true,
-    },
     permissions: {
       casino: true,
       sports: true,
@@ -182,9 +163,6 @@ export function WhitelabelPage({
       setCompletedTabs([
         "general",
         "theme",
-        "layout",
-        "config",
-        "preferences",
         "permissions",
         "preview",
       ]);
@@ -193,12 +171,8 @@ export function WhitelabelPage({
 
   const validateTab = (tab: string): boolean => {
     if (tab === "general")
-      return !!(formData.name && formData.domain && formData.contactEmail && formData.userId);
+      return !!(formData.name && formData.domain && formData.userId);
     if (tab === "theme") return true;
-    if (tab === "layout") return true;
-    if (tab === "config")
-      return !!(formData.config?.dbName && formData.config?.s3FolderName);
-    if (tab === "preferences") return true;
     if (tab === "permissions") return true;
     if (tab === "preview") return true;
     return false;
@@ -218,15 +192,6 @@ export function WhitelabelPage({
     }
     if (!formData.domain || !formData.domain.trim()) {
       errors.push("Domain is required");
-    }
-    if (!formData.contactEmail || !formData.contactEmail.trim()) {
-      errors.push("Contact Email is required");
-    }
-    if (!formData.config?.dbName || !formData.config.dbName.trim()) {
-      errors.push("Database Name is required");
-    }
-    if (!formData.config?.s3FolderName || !formData.config.s3FolderName.trim()) {
-      errors.push("S3 Folder Name is required");
     }
 
     return {
@@ -379,12 +344,9 @@ export function WhitelabelPage({
             onValueChange={handleTabChange}
             className="w-full"
           >
-            <TabsList className="grid w-full grid-cols-7">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="general">General</TabsTrigger>
               <TabsTrigger value="theme">Theme</TabsTrigger>
-              <TabsTrigger value="layout">Layout</TabsTrigger>
-              <TabsTrigger value="config">Config</TabsTrigger>
-              <TabsTrigger value="preferences">Preferences</TabsTrigger>
               <TabsTrigger value="permissions">Permissions</TabsTrigger>
               <TabsTrigger value="preview">Preview</TabsTrigger>
             </TabsList>
@@ -400,18 +362,6 @@ export function WhitelabelPage({
                 applyTemplate={applyTemplate}
                 applyThemeForTesting={applyThemeForTesting}
               />
-            </TabsContent>
-
-            <TabsContent value="layout" className="mt-6">
-              <LayoutTab formData={formData} setFormData={setFormData} />
-            </TabsContent>
-
-            <TabsContent value="config" className="mt-6">
-              <ConfigTab formData={formData} setFormData={setFormData} />
-            </TabsContent>
-
-            <TabsContent value="preferences" className="mt-6">
-              <PreferencesTab formData={formData} setFormData={setFormData} />
             </TabsContent>
 
             <TabsContent value="permissions" className="mt-6">

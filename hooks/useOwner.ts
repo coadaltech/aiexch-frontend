@@ -968,3 +968,15 @@ export const useSetMatkaResult = () => {
     onError: () => toast.error("Failed to set result"),
   });
 };
+
+export const useReorderMatkaShifts = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (orders: { id: string; shiftOrder: number }[]) =>
+      ownerApi.reorderMatkaShifts(orders),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["owner-matka-shifts"] });
+    },
+    onError: () => toast.error("Failed to reorder shifts"),
+  });
+};

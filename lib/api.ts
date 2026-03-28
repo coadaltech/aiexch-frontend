@@ -334,6 +334,8 @@ export const ownerApi = {
     api.post(`/owner/matka/shifts/${id}/result`, { result }),
   getMatkaJantri: (shiftId: string) =>
     api.get(`/owner/matka/shifts/${shiftId}/jantri`),
+  reorderMatkaShifts: (orders: { id: string; shiftOrder: number }[]) =>
+    api.put("/owner/matka/shifts/reorder", { orders }),
 };
 
 export interface BetRecord {

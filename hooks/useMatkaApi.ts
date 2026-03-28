@@ -14,6 +14,8 @@ export interface MatkaShift {
   mainJantriTime: string | null;
   result: number | null;
   isActive: boolean;
+  nextDayAllow: boolean;
+  capping: string;
 }
 
 export interface JantriTotal {

@@ -23,7 +23,7 @@ import { User, UserModalProps } from "./types";
 import { useAuth } from "@/contexts/AuthContext";
 import { normalizeRole } from "@/types/enums";
 import { useWhitelabelInfo } from "@/hooks/useAuth";
-import { useCurrencies } from "@/hooks/useOwner";
+import { useCurrencies, useOwnerUsers } from "@/hooks/useOwner";
 import { decode_payload_from_token } from "@/lib/token-utils";
 import {
   User as UserIcon,
@@ -39,6 +39,7 @@ import {
   Save,
   Loader2,
   AlertCircle,
+  CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -76,6 +77,8 @@ export function UserModal({
   const { data: currencies = [] } = useCurrencies();
   const isB2C = String(whitelabelInfo?.whitelabelType ?? "").toUpperCase() === "B2C";
   console.log(currentUser)
+
+  const { data: allUsers = [] } = useOwnerUsers();
 
   const [currentUserRole, setCurrentUserRole] = useState<string | undefined>(currentUser?.role);
 
@@ -131,6 +134,26 @@ export function UserModal({
       password: "",
     }
   );
+
+  // Real-time username availability check (debounced)
+  const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
+
+  useEffect(() => {
+    if (user) return; // skip check in edit mode
+    const trimmed = formData.username?.trim().toLowerCase() || "";
+    if (!trimmed || trimmed.length < 3) {
+      setUsernameStatus("idle");
+      return;
+    }
+    setUsernameStatus("checking");
+    const timer = setTimeout(() => {
+      const exists = allUsers.some(
+        (u: any) => u.username?.toLowerCase() === trimmed
+      );
+      setUsernameStatus(exists ? "taken" : "available");
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [formData.username, allUsers, user]);
 
   // Sync form when modal opens with a user (edit mode)
   useEffect(() => {
@@ -197,6 +220,7 @@ export function UserModal({
 
   const validateForm = () => {
     if (!formData.username?.trim()) return "Username is required";
+    if (!user && usernameStatus === "taken") return "Username is already taken";
     if (!formData.email?.trim()) return "Email is required";
     if (!formData.role?.trim()) return "Role is required";
     if (!formData.membership?.trim()) return "Membership is required";
@@ -308,16 +332,39 @@ export function UserModal({
                     <UserIcon className="h-3.5 w-3.5 text-muted-foreground" />
                     Username
                   </Label>
-                  <Input
-                    value={formData.username}
-                    onChange={(e) =>
-                      setFormData({ ...formData, username: e.target.value })
-                    }
-                    className="bg-background border-input text-foreground h-10 focus:ring-2 focus:ring-primary/20"
-                    placeholder="Enter username"
-                    required
-                    disabled={!!user}
-                  />
+                  <div className="relative">
+                    <Input
+                      value={formData.username}
+                      onChange={(e) =>
+                        setFormData({ ...formData, username: e.target.value })
+                      }
+                      className={`bg-background border-input text-foreground h-10 focus:ring-2 focus:ring-primary/20 pr-9 ${
+                        !user && usernameStatus === "taken"
+                          ? "border-red-500 focus:ring-red-500/20"
+                          : !user && usernameStatus === "available"
+                          ? "border-green-500 focus:ring-green-500/20"
+                          : ""
+                      }`}
+                      placeholder="Enter username"
+                      required
+                      disabled={!!user}
+                    />
+                    {!user && usernameStatus === "checking" && (
+                      <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                    )}
+                    {!user && usernameStatus === "available" && (
+                      <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                    )}
+                    {!user && usernameStatus === "taken" && (
+                      <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />
+                    )}
+                  </div>
+                  {!user && usernameStatus === "taken" && (
+                    <p className="text-xs text-red-500">Username is already taken</p>
+                  )}
+                  {!user && usernameStatus === "available" && (
+                    <p className="text-xs text-green-500">Username is available</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">

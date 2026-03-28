@@ -10,6 +10,39 @@ import { formatToIST } from "@/lib/date-utils";
 import { useSeries } from "@/hooks/useSportsApi";
 import { getSportConfig, isValidSportSlug } from "@/lib/sports-config";
 
+function SportPoster({
+  config,
+  sport,
+  children,
+}: {
+  config: { poster: string; title: string };
+  sport: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="relative w-full h-36 sm:h-48 overflow-hidden rounded-b-xl">
+      <img
+        src={config.poster}
+        alt={config.title}
+        className="w-full h-full object-fit bg-top"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 px-4 pb-4">
+        <Link href={`/sports/${sport}`}>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-white/70 hover:text-white hover:bg-white/10 w-fit h-7 px-2 mb-1 text-xs"
+          >
+            ← Back to Series
+          </Button>
+        </Link>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export default function SeriesMatchesPage({
   params,
 }: {
@@ -40,10 +73,15 @@ export default function SeriesMatchesPage({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center w-full mt-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="text-muted-foreground">Loading sports...</p>
+      <div className="h-full w-full pb-10">
+        <SportPoster config={config} sport={sport}>
+          <div className="h-6 w-48 bg-white/20 rounded animate-pulse" />
+          <div className="h-4 w-32 bg-white/10 rounded animate-pulse mt-2" />
+        </SportPoster>
+        <div className="px-4 mt-4 space-y-3">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-16 bg-muted/30 rounded-lg animate-pulse" />
+          ))}
         </div>
       </div>
     );
@@ -51,30 +89,40 @@ export default function SeriesMatchesPage({
 
   if (error) {
     return (
-      <Card className="p-8 text-center">
-        <div className="text-red-500 mb-2">
-          <p className="font-semibold">Error Loading Data</p>
-          <p className="text-sm">{error?.message || "Failed to fetch data"}</p>
+      <div className="h-full w-full pb-10">
+        <SportPoster config={config} sport={sport}>
+          <h1 className="text-xl sm:text-2xl font-bold text-white">Error</h1>
+        </SportPoster>
+        <div className="px-4 mt-6">
+          <Card className="p-8 text-center">
+            <div className="text-red-500 mb-2">
+              <p className="font-semibold">Error Loading Data</p>
+              <p className="text-sm">{error?.message || "Failed to fetch data"}</p>
+            </div>
+            <Button onClick={() => refetch()} className="mt-4">
+              Retry
+            </Button>
+          </Card>
         </div>
-        <Button onClick={() => refetch()} className="mt-4">
-          Retry
-        </Button>
-      </Card>
+      </div>
     );
   }
 
   if (!series) {
     return (
-      <Card className="p-8 text-center">
-        <p className="text-muted-foreground mb-2">
-          Series not found or no matches available.
-        </p>
-        <Link href={`/sports/${sport}`}>
-          <Button variant="outline" className="mt-4">
-            Back to Series
-          </Button>
-        </Link>
-      </Card>
+      <div className="h-full w-full pb-10">
+        <SportPoster config={config} sport={sport}>
+          <h1 className="text-xl sm:text-2xl font-bold text-white">Series Not Found</h1>
+        </SportPoster>
+        <div className="px-4 mt-6 text-center">
+          <p className="text-muted-foreground text-lg">
+            No matches available for this series.
+          </p>
+          <p className="text-muted-foreground text-sm mt-1">
+            Check back later for live action.
+          </p>
+        </div>
+      </div>
     );
   }
 
@@ -87,61 +135,55 @@ export default function SeriesMatchesPage({
   };
 
   return (
-    <div className="space-y-4 h-full w-full px-4 py-1 pb-10">
-      <div className="flex items-center gap-2 mb-4">
-        <Link href={`/sports/${sport}`}>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="text-muted-foreground hover:text-primary w-fit h-8"
-          >
-            ← Back to Series
-          </Button>
-        </Link>
-      </div>
-
-      <div className="mb-4">
-        <h1 className="text-xl font-bold text-foreground">{series.name}</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+    <div className="h-full w-full pb-10">
+      {/* Sport Poster Banner */}
+      <SportPoster config={config} sport={sport}>
+        <h1 className="text-xl sm:text-2xl font-bold text-white">{series.name}</h1>
+        <p className="text-sm text-white/70 mt-0.5">
           {matches.length} matches • {liveMatches.length} live
         </p>
-      </div>
+      </SportPoster>
 
-      {liveMatches.length > 0 && (
-        <div className="space-y-3 w-full">
-          <h2>Live matches</h2>
-          {liveMatches.map((match: any) => {
-            if (new Date(match.openDate).getDate() < new Date().getDate()) {
-              return null;
-            }
-            return (
+      <div className="px-4 mt-4 space-y-4">
+        {liveMatches.length > 0 && (
+          <div className="space-y-3 w-full">
+            <h2 className="text-foreground font-semibold">Live matches</h2>
+            {liveMatches.map((match: any) => {
+              if (new Date(match.openDate).getDate() < new Date().getDate()) {
+                return null;
+              }
+              return (
+                <div key={match.id} onClick={() => handleMatchClick(match.id)}>
+                  <MatchCard match={match} showLive={true} />
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {nonLiveMatches.length > 0 && (
+          <div className="space-y-3">
+            <h2 className="text-foreground font-semibold">Upcoming matches</h2>
+            {liveMatches.length > 0 && <div className="border-t my-4"></div>}
+            {nonLiveMatches.map((match: any) => (
               <div key={match.id} onClick={() => handleMatchClick(match.id)}>
-                <MatchCard match={match} showLive={true} />
+                <MatchCard match={match} showLive={false} />
               </div>
-            );
-          })}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
 
-      {nonLiveMatches.length > 0 && (
-        <div className="space-y-3">
-          <h2>Upcoming matches</h2>
-          {liveMatches.length > 0 && <div className="border-t my-4"></div>}
-          {nonLiveMatches.map((match: any) => (
-            <div key={match.id} onClick={() => handleMatchClick(match.id)}>
-              <MatchCard match={match} showLive={false} />
-            </div>
-          ))}
-        </div>
-      )}
-
-      {matches.length === 0 && (
-        <Card className="p-8 text-center">
-          <p className="text-muted-foreground">
-            No matches available for this series.
-          </p>
-        </Card>
-      )}
+        {matches.length === 0 && (
+          <div className="py-12 text-center">
+            <p className="text-muted-foreground text-lg">
+              No matches available for this series.
+            </p>
+            <p className="text-muted-foreground text-sm mt-1">
+              Check back later for live action.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

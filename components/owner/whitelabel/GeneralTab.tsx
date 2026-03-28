@@ -172,22 +172,6 @@ export function GeneralTab({ formData, setFormData }: GeneralTabProps) {
           />
         </div>
       </div>
-      <div>
-        <Label className="text-muted-foreground">Contact Email *</Label>
-        <Input
-          value={formData.contactEmail}
-          onChange={(e) => {
-            setFormData({ ...formData, contactEmail: e.target.value });
-            validateField("contactEmail", e.target.value);
-          }}
-          placeholder="contact@casino.com"
-          type="email"
-          className={errors.contactEmail ? "border-red-500" : ""}
-        />
-        {errors.contactEmail && (
-          <p className="text-xs text-red-500">{errors.contactEmail}</p>
-        )}
-      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label className="text-muted-foreground mb-2 block">Logo</Label>

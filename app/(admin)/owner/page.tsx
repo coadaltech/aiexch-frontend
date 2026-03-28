@@ -41,14 +41,23 @@ export default function AdminDashboard() {
   const isLoading =
     usersLoading || promotionsLoading || vouchersLoading || kycLoading;
 
-  // Calculate user counts by role
-  const roleCounts = [
-    { role: "Admin", count: users.filter((u: any) => u.role === "admin").length, color: "text-black" },
-    { role: "Super", count: users.filter((u: any) => u.role === "super").length, color: "text-black" },
-    { role: "Master", count: users.filter((u: any) => u.role === "master").length, color: "text-black" },
-    { role: "Agent", count: users.filter((u: any) => u.role === "agent").length, color: "text-black" },
-    { role: "User", count: users.filter((u: any) => u.role === "user").length, color: "text-black" },
+  // Role hierarchy - each role can see roles below it
+  const roleHierarchy = ["owner", "admin", "super", "master", "agent", "user"];
+  const currentRoleIndex = roleHierarchy.indexOf(user?.role || "user");
+
+  // Calculate user counts by role, filtered by hierarchy
+  const allRoleCounts = [
+    { role: "Admin", key: "admin", count: users.filter((u: any) => u.role === "admin").length, color: "text-blue-600" },
+    { role: "Super", key: "super", count: users.filter((u: any) => u.role === "super").length, color: "text-purple-600" },
+    { role: "Master", key: "master", count: users.filter((u: any) => u.role === "master").length, color: "text-orange-600" },
+    { role: "Agent", key: "agent", count: users.filter((u: any) => u.role === "agent").length, color: "text-green-600" },
+    { role: "User", key: "user", count: users.filter((u: any) => u.role === "user").length, color: "text-gray-600" },
   ];
+
+  // Filter: only show roles below the current user's role
+  const roleCounts = allRoleCounts.filter(
+    (r) => roleHierarchy.indexOf(r.key) > currentRoleIndex
+  );
 
   // Calculate real stats
   const totalUsers = users.length;
@@ -164,40 +173,27 @@ export default function AdminDashboard() {
       {isLoading ? (
         <DashboardActivitySkeleton />
       ) : (
-        <Card className="bg-card border">
-          <CardHeader>
-            <CardTitle className="text-foreground flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Users by Role
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Role</th>
-                    <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Count</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {roleCounts.map((item) => (
-                    <tr key={item.role} className="border-b border-border/50 hover:bg-muted/50 transition-colors">
-                      <td className={`py-3 px-4 text-sm font-medium ${item.color}`}>{item.role}</td>
-                      <td className="py-3 px-4 text-sm text-foreground text-right font-semibold">{item.count}</td>
-                    </tr>
-                  ))}
-                  <tr className="bg-muted/30">
-                    <td className="py-3 px-4 text-sm font-semibold text-foreground">Total</td>
-                    <td className="py-3 px-4 text-sm text-foreground text-right font-bold">
-                      {roleCounts.reduce((sum, r) => sum + r.count, 0)}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <Users className="h-4 w-4" />
+            <span className="font-medium">Users:</span>
+          </div>
+          {roleCounts.map((item) => (
+            <div
+              key={item.role}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/60 border border-border/50 text-sm"
+            >
+              <span className={`font-medium ${item.color}`}>{item.role}</span>
+              <span className="font-bold text-foreground">{item.count}</span>
             </div>
-          </CardContent>
-        </Card>
+          ))}
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-sm">
+            <span className="font-medium text-foreground">Total</span>
+            <span className="font-bold text-foreground">
+              {roleCounts.reduce((sum, r) => sum + r.count, 0)}
+            </span>
+          </div>
+        </div>
       )}
 
       {isLoading ? (

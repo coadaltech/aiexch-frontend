@@ -9,8 +9,62 @@ import {
   usePlaceMatka,
 } from "@/hooks/useMatkaApi";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, AlertCircle, ChevronDown, ChevronUp, Clock } from "lucide-react";
 import { toast } from "sonner";
+
+function useShiftCountdown(
+  shiftDate?: string,
+  endTime?: string,
+  nextDayAllow?: boolean
+) {
+  const [timeLeft, setTimeLeft] = useState("");
+  const [isExpired, setIsExpired] = useState(false);
+
+  useEffect(() => {
+    if (!shiftDate || !endTime) return;
+
+    const calcTarget = () => {
+      const [h, m] = endTime.split(":").map(Number);
+      const target = new Date(shiftDate);
+      target.setHours(h, m, 0, 0);
+      if (nextDayAllow) {
+        target.setDate(target.getDate() + 1);
+      }
+      return target;
+    };
+
+    const update = () => {
+      const target = calcTarget();
+      const now = new Date();
+      const diff = target.getTime() - now.getTime();
+
+      if (diff <= 0) {
+        setTimeLeft("Ended");
+        setIsExpired(true);
+        return;
+      }
+
+      setIsExpired(false);
+      const hrs = Math.floor(diff / 3600000);
+      const mins = Math.floor((diff % 3600000) / 60000);
+      const secs = Math.floor((diff % 60000) / 1000);
+
+      if (hrs > 0) {
+        setTimeLeft(`${hrs}h ${mins}m ${secs}s`);
+      } else if (mins > 0) {
+        setTimeLeft(`${mins}m ${secs}s`);
+      } else {
+        setTimeLeft(`${secs}s`);
+      }
+    };
+
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [shiftDate, endTime, nextDayAllow]);
+
+  return { timeLeft, isExpired };
+}
 import { RandomModal } from "./random-modal";
 import { CrossModal } from "./cross-modal";
 import { FromToModal } from "./fromto-modal";
@@ -133,6 +187,7 @@ export default function JantriPage() {
   const nextId = useRef(1);
   const numberInputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
+  const gridFirstCellRef = useRef<HTMLInputElement>(null);
   const [draftNumber, setDraftNumber] = useState("");
   const [draftAmount, setDraftAmount] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -227,6 +282,8 @@ export default function JantriPage() {
                   ]
                 : []),
             ]);
+            // Focus grid cell #1 after render
+            setTimeout(() => gridFirstCellRef.current?.focus(), 50);
           }
           return next;
         });
@@ -383,15 +440,35 @@ export default function JantriPage() {
     }
   };
 
+  // ── Countdown timer ──────────────────────────────────────────────────
+  const { timeLeft, isExpired: shiftEnded } = useShiftCountdown(
+    shift?.shiftDate,
+    shift?.endTime,
+    shift?.nextDayAllow
+  );
+
+  // ── Auto-redirect when shift ends ──────────────────────────────────
+  useEffect(() => {
+    if (shiftEnded && shift) {
+      toast.error("Shift has ended. Redirecting...");
+      const timeout = setTimeout(() => router.push("/matka"), 1500);
+      return () => clearTimeout(timeout);
+    }
+  }, [shiftEnded, shift, router]);
+
   // ── Jantri open check ─────────────────────────────────────────────────
   const isJantriOpen = useMemo(() => {
+    if (shiftEnded) return false;
     if (!shift?.mainJantriTime) return true;
     const now = new Date();
     const [h, m] = shift.mainJantriTime.split(":").map(Number);
     const t = new Date(shift.shiftDate);
     t.setHours(h, m, 0, 0);
+    if (shift.nextDayAllow) {
+      t.setDate(t.getDate() + 1);
+    }
     return now < t;
-  }, [shift]);
+  }, [shift, shiftEnded]);
 
   if (shiftLoading) {
     return (
@@ -427,11 +504,22 @@ export default function JantriPage() {
         >
           <ArrowLeft className="w-4 h-4" />
         </button>
-        <span className="font-semibold">Party</span>
+        <span className="font-semibold uppercase">{shift.name}</span>
+        <span className={`flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium ${
+          shiftEnded ? "bg-red-600" : "bg-teal-600"
+        }`}>
+          <Clock className="w-3 h-3" />
+          {timeLeft}
+        </span>
         <div className="flex-1" />
         <span className="bg-teal-600 rounded px-2 py-0.5 text-xs">
           Rate: {shift.daraRate}/{shift.akharRate}
         </span>
+        {Number(shift.capping) > 0 && (
+          <span className="bg-amber-600 rounded px-2 py-0.5 text-xs">
+            Cap: ₹{shift.capping}
+          </span>
+        )}
         <span className="bg-teal-600 rounded px-2 py-0.5 text-xs hidden sm:inline">
           Date: {fmtDate(shift.shiftDate)}
         </span>
@@ -532,6 +620,7 @@ export default function JantriPage() {
                               {num}
                             </span>
                             <input
+                              ref={num === "1" ? gridFirstCellRef : undefined}
                               type="number"
                               min={0}
                               value={val || ""}

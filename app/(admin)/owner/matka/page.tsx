@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,52 +10,94 @@ import {
   Trash2,
   Loader2,
   Trophy,
-  ChevronUp,
-  ChevronDown,
+  GripVertical,
 } from "lucide-react";
 import {
   useOwnerMatkaShifts,
   useDeleteMatkaShift,
-  useSetMatkaResult,
+  useReorderMatkaShifts,
 } from "@/hooks/useOwner";
-import { useTableSort } from "@/hooks/useTableSort";
-import { usePagination } from "@/hooks/usePagination";
-import { TableSkeleton } from "@/components/owner/skeletons";
 import { useConfirm } from "@/hooks/useConfirm";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { MatkaShiftModal } from "./shift-modal";
 import { MatkaResultModal } from "./result-modal";
 
 export default function OwnerMatkaPage() {
-  const today = new Date().toISOString().split("T")[0];
   const [dateFilter, setDateFilter] = useState<string>("");
 
   const { data: shifts = [], isLoading } = useOwnerMatkaShifts(
     dateFilter || undefined
   );
   const deleteMutation = useDeleteMatkaShift();
+  const reorderMutation = useReorderMatkaShifts();
   const confirmDialog = useConfirm();
 
-  // Modal states
   const [shiftModalOpen, setShiftModalOpen] = useState(false);
   const [editShift, setEditShift] = useState<any>(null);
   const [resultModalOpen, setResultModalOpen] = useState(false);
   const [resultShift, setResultShift] = useState<any>(null);
 
-  const { sortedData, requestSort, getSortIcon } = useTableSort({
-    data: shifts,
-    initialSort: { key: "shiftOrder", direction: "asc" },
-  });
+  // Drag and drop state
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const dragNode = useRef<HTMLDivElement | null>(null);
 
-  const {
-    items: paginatedShifts,
-    totalPages,
-    currentPage,
-    goToPage,
-  } = usePagination({
-    data: sortedData,
-    itemsPerPage: 15,
-  });
+  // Sort shifts by order
+  const sortedShifts = [...shifts].sort(
+    (a: any, b: any) => (a.shiftOrder ?? 0) - (b.shiftOrder ?? 0)
+  );
+
+  const handleDragStart = useCallback(
+    (e: React.DragEvent, index: number) => {
+      dragNode.current = e.target as HTMLDivElement;
+      setDragIndex(index);
+      e.dataTransfer.effectAllowed = "move";
+      // Make the drag image slightly transparent
+      setTimeout(() => {
+        if (dragNode.current) {
+          dragNode.current.style.opacity = "0.4";
+        }
+      }, 0);
+    },
+    []
+  );
+
+  const handleDragOver = useCallback(
+    (e: React.DragEvent, index: number) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      setDragOverIndex(index);
+    },
+    []
+  );
+
+  const handleDragEnd = useCallback(() => {
+    if (dragNode.current) {
+      dragNode.current.style.opacity = "1";
+    }
+    if (
+      dragIndex !== null &&
+      dragOverIndex !== null &&
+      dragIndex !== dragOverIndex
+    ) {
+      const reordered = [...sortedShifts];
+      const [moved] = reordered.splice(dragIndex, 1);
+      reordered.splice(dragOverIndex, 0, moved);
+
+      const orders = reordered.map((s: any, i: number) => ({
+        id: s.id,
+        shiftOrder: i + 1,
+      }));
+      reorderMutation.mutate(orders);
+    }
+    setDragIndex(null);
+    setDragOverIndex(null);
+    dragNode.current = null;
+  }, [dragIndex, dragOverIndex, sortedShifts, reorderMutation]);
+
+  const handleDragLeave = useCallback(() => {
+    setDragOverIndex(null);
+  }, []);
 
   const handleCreate = () => {
     setEditShift(null);
@@ -123,190 +165,151 @@ export default function OwnerMatkaPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto -mx-6 px-6 sm:mx-0 sm:px-0">
-            <table className="w-full min-w-[800px]">
-              <thead>
-                <tr className="border-b border-border">
-                  <th
-                    className="text-left py-3 px-2 text-muted-foreground text-sm cursor-pointer hover:text-foreground"
-                    onClick={() => requestSort("name")}
-                  >
-                    <div className="flex items-center gap-1">
-                      Name
-                      {getSortIcon("name") === "asc" && <ChevronUp className="w-3 h-3" />}
-                      {getSortIcon("name") === "desc" && <ChevronDown className="w-3 h-3" />}
+          {isLoading ? (
+            <div className="space-y-3">
+              {[...Array(3)].map((_, i) => (
+                <div
+                  key={i}
+                  className="h-24 bg-muted/50 rounded-lg animate-pulse"
+                />
+              ))}
+            </div>
+          ) : sortedShifts.length > 0 ? (
+            <div className="space-y-3">
+              {sortedShifts.map((shift: any, index: number) => (
+                <div
+                  key={shift.id}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDragEnd={handleDragEnd}
+                  onDragLeave={handleDragLeave}
+                  className={`rounded-xl border p-4 transition-all cursor-grab active:cursor-grabbing ${
+                    dragOverIndex === index && dragIndex !== index
+                      ? "border-primary bg-primary/5 border-dashed"
+                      : "border-border bg-card hover:bg-accent/5"
+                  } ${dragIndex === index ? "opacity-40" : ""}`}
+                >
+                  {/* Row 1: Drag handle + Name + Badges + Actions */}
+                  <div className="flex items-center gap-3">
+                    <div className="text-muted-foreground shrink-0 cursor-grab">
+                      <GripVertical className="h-5 w-5" />
                     </div>
-                  </th>
-                  <th
-                    className="text-left py-3 px-2 text-muted-foreground text-sm cursor-pointer hover:text-foreground"
-                    onClick={() => requestSort("shiftDate")}
-                  >
-                    <div className="flex items-center gap-1">
-                      Date
-                      {getSortIcon("shiftDate") === "asc" && <ChevronUp className="w-3 h-3" />}
-                      {getSortIcon("shiftDate") === "desc" && <ChevronDown className="w-3 h-3" />}
+                    <div className="shrink-0 w-7 h-7 rounded-md bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">
+                      {shift.shiftOrder ?? index + 1}
                     </div>
-                  </th>
-                  <th className="text-left py-3 px-2 text-muted-foreground text-sm">
-                    End Time
-                  </th>
-                  <th className="text-left py-3 px-2 text-muted-foreground text-sm">
-                    Jantri Time
-                  </th>
-                  <th className="text-left py-3 px-2 text-muted-foreground text-sm hidden md:table-cell">
-                    Dara Rate
-                  </th>
-                  <th className="text-left py-3 px-2 text-muted-foreground text-sm hidden md:table-cell">
-                    Akhar Rate
-                  </th>
-                  <th
-                    className="text-left py-3 px-2 text-muted-foreground text-sm cursor-pointer hover:text-foreground"
-                    onClick={() => requestSort("shiftOrder")}
-                  >
-                    <div className="flex items-center gap-1">
-                      Order
-                      {getSortIcon("shiftOrder") === "asc" && <ChevronUp className="w-3 h-3" />}
-                      {getSortIcon("shiftOrder") === "desc" && <ChevronDown className="w-3 h-3" />}
-                    </div>
-                  </th>
-                  <th className="text-left py-3 px-2 text-muted-foreground text-sm">
-                    Status
-                  </th>
-                  <th className="text-left py-3 px-2 text-muted-foreground text-sm">
-                    Result
-                  </th>
-                  <th className="text-left py-3 px-2 text-muted-foreground text-sm">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              {isLoading ? (
-                <TableSkeleton columns={10} />
-              ) : paginatedShifts.length > 0 ? (
-                <tbody>
-                  {paginatedShifts.map((shift: any) => (
-                    <tr key={shift.id} className="border-b border-border/50">
-                      <td className="py-3 px-2">
-                        <span className="font-medium text-foreground text-sm">
-                          {shift.name}
-                        </span>
-                      </td>
-                      <td className="py-3 px-2 text-sm text-muted-foreground">
-                        {formatDate(shift.shiftDate)}
-                      </td>
-                      <td className="py-3 px-2 text-sm text-muted-foreground">
-                        {shift.endTime}
-                      </td>
-                      <td className="py-3 px-2 text-sm text-muted-foreground">
-                        {shift.mainJantriTime || "-"}
-                      </td>
-                      <td className="py-3 px-2 text-sm text-muted-foreground hidden md:table-cell">
-                        {shift.daraRate} ({shift.daraCommission}%)
-                      </td>
-                      <td className="py-3 px-2 text-sm text-muted-foreground hidden md:table-cell">
-                        {shift.akharRate} ({shift.akharCommission}%)
-                      </td>
-                      <td className="py-3 px-2 text-sm text-muted-foreground">
-                        {shift.shiftOrder}
-                      </td>
-                      <td className="py-3 px-2">
+                    <span className="font-semibold text-foreground text-sm uppercase">
+                      {shift.name}
+                    </span>
+                    <div className="flex items-center gap-1.5 ml-1">
+                      <Badge
+                        variant={shift.isActive ? "default" : "secondary"}
+                        className="text-[10px] px-1.5 py-0"
+                      >
+                        {shift.isActive ? "Active" : "Inactive"}
+                      </Badge>
+                      {shift.nextDayAllow && (
                         <Badge
-                          variant={shift.isActive ? "default" : "secondary"}
-                          className="text-xs"
+                          variant="outline"
+                          className="text-[10px] px-1.5 py-0 border-blue-500 text-blue-500"
                         >
-                          {shift.isActive ? "Active" : "Inactive"}
+                          Next Day
                         </Badge>
-                      </td>
-                      <td className="py-3 px-2">
-                        {shift.result !== null && shift.result !== undefined ? (
-                          <Badge className="bg-amber-600 text-white text-xs">
-                            {shift.result}
-                          </Badge>
+                      )}
+                      {shift.result !== null && shift.result !== undefined ? (
+                        <Badge className="bg-amber-600 text-white text-[10px] px-1.5 py-0">
+                          Result: {shift.result}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-muted-foreground">
+                          Pending
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex-1" />
+                    <div className="flex gap-1 shrink-0">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleSetResult(shift)}
+                        title="Set Result"
+                        className="h-8 w-8 p-0 text-amber-500 hover:bg-amber-500/10"
+                      >
+                        <Trophy className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleEdit(shift)}
+                        title="Edit"
+                        className="h-8 w-8 p-0 text-foreground hover:bg-accent hover:text-accent-foreground"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleDelete(shift.id)}
+                        title="Delete"
+                        className="h-8 w-8 p-0 text-foreground hover:bg-accent hover:text-accent-foreground"
+                        disabled={deleteMutation.isPending}
+                      >
+                        {deleteMutation.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
-                          <span className="text-muted-foreground text-xs">
-                            Pending
-                          </span>
+                          <Trash2 className="h-4 w-4" />
                         )}
-                      </td>
-                      <td className="py-3 px-2">
-                        <div className="flex gap-1">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleSetResult(shift)}
-                            title="Set Result"
-                            className="h-8 w-8 p-0 text-amber-500 hover:bg-amber-500/10"
-                          >
-                            <Trophy className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleEdit(shift)}
-                            title="Edit"
-                            className="h-8 w-8 p-0 text-foreground hover:bg-accent hover:text-accent-foreground"
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleDelete(shift.id)}
-                            title="Delete"
-                            className="h-8 w-8 p-0 text-foreground hover:bg-accent hover:text-accent-foreground"
-                            disabled={deleteMutation.isPending}
-                          >
-                            {deleteMutation.isPending ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-3 w-3" />
-                            )}
-                          </Button>
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Row 2: Details in neat columns */}
+                  <div className="flex items-center gap-4 mt-2.5 ml-[60px] text-xs flex-wrap">
+                    <div className="flex items-center gap-4">
+                      <div>
+                        <span className="text-muted-foreground">Date</span>
+                        <span className="ml-1.5 text-foreground font-medium">{formatDate(shift.shiftDate)}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">End</span>
+                        <span className="ml-1.5 text-foreground font-medium">{shift.endTime}</span>
+                      </div>
+                      {shift.mainJantriTime && (
+                        <div>
+                          <span className="text-muted-foreground">Jantri</span>
+                          <span className="ml-1.5 text-foreground font-medium">{shift.mainJantriTime}</span>
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              ) : (
-                <tbody>
-                  <tr>
-                    <td
-                      colSpan={10}
-                      className="py-8 text-center text-muted-foreground"
-                    >
-                      No shifts found.{" "}
-                      {dateFilter
-                        ? "Try a different date or clear the filter."
-                        : 'Click "Create Shift" to add one.'}
-                    </td>
-                  </tr>
-                </tbody>
-              )}
-            </table>
-          </div>
-          {totalPages > 1 && (
-            <div className="mt-4 flex justify-center">
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => goToPage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </Button>
-                <span className="px-3 py-1 text-sm">
-                  {currentPage} of {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => goToPage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                </Button>
-              </div>
+                      )}
+                    </div>
+                    <div className="h-4 w-px bg-border hidden sm:block" />
+                    <div className="flex items-center gap-4">
+                      <div>
+                        <span className="text-muted-foreground">Dara</span>
+                        <span className="ml-1.5 text-foreground font-medium">{shift.daraRate}</span>
+                        <span className="text-muted-foreground ml-0.5">({shift.daraCommission}%)</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Akhar</span>
+                        <span className="ml-1.5 text-foreground font-medium">{shift.akharRate}</span>
+                        <span className="text-muted-foreground ml-0.5">({shift.akharCommission}%)</span>
+                      </div>
+                      {Number(shift.capping) > 0 && (
+                        <div>
+                          <span className="text-muted-foreground">Cap</span>
+                          <span className="ml-1.5 text-foreground font-medium">₹{shift.capping}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-8 text-center text-muted-foreground">
+              No shifts found.{" "}
+              {dateFilter
+                ? "Try a different date or clear the filter."
+                : 'Click "Create Shift" to add one.'}
             </div>
           )}
         </CardContent>

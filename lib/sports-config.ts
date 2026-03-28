@@ -10,6 +10,7 @@ export const SPORT_ROUTES = {
     title: "Cricket Series",
     emptyText: "No live cricket matches at the moment.",
     checkBackText: "Check back later for live action.",
+    poster: "/cricket-poster.png",
   },
   tennis: {
     basePath: "tennis",
@@ -17,6 +18,7 @@ export const SPORT_ROUTES = {
     title: "Tennis Tournaments",
     emptyText: "No live tennis matches at the moment.",
     checkBackText: "Check back later for live action.",
+    poster: "/tennis-poster.png",
   },
   soccer: {
     basePath: "soccer",
@@ -24,6 +26,7 @@ export const SPORT_ROUTES = {
     title: "Soccer Leagues",
     emptyText: "No live soccer matches at the moment.",
     checkBackText: "Check back later for live action.",
+    poster: "/soccer-poster.png",
   },
   "horse-racing": {
     basePath: "horse-racing",
@@ -31,6 +34,7 @@ export const SPORT_ROUTES = {
     title: "Horse Racing",
     emptyText: "No live horse racing at the moment.",
     checkBackText: "Check back later for live action.",
+    poster: "/horseracing-poster.avif",
   },
   "greyhound-racing": {
     basePath: "greyhound-racing",
@@ -38,6 +42,7 @@ export const SPORT_ROUTES = {
     title: "Greyhound Racing",
     emptyText: "No live greyhound racing at the moment.",
     checkBackText: "Check back later for live action.",
+    poster: "/greyhound-poster.png",
   },
 } as const;
 
