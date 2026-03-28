@@ -3,6 +3,11 @@
 
 @custom-variant dark (&:is(.dark *));
 
+html {
+  /* Scales root font-size from 14px @1366px to 16px @1920px viewport width */
+  font-size: clamp(13px, calc(9.07px + 0.361vw), 16px);
+}
+
 * {
   box-sizing: border-box;
   letter-spacing: 1px;
