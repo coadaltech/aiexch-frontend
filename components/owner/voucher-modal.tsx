@@ -35,7 +35,8 @@ import {
 import { Loader2, ChevronsUpDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VoucherModalProps } from "./types";
-import { useOwnerUsers } from "@/hooks/useOwner";
+import { useUserCreatedUsers } from "@/hooks/useOwner";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function VoucherModal({
   open,
@@ -43,7 +44,8 @@ export function VoucherModal({
   onSave,
   isLoading,
 }: VoucherModalProps & { isLoading?: boolean }) {
-  const { data: users = [], isLoading: usersLoading } = useOwnerUsers();
+  const { user } = useAuth();
+  const { data: users = [], isLoading: usersLoading } = useUserCreatedUsers(user?.id ?? null);
   const [userSearchOpen, setUserSearchOpen] = useState(false);
   const [formData, setFormData] = useState({
     userId: "",

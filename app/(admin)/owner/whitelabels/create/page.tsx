@@ -34,26 +34,17 @@ export default function CreateWhitelabelPage() {
       }
     }
     if (formData.socialLinks) formDataToSend.append('socialLinks', JSON.stringify(formData.socialLinks));
-    formDataToSend.append('theme', JSON.stringify(formData.theme));
-    formDataToSend.append('layout', JSON.stringify(formData.layout));
-    formDataToSend.append('config', JSON.stringify(formData.config));
-    formDataToSend.append('preferences', JSON.stringify(formData.preferences));
-    formDataToSend.append('permissions', JSON.stringify(formData.permissions));
-    console.log(formData.userId)
+    if (formData.theme) formDataToSend.append('theme', JSON.stringify(formData.theme));
+    if (formData.layout) formDataToSend.append('layout', JSON.stringify(formData.layout));
+    if (formData.config) formDataToSend.append('config', JSON.stringify(formData.config));
+    if (formData.preferences) formDataToSend.append('preferences', JSON.stringify(formData.preferences));
+    if (formData.permissions) formDataToSend.append('permissions', JSON.stringify(formData.permissions));
 
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/owner/whitelabels`, {
-        method: 'POST',
-        body: formDataToSend,
-        credentials: 'include',
-      });
-      const data = await response.json();
-      if (data.success) {
+    createMutation.mutate(formDataToSend, {
+      onSuccess: () => {
         router.push("/owner/whitelabels");
-      }
-    } catch (error) {
-      console.error('Failed to create whitelabel:', error);
-    }
+      },
+    });
   };
 
   return (

@@ -55,7 +55,8 @@ import {
   Image,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useOwnerUsers, useCreateVoucher, useVouchers, useUpdateVoucher } from "@/hooks/useOwner";
+import { useUserCreatedUsers, useCreateVoucher, useVouchers, useUpdateVoucher } from "@/hooks/useOwner";
+import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { TableSkeleton } from "@/components/owner/skeletons";
 import { usePagination } from "@/hooks/usePagination";
@@ -606,11 +607,13 @@ function AddVoucherModal({
   onSave: (data: any) => void;
   isLoading?: boolean;
 }) {
-  const { data: users = [], isLoading: usersLoading } = useOwnerUsers();
+  const { user: authUser } = useAuth();
+  const { data: users = [], isLoading: usersLoading } = useUserCreatedUsers(authUser?.id ?? null);
   const [userSearchOpen, setUserSearchOpen] = useState(false);
   const [formData, setFormData] = useState({
     userId: "",
     amount: "",
+    amountType: "deposit" as "deposit" | "withdraw",
     method: "",
     reference: "",
     remarks: "",
@@ -624,6 +627,7 @@ function AddVoucherModal({
       setFormData({
         userId: "",
         amount: "",
+        amountType: "deposit",
         method: "",
         reference: "",
         remarks: "",
@@ -656,6 +660,8 @@ function AddVoucherModal({
       status: formData.status,
     };
 
+    // For limit vouchers, send amountType so backend flips dr/cr direction
+    if (type === "limit") voucherData.amountType = formData.amountType;
     if (formData.method) voucherData.method = formData.method;
     if (formData.reference) voucherData.reference = formData.reference;
     if (formData.remarks) voucherData.remarks = formData.remarks;
@@ -757,6 +763,31 @@ function AddVoucherModal({
                 />
               </div>
 
+              {type === "limit" && (
+                <div className="space-y-2">
+                  <Label className="text-foreground font-medium text-sm">
+                    Amount Type <span className="text-destructive">*</span>
+                  </Label>
+                  <Select
+                    value={formData.amountType}
+                    onValueChange={(value: "deposit" | "withdraw") => setFormData({ ...formData, amountType: value })}
+                  >
+                    <SelectTrigger className="bg-input border text-foreground h-10 w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border">
+                      <SelectItem value="deposit">Deposit (Credit to user)</SelectItem>
+                      <SelectItem value="withdraw">Withdraw (Debit from user)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {formData.amountType === "deposit"
+                      ? "Amount will be added to user's limit"
+                      : "Amount will be deducted from user's limit"}
+                  </p>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label className="text-foreground font-medium text-sm">Payment Method</Label>
                 <Select
@@ -768,6 +799,9 @@ function AddVoucherModal({
                   </SelectTrigger>
                   <SelectContent className="bg-card border">
                     <SelectItem value="admin_credits">Admin Credits</SelectItem>
+                    {type === "limit" && (
+                      <SelectItem value="admin_deposit">Admin Deposit</SelectItem>
+                    )}
                     <SelectItem value="crypto">Crypto</SelectItem>
                     <SelectItem value="bank">Bank Transfer</SelectItem>
                   </SelectContent>

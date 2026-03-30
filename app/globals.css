@@ -3,9 +3,21 @@
 
 @custom-variant dark (&:is(.dark *));
 
-html {
-  /* Scales root font-size from 14px @1366px to 16px @1920px viewport width */
-  font-size: clamp(13px, calc(9.07px + 0.361vw), 16px);
+/* Scale the entire UI proportionally for smaller desktop screens */
+@media (max-width: 1680px) {
+  html {
+    zoom: 0.9;
+  }
+}
+@media (max-width: 1440px) {
+  html {
+    zoom: 0.85;
+  }
+}
+@media (max-width: 1366px) {
+  html {
+    zoom: 0.8;
+  }
 }
 
 * {
