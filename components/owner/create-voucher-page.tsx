@@ -615,7 +615,6 @@ function AddVoucherModal({
   const [formData, setFormData] = useState({
     userId: "",
     amount: "",
-    amountType: "deposit" as "deposit" | "withdraw",
     method: "",
     reference: "",
     remarks: "",
@@ -629,7 +628,6 @@ function AddVoucherModal({
       setFormData({
         userId: "",
         amount: "",
-        amountType: "deposit",
         method: "",
         reference: "",
         remarks: "",
@@ -663,8 +661,6 @@ function AddVoucherModal({
       status: formData.status,
     };
 
-    // For limit vouchers, send amountType so backend flips dr/cr direction
-    if (type === "limit") voucherData.amountType = formData.amountType;
     if (formData.method) voucherData.method = formData.method;
     if (formData.reference) voucherData.reference = formData.reference;
     if (formData.remarks) voucherData.remarks = formData.remarks;
@@ -784,31 +780,6 @@ function AddVoucherModal({
                   placeholder="0.00"
                 />
               </div>
-
-              {type === "limit" && (
-                <div className="space-y-2">
-                  <Label className="text-foreground font-medium text-sm">
-                    Amount Type <span className="text-destructive">*</span>
-                  </Label>
-                  <Select
-                    value={formData.amountType}
-                    onValueChange={(value: "deposit" | "withdraw") => setFormData({ ...formData, amountType: value })}
-                  >
-                    <SelectTrigger className="bg-input border text-foreground h-10 w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card border">
-                      <SelectItem value="deposit">Deposit (Credit to user)</SelectItem>
-                      <SelectItem value="withdraw">Withdraw (Debit from user)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {formData.amountType === "deposit"
-                      ? "Amount will be added to user's limit"
-                      : "Amount will be deducted from user's limit"}
-                  </p>
-                </div>
-              )}
 
               <div className="space-y-2">
                 <Label className="text-foreground font-medium text-sm">Payment Method</Label>
