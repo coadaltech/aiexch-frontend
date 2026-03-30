@@ -55,7 +55,7 @@ import {
   Image,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useUserCreatedUsers, useCreateVoucher, useVouchers, useUpdateVoucher } from "@/hooks/useOwner";
+import { useUserCreatedUsers, useUserLedger, useCreateVoucher, useVouchers, useUpdateVoucher } from "@/hooks/useOwner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { TableSkeleton } from "@/components/owner/skeletons";
@@ -610,6 +610,8 @@ function AddVoucherModal({
   const { user: authUser } = useAuth();
   const { data: users = [], isLoading: usersLoading } = useUserCreatedUsers(authUser?.id ?? null);
   const [userSearchOpen, setUserSearchOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const { data: userLedger, isLoading: ledgerLoading } = useUserLedger(type === "limit" ? selectedUserId : null);
   const [formData, setFormData] = useState({
     userId: "",
     amount: "",
@@ -635,6 +637,7 @@ function AddVoucherModal({
       });
       setError(null);
       setUserSearchOpen(false);
+      setSelectedUserId(null);
     }
   }, [open]);
 
@@ -729,6 +732,7 @@ function AddVoucherModal({
                               value={`${user.username} ${user.email}`}
                               onSelect={() => {
                                 setFormData({ ...formData, userId: user.id });
+                                setSelectedUserId(user.id);
                                 setUserSearchOpen(false);
                               }}
                             >
@@ -746,6 +750,24 @@ function AddVoucherModal({
                     </Command>
                   </PopoverContent>
                 </Popover>
+                {type === "limit" && selectedUserId && (
+                  <div className="flex gap-4 mt-2 p-2 rounded-md bg-muted/50 text-sm">
+                    {ledgerLoading ? (
+                      <span className="text-muted-foreground">Loading limits...</span>
+                    ) : userLedger ? (
+                      <>
+                        <div>
+                          <span className="text-muted-foreground">Fix Limit: </span>
+                          <span className="font-semibold text-foreground">₹{parseFloat(userLedger.fixLimit ?? "0").toFixed(2)}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Final Limit: </span>
+                          <span className="font-semibold text-foreground">₹{parseFloat(userLedger.finalLimit ?? "0").toFixed(2)}</span>
+                        </div>
+                      </>
+                    ) : null}
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">

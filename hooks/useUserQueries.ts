@@ -66,7 +66,7 @@ export const useLedger = (enabled = true) => {
       userBalance: string;
       userLimit: string;
       limitConsumed: string;
-      limitConsumedAfterDeclare: string;
+      fixLimit: string;
       finalLimit: string;
     } | null,
     enabled,

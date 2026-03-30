@@ -320,6 +320,20 @@ export const useUserCreatedUsers = (userId: string | null) => {
   });
 };
 
+export const useUserLedger = (userId: string | null) => {
+  return useQuery({
+    queryKey: ["user-ledger", userId],
+    queryFn: () => ownerApi.getUserLedger(userId!).then((res) => res.data.data as {
+      fixLimit: string;
+      finalLimit: string;
+      userLimit: string;
+      limitConsumed: string;
+      userBalance: string;
+    }),
+    enabled: !!userId,
+  });
+};
+
 // Vouchers
 export const useVouchers = () => {
   return useQuery({
