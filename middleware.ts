@@ -1,7 +1,6 @@
 // middleware.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { decode_payload_from_token } from "./lib/token-utils";
 
 // Panel role prefixes (duplicated from lib/panel-utils.ts since middleware runs in edge runtime)
 const PANEL_PREFIXES = ["owner", "admin", "super", "master", "agent"] as const;
@@ -52,9 +51,11 @@ export async function middleware(request: NextRequest) {
   let userRole: string | number | null = null;
 
   if (token) {
-    const tokenResult = decode_payload_from_token(token);
-    if (tokenResult?.success && tokenResult?.payload) {
-      userRole = tokenResult.payload.role ?? null;
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      userRole = payload.role ?? null;
+    } catch {
+      // invalid token
     }
   }
 
