@@ -1,5 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async rewrites() {
+    return [
+      { source: "/admin/:path*", destination: "/owner/:path*" },
+      { source: "/super/:path*", destination: "/owner/:path*" },
+      { source: "/master/:path*", destination: "/owner/:path*" },
+      { source: "/agent/:path*", destination: "/owner/:path*" },
+      { source: "/admin", destination: "/owner" },
+      { source: "/super", destination: "/owner" },
+      { source: "/master", destination: "/owner" },
+      { source: "/agent", destination: "/owner" },
+    ];
+  },
   experimental: {
     optimizePackageImports: ["@radix-ui/react-icons", "lucide-react"],
   },
