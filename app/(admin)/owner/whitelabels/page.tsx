@@ -8,16 +8,18 @@ import { TableSkeleton } from "@/components/owner/skeletons";
 import { useConfirm } from "@/hooks/useConfirm";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useRouter } from "next/navigation";
+import { usePanelPrefix } from "@/hooks/usePanelPrefix";
 
 export default function WhitelabelsPage() {
   const router = useRouter();
+  const panelPrefix = usePanelPrefix();
   const confirmDialog = useConfirm();
 
   const { data: whitelabels = [], isLoading } = useWhitelabels();
   const deleteMutation = useDeleteWhitelabel();
 
   const handleCreateWhitelabel = () => {
-    router.push("/owner/whitelabels/create");
+    router.push(`${panelPrefix}/whitelabels/create`);
   };
 
   const handleEditWhitelabel = (whitelabel: any) => {

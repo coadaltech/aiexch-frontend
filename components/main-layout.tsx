@@ -7,6 +7,7 @@ import { AppSidebar } from "./layout/app-sidebar-new";
 import { useWhitelabelInfo } from "@/hooks/useAuth";
 import { useAuth } from "@/contexts/AuthContext";
 import { PanelLeftOpen } from "lucide-react";
+import { isPanelPath } from "@/lib/panel-utils";
 
 function SidebarOpenButton() {
   const { open, toggleSidebar, isMobile } = useSidebar();
@@ -27,7 +28,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { data: whitelabelInfo, isLoading: whitelabelLoading } = useWhitelabelInfo();
   const { isLoggedIn } = useAuth();
-  const isOwnerRoute = pathname?.startsWith("/owner");
+  const isOwnerRoute = isPanelPath(pathname);
   const isAuthRoute =
     pathname?.startsWith("/login") ||
     pathname?.startsWith("/signup") ||
@@ -59,7 +60,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
 
   return (
     <SidebarProvider>
-      <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 w-full flex flex-col">
+      <div style={{ height: 'var(--vh-full)' }} className="overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 w-full flex flex-col">
         {/* Fixed Header - always visible at top */}
         <Header />
 
@@ -67,7 +68,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
         <SidebarOpenButton />
 
         {/* Main Content Area - only this part scrolls; header and (on mobile) bottom tab stay fixed */}
-        <div className="flex flex-1 min-h-0 mt-14 md:mt-30 max-h-[calc(100vh-4rem)] md:max-h-[calc(100vh-7.5rem)]">
+        <div className="flex flex-1 min-h-0 mt-14 md:mt-30 max-h-[calc(var(--vh-full)-4rem)] md:max-h-[calc(var(--vh-full)-7.5rem)]">
           {/* <div className= "flex flex-1 min-h-0 mt-14 lg:mt-24 max-h-[calc(100vh-3.5rem)] lg:max-h-[calc(100vh-6rem)]"> */}
           {/* Sidebar - Starts below header */}
           <AppSidebar />

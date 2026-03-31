@@ -6,6 +6,7 @@ import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react"
 import { usePathname } from "next/navigation"
 
 import { cn } from "@/lib/utils"
+import { isPanelPath } from "@/lib/panel-utils"
 
 function Select({
   ...props
@@ -58,7 +59,7 @@ function SelectContent({
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Content>) {
   const pathname = usePathname();
-  const isOwnerRoute = pathname?.startsWith("/owner");
+  const isOwnerRoute = isPanelPath(pathname);
   
   return (
     <SelectPrimitive.Portal>

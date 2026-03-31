@@ -6,6 +6,7 @@ import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react"
 import { usePathname } from "next/navigation"
 
 import { cn } from "@/lib/utils"
+import { isPanelPath } from "@/lib/panel-utils"
 
 function DropdownMenu({
   ...props
@@ -38,7 +39,7 @@ function DropdownMenuContent({
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Content>) {
   const pathname = usePathname();
-  const isOwnerRoute = pathname?.startsWith("/owner");
+  const isOwnerRoute = isPanelPath(pathname);
   
   return (
     <DropdownMenuPrimitive.Portal>
@@ -232,7 +233,7 @@ function DropdownMenuSubContent({
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.SubContent>) {
   const pathname = usePathname();
-  const isOwnerRoute = pathname?.startsWith("/owner");
+  const isOwnerRoute = isPanelPath(pathname);
   
   return (
     <DropdownMenuPrimitive.SubContent

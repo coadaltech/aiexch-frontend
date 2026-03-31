@@ -233,6 +233,12 @@ export const ownerApi = {
     api.put(`/owner/sports-games/${id}`, data),
   deleteSportsGame: (id: string) => api.delete(`/owner/sports-games/${id}`),
 
+  // Competitions (per-sport, role + whitelabel aware)
+  getCompetitions: (sportId: string) =>
+    api.get(`/owner/sports-games/competitions/${sportId}`),
+  updateCompetitionStatus: (sportId: string, data: { competitions: Array<{ id: string; isActive: boolean }> }) =>
+    api.post(`/owner/sports-games/competitions/${sportId}/update-status`, data),
+
   // Home Sections
   getHomeSections: () => api.get("/owner/home-sections"),
   createHomeSection: (data: any) => api.post("/owner/home-sections", data),

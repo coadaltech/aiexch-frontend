@@ -25,64 +25,70 @@ import {
   Wrench,
 } from "lucide-react";
 
-export const navigation: {
+export type NavItem = {
   name: string;
   href?: string;
   icon: React.ComponentType<any>;
   subItems?: { name: string; href: string; icon: React.ComponentType<any> }[];
-}[] = [
-  // { name: "Home", href: "/", icon: HomeIcon },
-  { name: "Dashboard", href: "/owner", icon: BarChart3 },
-  { name: "Users", href: "/owner/users", icon: Users },
-  {
-    name: "Sports Games",
-    icon: Trophy,
-    subItems: [
-      { name: "Sports Games", href: "/owner/sports-games", icon: Trophy },
-      { name: "Market Management", href: "/owner/market-management", icon: LineChart },
-      { name: "Custom Markets", href: "/owner/custom-markets", icon: Wrench },
-      { name: "Matka", href: "/owner/matka", icon: Dice6 },
-    ],
-  },
-  { name: "Home Sections", href: "/owner/home-sections", icon: Image },
-  {
-    name: "Marketing",
-    icon: Gift,
-    subItems: [
-      { name: "Promotions", href: "/owner/promotions", icon: Megaphone },
-      { name: "Promo Codes", href: "/owner/promocodes", icon: Ticket },
-      { name: "Banners", href: "/owner/banners", icon: PanelTop },
-      { name: "Popups", href: "/owner/popups", icon: MessageSquare },
-    ],
-  },
-  {
-    name: "Vouchers",
-    icon: CreditCard,
-    subItems: [
-      { name: "All Vouchers", href: "/owner/vouchers", icon: ListOrdered },
-      { name: "Limit Voucher", href: "/owner/vouchers/limit", icon: CreditCardAlt },
-      { name: "Deposit Voucher", href: "/owner/vouchers/deposit", icon: ArrowDownCircle },
-      { name: "Withdraw Voucher", href: "/owner/vouchers/withdraw", icon: ArrowUpCircle },
-    ],
-  },
-  { name: "Notifications", href: "/owner/notifications", icon: Bell },
-  { name: "QR Codes", href: "/owner/qrcodes", icon: QrCode },
-  {
-    name: "Withdrawal Methods",
-    href: "/owner/withdrawal-methods",
-    icon: Wallet,
-  },
-  { name: "Manage Currency", href: "/owner/manage-currency", icon: Banknote },
-  {
-    name: "Configuration",
-    icon: Settings,
-    subItems: [
-      { name: "White Labels", href: "/owner/whitelabels", icon: Globe },
-      // { name: "Domains", href: "/owner/domains" },
-      { name: "Settings", href: "/owner/settings", icon: Wrench },
-    ],
-  },
-];
+};
+
+/** Build navigation with the correct panel prefix (e.g. "/admin", "/owner") */
+export function getNavigation(prefix: string): NavItem[] {
+  return [
+    { name: "Dashboard", href: prefix, icon: BarChart3 },
+    { name: "Users", href: `${prefix}/users`, icon: Users },
+    {
+      name: "Sports Games",
+      icon: Trophy,
+      subItems: [
+        { name: "Sports Games", href: `${prefix}/sports-games`, icon: Trophy },
+        { name: "Market Management", href: `${prefix}/market-management`, icon: LineChart },
+        { name: "Custom Markets", href: `${prefix}/custom-markets`, icon: Wrench },
+        { name: "Matka", href: `${prefix}/matka`, icon: Dice6 },
+      ],
+    },
+    { name: "Home Sections", href: `${prefix}/home-sections`, icon: Image },
+    {
+      name: "Marketing",
+      icon: Gift,
+      subItems: [
+        { name: "Promotions", href: `${prefix}/promotions`, icon: Megaphone },
+        { name: "Promo Codes", href: `${prefix}/promocodes`, icon: Ticket },
+        { name: "Banners", href: `${prefix}/banners`, icon: PanelTop },
+        { name: "Popups", href: `${prefix}/popups`, icon: MessageSquare },
+      ],
+    },
+    {
+      name: "Vouchers",
+      icon: CreditCard,
+      subItems: [
+        { name: "All Vouchers", href: `${prefix}/vouchers`, icon: ListOrdered },
+        { name: "Limit Voucher", href: `${prefix}/vouchers/limit`, icon: CreditCardAlt },
+        { name: "Deposit Voucher", href: `${prefix}/vouchers/deposit`, icon: ArrowDownCircle },
+        { name: "Withdraw Voucher", href: `${prefix}/vouchers/withdraw`, icon: ArrowUpCircle },
+      ],
+    },
+    { name: "Notifications", href: `${prefix}/notifications`, icon: Bell },
+    { name: "QR Codes", href: `${prefix}/qrcodes`, icon: QrCode },
+    {
+      name: "Withdrawal Methods",
+      href: `${prefix}/withdrawal-methods`,
+      icon: Wallet,
+    },
+    { name: "Manage Currency", href: `${prefix}/manage-currency`, icon: Banknote },
+    {
+      name: "Configuration",
+      icon: Settings,
+      subItems: [
+        { name: "White Labels", href: `${prefix}/whitelabels`, icon: Globe },
+        { name: "Settings", href: `${prefix}/settings`, icon: Wrench },
+      ],
+    },
+  ];
+}
+
+/** @deprecated Use getNavigation(prefix) instead */
+export const navigation = getNavigation("/owner");
 
 export const colorTemplates = [
   {

@@ -3,6 +3,9 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import { ownerApi } from "@/lib/api";
+import { usePanelPrefix } from "@/hooks/usePanelPrefix";
 
 interface Competition {
   id: string;
@@ -10,6 +13,8 @@ interface Competition {
   sportId: string;
   totalEvents: number;
   isActive: boolean;
+  /** Per-whitelabel override: true = visible, false = hidden for this whitelabel, null = no override */
+  whitelabelActive: boolean;
   competition_id?: string;
   sport_id?: string;
   is_active?: boolean;
@@ -20,6 +25,13 @@ export default function CompetitionsPage() {
   const params = useParams();
   const router = useRouter();
   const sportId = params.sportId as string;
+  const { user: currentUser } = useAuth();
+  const panelPrefix = usePanelPrefix();
+
+  const isOwner = currentUser?.role === "owner";
+  const isAdmin = currentUser?.role === "admin";
+  // Super/Master/Agent = read-only
+  const canEdit = isOwner || isAdmin;
 
   const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,38 +46,39 @@ export default function CompetitionsPage() {
     const fetchCompetitions = async () => {
       try {
         setLoading(true);
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/competitions/${sportId}`,
-        );
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
+        const { data } = await ownerApi.getCompetitions(sportId);
 
         let competitionsData: Competition[] = [];
-        if (Array.isArray(data.data)) {
-          competitionsData = data.data.map((comp) => ({
-            id: comp.competition_id || comp.id,
+        if (data.success && Array.isArray(data.data)) {
+          competitionsData = data.data.map((comp: any) => ({
+            id: String(comp.competition_id || comp.id),
             name: comp.name,
-            sportId: comp.sport_id || comp.sportId,
+            sportId: String(comp.sport_id || comp.sportId),
             totalEvents: comp.totalEvents || comp.metadata?.totalEvents || 0,
-            isActive: comp.is_active || comp.isActive || false,
+            isActive: comp.is_active ?? comp.isActive ?? false,
+            whitelabelActive: comp.whitelabelActive ?? true,
           }));
           setSportName(data.sportName || "");
         }
 
-        // Sort competitions: active ones first, then by name
-        const sortedCompetitions = [...competitionsData].sort((a, b) => {
-          if (a.isActive && !b.isActive) return -1;
-          if (!a.isActive && b.isActive) return 1;
+        // Sort: active first, then by name
+        const sorted = [...competitionsData].sort((a, b) => {
+          // For owner: sort by global isActive
+          // For admin: sort by whitelabelActive (since they only see globally active ones)
+          const aActive = isOwner ? a.isActive : a.whitelabelActive;
+          const bActive = isOwner ? b.isActive : b.whitelabelActive;
+          if (aActive && !bActive) return -1;
+          if (!aActive && bActive) return 1;
           return a.name.localeCompare(b.name);
         });
 
-        setCompetitions(sortedCompetitions);
+        setCompetitions(sorted);
 
-        // Auto-select active competitions
+        // Auto-select currently active competitions
         const activeIds = competitionsData
-          .filter((comp) => comp.isActive)
+          .filter((comp) =>
+            isOwner ? comp.isActive : comp.whitelabelActive,
+          )
           .map((comp) => comp.id);
         setSelectedCompetitions(activeIds);
       } catch (error) {
@@ -78,21 +91,25 @@ export default function CompetitionsPage() {
     if (sportId) {
       fetchCompetitions();
     }
-  }, [sportId]);
+  }, [sportId, isOwner]);
 
-  // Memoize filtered competitions
   const filteredCompetitions = useMemo(() => {
     return competitions.filter((competition) =>
       competition.name.toLowerCase().includes(search.toLowerCase()),
     );
   }, [competitions, search]);
 
-  // Memoize changed competitions calculation
+  // Calculate changes based on role:
+  // Owner: compares against global isActive
+  // Admin: compares against whitelabelActive
   const changedCompetitions = useMemo(() => {
     const changes: Array<{ id: string; isActive: boolean }> = [];
     competitions.forEach((competition) => {
       const isNowActive = selectedCompetitions.includes(competition.id);
-      if (competition.isActive !== isNowActive) {
+      const wasActive = isOwner
+        ? competition.isActive
+        : competition.whitelabelActive;
+      if (wasActive !== isNowActive) {
         changes.push({
           id: competition.id,
           isActive: isNowActive,
@@ -100,20 +117,20 @@ export default function CompetitionsPage() {
       }
     });
     return changes;
-  }, [competitions, selectedCompetitions]);
+  }, [competitions, selectedCompetitions, isOwner]);
 
-  // Memoize stats
   const stats = useMemo(
     () => ({
       total: competitions.length,
-      active: competitions.filter((c) => c.isActive).length,
+      active: competitions.filter((c) =>
+        isOwner ? c.isActive : c.whitelabelActive,
+      ).length,
       selected: selectedCompetitions.length,
       changes: changedCompetitions.length,
     }),
-    [competitions, selectedCompetitions, changedCompetitions],
+    [competitions, selectedCompetitions, changedCompetitions, isOwner],
   );
 
-  // Optimize checkbox handler with useCallback
   const handleSelectCompetition = useCallback((competitionId: string) => {
     setSelectedCompetitions((prev) => {
       if (prev.includes(competitionId)) {
@@ -143,38 +160,35 @@ export default function CompetitionsPage() {
         return;
       }
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/competitions/update-status`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            sportId,
-            competitions: changedCompetitions,
-          }),
-        },
-      );
-
-      const result = await response.json();
+      const { data: result } = await ownerApi.updateCompetitionStatus(sportId, {
+        competitions: changedCompetitions,
+      });
 
       if (result.success) {
+        // Update local state
         const updatedCompetitions = competitions.map((competition) => {
           const change = changedCompetitions.find(
             (c) => c.id === competition.id,
           );
           if (change) {
-            return { ...competition, isActive: change.isActive };
+            if (isOwner) {
+              return { ...competition, isActive: change.isActive };
+            } else {
+              return { ...competition, whitelabelActive: change.isActive };
+            }
           }
           return competition;
         });
 
-        const sortedUpdated = [...updatedCompetitions].sort((a, b) => {
-          if (a.isActive && !b.isActive) return -1;
-          if (!a.isActive && b.isActive) return 1;
+        const sorted = [...updatedCompetitions].sort((a, b) => {
+          const aActive = isOwner ? a.isActive : a.whitelabelActive;
+          const bActive = isOwner ? b.isActive : b.whitelabelActive;
+          if (aActive && !bActive) return -1;
+          if (!aActive && bActive) return 1;
           return a.name.localeCompare(b.name);
         });
 
-        setCompetitions(sortedUpdated);
+        setCompetitions(sorted);
         alert(
           `Updated ${changedCompetitions.length} competition(s) successfully!`,
         );
@@ -191,20 +205,22 @@ export default function CompetitionsPage() {
 
   const handleDiscardChanges = useCallback(() => {
     const activeIds = competitions
-      .filter((comp) => comp.isActive)
+      .filter((comp) =>
+        isOwner ? comp.isActive : comp.whitelabelActive,
+      )
       .map((comp) => comp.id);
     setSelectedCompetitions(activeIds);
-  }, [competitions]);
+  }, [competitions, isOwner]);
 
   const handleBackClick = () => {
     if (changedCompetitions.length > 0) {
       if (
         confirm("You have unsaved changes. Are you sure you want to leave?")
       ) {
-        router.push("/owner/sports-games");
+        router.push(`${panelPrefix}/sports-games`);
       }
     } else {
-      router.push("/owner/sports-games");
+      router.push(`${panelPrefix}/sports-games`);
     }
   };
 
@@ -247,9 +263,26 @@ export default function CompetitionsPage() {
             <h1 className="text-3xl font-bold text-gray-900">
               {sportName || "Sport"} Competitions
             </h1>
-            <p className="text-sm text-gray-500 mt-1">Sport ID: {sportId}</p>
+            <div className="flex items-center gap-3 mt-1">
+              <p className="text-sm text-gray-500">Sport ID: {sportId}</p>
+              {isOwner && (
+                <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                  Global Control
+                </span>
+              )}
+              {isAdmin && (
+                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                  Whitelabel Control
+                </span>
+              )}
+              {!canEdit && (
+                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                  View Only
+                </span>
+              )}
+            </div>
           </div>
-          {stats.changes > 0 && (
+          {canEdit && stats.changes > 0 && (
             <div className="flex gap-3">
               <button
                 onClick={handleDiscardChanges}
@@ -270,11 +303,9 @@ export default function CompetitionsPage() {
                 ) : (
                   <>
                     Save Changes
-                    {stats.changes > 0 && (
-                      <span className="bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
-                        {stats.changes}
-                      </span>
-                    )}
+                    <span className="bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
+                      {stats.changes}
+                    </span>
                   </>
                 )}
               </button>
@@ -295,18 +326,22 @@ export default function CompetitionsPage() {
             {stats.active}
           </p>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-          <p className="text-sm text-gray-600">Selected</p>
-          <p className="text-2xl font-bold text-blue-600 mt-1">
-            {stats.selected}
-          </p>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-          <p className="text-sm text-gray-600">Pending Changes</p>
-          <p className="text-2xl font-bold text-orange-600 mt-1">
-            {stats.changes}
-          </p>
-        </div>
+        {canEdit && (
+          <>
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+              <p className="text-sm text-gray-600">Selected</p>
+              <p className="text-2xl font-bold text-blue-600 mt-1">
+                {stats.selected}
+              </p>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+              <p className="text-sm text-gray-600">Pending Changes</p>
+              <p className="text-2xl font-bold text-orange-600 mt-1">
+                {stats.changes}
+              </p>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Search and Select All */}
@@ -334,23 +369,28 @@ export default function CompetitionsPage() {
               className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
             />
           </div>
-          <button
-            onClick={handleSelectAll}
-            className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap"
-          >
-            {selectedCompetitions.length === filteredCompetitions.length
-              ? "Deselect All"
-              : "Select All"}{" "}
-            ({filteredCompetitions.length})
-          </button>
+          {canEdit && (
+            <button
+              onClick={handleSelectAll}
+              className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap"
+            >
+              {selectedCompetitions.length === filteredCompetitions.length
+                ? "Deselect All"
+                : "Select All"}{" "}
+              ({filteredCompetitions.length})
+            </button>
+          )}
         </div>
       </div>
 
       {/* Competitions List */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         {filteredCompetitions.map((competition) => {
+          const currentActive = isOwner
+            ? competition.isActive
+            : competition.whitelabelActive;
           const isSelected = selectedCompetitions.includes(competition.id);
-          const isChanged = competition.isActive !== isSelected;
+          const isChanged = canEdit && currentActive !== isSelected;
 
           return (
             <div
@@ -358,12 +398,20 @@ export default function CompetitionsPage() {
               className="flex items-center justify-between p-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors"
             >
               <div className="flex items-center gap-4 flex-1">
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  onChange={() => handleSelectCompetition(competition.id)}
-                  className="h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                />
+                {canEdit ? (
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => handleSelectCompetition(competition.id)}
+                    className="h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                  />
+                ) : (
+                  <div
+                    className={`h-3 w-3 rounded-full ${
+                      currentActive ? "bg-green-500" : "bg-gray-300"
+                    }`}
+                  />
+                )}
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <h3 className="font-medium text-gray-900">
@@ -372,6 +420,12 @@ export default function CompetitionsPage() {
                     {isChanged && (
                       <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
                         Modified
+                      </span>
+                    )}
+                    {/* Owner: show if a whitelabel has overridden this competition */}
+                    {isOwner && !competition.isActive && (
+                      <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">
+                        Globally Inactive
                       </span>
                     )}
                   </div>
@@ -387,12 +441,22 @@ export default function CompetitionsPage() {
                 </div>
                 <span
                   className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    isSelected
-                      ? "bg-green-100 text-green-700"
-                      : "bg-gray-100 text-gray-600"
+                    canEdit
+                      ? isSelected
+                        ? "bg-green-100 text-green-700"
+                        : "bg-gray-100 text-gray-600"
+                      : currentActive
+                        ? "bg-green-100 text-green-700"
+                        : "bg-gray-100 text-gray-600"
                   }`}
                 >
-                  {isSelected ? "Active" : "Inactive"}
+                  {canEdit
+                    ? isSelected
+                      ? "Active"
+                      : "Inactive"
+                    : currentActive
+                      ? "Active"
+                      : "Inactive"}
                 </span>
               </div>
             </div>

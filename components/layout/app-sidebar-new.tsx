@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { MenuGroup, MenuItem } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
+import { isPanelPath } from "@/lib/panel-utils";
 import { Series, Match } from "@/components/sports/types";
 import axios from "axios";
 import { useSeries } from "@/hooks/useSportsApi";
@@ -274,7 +275,7 @@ export function AppSidebar() {
     { title: string; eventTypeId: string; basePath: string }[]
   >([]);
 
-  const isOwnerRoute = pathname.includes("/owner");
+  const isOwnerRoute = isPanelPath(pathname);
   const isSportsPage = pathname.startsWith("/sports");
 
   // Fetch sports list

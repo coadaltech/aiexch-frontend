@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { publicApi } from "@/lib/api";
 import MaintenancePage from "./maintenance-page";
 import { MaintenanceWrapperProps } from "@/types";
+import { isPanelPath } from "@/lib/panel-utils";
 
 export function MaintenanceWrapper({ children }: MaintenanceWrapperProps) {
   const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
@@ -12,7 +13,7 @@ export function MaintenanceWrapper({ children }: MaintenanceWrapperProps) {
   const [isLoading, setIsLoading] = useState(true);
   const pathname = usePathname();
 
-  const isOwnerPage = pathname?.startsWith("/owner");
+  const isOwnerPage = isPanelPath(pathname);
 
   useEffect(() => {
     const checkMaintenanceMode = async () => {

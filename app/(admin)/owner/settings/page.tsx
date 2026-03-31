@@ -8,12 +8,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Wrench, Save, Settings, Palette, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { usePanelPrefix } from "@/hooks/usePanelPrefix";
 import { useSettings, useUpdateSettings } from "@/hooks/useOwner";
 import { toast } from "sonner";
 
 export default function SettingsPage() {
   const { data: settings, isLoading } = useSettings();
   const updateSettings = useUpdateSettings();
+  const panelPrefix = usePanelPrefix();
 
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [maintenanceMessage, setMaintenanceMessage] = useState(
@@ -45,7 +47,7 @@ export default function SettingsPage() {
 
       {/* Quick Access Cards */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Link href="/owner/settings/preferences">
+        <Link href={`${panelPrefix}/settings/preferences`}>
           <Card className="bg-card border hover:border-primary/50 transition-colors cursor-pointer">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">

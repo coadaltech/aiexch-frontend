@@ -17,9 +17,11 @@ import { useConfirm } from "@/hooks/useConfirm";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { usePanelPrefix } from "@/hooks/usePanelPrefix";
 
 export default function SectionGamesPage() {
   const params = useParams();
+  const panelPrefix = usePanelPrefix();
   const sectionId = parseInt(params.id as string);
 
   const [gameModalOpen, setGameModalOpen] = useState(false);
@@ -72,7 +74,7 @@ export default function SectionGamesPage() {
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" asChild>
-          <Link href="/owner/home-sections">
+          <Link href={`${panelPrefix}/home-sections`}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Sections
           </Link>

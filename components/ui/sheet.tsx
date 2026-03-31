@@ -6,6 +6,7 @@ import { XIcon } from "lucide-react"
 import { usePathname } from "next/navigation"
 
 import { cn } from "@/lib/utils"
+import { isPanelPath } from "@/lib/panel-utils"
 
 function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />
@@ -54,7 +55,7 @@ function SheetContent({
   side?: "top" | "right" | "bottom" | "left"
 }) {
   const pathname = usePathname();
-  const isOwnerRoute = pathname?.startsWith("/owner");
+  const isOwnerRoute = isPanelPath(pathname);
   
   return (
     <SheetPortal>

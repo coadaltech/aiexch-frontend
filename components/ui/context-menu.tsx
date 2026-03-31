@@ -6,6 +6,7 @@ import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react"
 import { usePathname } from "next/navigation"
 
 import { cn } from "@/lib/utils"
+import { isPanelPath } from "@/lib/panel-utils"
 
 function ContextMenu({
   ...props
@@ -83,7 +84,7 @@ function ContextMenuSubContent({
   ...props
 }: React.ComponentProps<typeof ContextMenuPrimitive.SubContent>) {
   const pathname = usePathname();
-  const isOwnerRoute = pathname?.startsWith("/owner");
+  const isOwnerRoute = isPanelPath(pathname);
   
   return (
     <ContextMenuPrimitive.SubContent
@@ -103,7 +104,7 @@ function ContextMenuContent({
   ...props
 }: React.ComponentProps<typeof ContextMenuPrimitive.Content>) {
   const pathname = usePathname();
-  const isOwnerRoute = pathname?.startsWith("/owner");
+  const isOwnerRoute = isPanelPath(pathname);
   
   return (
     <ContextMenuPrimitive.Portal>

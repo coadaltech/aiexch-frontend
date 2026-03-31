@@ -4,9 +4,11 @@ import { useRouter } from "next/navigation";
 import { useCreateWhitelabel } from "@/hooks/useOwner";
 import { WhitelabelPage } from "@/components/owner/whitelabel-page";
 import { Whitelabel } from "@/components/owner/types";
+import { usePanelPrefix } from "@/hooks/usePanelPrefix";
 
 export default function CreateWhitelabelPage() {
   const router = useRouter();
+  const panelPrefix = usePanelPrefix();
   const createMutation = useCreateWhitelabel();
 
   const handleSave = async (formData: Whitelabel) => {
@@ -42,7 +44,7 @@ export default function CreateWhitelabelPage() {
 
     createMutation.mutate(formDataToSend, {
       onSuccess: () => {
-        router.push("/owner/whitelabels");
+        router.push(`${panelPrefix}/whitelabels`);
       },
     });
   };

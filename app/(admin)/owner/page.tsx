@@ -27,10 +27,12 @@ import {
   DashboardActivitySkeleton,
 } from "@/components/owner/skeletons";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePanelPrefix } from "@/hooks/usePanelPrefix";
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const { user } = useAuth(); 
+  const { user } = useAuth();
+  const panelPrefix = usePanelPrefix();
   const { data: users = [], isLoading: usersLoading } = useOwnerUsers();
   const { data: promotions = [], isLoading: promotionsLoading } =
     usePromotions();
@@ -287,35 +289,35 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent className="space-y-3">
             <button
-              onClick={() => router.push("/owner/promotions")}
+              onClick={() => router.push(`${panelPrefix}/promotions`)}
               className="w-full text-left p-3 rounded-lg bg-muted hover:bg-primary hover:text-black text-foreground transition-colors flex items-center gap-2"
             >
               <Gift className="h-4 w-4" />
               Manage Promotions
             </button>
             <button
-              onClick={() => router.push("/owner/kyc")}
+              onClick={() => router.push(`${panelPrefix}/kyc`)}
               className="w-full text-left p-3 rounded-lg bg-muted hover:bg-primary hover:text-black text-foreground transition-colors flex items-center gap-2"
             >
               <Shield className="h-4 w-4" />
               Review KYC ({pendingKyc})
             </button>
             <button
-              onClick={() => router.push("/owner/vouchers")}
+              onClick={() => router.push(`${panelPrefix}/vouchers`)}
               className="w-full text-left p-3 rounded-lg bg-muted hover:bg-primary hover:text-black text-foreground transition-colors flex items-center gap-2"
             >
               <CreditCard className="h-4 w-4" />
               Vouchers ({pendingVouchers})
             </button>
             <button
-              onClick={() => router.push("/owner/users")}
+              onClick={() => router.push(`${panelPrefix}/users`)}
               className="w-full text-left p-3 rounded-lg bg-muted hover:bg-primary hover:text-black text-foreground transition-colors flex items-center gap-2"
             >
               <Users className="h-4 w-4" />
               Manage Users
             </button>
             <button
-              onClick={() => router.push("/owner/settings")}
+              onClick={() => router.push(`${panelPrefix}/settings`)}
               className="w-full text-left p-3 rounded-lg bg-muted hover:bg-primary hover:text-black text-foreground transition-colors flex items-center gap-2"
             >
               <Settings className="h-4 w-4" />

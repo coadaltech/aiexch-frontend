@@ -7,8 +7,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWhitelabelInfo } from "@/hooks/useAuth";
-import { navigation } from "./data";
-import { useState } from "react";
+import { usePanelPrefix } from "@/hooks/usePanelPrefix";
+import { getNavigation } from "./data";
+import { useState, useMemo } from "react";
 import { useSettings } from "@/hooks/usePublic";
 
 interface OwnerSidebarProps {
@@ -63,10 +64,12 @@ function SidebarContent({
 }) {
   const { logout, user: currentUser } = useAuth();
   const { data: whitelabelInfo } = useWhitelabelInfo();
+  const panelPrefix = usePanelPrefix();
   const [openGroups, setOpenGroups] = useState<string[]>([]);
   const { data: settings } = useSettings();
   const isWhitelabel = !!settings?.whitelabelTheme;
   const whitelabelType = whitelabelInfo?.whitelabelType ? String(whitelabelInfo.whitelabelType).toUpperCase() : null;
+  const navigation = useMemo(() => getNavigation(panelPrefix), [panelPrefix]);
 
   const toggleGroup = (name: string) => {
     setOpenGroups((prev) =>
@@ -98,6 +101,18 @@ function SidebarContent({
           .filter((item) => {
             if (isWhitelabel && item.name === "Configuration") return false;
             if (item.name === "Manage Currency" && currentUser?.role !== "owner") return false;
+            // Marketing is owner-only
+            if (item.name === "Marketing" && currentUser?.role !== "owner") return false;
+            // QR Codes: only for non-owner users on B2C whitelabels
+            if (item.name === "QR Codes") {
+              if (currentUser?.role === "owner") return false;
+              if (whitelabelType !== "B2C") return false;
+            }
+            // Withdrawal Methods: only for non-owner users on B2C whitelabels
+            if (item.name === "Withdrawal Methods") {
+              if (currentUser?.role === "owner") return false;
+              if (whitelabelType !== "B2C") return false;
+            }
             return true;
           })
           .map((item) =>
@@ -120,7 +135,12 @@ function SidebarContent({
                 </button>
                 {openGroups.includes(item.name) && (
                   <div className="ml-8 mt-1 space-y-1">
-                    {item.subItems.map((subItem) => (
+                    {item.subItems
+                    .filter((subItem) => {
+                      if (subItem.name === "Matka" && currentUser?.role !== "owner") return false;
+                      return true;
+                    })
+                    .map((subItem) => (
                       <Link
                         key={subItem.name}
                         href={subItem.href}

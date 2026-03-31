@@ -6,6 +6,7 @@ import { XIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utils";
+import { isPanelPath } from "@/lib/panel-utils";
 
 function Dialog({
   ...props
@@ -56,7 +57,7 @@ function DialogContent({
   showCloseButton?: boolean;
 }) {
   const pathname = usePathname();
-  const isOwnerRoute = pathname?.startsWith("/owner");
+  const isOwnerRoute = isPanelPath(pathname);
   
   return (
     <DialogPortal data-slot="dialog-portal">

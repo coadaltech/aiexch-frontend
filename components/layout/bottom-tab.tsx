@@ -25,6 +25,7 @@ import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { Sheet, SheetContent } from "../ui/sheet";
 import { useAuth } from "@/contexts/AuthContext";
+import { isPanelPath } from "@/lib/panel-utils";
 
 const navItems = [
   { id: "home", label: "Home", icon: Home, link: "/" },
@@ -87,11 +88,11 @@ export default function BottomNavigation() {
     document.body.style.overflow = "unset";
   };
 
-  const hiddenRoutes = ["/login", "/signup", "/forgot-password", "/owner"];
+  const hiddenRoutes = ["/login", "/signup", "/forgot-password"];
   const isCasinoGame =
     pathname?.startsWith("/casino/") && pathname !== "/casino";
 
-  if (hiddenRoutes.some((route) => pathname?.includes(route)) || isCasinoGame)
+  if (hiddenRoutes.some((route) => pathname?.includes(route)) || isPanelPath(pathname) || isCasinoGame)
     return null;
 
   const visibleNavItems = navItems.filter(

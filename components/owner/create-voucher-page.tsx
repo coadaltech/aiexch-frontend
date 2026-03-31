@@ -58,6 +58,7 @@ import { cn } from "@/lib/utils";
 import { useUserCreatedUsers, useUserLedger, useCreateVoucher, useVouchers, useUpdateVoucher } from "@/hooks/useOwner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import { usePanelPrefix } from "@/hooks/usePanelPrefix";
 import { TableSkeleton } from "@/components/owner/skeletons";
 import { usePagination } from "@/hooks/usePagination";
 import { Pagination } from "@/components/ui/pagination";
@@ -106,6 +107,7 @@ const getStatusBadge = (status: string) => {
 
 export function CreateVoucherPage({ type }: { type: "limit" | "deposit" | "withdraw" }) {
   const router = useRouter();
+  const panelPrefix = usePanelPrefix();
   const { data: allVouchers = [], isLoading: vouchersLoading, error } = useVouchers();
   const updateVoucherMutation = useUpdateVoucher();
   const createVoucherMutation = useCreateVoucher();
@@ -201,7 +203,7 @@ export function CreateVoucherPage({ type }: { type: "limit" | "deposit" | "withd
         <Button
           variant="outline"
           size="sm"
-          onClick={() => router.push("/owner/vouchers")}
+          onClick={() => router.push(`${panelPrefix}/vouchers`)}
           className="h-9 w-9 p-0 shrink-0"
         >
           <ArrowLeft className="h-4 w-4" />

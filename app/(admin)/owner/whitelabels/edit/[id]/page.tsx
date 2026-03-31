@@ -4,9 +4,11 @@ import { useRouter, useParams } from "next/navigation";
 import { useWhitelabel, useUpdateWhitelabel } from "@/hooks/useOwner";
 import { WhitelabelPage } from "@/components/owner/whitelabel-page";
 import { Whitelabel } from "@/components/owner/types";
+import { usePanelPrefix } from "@/hooks/usePanelPrefix";
 
 export default function EditWhitelabelPage() {
   const router = useRouter();
+  const panelPrefix = usePanelPrefix();
   const params = useParams();
   const id = params.id as string;
 
@@ -48,7 +50,7 @@ export default function EditWhitelabelPage() {
       });
       const data = await response.json();
       if (data.success) {
-        router.push("/owner/whitelabels");
+        router.push(`${panelPrefix}/whitelabels`);
       }
     } catch (error) {
       console.error('Failed to update whitelabel:', error);

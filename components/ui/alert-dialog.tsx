@@ -5,6 +5,7 @@ import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
 import { usePathname } from "next/navigation"
 
 import { cn } from "@/lib/utils"
+import { isPanelPath } from "@/lib/panel-utils"
 import { buttonVariants } from "@/components/ui/button"
 
 function AlertDialog({
@@ -50,7 +51,7 @@ function AlertDialogContent({
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Content>) {
   const pathname = usePathname();
-  const isOwnerRoute = pathname?.startsWith("/owner");
+  const isOwnerRoute = isPanelPath(pathname);
   
   return (
     <AlertDialogPortal>

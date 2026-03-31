@@ -34,8 +34,9 @@ async function getTheme() {
 export async function ThemeScript() {
   const headersList = await headers();
   const pathname = headersList.get("x-pathname") || "";
-  // Don't apply whitelabel theme on admin routes
-  if (pathname.startsWith("/owner")) {
+  // Don't apply whitelabel theme on admin/panel routes
+  const panelPrefixes = ["owner", "admin", "super", "master", "agent"];
+  if (panelPrefixes.some((p) => pathname === `/${p}` || pathname.startsWith(`/${p}/`))) {
     return null;
   }
 
@@ -54,8 +55,10 @@ export async function ThemeScript() {
 
   const script = `
     (function() {
-      // Don't apply theme on admin routes
-      if (window.location.pathname.startsWith('/owner')) return;
+      // Don't apply theme on admin/panel routes
+      var pp = ['owner','admin','super','master','agent'];
+      var pn = window.location.pathname;
+      if (pp.some(function(p){return pn==='/'+p||pn.indexOf('/'+p+'/')===0})) return;
       
       const root = document.documentElement;
       const theme = ${JSON.stringify(theme)};

@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { publicApi } from "@/lib/api";
+import { isPanelPath } from "@/lib/panel-utils";
 
 export function ThemeLoader() {
   const pathname = usePathname();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (pathname?.startsWith("/owner")) {
+    if (isPanelPath(pathname)) {
       setLoading(false);
       return;
     }

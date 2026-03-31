@@ -25,12 +25,14 @@ import { AuthModal } from "../modals/auth-modal";
 import TransactionModal from "../modals/transaction-modal";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useWhitelabelInfo } from "@/hooks/useAuth";
 import { useLedger } from "@/hooks/useUserQueries";
 import { formatBalance } from "@/lib/format-balance";
 import Logo from "./logo";
 import { useSettings } from "@/hooks/usePublic";
 import { publicApi } from "@/lib/api";
 import Dropheader from "./dropheader";
+import { isPanelPath } from "@/lib/panel-utils";
 
 const leftMenu = [
   { label: "Home", link: "/home" },
@@ -63,6 +65,8 @@ export default function Header() {
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const { user, isLoggedIn, logout, isLoading } = useAuth();
+  const { data: whitelabelInfo } = useWhitelabelInfo();
+  const isB2C = String(whitelabelInfo?.whitelabelType ?? "").toUpperCase() === "B2C";
   const { data: ledger, isLoading: ledgerLoading } = useLedger(
     isLoggedIn && !user?.isDemo
   );
@@ -119,7 +123,7 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  if (pathname.includes("/owner")) return null;
+  if (isPanelPath(pathname)) return null;
   return (
     <>
       <header className="fixed w-full pb-2 top-0 z-50 shadow-lg bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700/50">
@@ -149,18 +153,20 @@ export default function Header() {
                     </span>
                   </Button> */}
 
-                    {/* Add Funds Button - Hidden on very small screens */}
-                    <div className="md:block hidden">
-                      <Button
-                        onClick={() => setIsTransactionModalOpen(true)}
-                        size="sm"
-                        className="xs:flex h-7 sm:h-8 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold px-2 sm:px-3 md:px-4 rounded-lg shadow-md text-xs sm:text-sm"
-                      >
-                        <Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5" />
-                        <span className="hidden sm:inline">Add Funds</span>
-                        <span className="sm:hidden">Add</span>
-                      </Button>
-                    </div>
+                    {/* Add Funds Button - Hidden on very small screens, B2C only */}
+                    {isB2C && (
+                      <div className="md:block hidden">
+                        <Button
+                          onClick={() => setIsTransactionModalOpen(true)}
+                          size="sm"
+                          className="xs:flex h-7 sm:h-8 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold px-2 sm:px-3 md:px-4 rounded-lg shadow-md text-xs sm:text-sm"
+                        >
+                          <Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5" />
+                          <span className="hidden sm:inline">Add Funds</span>
+                          <span className="sm:hidden">Add</span>
+                        </Button>
+                      </div>
+                    )}
 
                     {/* Balance + Exposure Display */}
                     <Button

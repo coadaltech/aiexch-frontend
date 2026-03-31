@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { publicApi } from "@/lib/api";
+import { isPanelPath } from "@/lib/panel-utils";
 
 export function MetadataLoader() {
   const pathname = usePathname();
@@ -15,7 +16,7 @@ export function MetadataLoader() {
 
         // Update title
         const siteName = data?.siteName || "AIEXCH";
-        const isOwner = pathname?.startsWith("/owner");
+        const isOwner = isPanelPath(pathname);
         document.title = isOwner 
           ? `Owner - ${siteName}` 
           : `${siteName} - Gaming Exchange Platform`;

@@ -24,6 +24,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useState, lazy, Suspense } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useWhitelabelInfo } from "@/hooks/useAuth";
 import { ProfileDashboardSkeleton } from "@/components/skeletons/profile-skeletons";
 import { formatBalance } from "@/lib/format-balance";
 import { useLedger } from "@/hooks/useUserQueries";
@@ -34,6 +35,8 @@ const TransactionModal = lazy(
 
 export default function DashboardContent() {
   const { user, isLoggedIn, logout, isLoading } = useAuth();
+  const { data: whitelabelInfo } = useWhitelabelInfo();
+  const isB2C = String(whitelabelInfo?.whitelabelType ?? "").toUpperCase() === "B2C";
   const { data: ledger, isLoading: ledgerLoading } = useLedger(
     isLoggedIn && !user?.isDemo
   );
@@ -114,21 +117,25 @@ export default function DashboardContent() {
 
           {/* Action Buttons */}
           <div className="flex gap-3 lg:gap-4 mt-4 lg:mt-8">
-            <Button
-              onClick={() => handleOpenTransactionModal("deposit")}
-              className="flex-1 h-11 lg:h-14 text-sm lg:text-lg font-semibold"
-            >
-              <Banknote className="w-4 h-4 lg:w-5 lg:h-5 mr-2" />
-              Deposit
-            </Button>
-            <Button
-              onClick={() => handleOpenTransactionModal("withdraw")}
-              variant="outline"
-              className="flex-1 h-11 lg:h-14 text-sm lg:text-lg font-semibold"
-            >
-              <CreditCard className="w-4 h-4 lg:w-5 lg:h-5 mr-2" />
-              Withdraw
-            </Button>
+            {isB2C && (
+              <Button
+                onClick={() => handleOpenTransactionModal("deposit")}
+                className="flex-1 h-11 lg:h-14 text-sm lg:text-lg font-semibold"
+              >
+                <Banknote className="w-4 h-4 lg:w-5 lg:h-5 mr-2" />
+                Deposit
+              </Button>
+            )}
+            {isB2C && (
+              <Button
+                onClick={() => handleOpenTransactionModal("withdraw")}
+                variant="outline"
+                className="flex-1 h-11 lg:h-14 text-sm lg:text-lg font-semibold"
+              >
+                <CreditCard className="w-4 h-4 lg:w-5 lg:h-5 mr-2" />
+                Withdraw
+              </Button>
+            )}
           </div>
         </Card>
 

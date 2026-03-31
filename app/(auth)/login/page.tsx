@@ -10,6 +10,7 @@ import { useAuth, createDemoUser, DEMO_BALANCE } from "@/contexts/AuthContext";
 import { Eye, EyeOff, Sparkles, Mail, Lock } from "lucide-react";
 import { Captcha } from "@/components/modals/auth/captcha";
 import { normalizeRole, normalizeMembership, PANEL_ROLE_IDS, PANEL_ROLE_STRINGS } from "@/types/enums";
+import { roleToPrefix } from "@/lib/panel-utils";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -58,7 +59,7 @@ export default function LoginPage() {
               ? PANEL_ROLE_IDS.includes(user.role)
               : PANEL_ROLE_STRINGS.includes(roleStr);
             if (isPanelRole) {
-              router.push("/owner");
+              router.push(`/${roleToPrefix(user.role)}`);
             } else {
               router.push("/");
             }
