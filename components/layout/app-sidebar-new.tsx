@@ -28,6 +28,7 @@ import {
   ChevronDown,
   ChevronRight,
   PanelLeftClose,
+  PanelLeftOpen,
   Loader2,
 } from "lucide-react";
 import { MenuGroup, MenuItem } from "@/types";
@@ -47,7 +48,7 @@ const SPORT_LINK_MAPPING: Record<string, { basePath: string; eventTypeId: string
     ])
   );
 
-// Helper: Get menu groups (without Sport sub-items since accordion handles that)
+// Helper: Get menu groups
 const getMenuGroups = (isLoggedIn: boolean): MenuGroup[] => {
   const baseGroups: MenuGroup[] = [
     {
@@ -91,13 +92,12 @@ const getMenuGroups = (isLoggedIn: boolean): MenuGroup[] => {
   ];
 };
 
-// Helper: Check if item is active
 const isItemActive = (itemLink: string | undefined, pathname: string): boolean => {
   if (!itemLink) return false;
   return pathname === itemLink || pathname.startsWith(itemLink + "/");
 };
 
-/** Accordion item for a single sport — fetches series on expand */
+/** Accordion item for a single sport */
 function SportAccordionItem({
   sport,
   pathname,
@@ -109,12 +109,8 @@ function SportAccordionItem({
   const [expanded, setExpanded] = useState(false);
   const [expandedSeries, setExpandedSeries] = useState<string[]>([]);
 
-  const { data: seriesData = [], isLoading } = useSeries(
-    sport.eventTypeId,
-    expanded // only fetch when expanded
-  );
+  const { data: seriesData = [], isLoading } = useSeries(sport.eventTypeId, expanded);
 
-  // Auto-expand sport if the current path is within this sport
   useEffect(() => {
     if (
       pathname.startsWith(`/sports/${sport.basePath}`) ||
@@ -124,11 +120,9 @@ function SportAccordionItem({
     }
   }, [pathname, sport.basePath, sport.eventTypeId]);
 
-  // Auto-expand the series that contains the current match
   useEffect(() => {
     if (!expanded || seriesData.length === 0) return;
     const segments = pathname.split("/").filter(Boolean);
-    // /sports/{sport}/{seriesId}/...
     if (segments.length >= 3 && segments[0] === "sports") {
       const seriesId = segments[2];
       if (seriesId && !expandedSeries.includes(seriesId)) {
@@ -150,77 +144,62 @@ function SportAccordionItem({
   };
 
   return (
-    <div>
-      {/* Sport Header */}
+    <div className="border-b border-gray-100">
       <button
         onClick={() => setExpanded(!expanded)}
-        className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer ${
-          isSportActive
-            ? "bg-[#3730a3] text-white shadow-md"
-            : "text-white/90 hover:bg-[#3730a3]/20"
+        className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors cursor-pointer ${
+          isSportActive ? "bg-[#174b73] text-white" : "text-gray-700 hover:bg-gray-50"
         }`}
       >
         <Trophy className="h-4 w-4 flex-shrink-0" />
         <span className="flex-1 text-left">{sport.title}</span>
         {expanded ? (
-          <ChevronDown className="h-3.5 w-3.5 text-white/60" />
+          <ChevronDown className="h-3.5 w-3.5 opacity-60" />
         ) : (
-          <ChevronRight className="h-3.5 w-3.5 text-white/60" />
+          <ChevronRight className="h-3.5 w-3.5 opacity-60" />
         )}
       </button>
 
-      {/* Series List */}
       {expanded && (
-        <div className="ml-3 mt-0.5 border-l border-white/10 pl-2">
+        <div className="ml-3 border-l border-gray-200 pl-2">
           {isLoading ? (
-            <div className="flex items-center gap-2 px-3 py-2 text-xs text-white/50">
+            <div className="flex items-center gap-2 px-3 py-2 text-xs text-gray-500">
               <Loader2 className="h-3 w-3 animate-spin" />
               Loading...
             </div>
           ) : seriesData.length === 0 ? (
-            <div className="px-3 py-2 text-xs text-white/40">No matches available</div>
+            <div className="px-3 py-2 text-xs text-gray-400">No matches available</div>
           ) : (
             seriesData.map((series: Series) => {
               const isSeriesExpanded = expandedSeries.includes(series.id);
-              const isSeriesActive =
-                pathname.includes(`/${series.id}`) && isSportActive;
+              const isSeriesActive = pathname.includes(`/${series.id}`) && isSportActive;
 
               return (
                 <div key={series.id}>
-                  {/* Series Header */}
                   <button
                     onClick={() => toggleSeries(series.id)}
-                    className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-xs font-medium transition-all duration-200 cursor-pointer ${
+                    className={`w-full flex items-center gap-2 px-2.5 py-2 text-xs font-medium transition-colors cursor-pointer border-b border-gray-100 ${
                       isSeriesActive
-                        ? "bg-[#3730a3]/50 text-white"
-                        : "text-white/75 hover:bg-[#3730a3]/15 hover:text-white"
+                        ? "bg-[#174b73]/10 text-[#174b73] font-semibold"
+                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                     }`}
                   >
                     <span className="flex-1 text-left truncate">{series.name}</span>
                     {series.matches && series.matches.length > 0 && (
-                      isSeriesExpanded ? (
-                        <ChevronDown className="h-3 w-3 text-white/50 flex-shrink-0" />
-                      ) : (
-                        <ChevronRight className="h-3 w-3 text-white/50 flex-shrink-0" />
-                      )
+                      isSeriesExpanded
+                        ? <ChevronDown className="h-3 w-3 flex-shrink-0 opacity-50" />
+                        : <ChevronRight className="h-3 w-3 flex-shrink-0 opacity-50" />
                     )}
                   </button>
 
-                  {/* Matches List */}
                   {isSeriesExpanded && series.matches && series.matches.length > 0 && (
-                    <div className="ml-2 border-l border-white/10 pl-2 mb-1">
+                    <div className="ml-2 border-l border-gray-200 pl-2 mb-1">
                       {series.matches.map((match: Match) => {
                         const matchId = match.event?.id || (match as any).id || (match as any).bfid;
                         const matchName =
-                          match.event?.name ||
-                          (match as any).name ||
-                          (match as any).eventName ||
-                          (match as any).matchName ||
-                          (match as any).selections ||
-                          "Unknown Match";
+                          match.event?.name || (match as any).name || (match as any).eventName ||
+                          (match as any).matchName || (match as any).selections || "Unknown Match";
                         const isMatchActive = pathname.includes(`/${matchId}`);
-
-                        // Split "Team A v Team B" into two lines
                         const nameParts = matchName.split(/ v | vs /i);
                         const team1 = nameParts[0]?.trim();
                         const team2 = nameParts[1]?.trim();
@@ -228,15 +207,11 @@ function SportAccordionItem({
                         return (
                           <button
                             key={matchId}
-                            onClick={() =>
-                              router.push(
-                                `/sports/${sport.basePath}/${series.id}/${matchId}`
-                              )
-                            }
-                            className={`w-full text-left px-2.5 py-1.5 rounded text-[11px] transition-all duration-150 cursor-pointer ${
+                            onClick={() => router.push(`/sports/${sport.basePath}/${series.id}/${matchId}`)}
+                            className={`w-full text-left px-2.5 py-1.5 text-[11px] transition-colors cursor-pointer border-b border-gray-100 ${
                               isMatchActive
-                                ? "bg-[#3730a3]/40 text-white font-medium"
-                                : "text-white/60 hover:text-white hover:bg-white/5"
+                                ? "bg-[#174b73]/10 text-[#174b73] font-semibold"
+                                : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
                             }`}
                             title={matchName}
                           >
@@ -267,18 +242,18 @@ export function AppSidebar() {
   const { isLoggedIn, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const { toggleSidebar } = useSidebar();
+  const { open, toggleSidebar } = useSidebar();
 
   const [mounted, setMounted] = useState(false);
   const [loadingGames, setLoadingGames] = useState(false);
   const [sports, setSports] = useState<
     { title: string; eventTypeId: string; basePath: string }[]
   >([]);
+  const [liveTab, setLiveTab] = useState<"live" | "sports">("sports");
 
   const isOwnerRoute = isPanelPath(pathname);
   const isSportsPage = pathname.startsWith("/sports");
 
-  // Fetch sports list
   useEffect(() => {
     const fetchSportsList = async () => {
       try {
@@ -287,11 +262,9 @@ export function AppSidebar() {
           `${process.env.NEXT_PUBLIC_API_URL}/api/sports/sports-list`
         );
         const data = await response.data.data;
-
         const transformedData = data.map((sport: any) => {
           const eventTypeId = String(sport.id || sport.eventType || "");
-          const sportName =
-            sport.name || sport.title || sport.displayName || "Unknown Sport";
+          const sportName = sport.name || sport.title || sport.displayName || "Unknown Sport";
           const config = SPORT_LINK_MAPPING[eventTypeId];
           return {
             title: sportName,
@@ -299,7 +272,6 @@ export function AppSidebar() {
             basePath: config?.basePath || eventTypeId,
           };
         });
-
         setSports(transformedData);
       } catch (error) {
         console.error("Error fetching sports list:", error);
@@ -308,234 +280,309 @@ export function AppSidebar() {
       }
     };
 
-    if (mounted) {
-      fetchSportsList();
-    }
+    if (mounted) fetchSportsList();
   }, [mounted]);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Menu groups
   const menuGroups = useMemo(
     () => getMenuGroups(mounted ? isLoggedIn : false),
     [mounted, isLoggedIn]
   );
 
-  // Handle item click
   const handleItemClick = (item: MenuItem) => {
     if (item.title === "Logout") {
       logout();
       return;
     }
-    if (item.link) {
-      router.push(item.link);
-    }
+    if (item.link) router.push(item.link);
   };
 
-  // Early return for admin routes
   if (isOwnerRoute) return null;
 
-  // Loading state
   const isLoading = !mounted || loadingGames;
 
-  // Sidebar classes
-  const sidebarClassName = "ml-2 rounded-2xl bg-[#1a2b47] overflow-hidden";
-  const contentClassName =
-    "p-3 pt-2 h-full bg-gradient-to-br from-slate-900 to-slate-800 pb-6";
+  const sidebarClassName = "rounded-xl bg-white overflow-hidden border border-gray-200";
+  const contentClassName = "p-0 h-full bg-white pb-6";
 
-  // Render loading skeleton
-  if (isLoading) {
-    return (
-      <Sidebar className={sidebarClassName}>
-        <SidebarContent className={contentClassName}>
-          <div className="space-y-8 animate-pulse">
-            {[1, 2, 3].map((section) => (
-              <div key={section}>
-                <div className="h-3 bg-blue-400/30 rounded w-20 mb-4 px-2" />
-                <div className="space-y-2">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div
-                      key={i}
-                      className="flex items-center gap-3 px-3 py-3 rounded-lg bg-blue-600/20"
-                    >
-                      <div className="w-5 h-5 bg-blue-400/20 rounded" />
-                      <div className="h-4 bg-blue-400/20 rounded flex-1" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </SidebarContent>
-      </Sidebar>
-    );
-  }
+  // ── All icon-only items for collapsed state ────────────────────────────
+  const allIconItems = [
+    { icon: Home, link: "/", title: "Home" },
+    { icon: Dice6, link: "/casino", title: "Casino" },
+    { icon: Gift, link: "/promotions", title: "Promotions" },
+    { icon: Trophy, link: "/sports", title: "Sports" },
+    ...(isLoggedIn ? [
+      { icon: User, link: "/profile", title: "Profile" },
+      { icon: Club, link: "/profile/bet-history", title: "Bet History" },
+      { icon: Receipt, link: "/profile/account-statement", title: "Statement" },
+    ] : []),
+    { icon: Headphones, link: "/live-support", title: "Support" },
+    { icon: Info, link: "/faqs", title: "FAQs" },
+    { icon: BookOpen, link: "/game-rules", title: "Game Rules" },
+    { icon: Shield, link: "/responsible-gaming", title: "Responsible" },
+    ...(isLoggedIn ? [{ icon: LogOut, link: null, title: "Logout" }] : []),
+  ];
 
   return (
-    <Sidebar className={sidebarClassName}>
+    <Sidebar collapsible="icon" className={sidebarClassName}>
       <SidebarContent className={contentClassName}>
-        {/* Close / collapse button */}
-        <div className="flex justify-end mb-1">
+
+        {/* ── Toggle button (always visible at top) ── */}
+        <div className={`pt-2 mb-1 ${open ? "flex justify-end px-2" : ""}`}>
           <button
             onClick={toggleSidebar}
-            className="p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors"
-            title="Close sidebar"
+            title={open ? "Collapse sidebar" : "Expand sidebar"}
+            className={`p-1.5 rounded-lg text-gray-400 hover:text-[#174b73] hover:bg-gray-100 transition-colors ${!open ? "w-full flex items-center justify-center h-9" : ""}`}
           >
-            <PanelLeftClose className="h-4 w-4" />
+            {open
+              ? <PanelLeftClose className="h-4 w-4" />
+              : <PanelLeftOpen className="h-4 w-4" />
+            }
           </button>
         </div>
 
-        {isSportsPage ? (
-          /* ── Sports pages: only show sports accordion tree ── */
-          <div>
-            <div className="mb-2 px-2">
-              <h3 className="text-xs font-semibold text-blue-300 uppercase tracking-wider">
-                Sports
-              </h3>
-            </div>
-            <div className="space-y-0.5">
-              {sports.map((sport) => (
-                <SportAccordionItem
-                  key={sport.eventTypeId}
-                  sport={sport}
-                  pathname={pathname}
-                />
-              ))}
-              {/* Extra game links */}
-              {[
-                { title: "Matka", href: "/matka" },
-                { title: "Lotry", href: "/lotry" },
-                { title: "Skil Games", href: "/skil-games" },
-                { title: "Jambo", href: "/jambo" },
-              ].map((game) => (
+        {/* ── COLLAPSED: icon-only column ── */}
+        {!open && (
+          <div className="flex flex-col gap-0.5">
+            {allIconItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = item.link ? isItemActive(item.link, pathname) : false;
+              const isLogoutItem = item.title === "Logout";
+              return (
                 <button
-                  key={game.title}
-                  onClick={() => router.push(game.href)}
-                  className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer ${
-                    pathname.startsWith(game.href)
-                      ? "bg-[#3730a3] text-white shadow-md"
-                      : "text-white/90 hover:bg-[#3730a3]/20"
+                  key={item.title}
+                  onClick={() => {
+                    if (isLogoutItem) { logout(); return; }
+                    if (item.link) router.push(item.link);
+                  }}
+                  title={item.title}
+                  className={`w-full h-9 flex items-center justify-center rounded-lg transition-colors ${
+                    isLogoutItem
+                      ? "text-red-500 hover:bg-red-50"
+                      : isActive
+                        ? "bg-[#174b73] text-white"
+                        : "text-gray-500 hover:bg-gray-100 hover:text-[#174b73]"
                   }`}
                 >
-                  <Trophy className="h-4 w-4 flex-shrink-0" />
-                  <span className="flex-1 text-left">{game.title}</span>
+                  <Icon className="h-4 w-4" />
                 </button>
-              ))}
-            </div>
+              );
+            })}
           </div>
-        ) : (
-          /* ── Non-sport pages: full menu ── */
-          <>
-            {/* Navigation Menu */}
-            <div className="space-y-1 mb-4">
-              {menuGroups[0].items.map((item) => {
-                const isActive = isItemActive(item.link, pathname);
-                return (
-                  <SidebarMenu key={item.title} className="space-y-0">
-                    <SidebarMenuItem>
-                      <SidebarMenuButton
-                        className={`group relative w-full h-full justify-start px-3 py-2.5 rounded-lg transition-all duration-200 cursor-pointer ${
-                          isActive
-                            ? "bg-[#3730a3] hover:bg-[#3730a3]/80 text-white shadow-md"
-                            : "bg-transparent text-white hover:bg-[#3730a3]/20 border border-transparent"
-                        }`}
-                        onClick={() => handleItemClick(item)}
-                      >
-                        <div className="relative flex items-center w-full gap-3">
-                          <item.icon className="h-5 w-5 flex-shrink-0 text-white" />
-                          <span className="flex-1 text-sm font-medium text-white">
-                            {item.title}
-                          </span>
-                        </div>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  </SidebarMenu>
-                );
-              })}
-            </div>
+        )}
 
-            {/* Sports Accordion Tree */}
-            <div className="mb-4">
-              <div className="mb-2 px-2">
-                <h3 className="text-xs font-semibold text-blue-300 uppercase tracking-wider">
-                  Sports
-                </h3>
-              </div>
-              <div className="space-y-0.5">
-                {sports.map((sport) => (
-                  <SportAccordionItem
-                    key={sport.eventTypeId}
-                    sport={sport}
-                    pathname={pathname}
-                  />
+        {/* ── EXPANDED: full sidebar ── */}
+        {open && (
+          <>
+            {isLoading ? (
+              <div className="space-y-8 animate-pulse px-3">
+                {[1, 2, 3].map((section) => (
+                  <div key={section}>
+                    <div className="h-3 bg-gray-200 rounded w-20 mb-4" />
+                    <div className="space-y-2">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="flex items-center gap-3 px-3 py-3 rounded-lg bg-gray-100">
+                          <div className="w-5 h-5 bg-gray-200 rounded" />
+                          <div className="h-4 bg-gray-200 rounded flex-1" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 ))}
-                {/* Extra game links */}
-                {[
-                  { title: "Matka", href: "/matka" },
-                  { title: "Lotry", href: "/lotry" },
-                  { title: "Skil Games", href: "/skil-games" },
-                  { title: "Jambo", href: "/jambo" },
-                ].map((game) => (
+              </div>
+            ) : isSportsPage ? (
+              /* ── Sports pages ── */
+              <div className="px-2">
+                {/* Header buttons */}
+                <div className="space-y-1 mb-3">
+                  {[
+                    { label: "Favorite matches", icon: Gift },
+                    { label: "Recommended", icon: Home },
+                    { label: "Top competitions", icon: Trophy },
+                  ].map(({ label, icon: Icon }) => (
+                    <button
+                      key={label}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium bg-[#174b73] hover:bg-[#0c314d] text-white transition-colors cursor-pointer"
+                    >
+                      <Icon className="h-4 w-4 flex-shrink-0" />
+                      <span className="flex-1 text-left">{label}</span>
+                      <ChevronRight className="h-3.5 w-3.5 opacity-60" />
+                    </button>
+                  ))}
+                </div>
+
+                {/* LIVE / SPORTS toggle */}
+                <div className="flex mb-3 rounded-md overflow-hidden border border-gray-200">
                   <button
-                    key={game.title}
-                    onClick={() => router.push(game.href)}
-                    className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer ${
-                      pathname.startsWith(game.href)
-                        ? "bg-[#3730a3] text-white shadow-md"
-                        : "text-white/90 hover:bg-[#3730a3]/20"
+                    onClick={() => setLiveTab("live")}
+                    className={`flex-1 py-1.5 text-xs font-bold tracking-wide transition-colors cursor-pointer ${
+                      liveTab === "live" ? "bg-green-600 text-white" : "bg-gray-100 text-gray-500 hover:text-gray-800"
                     }`}
                   >
-                    <Trophy className="h-4 w-4 flex-shrink-0" />
-                    <span className="flex-1 text-left">{game.title}</span>
+                    ● LIVE
                   </button>
-                ))}
+                  <button
+                    onClick={() => setLiveTab("sports")}
+                    className={`flex-1 py-1.5 text-xs font-bold tracking-wide transition-colors cursor-pointer ${
+                      liveTab === "sports" ? "bg-[#174b73] text-white" : "bg-gray-100 text-gray-500 hover:text-gray-800"
+                    }`}
+                  >
+                    SPORTS
+                  </button>
+                </div>
+
+                <div className="mb-1 px-1">
+                  <span className="text-[10px] font-bold text-[#174b73] uppercase tracking-widest">Top</span>
+                </div>
+
+                <div className="space-y-0">
+                  {sports.map((sport) => (
+                    <SportAccordionItem key={sport.eventTypeId} sport={sport} pathname={pathname} />
+                  ))}
+                  {[
+                    { title: "Matka", href: "/matka" },
+                    { title: "Lotry", href: "/lotry" },
+                    { title: "Skil Games", href: "/skil-games" },
+                    { title: "Jambo", href: "/jambo" },
+                  ].map((game) => (
+                    <button
+                      key={game.title}
+                      onClick={() => router.push(game.href)}
+                      className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors cursor-pointer border-b border-gray-100 ${
+                        pathname.startsWith(game.href) ? "bg-[#174b73] text-white" : "text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      <Trophy className="h-4 w-4 flex-shrink-0" />
+                      <span className="flex-1 text-left">{game.title}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              /* ── Non-sport pages ── */
+              <div className="px-2">
+                {/* Header buttons */}
+                <div className="space-y-1 mb-4">
+                  {[
+                    { label: "Favorite matches", icon: Gift },
+                    { label: "Recommended", icon: Home },
+                    { label: "Top competitions", icon: Trophy },
+                  ].map(({ label, icon: Icon }) => (
+                    <button
+                      key={label}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium bg-[#174b73] hover:bg-[#0c314d] text-white transition-colors cursor-pointer"
+                    >
+                      <Icon className="h-4 w-4 flex-shrink-0" />
+                      <span className="flex-1 text-left">{label}</span>
+                      <ChevronRight className="h-3.5 w-3.5 opacity-60" />
+                    </button>
+                  ))}
+                </div>
 
-            {/* Remaining menu groups (Account, Support, etc.) */}
-            <div className="space-y-1">
-              {menuGroups.slice(1).map((group) => (
-                <div key={group.title} className="mb-4">
-                  {group.title && (
-                    <div className="mb-2 px-2">
-                      <h3 className="text-xs font-semibold text-blue-300 uppercase tracking-wider">
-                        {group.title}
-                      </h3>
-                    </div>
-                  )}
-                  <SidebarMenu className="space-y-0.5">
-                    {group.items.map((item) => {
-                      const isActive = isItemActive(item.link, pathname);
-                      const isLogoutItem = item.title === "Logout";
-
-                      return (
-                        <SidebarMenuItem key={item.title}>
+                {/* Nav items */}
+                <div className="space-y-1 mb-4">
+                  {menuGroups[0].items.map((item) => {
+                    const isActive = isItemActive(item.link, pathname);
+                    return (
+                      <SidebarMenu key={item.title} className="space-y-0">
+                        <SidebarMenuItem>
                           <SidebarMenuButton
-                            className={`group relative w-full justify-start px-3 py-2.5 rounded-lg transition-all duration-200 cursor-pointer ${
-                              isLogoutItem
-                                ? "bg-[#3730a3]/20 text-white hover:bg-[#3730a3]/30 border border-[#3730a3]/30"
-                                : isActive
-                                  ? "bg-[#3730a3] hover:bg-[#3730a3]/80 text-white shadow-md"
-                                  : "bg-transparent text-white hover:bg-[#3730a3]/20 border border-transparent"
+                            className={`group relative w-full h-full justify-start px-3 py-2.5 rounded-lg transition-all duration-200 cursor-pointer ${
+                              isActive
+                                ? "bg-[#174b73] text-white shadow-md"
+                                : "bg-transparent text-gray-700 hover:bg-gray-100 border border-transparent"
                             }`}
                             onClick={() => handleItemClick(item)}
                           >
                             <div className="relative flex items-center w-full gap-3">
-                              <item.icon className="h-5 w-5 flex-shrink-0 text-white" />
-                              <span className="flex-1 text-sm font-medium text-white">
+                              <item.icon className={`h-5 w-5 flex-shrink-0 ${isActive ? "text-white" : "text-gray-500"}`} />
+                              <span className={`flex-1 text-sm font-medium ${isActive ? "text-white" : "text-gray-700"}`}>
                                 {item.title}
                               </span>
                             </div>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
-                      );
-                    })}
-                  </SidebarMenu>
+                      </SidebarMenu>
+                    );
+                  })}
                 </div>
-              ))}
-            </div>
+
+                {/* Sports section */}
+                <div className="mb-4">
+                  <div className="mb-2 px-2">
+                    <h3 className="text-xs font-semibold text-[#174b73] uppercase tracking-wider">Sports</h3>
+                  </div>
+                  <div className="space-y-0.5">
+                    {sports.map((sport) => (
+                      <SportAccordionItem key={sport.eventTypeId} sport={sport} pathname={pathname} />
+                    ))}
+                    {[
+                      { title: "Matka", href: "/matka" },
+                      { title: "Lotry", href: "/lotry" },
+                      { title: "Skil Games", href: "/skil-games" },
+                      { title: "Jambo", href: "/jambo" },
+                    ].map((game) => (
+                      <button
+                        key={game.title}
+                        onClick={() => router.push(game.href)}
+                        className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer ${
+                          pathname.startsWith(game.href)
+                            ? "bg-[#174b73] text-white shadow-md"
+                            : "text-gray-700 hover:bg-gray-100"
+                        }`}
+                      >
+                        <Trophy className="h-4 w-4 flex-shrink-0" />
+                        <span className="flex-1 text-left">{game.title}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Remaining groups */}
+                <div className="space-y-1">
+                  {menuGroups.slice(1).map((group) => (
+                    <div key={group.title} className="mb-4">
+                      {group.title && (
+                        <div className="mb-2 px-2">
+                          <h3 className="text-xs font-semibold text-[#174b73] uppercase tracking-wider">
+                            {group.title}
+                          </h3>
+                        </div>
+                      )}
+                      <SidebarMenu className="space-y-0.5">
+                        {group.items.map((item) => {
+                          const isActive = isItemActive(item.link, pathname);
+                          const isLogoutItem = item.title === "Logout";
+                          return (
+                            <SidebarMenuItem key={item.title}>
+                              <SidebarMenuButton
+                                className={`group relative w-full justify-start px-3 py-2.5 rounded-lg transition-all duration-200 cursor-pointer ${
+                                  isLogoutItem
+                                    ? "bg-red-50 text-red-600 hover:bg-red-100 border border-red-200"
+                                    : isActive
+                                      ? "bg-[#174b73] text-white shadow-md"
+                                      : "bg-transparent text-gray-700 hover:bg-gray-100 border border-transparent"
+                                }`}
+                                onClick={() => handleItemClick(item)}
+                              >
+                                <div className="relative flex items-center w-full gap-3">
+                                  <item.icon className={`h-5 w-5 flex-shrink-0 ${isLogoutItem ? "text-red-500" : isActive ? "text-white" : "text-gray-500"}`} />
+                                  <span className={`flex-1 text-sm font-medium ${isLogoutItem ? "text-red-600" : isActive ? "text-white" : "text-gray-700"}`}>
+                                    {item.title}
+                                  </span>
+                                </div>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          );
+                        })}
+                      </SidebarMenu>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         )}
       </SidebarContent>

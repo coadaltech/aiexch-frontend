@@ -72,37 +72,29 @@ function ShiftCard({ shift }: { shift: MatkaShift }) {
 
   return (
     <Link href={`/matka/${shift.id}`} className="block group">
-      <div className="bg-card border border-border rounded-xl px-5 py-5 hover:border-primary/50 transition-all duration-200 hover:shadow-md">
-        <h3 className="font-bold text-foreground text-lg uppercase truncate text-center">
+      <div className="bg-[#0a2a42] border border-[#1b5785]/50 hover:border-[#1b5785] rounded-xl px-4 py-4 transition-all duration-200 hover:bg-[#0f3d5e]">
+        <h3 className="font-bold text-white text-sm font-condensed uppercase truncate text-center tracking-wide">
           {shift.name}
         </h3>
-        <div className="flex items-center justify-center gap-3 mt-3 text-sm text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <Calendar className="w-4 h-4" />
-            {formatDate(shift.shiftDate)}
-          </span>
-          {/* <span className="flex items-center gap-1">
-            <Clock className="w-4 h-4" />
-            {shift.endTime}
-          </span>
-          {shift.nextDayAllow && (
-            <span className="text-blue-400 text-xs">+1 day</span>
-          )} */}
+        <div className="flex items-center justify-center gap-2 mt-2 text-xs text-white/40">
+          <Calendar className="w-3 h-3" />
+          <span>{formatDate(shift.shiftDate)}</span>
         </div>
         <div className="flex items-center justify-center mt-3">
           {hasResult ? (
-            <span className="flex items-center gap-1.5 text-amber-500 font-bold text-lg">
-              <Trophy className="w-5 h-5" />
+            <span className="flex items-center gap-1.5 text-[#f0a050] font-bold text-base">
+              <Trophy className="w-4 h-4" />
               {shift.result}
             </span>
           ) : (
             <span
-              className={`text-sm font-semibold px-3 py-1 rounded-lg ${
+              className={`flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-lg ${
                 isExpired
-                  ? "bg-red-500/10 text-red-500"
-                  : "bg-primary/10 text-primary"
+                  ? "bg-red-500/15 text-red-400 border border-red-500/20"
+                  : "bg-[#79a430]/15 text-[#79a430] border border-[#79a430]/30"
               }`}
             >
+              <Clock className="w-3 h-3" />
               {isExpired ? "Ended" : timeLeft}
             </span>
           )}
@@ -118,33 +110,36 @@ export default function MatkaPage() {
   const { data: shifts = [], isLoading } = useMatkaShifts(date);
 
   return (
-    <div className="space-y-4 p-4">
+    <div className="bg-[#0c314d] min-h-full">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Matka</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">
-            Select a shift to place bets
-          </p>
+      <div className="bg-[#0a2a42] border-b border-[#1b5785]/50 px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="w-1 h-5 bg-[#79a430] rounded-full" />
+          <div>
+            <h1 className="text-white font-bold text-sm font-condensed tracking-wide">MATKA</h1>
+            <p className="text-white/40 text-[10px] mt-0.5">Select a shift to place bets</p>
+          </div>
         </div>
         <input
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          className="bg-card border border-border text-foreground rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          className="bg-[#174b73] border border-[#1b5785] text-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-[#66c4ff] transition-colors"
         />
       </div>
 
       {/* Loading */}
       {isLoading && (
-        <div className="flex items-center justify-center py-16">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
+        <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className="h-28 bg-[#0a2a42] rounded-xl animate-pulse border border-[#1b5785]/30" />
+          ))}
         </div>
       )}
 
       {/* Shifts Grid */}
       {!isLoading && shifts.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {shifts.map((shift) => (
             <ShiftCard key={shift.id} shift={shift} />
           ))}
@@ -154,15 +149,11 @@ export default function MatkaPage() {
       {/* Empty State */}
       {!isLoading && shifts.length === 0 && (
         <div className="text-center py-16">
-          <div className="mx-auto w-16 h-16 bg-muted rounded-xl flex items-center justify-center mb-3">
-            <Calendar className="w-8 h-8 text-muted-foreground" />
+          <div className="mx-auto w-14 h-14 bg-[#0a2a42] border border-[#1b5785]/40 rounded-xl flex items-center justify-center mb-3">
+            <Calendar className="w-7 h-7 text-white/30" />
           </div>
-          <p className="text-muted-foreground">
-            No shifts available for {formatDate(date)}
-          </p>
-          <p className="text-muted-foreground text-sm mt-1">
-            Try selecting a different date
-          </p>
+          <p className="text-white/50 text-sm">No shifts available for {formatDate(date)}</p>
+          <p className="text-white/30 text-xs mt-1">Try selecting a different date</p>
         </div>
       )}
     </div>

@@ -23,6 +23,9 @@ import {
   CreditCard as CreditCardAlt,
   Globe,
   Wrench,
+  Activity,
+  LayoutList,
+  FileText,
 } from "lucide-react";
 
 export type NavItem = {
@@ -36,6 +39,14 @@ export type NavItem = {
 export function getNavigation(prefix: string): NavItem[] {
   return [
     { name: "Dashboard", href: prefix, icon: BarChart3 },
+    {
+      name: "Live Markets",
+      icon: Activity,
+      subItems: [
+        { name: "Summary", href: `${prefix}/live-markets/summary`, icon: LayoutList },
+        { name: "Details", href: `${prefix}/live-markets/details`, icon: FileText },
+      ],
+    },
     { name: "Users", href: `${prefix}/users`, icon: Users },
     {
       name: "Sports Games",

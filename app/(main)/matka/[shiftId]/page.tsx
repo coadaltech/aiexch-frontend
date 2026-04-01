@@ -472,14 +472,14 @@ export default function JantriPage() {
 
   if (shiftLoading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+      <div className="flex items-center justify-center py-20 bg-[#0c314d] min-h-full">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#79a430]" />
       </div>
     );
   }
   if (!shift) {
     return (
-      <div className="text-center py-20 text-muted-foreground">
+      <div className="text-center py-20 text-white/50 bg-[#0c314d] min-h-full">
         Shift not found
       </div>
     );
@@ -497,41 +497,41 @@ export default function JantriPage() {
   return (
     <div className="flex flex-col h-full">
       {/* ── Top Header ─────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 sm:gap-3 bg-teal-700 text-white px-2 sm:px-4 py-2 text-sm flex-wrap">
+      <div className="flex items-center gap-2 sm:gap-3 bg-[#174b73] text-white px-2 sm:px-4 py-2 text-sm flex-wrap border-b border-[#1b5785]/60">
         <button
           onClick={() => router.push("/matka")}
-          className="hover:bg-white/20 rounded p-1 transition-colors"
+          className="hover:bg-white/20 rounded-lg p-1 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
         </button>
-        <span className="font-semibold uppercase">{shift.name}</span>
-        <span className={`flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium ${
-          shiftEnded ? "bg-red-600" : "bg-teal-600"
+        <span className="font-semibold uppercase font-condensed tracking-wide">{shift.name}</span>
+        <span className={`flex items-center gap-1 rounded-lg px-2 py-0.5 text-xs font-medium ${
+          shiftEnded ? "bg-red-600" : "bg-[#79a430]/20 border border-[#79a430]/40 text-[#79a430]"
         }`}>
           <Clock className="w-3 h-3" />
           {timeLeft}
         </span>
         <div className="flex-1" />
-        <span className="bg-teal-600 rounded px-2 py-0.5 text-xs">
+        <span className="bg-[#0f3d5e] border border-[#1b5785]/60 rounded-lg px-2 py-0.5 text-xs">
           Rate: {shift.daraRate}/{shift.akharRate}
         </span>
         {Number(shift.capping) > 0 && (
-          <span className="bg-amber-600 rounded px-2 py-0.5 text-xs">
+          <span className="bg-[#0f3d5e] border border-[#1b5785]/60 rounded-lg px-2 py-0.5 text-xs">
             Cap: ₹{shift.capping}
           </span>
         )}
-        <span className="bg-teal-600 rounded px-2 py-0.5 text-xs hidden sm:inline">
+        <span className="bg-[#0f3d5e] border border-[#1b5785]/60 rounded-lg px-2 py-0.5 text-xs hidden sm:inline">
           Date: {fmtDate(shift.shiftDate)}
         </span>
         {!isJantriOpen && (
-          <span className="bg-red-600 rounded px-2 py-0.5 text-xs flex items-center gap-1">
+          <span className="bg-red-600 rounded-lg px-2 py-0.5 text-xs flex items-center gap-1">
             <AlertCircle className="w-3 h-3" /> Closed
           </span>
         )}
         {/* Mobile sidebar toggle */}
         <button
           onClick={() => setSidebarOpen((p) => !p)}
-          className="lg:hidden bg-teal-600 hover:bg-teal-500 rounded px-2 py-0.5 text-xs flex items-center gap-1"
+          className="lg:hidden bg-[#0f3d5e] hover:bg-[#1b5785] border border-[#1b5785]/60 rounded-lg px-2 py-0.5 text-xs flex items-center gap-1"
         >
           Shifts {sidebarOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
         </button>
@@ -539,11 +539,11 @@ export default function JantriPage() {
 
       {/* ── Mobile sidebar (collapsible) ─────────────────────────────── */}
       {sidebarOpen && (
-        <div className="lg:hidden border-b border-slate-700 bg-slate-950 max-h-48 overflow-auto">
-          <div className="bg-teal-700 text-white text-center text-sm font-bold py-1.5 uppercase">
+        <div className="lg:hidden border-b border-[#1b5785]/40 bg-[#0a2a42] max-h-48 overflow-auto">
+          <div className="bg-[#174b73] text-white text-center text-sm font-bold py-1.5 uppercase font-condensed">
             {shift.name} {isJantriOpen ? "[LIVE]" : ""}
           </div>
-          <label className="flex items-center gap-2 px-3 py-1.5 border-b border-slate-700 cursor-pointer hover:bg-slate-800">
+          <label className="flex items-center gap-2 px-3 py-1.5 border-b border-[#1b5785]/40 cursor-pointer hover:bg-[#0f3d5e]">
             <input
               type="checkbox"
               checked={selectedShifts.size === allShifts.length}
@@ -554,7 +554,7 @@ export default function JantriPage() {
                   setSelectedShifts(new Set(allShifts.map((s) => s.id)));
                 }
               }}
-              className="h-4 w-4 rounded border-slate-500"
+              className="h-4 w-4 rounded border-[#1b5785]"
             />
             <span className="text-xs text-white font-medium">Select All</span>
           </label>
@@ -563,18 +563,18 @@ export default function JantriPage() {
             .map((s) => (
               <label
                 key={s.id}
-                className="flex items-center gap-2 px-3 py-1.5 border-b border-slate-800 cursor-pointer hover:bg-slate-800"
+                className="flex items-center gap-2 px-3 py-1.5 border-b border-[#1b5785]/30 cursor-pointer hover:bg-[#0f3d5e]"
               >
                 <input
                   type="checkbox"
                   checked={selectedShifts.has(s.id)}
                   onChange={() => toggleShift(s.id)}
-                  className="h-4 w-4 rounded border-slate-500"
+                  className="h-4 w-4 rounded border-[#1b5785]"
                 />
                 <span className="text-sm text-white">{s.name}</span>
               </label>
             ))}
-          <div className="bg-red-600 text-white text-center text-sm font-bold py-1.5">
+          <div className="bg-red-700 text-white text-center text-sm font-bold py-1.5">
             Grand Total: {grandTotal}
           </div>
         </div>
@@ -583,7 +583,7 @@ export default function JantriPage() {
       {/* ── Main layout ──────────────────────────────────────────────────── */}
       <div className="flex flex-1 overflow-hidden">
         {/* ═══ LEFT: Grid / Quick Entry ═══ */}
-        <div className="flex-1 overflow-auto p-1 sm:p-2">
+        <div className="flex-1 overflow-auto p-1 sm:p-2 bg-[#0c314d]">
           {mode === "grid" ? (
             /* ── GRID VIEW ─────────────────────────────────────────── */
             <div className="overflow-x-auto">
@@ -593,12 +593,12 @@ export default function JantriPage() {
                     {Array.from({ length: COLS }, (_, i) => (
                       <th
                         key={i}
-                        className="bg-teal-700 text-white text-center py-1.5 px-1 font-bold border border-teal-600"
+                        className="bg-[#174b73] text-white text-center py-1.5 px-1 font-bold border border-[#1b5785]/60"
                       >
                         {i + 1}
                       </th>
                     ))}
-                    <th className="bg-teal-700 text-white text-center py-1.5 px-1 font-bold border border-teal-600">
+                    <th className="bg-[#174b73] text-white text-center py-1.5 px-1 font-bold border border-[#1b5785]/60">
                       Total
                     </th>
                   </tr>
@@ -614,9 +614,9 @@ export default function JantriPage() {
                         return (
                           <td
                             key={num}
-                            className="border border-slate-700 p-0 bg-slate-900 relative"
+                            className="border border-[#1b5785]/40 p-0 bg-[#0a2a42] relative"
                           >
-                            <span className="absolute top-0 left-0.5 text-amber-400 text-[10px] leading-none">
+                            <span className="absolute top-0 left-0.5 text-[#f0a050] text-[10px] leading-none">
                               {num}
                             </span>
                             <input
@@ -626,17 +626,17 @@ export default function JantriPage() {
                               value={val || ""}
                               onChange={(e) => setAmount(key, e.target.value)}
                               disabled={!isJantriOpen}
-                              className="w-full bg-transparent text-white text-center text-sm pt-4 pb-1 px-0 focus:outline-none focus:bg-teal-900/40 disabled:opacity-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              className="w-full bg-transparent text-white text-center text-sm pt-4 pb-1 px-0 focus:outline-none focus:bg-[#174b73]/30 disabled:opacity-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             />
                             {existing > 0 && (
-                              <span className="absolute bottom-0 right-0.5 text-[9px] text-teal-400">
+                              <span className="absolute bottom-0 right-0.5 text-[9px] text-[#79a430]">
                                 {existing}
                               </span>
                             )}
                           </td>
                         );
                       })}
-                      <td className="border border-teal-600 bg-teal-800/40 text-white text-center text-sm font-semibold px-1 py-1.5">
+                      <td className="border border-[#1b5785]/60 bg-[#174b73]/30 text-white text-center text-sm font-semibold px-1 py-1.5">
                         {rowTotals[rowIdx] || 0}
                       </td>
                     </tr>
@@ -647,12 +647,12 @@ export default function JantriPage() {
                     {colTotals.map((t, i) => (
                       <td
                         key={i}
-                        className="border border-teal-600 bg-teal-800/50 text-white text-center font-bold py-1"
+                        className="border border-[#1b5785]/60 bg-[#174b73]/40 text-white text-center font-bold py-1"
                       >
                         {t}
                       </td>
                     ))}
-                    <td className="border border-teal-600 bg-teal-800/50 text-white text-center font-bold py-1">
+                    <td className="border border-[#1b5785]/60 bg-[#174b73]/40 text-white text-center font-bold py-1">
                       {grandTotal}
                     </td>
                   </tr>
@@ -667,9 +667,9 @@ export default function JantriPage() {
                       return (
                         <td
                           key={`B${d}`}
-                          className="border border-slate-700 p-0 bg-slate-900 relative"
+                          className="border border-[#1b5785]/40 p-0 bg-[#0a2a42] relative"
                         >
-                          <span className="absolute top-0 left-0.5 text-blue-400 text-[10px] leading-none">
+                          <span className="absolute top-0 left-0.5 text-[#66c4ff] text-[10px] leading-none">
                             B{d}
                           </span>
                           {key ? (
@@ -679,22 +679,22 @@ export default function JantriPage() {
                               value={val || ""}
                               onChange={(e) => setAmount(key, e.target.value)}
                               disabled={!isJantriOpen}
-                              className="w-full bg-transparent text-white text-center text-sm pt-4 pb-1 px-0 focus:outline-none focus:bg-teal-900/40 disabled:opacity-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              className="w-full bg-transparent text-white text-center text-sm pt-4 pb-1 px-0 focus:outline-none focus:bg-[#174b73]/30 disabled:opacity-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             />
                           ) : (
-                            <div className="pt-4 pb-1 text-center text-slate-600 text-sm">
+                            <div className="pt-4 pb-1 text-center text-white/40 text-sm">
                               -
                             </div>
                           )}
                           {existing > 0 && (
-                            <span className="absolute bottom-0 right-0.5 text-[9px] text-teal-400">
+                            <span className="absolute bottom-0 right-0.5 text-[9px] text-[#79a430]">
                               {existing}
                             </span>
                           )}
                         </td>
                       );
                     })}
-                    <td className="border border-teal-600 bg-teal-800/40 text-white text-center text-sm font-semibold px-1 py-1.5">
+                    <td className="border border-[#1b5785]/60 bg-[#174b73]/30 text-white text-center text-sm font-semibold px-1 py-1.5">
                       {B_LABELS.reduce((s, d) => {
                         const n = bLabelToNum(d);
                         return s + (n ? amounts[`2:${n}`] || 0 : 0);
@@ -712,9 +712,9 @@ export default function JantriPage() {
                       return (
                         <td
                           key={`A${d}`}
-                          className="border border-slate-700 p-0 bg-slate-900 relative"
+                          className="border border-[#1b5785]/40 p-0 bg-[#0a2a42] relative"
                         >
-                          <span className="absolute top-0 left-0.5 text-purple-400 text-[10px] leading-none">
+                          <span className="absolute top-0 left-0.5 text-[#c084fc] text-[10px] leading-none">
                             A{d}
                           </span>
                           {key ? (
@@ -724,22 +724,22 @@ export default function JantriPage() {
                               value={val || ""}
                               onChange={(e) => setAmount(key, e.target.value)}
                               disabled={!isJantriOpen}
-                              className="w-full bg-transparent text-white text-center text-sm pt-4 pb-1 px-0 focus:outline-none focus:bg-teal-900/40 disabled:opacity-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              className="w-full bg-transparent text-white text-center text-sm pt-4 pb-1 px-0 focus:outline-none focus:bg-[#174b73]/30 disabled:opacity-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             />
                           ) : (
-                            <div className="pt-4 pb-1 text-center text-slate-600 text-sm">
+                            <div className="pt-4 pb-1 text-center text-white/40 text-sm">
                               -
                             </div>
                           )}
                           {existing > 0 && (
-                            <span className="absolute bottom-0 right-0.5 text-[9px] text-teal-400">
+                            <span className="absolute bottom-0 right-0.5 text-[9px] text-[#79a430]">
                               {existing}
                             </span>
                           )}
                         </td>
                       );
                     })}
-                    <td className="border border-teal-600 bg-teal-800/40 text-white text-center text-sm font-semibold px-1 py-1.5">
+                    <td className="border border-[#1b5785]/60 bg-[#174b73]/30 text-white text-center text-sm font-semibold px-1 py-1.5">
                       {A_LABELS.reduce((s, d) => {
                         const n = aLabelToNum(d);
                         return s + (n ? amounts[`3:${n}`] || 0 : 0);
@@ -757,7 +757,7 @@ export default function JantriPage() {
                 {/* Number + Amount inputs */}
                 <div className="flex gap-1 mb-2">
                   <div className="flex-1">
-                    <div className="bg-amber-500 text-black text-[10px] font-bold text-center py-0.5 rounded-t">
+                    <div className="bg-[#e6a020] text-white text-[10px] font-bold text-center py-0.5 rounded-t">
                       NUMBER
                     </div>
                     <input
@@ -774,11 +774,11 @@ export default function JantriPage() {
                       disabled={!isJantriOpen}
                       placeholder=""
                       autoFocus
-                      className="w-full bg-slate-900 border border-slate-600 text-white text-center text-sm py-2 focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:opacity-40"
+                      className="w-full bg-[#0a2a42] border border-[#1b5785]/60 text-white text-center text-sm py-2 focus:outline-none focus:ring-1 focus:ring-[#79a430] disabled:opacity-40"
                     />
                   </div>
                   <div className="flex-1">
-                    <div className="bg-slate-700 text-white text-[10px] font-bold text-center py-0.5 rounded-t">
+                    <div className="bg-[#174b73] text-white text-[10px] font-bold text-center py-0.5 rounded-t">
                       AMOUNT
                     </div>
                     <input
@@ -795,22 +795,22 @@ export default function JantriPage() {
                       }}
                       disabled={!isJantriOpen}
                       placeholder=""
-                      className="w-full bg-slate-900 border border-slate-600 text-white text-center text-sm py-2 focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:opacity-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className="w-full bg-[#0a2a42] border border-[#1b5785]/60 text-white text-center text-sm py-2 focus:outline-none focus:ring-1 focus:ring-[#79a430] disabled:opacity-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                   </div>
                   <button
                     onClick={addFromDraft}
                     disabled={!isJantriOpen}
-                    className="self-end bg-teal-600 hover:bg-teal-700 disabled:bg-slate-600 text-white font-bold px-3 py-2 rounded text-lg leading-none"
+                    className="self-end bg-[#79a430] hover:bg-[#8fb832] disabled:bg-[#174b73] text-white font-bold px-3 py-2 rounded-lg text-lg leading-none"
                   >
                     +
                   </button>
                 </div>
 
                 {/* Entry list */}
-                <div className="flex-1 overflow-auto border border-slate-700 rounded bg-slate-950">
+                <div className="flex-1 overflow-auto border border-[#1b5785]/40 rounded-lg bg-[#0a2a42]">
                   {quickEntries.length === 0 ? (
-                    <div className="text-center text-slate-500 text-xs py-8">
+                    <div className="text-center text-white/40 text-xs py-8">
                       No entries yet
                     </div>
                   ) : (
@@ -819,7 +819,7 @@ export default function JantriPage() {
                         {quickEntries.map((entry) => (
                           <tr
                             key={entry.id}
-                            className="border-b border-slate-800"
+                            className="border-b border-[#1b5785]/30"
                           >
                             <td className="py-1.5 px-2 text-white font-medium text-center">
                               {entry.numberInput}
@@ -830,7 +830,7 @@ export default function JantriPage() {
                             <td className="py-1 px-1 w-6">
                               <button
                                 onClick={() => removeQuickEntry(entry.id)}
-                                className="text-red-500 hover:text-red-400 bg-red-500/10 rounded w-5 h-5 flex items-center justify-center text-[10px] font-bold"
+                                className="text-red-400 hover:text-red-300 bg-red-500/10 rounded-lg w-5 h-5 flex items-center justify-center text-[10px] font-bold"
                               >
                                 x
                               </button>
@@ -843,23 +843,23 @@ export default function JantriPage() {
                 </div>
 
                 {/* Total count */}
-                <div className="bg-slate-800 text-white text-center text-sm font-semibold py-1.5 mt-1 rounded">
+                <div className="bg-[#174b73] text-white text-center text-sm font-semibold py-1.5 mt-1 rounded-lg">
                   Total Count : {entryCount}
                 </div>
               </div>
 
               {/* Center: Instructions */}
-              <div className="hidden sm:block flex-1 border border-slate-700 rounded bg-slate-950 p-3 overflow-auto">
-                <div className="bg-teal-700 text-white text-xs font-semibold px-3 py-1.5 rounded mb-3">
+              <div className="hidden sm:block flex-1 border border-[#1b5785]/40 rounded-xl bg-[#0a2a42] p-3 overflow-auto">
+                <div className="bg-[#174b73] text-white text-xs font-semibold px-3 py-1.5 rounded-lg mb-3">
                   Utar Mode Instructions
                 </div>
-                <div className="space-y-2 text-slate-300 text-xs">
+                <div className="space-y-2 text-white/70 text-xs">
                   <p>1. Dara Number: should be 1 to 100</p>
                   <p>2. Bahar Akhar Number: should be 111 to 999 (repeated digit like 111, 222, 333…999)</p>
                   <p>3. Andar Akhar Number: should be 1111 to 9999 (repeated digit like 1111, 2222…9999)</p>
-                  <p>4. Press <kbd className="bg-slate-700 px-1.5 py-0.5 rounded text-white font-mono">F12</kbd> for Jantri View</p>
-                  <p>5. Press <kbd className="bg-slate-700 px-1.5 py-0.5 rounded text-white font-mono">Enter</kbd> after amount to add entry</p>
-                  <p>6. Press <kbd className="bg-slate-700 px-1.5 py-0.5 rounded text-white font-mono">`~</kbd> for Re-Focus</p>
+                  <p>4. Press <kbd className="bg-[#174b73] px-1.5 py-0.5 rounded text-white font-mono">F12</kbd> for Jantri View</p>
+                  <p>5. Press <kbd className="bg-[#174b73] px-1.5 py-0.5 rounded text-white font-mono">Enter</kbd> after amount to add entry</p>
+                  <p>6. Press <kbd className="bg-[#174b73] px-1.5 py-0.5 rounded text-white font-mono">`~</kbd> for Re-Focus</p>
                 </div>
               </div>
             </div>
@@ -867,14 +867,14 @@ export default function JantriPage() {
         </div>
 
         {/* ═══ RIGHT SIDEBAR: Shift list (desktop only) ═══ */}
-        <div className="hidden lg:flex w-[220px] flex-shrink-0 border-l border-slate-700 bg-slate-950 flex-col overflow-hidden">
+        <div className="hidden lg:flex w-[220px] flex-shrink-0 border-l border-[#1b5785]/40 bg-[#0a2a42] flex-col overflow-hidden">
           {/* Current shift header */}
-          <div className="bg-teal-700 text-white text-center text-sm font-bold py-2 uppercase">
+          <div className="bg-[#174b73] text-white text-center text-sm font-bold py-2 uppercase font-condensed tracking-wide">
             {shift.name} {isJantriOpen ? "[LIVE]" : ""}
           </div>
 
           {/* Tick to copy */}
-          <label className="flex items-center gap-2 px-3 py-2 border-b border-slate-700 cursor-pointer hover:bg-slate-800">
+          <label className="flex items-center gap-2 px-3 py-2 border-b border-[#1b5785]/40 cursor-pointer hover:bg-[#0f3d5e]">
             <input
               type="checkbox"
               checked={selectedShifts.size === allShifts.length}
@@ -887,7 +887,7 @@ export default function JantriPage() {
                   );
                 }
               }}
-              className="h-4 w-4 rounded border-slate-500"
+              className="h-4 w-4 rounded border-[#1b5785]"
             />
             <span className="text-xs text-white font-medium">
               Tick Shift for Copy Transaction
@@ -901,13 +901,13 @@ export default function JantriPage() {
               .map((s) => (
                 <label
                   key={s.id}
-                  className="flex items-center gap-2 px-3 py-2 border-b border-slate-800 cursor-pointer hover:bg-slate-800"
+                  className="flex items-center gap-2 px-3 py-2 border-b border-[#1b5785]/30 cursor-pointer hover:bg-[#0f3d5e]"
                 >
                   <input
                     type="checkbox"
                     checked={selectedShifts.has(s.id)}
                     onChange={() => toggleShift(s.id)}
-                    className="h-4 w-4 rounded border-slate-500"
+                    className="h-4 w-4 rounded border-[#1b5785]"
                   />
                   <span className="text-sm text-white">{s.name}</span>
                 </label>
@@ -915,18 +915,18 @@ export default function JantriPage() {
           </div>
 
           {/* Applied narration */}
-          <div className="bg-teal-700 text-white text-[10px] font-semibold px-3 py-1">
+          <div className="bg-[#174b73] text-white text-[10px] font-semibold px-3 py-1">
             Applied Narration
           </div>
-          <div className="bg-red-600 text-white text-center text-sm font-bold py-2">
+          <div className="bg-red-700 text-white text-center text-sm font-bold py-2">
             Grand Total: {grandTotal}
           </div>
         </div>
       </div>
 
       {/* ── Bottom Bar: action buttons ─────────────────────────────────── */}
-      <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2 bg-slate-900 border-t border-slate-700 text-xs flex-wrap">
-        <span className="text-teal-400 text-[11px] mr-1 sm:mr-2 hidden sm:inline">
+      <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2 bg-[#0a2a42] border-t border-[#1b5785]/40 text-xs flex-wrap">
+        <span className="text-[#79a430] text-[11px] mr-1 sm:mr-2 hidden sm:inline">
           [ F12 = Switch View ]
         </span>
         <div className="flex-1 min-w-0" />
@@ -934,48 +934,48 @@ export default function JantriPage() {
         <button
           onClick={() => setRandomModalOpen(true)}
           disabled={!isJantriOpen}
-          className="bg-teal-600 hover:bg-teal-700 disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold px-2 sm:px-3 py-1.5 rounded hidden md:block transition-colors"
+          className="bg-[#79a430] hover:bg-[#8fb832] disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold px-2 sm:px-3 py-1.5 rounded-lg hidden md:block transition-colors"
         >
           Random (F4)
         </button>
         <button
           onClick={() => setCrossModalOpen(true)}
           disabled={!isJantriOpen}
-          className="bg-teal-600 hover:bg-teal-700 disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold px-2 sm:px-3 py-1.5 rounded hidden md:block transition-colors"
+          className="bg-[#79a430] hover:bg-[#8fb832] disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold px-2 sm:px-3 py-1.5 rounded-lg hidden md:block transition-colors"
         >
           Cross (F6)
         </button>
         <button
           onClick={() => setFromToModalOpen(true)}
           disabled={!isJantriOpen}
-          className="bg-teal-600 hover:bg-teal-700 disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold px-2 sm:px-3 py-1.5 rounded hidden md:block transition-colors"
+          className="bg-[#79a430] hover:bg-[#8fb832] disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold px-2 sm:px-3 py-1.5 rounded-lg hidden md:block transition-colors"
         >
           From-To (F7)
         </button>
         <button
           onClick={() => setRandom2ModalOpen(true)}
           disabled={!isJantriOpen}
-          className="bg-teal-600 hover:bg-teal-700 disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold px-2 sm:px-3 py-1.5 rounded hidden md:block transition-colors"
+          className="bg-[#79a430] hover:bg-[#8fb832] disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold px-2 sm:px-3 py-1.5 rounded-lg hidden md:block transition-colors"
         >
           Random (F8)
         </button>
         <button
           disabled
-          className="bg-amber-600 text-white font-semibold px-2 sm:px-3 py-1.5 rounded opacity-70 cursor-not-allowed hidden md:block"
+          className="bg-[#174b73] text-white font-semibold px-2 sm:px-3 py-1.5 rounded-lg opacity-70 cursor-not-allowed hidden md:block"
         >
           J-Daane
         </button>
 
         <button
           onClick={handleClear}
-          className="bg-teal-500 hover:bg-teal-600 text-white font-semibold px-3 sm:px-4 py-1.5 rounded transition-colors"
+          className="bg-[#174b73] hover:bg-[#1b5785] text-white font-semibold px-3 sm:px-4 py-1.5 rounded-lg transition-colors border border-[#1b5785]/60"
         >
           Clear
         </button>
         <button
           onClick={handleSubmit}
           disabled={!isJantriOpen || submitting || grandTotal === 0}
-          className="bg-amber-500 hover:bg-amber-600 disabled:bg-slate-600 disabled:cursor-not-allowed text-white font-semibold px-3 sm:px-4 py-1.5 rounded transition-colors"
+          className="bg-[#e6a020] hover:bg-[#d09018] disabled:bg-[#174b73] disabled:cursor-not-allowed text-white font-semibold px-3 sm:px-4 py-1.5 rounded-lg transition-colors"
         >
           {submitting ? "Saving..." : "Save Now"}
         </button>

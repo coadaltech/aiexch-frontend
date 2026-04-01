@@ -1,27 +1,12 @@
 "use client";
 import { ReactNode, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { SidebarProvider, useSidebar } from "./ui/sidebar";
+import { SidebarProvider } from "./ui/sidebar";
 import Header from "./layout/header";
 import { AppSidebar } from "./layout/app-sidebar-new";
 import { useWhitelabelInfo } from "@/hooks/useAuth";
 import { useAuth } from "@/contexts/AuthContext";
-import { PanelLeftOpen } from "lucide-react";
 import { isPanelPath } from "@/lib/panel-utils";
-
-function SidebarOpenButton() {
-  const { open, toggleSidebar, isMobile } = useSidebar();
-  if (open || isMobile) return null;
-  return (
-    <button
-      onClick={toggleSidebar}
-      className="hidden md:flex fixed left-2 top-1/2 -translate-y-1/2 z-20 p-1.5 rounded-lg bg-slate-800 border border-slate-700 text-white/60 hover:text-white hover:bg-slate-700 transition-colors shadow-lg"
-      title="Open sidebar"
-    >
-      <PanelLeftOpen className="h-4 w-4" />
-    </button>
-  );
-}
 
 export default function MainLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -60,22 +45,18 @@ export default function MainLayout({ children }: { children: ReactNode }) {
 
   return (
     <SidebarProvider>
-      <div style={{ height: 'var(--vh-full)' }} className="overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 w-full flex flex-col">
+      <div style={{ height: 'var(--vh-full)' }} className="overflow-hidden bg-gradient-to-br from-nav-dark via-nav-dark to-nav-dark w-full flex flex-col">
         {/* Fixed Header - always visible at top */}
         <Header />
 
-        {/* Floating button to reopen sidebar when collapsed */}
-        <SidebarOpenButton />
-
         {/* Main Content Area - only this part scrolls; header and (on mobile) bottom tab stay fixed */}
-        <div className="flex flex-1 min-h-0 mt-14 md:mt-30 max-h-[calc(var(--vh-full)-4rem)] md:max-h-[calc(var(--vh-full)-7.5rem)]">
-          {/* <div className= "flex flex-1 min-h-0 mt-14 lg:mt-24 max-h-[calc(100vh-3.5rem)] lg:max-h-[calc(100vh-6rem)]"> */}
+        <div className="flex flex-1 min-h-0 mt-14 md:mt-30 max-h-[calc(var(--vh-full)-4rem)] md:max-h-[calc(var(--vh-full)-7.5rem)] gap-2 p-2">
           {/* Sidebar - Starts below header */}
           <AppSidebar />
 
           {/* Main Content - scrollable area; pb for mobile so content clears fixed bottom tab */}
           <main
-            className="min-h-0 flex-1 w-full overflow-y-auto overflow-x-hidden transition-all duration-300 pb-20 lg:pb-0"
+            className="min-h-0 flex-1 w-full overflow-y-auto overflow-x-hidden transition-all duration-300 pb-20 lg:pb-0 bg-white rounded-xl"
             id="main-content"
           >
             {children}

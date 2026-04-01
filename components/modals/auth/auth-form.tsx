@@ -33,8 +33,8 @@ export function AuthForm({
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       {error && (
-        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-          <p className="text-red-400 text-sm">{error}</p>
+        <div className="bg-danger/10 border border-danger/20 rounded-lg p-3">
+          <p className="text-danger text-sm">{error}</p>
         </div>
       )}
 

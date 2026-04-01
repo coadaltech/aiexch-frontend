@@ -40,62 +40,243 @@
 
 * {
   box-sizing: border-box;
-  letter-spacing: 1px;
+  letter-spacing: 0.2px;
+}
+
+/* ===== Global button curve ===== */
+button, [role="button"], input[type="submit"], input[type="button"], input[type="reset"] {
+  border-radius: 0.5rem;
+}
+
+/* ===== Base Typography ===== */
+body {
+  font-family: var(--font-roboto), "Roboto", "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Roboto Condensed for headings, odds numbers, badges */
+h1, h2, h3, h4, h5, h6,
+.font-condensed,
+[class*="text-odds"],
+th {
+  font-family: var(--font-roboto-condensed), "Roboto Condensed", "Helvetica Neue", Arial, sans-serif;
+  letter-spacing: 0.3px;
+}
+
+/* ===== Dark sections (nav, header, sidebar bg) — white text ===== */
+.bg-\[\#0c314d\], .bg-\[\#174b73\], .bg-\[\#1b5785\],
+.bg-\[\#0a2a42\], .bg-\[\#0f3d5e\] {
+  color: #ffffff;
+}
+
+/* ===== White sections — dark text ===== */
+.bg-white {
+  color: #1a1a2e;
+}
+.bg-gray-50 {
+  color: #2d3748;
 }
 
 :root {
-  /* ===== Core Theme ===== */
-  --background: #120a1c; /* deep royal purple */
-  --foreground: #fff8ec; /* soft ivory */
-  --card: #221233; /* deep card background */
-  --card-foreground: #f4e2c8; /* card text */
+  /* ===== 1xBet India Exact Color Theme ===== */
+  --background: #0c314d;       /* 1xBet main bg deep navy */
+  --foreground: #ffffff;
+  --card: #0a2a42;             /* 1xBet card/content bg */
+  --card-foreground: #ffffff;
 
-  --primary: #ffd85c; /* bright gold */
-  --primary-foreground: #1b1300; /* readable dark text on gold */
+  --primary: #79a430;          /* 1xBet lime green CTA */
+  --primary-foreground: #ffffff;
 
-  --secondary: #5b2e8a; /* royal purple */
-  --secondary-foreground: #f4e2c8;
+  --secondary: #174b73;        /* 1xBet secondary nav blue */
+  --secondary-foreground: #ffffff;
 
-  --muted: #3a275e;
-  --muted-foreground: #d9c8b3;
+  --muted: #0f3d5e;
+  --muted-foreground: #94b8cc;
 
-  --accent: #ffbf4d; /* warm amber accent */
-  --accent-foreground: #1c1400;
+  --accent: #66c4ff;           /* 1xBet cyan active/hover */
+  --accent-foreground: #0c314d;
 
-  --border: #3f2a60;
-  --input: #6943a1;
-  --ring: #ffd85c;
+  --border: #1b5785;
+  --input: #174b73;
+  --ring: #79a430;
 
-  --popover: #221233;
-  --popover-foreground: #f4e2c8;
+  --popover: #0f3d5e;
+  --popover-foreground: #ffffff;
 
   /* ===== Chart Palette ===== */
-  --chart-1: #ffd85c; /* gold */
-  --chart-2: #e65c47; /* vibrant red */
-  --chart-3: #6c63ff; /* royal blue */
-  --chart-4: #3ac17e; /* emerald green */
-  --chart-5: #a64bc4; /* purple */
+  --chart-1: #79a430;
+  --chart-2: #f06888;
+  --chart-3: #66c4ff;
+  --chart-4: #93c738;
+  --chart-5: #f0a050;
 
-  --radius: 0.4rem;
-  --success: #5fc24d;
-  --error: #e85854;
-  --info: #009ed4;
+  --radius: 0.5rem;            /* curved buttons */
+  --success: #79a430;
+  --error: #f06888;
+  --info: #66c4ff;
 
   /* ===== Sidebar ===== */
-  --sidebar: #120a1c;
-  --sidebar-foreground: #f4e2c8;
-  --sidebar-primary: #ffd85c;
-  --sidebar-primary-foreground: #1b1300;
-  --sidebar-accent: #ffbf4d;
-  --sidebar-accent-foreground: #1c1400;
-  --sidebar-border: #3f2a60;
-  --sidebar-ring: #ffd85c;
+  --sidebar: #0c314d;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #79a430;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #174b73;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #1b5785;
+  --sidebar-ring: #79a430;
 
   --header-bg: linear-gradient(
-    135deg,
-    rgba(34, 18, 51, 0.95),
-    rgba(91, 46, 138, 0.85)
+    180deg,
+    #174b73 0%,
+    #0c314d 100%
   );
+
+  /* ===== Sports / Betting ===== */
+  --back: #72BBEF;
+  --back-hover: #5caaee;
+  --back-disabled: #3a6088;
+  --lay: #f5a0b4;
+  --lay-hover: #ee8da2;
+  --lay-disabled: #885060;
+  --sports-header: #174b73;
+  --table-header: #174b73;
+  --lay-row: #2c1822;
+
+  /* ===== Navigation / Layout ===== */
+  --nav-active: #66c4ff;       /* 1xBet cyan active */
+  --nav-highlight: #79a430;
+  --sidebar-panel: #0c314d;
+  --sidebar-gradient-from: #0c314d;
+  --sidebar-gradient-to: #0a2a42;
+  --footer-bg: #103856;
+
+  /* ===== Button Variants ===== */
+  --btn-default: #79a430;
+  --ghost-hover: #174b73;
+
+  /* ===== Navigation Chrome (header, dropheader, bottom-tab) ===== */
+  --nav-dark: #0c314d;
+  --nav-surface: #174b73;
+  --nav-btn: #1b5785;
+  --nav-text: #b8d4e8;
+  --nav-text-secondary: #ffffff;
+  --nav-text-muted: #5888a8;
+
+  /* ===== Dropdown / Popover Surfaces ===== */
+  --dropdown-bg: #0f3d5e;
+
+  /* ===== Content Area (match pages, cards, tables) ===== */
+  --content-bg: #0a2a42;
+  --content-bg-light: #ffffff;
+  --content-bg-hover: #0f3d5e;
+  --content-bg-inset: #071e30;
+  --content-border: #1b5785;
+  --content-border-light: #d8dde8;
+  --content-border-medium: #c0c8d8;
+  --content-text: #94b8cc;
+  --content-text-muted: #5c88aa;
+
+  /* ===== CTA Gradients ===== */
+  --cta-deposit-from: #79a430;
+  --cta-deposit-to: #668a28;
+  --cta-deposit-from-hover: #93c738;
+  --cta-deposit-to-hover: #79a430;
+  --cta-login-from: #174b73;
+  --cta-login-to: #1b5785;
+  --cta-login-from-hover: #1b5785;
+  --cta-login-to-hover: #215e90;
+
+  /* ===== Status Indicators ===== */
+  --live: #79a430;
+  --live-text: #93c738;
+  --danger: #f06888;
+  --danger-hover: #f8a0b4;
+  --danger-strong: #e04060;
+  --warning-bg: #f0a050;
+  --warning-text: #f8c070;
+
+  /* ===== Section / Accent ===== */
+  --section-title: #66c4ff;
+  --back-row: #071e30;
+
+  /* ===== Market Badges ===== */
+  --badge-odds: #4090e0;
+  --badge-bookmaker: #20b888;
+  --badge-fancy: #e88030;
+
+  /* ===== Matka Theme ===== */
+  --matka: #18b0a8;
+  --matka-hover: #14a098;
+  --matka-dark: #108880;
+  --matka-text: #60e8d8;
+  --matka-ring: #20c8b8;
+  --matka-input-bg: #f0f8f4;
+  --matka-result: #e09020;
+  --matka-panna: #a888f0;
+
+  /* ===== Decorative Accents (section headers, gradients) ===== */
+  --accent-warm: #f0a050;
+  --accent-warm-light: #f8b868;
+  --accent-purple: #9078f0;
+  --accent-purple-light: #a898f4;
+  --accent-pink: #e868a0;
+  --accent-emerald: #2dc898;
+  --accent-emerald-light: #50e0b0;
+
+  /* ===== Quick Link Gradients ===== */
+  --ql-emerald-from: #2dc898;
+  --ql-emerald-to: #20b080;
+  --ql-purple-from: #9078f0;
+  --ql-purple-to: #7c60e0;
+  --ql-rose-from: #f06888;
+  --ql-rose-to: #e04868;
+  --ql-amber-from: #f0a050;
+  --ql-amber-to: #e08838;
+  --ql-orange-from: #e88030;
+  --ql-orange-to: #d06820;
+
+  /* ===== Promotion Badge Colors ===== */
+  --promo-deposit: #20b888;
+  --promo-spins: #4090e0;
+  --promo-cashback: #7c60e0;
+  --promo-nodeposit: #d06820;
+
+  /* ===== Quick Bet Panel ===== */
+  --quickbet-from: rgba(20, 26, 40, 0.7);
+  --quickbet-via: rgba(26, 32, 48, 0.6);
+  --quickbet-to: #141a28;
+  --quickbet-delay-bg: rgba(100, 60, 10, 0.3);
+  --quickbet-delay-border: #c88830;
+  --quickbet-delay-text: #f8d080;
+  --quickbet-delay-btn: #8a6020;
+  --quickbet-delay-btn-hover: #705018;
+  --quickbet-delay-spinner: #f0a050;
+
+  /* ===== Status Colors (extended) ===== */
+  --status-yellow: #f0c040;
+  --status-yellow-dark: #d0a028;
+  --info-light: #70a8f0;
+
+  /* ===== Card Component ===== */
+  --card-gradient-from: #0c314d;
+  --card-gradient-via: #0a2a42;
+  --card-gradient-to: #0c314d;
+  --card-accent-border: rgba(91, 138, 245, 0.18);
+
+  /* ===== Toast Destructive ===== */
+  --toast-dest-text: #f8a0b4;
+  --toast-dest-hover: #fef0f4;
+  --toast-dest-ring: #f06888;
+  --toast-dest-offset: #e04060;
+
+  /* ===== Misc ===== */
+  --star-color: #f0c040;
+  --skeleton-alt: #1b5785;
+  --error-light-bg: #fef0f2;
+  --error-light-border: #f8d0d8;
 }
 
 .light {
@@ -160,6 +341,9 @@
 }
 
 @theme inline {
+  --font-roboto: var(--font-roboto);
+  --font-roboto-condensed: var(--font-roboto-condensed);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -201,9 +385,176 @@
   --color-sidebar-ring: var(--sidebar-ring);
 
   --color-header-bg: var(--header-bg);
+
+  --color-back: var(--back);
+  --color-back-hover: var(--back-hover);
+  --color-back-disabled: var(--back-disabled);
+  --color-lay: var(--lay);
+  --color-lay-hover: var(--lay-hover);
+  --color-lay-disabled: var(--lay-disabled);
+  --color-sports-header: var(--sports-header);
+  --color-table-header: var(--table-header);
+  --color-lay-row: var(--lay-row);
+  --color-nav-active: var(--nav-active);
+  --color-nav-highlight: var(--nav-highlight);
+  --color-sidebar-panel: var(--sidebar-panel);
+  --color-sidebar-gradient-from: var(--sidebar-gradient-from);
+  --color-sidebar-gradient-to: var(--sidebar-gradient-to);
+  --color-footer-bg: var(--footer-bg);
+  --color-btn-default: var(--btn-default);
+  --color-ghost-hover: var(--ghost-hover);
+
+  /* Navigation chrome */
+  --color-nav-dark: var(--nav-dark);
+  --color-nav-surface: var(--nav-surface);
+  --color-nav-btn: var(--nav-btn);
+  --color-nav-text: var(--nav-text);
+  --color-nav-text-secondary: var(--nav-text-secondary);
+  --color-nav-text-muted: var(--nav-text-muted);
+  --color-dropdown-bg: var(--dropdown-bg);
+
+  /* Content area */
+  --color-content-bg: var(--content-bg);
+  --color-content-bg-light: var(--content-bg-light);
+  --color-content-bg-hover: var(--content-bg-hover);
+  --color-content-bg-inset: var(--content-bg-inset);
+  --color-content-border: var(--content-border);
+  --color-content-border-light: var(--content-border-light);
+  --color-content-border-medium: var(--content-border-medium);
+  --color-content-text: var(--content-text);
+  --color-content-text-muted: var(--content-text-muted);
+
+  /* CTA gradients */
+  --color-cta-deposit-from: var(--cta-deposit-from);
+  --color-cta-deposit-to: var(--cta-deposit-to);
+  --color-cta-deposit-from-hover: var(--cta-deposit-from-hover);
+  --color-cta-deposit-to-hover: var(--cta-deposit-to-hover);
+  --color-cta-login-from: var(--cta-login-from);
+  --color-cta-login-to: var(--cta-login-to);
+  --color-cta-login-from-hover: var(--cta-login-from-hover);
+  --color-cta-login-to-hover: var(--cta-login-to-hover);
+
+  /* Status */
+  --color-live: var(--live);
+  --color-live-text: var(--live-text);
+  --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
+  --color-danger-strong: var(--danger-strong);
+  --color-warning-bg: var(--warning-bg);
+  --color-warning-text: var(--warning-text);
+
+  /* Section / accent */
+  --color-section-title: var(--section-title);
+  --color-back-row: var(--back-row);
+
+  /* Market badges */
+  --color-badge-odds: var(--badge-odds);
+  --color-badge-bookmaker: var(--badge-bookmaker);
+  --color-badge-fancy: var(--badge-fancy);
+
+  /* Matka */
+  --color-matka: var(--matka);
+  --color-matka-hover: var(--matka-hover);
+  --color-matka-dark: var(--matka-dark);
+  --color-matka-text: var(--matka-text);
+  --color-matka-ring: var(--matka-ring);
+  --color-matka-input-bg: var(--matka-input-bg);
+  --color-matka-result: var(--matka-result);
+  --color-matka-panna: var(--matka-panna);
+
+  /* Decorative accents */
+  --color-accent-warm: var(--accent-warm);
+  --color-accent-warm-light: var(--accent-warm-light);
+  --color-accent-purple: var(--accent-purple);
+  --color-accent-purple-light: var(--accent-purple-light);
+  --color-accent-pink: var(--accent-pink);
+  --color-accent-emerald: var(--accent-emerald);
+  --color-accent-emerald-light: var(--accent-emerald-light);
+
+  /* Quick link gradients */
+  --color-ql-emerald-from: var(--ql-emerald-from);
+  --color-ql-emerald-to: var(--ql-emerald-to);
+  --color-ql-purple-from: var(--ql-purple-from);
+  --color-ql-purple-to: var(--ql-purple-to);
+  --color-ql-rose-from: var(--ql-rose-from);
+  --color-ql-rose-to: var(--ql-rose-to);
+  --color-ql-amber-from: var(--ql-amber-from);
+  --color-ql-amber-to: var(--ql-amber-to);
+  --color-ql-orange-from: var(--ql-orange-from);
+  --color-ql-orange-to: var(--ql-orange-to);
+
+  /* Promotion badges */
+  --color-promo-deposit: var(--promo-deposit);
+  --color-promo-spins: var(--promo-spins);
+  --color-promo-cashback: var(--promo-cashback);
+  --color-promo-nodeposit: var(--promo-nodeposit);
+
+  /* Quick Bet panel */
+  --color-quickbet-from: var(--quickbet-from);
+  --color-quickbet-via: var(--quickbet-via);
+  --color-quickbet-to: var(--quickbet-to);
+  --color-quickbet-delay-bg: var(--quickbet-delay-bg);
+  --color-quickbet-delay-border: var(--quickbet-delay-border);
+  --color-quickbet-delay-text: var(--quickbet-delay-text);
+  --color-quickbet-delay-btn: var(--quickbet-delay-btn);
+  --color-quickbet-delay-btn-hover: var(--quickbet-delay-btn-hover);
+  --color-quickbet-delay-spinner: var(--quickbet-delay-spinner);
+
+  /* Status extended */
+  --color-status-yellow: var(--status-yellow);
+  --color-status-yellow-dark: var(--status-yellow-dark);
+  --color-info-light: var(--info-light);
+
+  /* Card component */
+  --color-card-gradient-from: var(--card-gradient-from);
+  --color-card-gradient-via: var(--card-gradient-via);
+  --color-card-gradient-to: var(--card-gradient-to);
+  --color-card-accent-border: var(--card-accent-border);
+
+  /* Toast destructive */
+  --color-toast-dest-text: var(--toast-dest-text);
+  --color-toast-dest-hover: var(--toast-dest-hover);
+  --color-toast-dest-ring: var(--toast-dest-ring);
+  --color-toast-dest-offset: var(--toast-dest-offset);
+
+  /* Misc */
+  --color-star-color: var(--star-color);
+  --color-skeleton-alt: var(--skeleton-alt);
+  --color-error-light-bg: var(--error-light-bg);
+  --color-error-light-border: var(--error-light-border);
 }
 
 @layer utilities {
+  /* ===== Font Utilities ===== */
+  .font-roboto {
+    font-family: var(--font-roboto), "Roboto", "Helvetica Neue", Arial, sans-serif;
+  }
+  .font-condensed {
+    font-family: var(--font-roboto-condensed), "Roboto Condensed", "Helvetica Neue", Arial, sans-serif;
+  }
+
+  /* ===== Text color helpers for dark nav/header sections ===== */
+  .text-nav {
+    color: rgba(255, 255, 255, 0.9);
+  }
+  .text-nav-muted {
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  /* ===== Notice ticker animation ===== */
+  @keyframes ticker {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  .animate-ticker {
+    animation: ticker 28s linear infinite;
+    display: inline-block;
+    will-change: transform;
+  }
+  .animate-ticker:hover {
+    animation-play-state: paused;
+  }
+
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -212,7 +563,7 @@
   /* Sidebar Custom Scrollbar - Casino Theme */
   .sidebar-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: #3730a3 transparent;
+    scrollbar-color: var(--nav-active) transparent;
   }
 
   .sidebar-scrollbar::-webkit-scrollbar {
@@ -229,19 +580,19 @@
     background: linear-gradient(
       to bottom,
       var(--primary),
-      rgba(255, 216, 92, 0.8)
+      rgba(124, 109, 245, 0.8)
     );
     border-radius: 10px;
-    border: 1px solid rgba(255, 216, 92, 0.3);
+    border: 1px solid rgba(91, 138, 245, 0.3);
   }
 
   .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(
       to bottom,
       var(--primary),
-      rgba(255, 216, 92, 1)
+      rgba(124, 109, 245, 1)
     );
-    box-shadow: 0 0 8px rgba(255, 216, 92, 0.5);
+    box-shadow: 0 0 8px rgba(91, 138, 245, 0.5);
   }
 
   .hide-scrollbar {
@@ -271,11 +622,11 @@
   @keyframes glow {
     0%,
     100% {
-      box-shadow: 0 0 20px rgba(255, 216, 92, 0.3);
+      box-shadow: 0 0 20px rgba(91, 138, 245, 0.25);
     }
     50% {
-      box-shadow: 0 0 40px rgba(255, 216, 92, 0.6),
-        0 0 60px rgba(255, 216, 92, 0.3);
+      box-shadow: 0 0 40px rgba(91, 138, 245, 0.45),
+        0 0 60px rgba(124, 109, 245, 0.2);
     }
   }
 

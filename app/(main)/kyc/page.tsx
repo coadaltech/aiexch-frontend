@@ -21,11 +21,11 @@ import { DocumentUpload } from "@/types";
 const getStatusIcon = (status: string) => {
   switch (status) {
     case "verified":
-      return <CheckCircle className="w-5 h-5 text-green-500" />;
+      return <CheckCircle className="w-5 h-5 text-live-text" />;
     case "rejected":
-      return <AlertCircle className="w-5 h-5 text-red-500" />;
+      return <AlertCircle className="w-5 h-5 text-danger" />;
     case "uploaded":
-      return <Clock className="w-5 h-5 text-yellow-500" />;
+      return <Clock className="w-5 h-5 text-status-yellow-dark" />;
     default:
       return <Upload className="w-5 h-5 text-casino-secondary-text" />;
   }
@@ -166,15 +166,15 @@ export default function KYCPage() {
               <div className="mt-6 pt-6 border-t border-casino-primary/20">
                 <div className="text-sm text-casino-secondary-text">
                   <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    <CheckCircle className="w-4 h-4 text-live-text" />
                     <span>Increased withdrawal limits</span>
                   </div>
                   <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    <CheckCircle className="w-4 h-4 text-live-text" />
                     <span>Access to VIP features</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    <CheckCircle className="w-4 h-4 text-live-text" />
                     <span>Enhanced security</span>
                   </div>
                 </div>
@@ -266,11 +266,11 @@ function DocumentUploadCard({
   const getStatusColor = (status: string) => {
     switch (status) {
       case "verified":
-        return "border-green-500/50 bg-green-500/10";
+        return "border-live/50 bg-live/10";
       case "rejected":
-        return "border-red-500/50 bg-red-500/10";
+        return "border-danger/50 bg-danger/10";
       case "uploaded":
-        return "border-yellow-500/50 bg-yellow-500/10";
+        return "border-status-yellow-dark/50 bg-status-yellow-dark/10";
       default:
         return "border-casino-primary/30";
     }
@@ -317,7 +317,7 @@ function DocumentUploadCard({
             onClick={() => onRemoveFile(document.id)}
             variant="ghost"
             size="sm"
-            className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+            className="text-danger hover:text-danger/80 hover:bg-danger/10"
           >
             <X className="w-4 h-4" />
           </Button>

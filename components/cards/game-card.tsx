@@ -48,7 +48,7 @@ export const GameCard = ({
             </div>
           )}
           {game.hot && (
-            <div className=" bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold shadow-lg animate-pulse">
+            <div className=" bg-danger text-white text-xs px-2 py-1 rounded-full font-bold shadow-lg animate-pulse">
               HOT
             </div>
           )}

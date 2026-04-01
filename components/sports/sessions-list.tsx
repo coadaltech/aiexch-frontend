@@ -134,7 +134,7 @@ export function SessionsList({
                     className={`text-white text-xs px-2 py-1.5 rounded text-center min-w-[50px] h-[38px] flex flex-col items-center justify-center transition ${
                       canTrade
                         ? "bg-chart-2 cursor-pointer hover:bg-chart-2/80"
-                        : "bg-gray-600 cursor-not-allowed"
+                        : "bg-content-text-muted cursor-not-allowed"
                     }`}
                     onClick={() =>
                       canTrade &&
@@ -168,7 +168,7 @@ export function SessionsList({
                     className={`text-white text-xs px-2 py-1.5 rounded text-center min-w-[50px] h-[38px] flex flex-col items-center justify-center transition ${
                       canTrade
                         ? "bg-chart-3 cursor-pointer hover:bg-chart-3/80"
-                        : "bg-gray-600 cursor-not-allowed"
+                        : "bg-content-text-muted cursor-not-allowed"
                     }`}
                     onClick={() =>
                       canTrade &&

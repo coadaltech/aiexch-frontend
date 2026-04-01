@@ -10,7 +10,7 @@ export function CarouselSkeleton({
 }) {
   return (
     <div className={cn("relative w-full", className)}>
-      <Skeleton className="w-full h-full rounded-lg bg-zinc-500" />
+      <Skeleton className="w-full h-full rounded-lg bg-skeleton-alt" />
     </div>
   );
 }

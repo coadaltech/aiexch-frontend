@@ -1,6 +1,59 @@
 import axios from "axios";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
+// ── First-party cookie helpers ────────────────────────────────────────────────
+// Set on the frontend's own domain so Safari accepts them as first-party.
+
+export function getAuthCookie(name: string): string | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+export function setAuthCookie(name: string, value: string, maxAgeSeconds: number) {
+  if (typeof document === "undefined") return;
+  const secure = window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${maxAgeSeconds}; SameSite=Lax${secure}`;
+}
+
+export function clearAuthCookie(name: string) {
+  if (typeof document === "undefined") return;
+  document.cookie = `${name}=; Path=/; Max-Age=0`;
+}
+
+export function storeTokens(accessToken: string, refreshToken?: string) {
+  setAuthCookie("accessToken", accessToken, 60 * 15);
+  if (refreshToken) setAuthCookie("refreshToken", refreshToken, 60 * 60 * 24 * 7);
+}
+
+export function clearTokens() {
+  clearAuthCookie("accessToken");
+  clearAuthCookie("refreshToken");
+}
+
+/**
+ * Proactive token refresh — call this on a timer before the access token expires.
+ * Uses a plain axios instance (no interceptors) to avoid infinite loops.
+ */
+export async function proactiveRefresh(): Promise<boolean> {
+  const storedRefreshToken = getAuthCookie("refreshToken");
+  if (!storedRefreshToken) return false;
+  try {
+    const response = await axios
+      .create({ baseURL: API_BASE_URL, withCredentials: true })
+      .post("/auth/refresh", { refreshToken: storedRefreshToken });
+    if (response.data.success && response.data.accessToken) {
+      storeTokens(response.data.accessToken, response.data.refreshToken);
+      return true;
+    }
+    return false;
+  } catch {
+    // Network error or server error — do NOT clear tokens, just return false
+    return false;
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 export const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
@@ -10,16 +63,27 @@ export const api = axios.create({
   },
 });
 
-// Add domain header dynamically for client-side requests
+// Attach domain header + Authorization header on every request
 api.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
     config.headers["x-whitelabel-domain"] = window.location.host;
+    const token = getAuthCookie("accessToken");
+    if (token) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+    }
   }
   return config;
 });
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Auto-store tokens returned in any response body (login, refresh, etc.)
+    if (typeof window !== "undefined") {
+      const { accessToken, refreshToken } = response.data || {};
+      if (accessToken) storeTokens(accessToken, refreshToken);
+    }
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
 
@@ -28,36 +92,35 @@ api.interceptors.response.use(
       error.response?.status === 503 &&
       error.response?.data?.error === "DATABASE_NOT_FOUND"
     ) {
-      // Dispatch custom event to show database error dialog
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("database-not-found"));
       }
       return Promise.reject(error);
     }
 
-    if (
-      [404, 401].includes(error.response?.status) &&
-      !originalRequest._retry
-    ) {
+    if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
+        const storedRefreshToken = getAuthCookie("refreshToken");
         const refreshResponse = await axios
-          .create({
-            baseURL: API_BASE_URL,
-            withCredentials: true,
-          })
-          .post("/auth/refresh");
-
-        console.log("Refresh Response", refreshResponse);
+          .create({ baseURL: API_BASE_URL, withCredentials: true })
+          .post("/auth/refresh", storedRefreshToken ? { refreshToken: storedRefreshToken } : undefined);
 
         if (refreshResponse.data.success) {
+          // storeTokens is called automatically by the response interceptor above
+          // but since this uses a raw axios instance, store manually
+          const { accessToken, refreshToken } = refreshResponse.data;
+          if (accessToken) storeTokens(accessToken, refreshToken);
           return api(originalRequest);
         }
-      } catch (refreshError) {
-        // Clear auth state and redirect
-        if (typeof window !== "undefined") {
+      } catch (refreshError: any) {
+        // Only clear tokens on actual auth failure (401/403).
+        // Network errors, timeouts, 5xx should NOT log the user out.
+        const status = refreshError?.response?.status;
+        if (typeof window !== "undefined" && (status === 401 || status === 403)) {
           localStorage.removeItem("user");
+          clearTokens();
         }
       }
     }
@@ -206,6 +269,11 @@ export const ownerApi = {
   // Settings
   getSettings: () => api.get("/owner/settings"),
   updateSettings: (data: any) => api.put("/owner/settings", data),
+
+  // Live Markets
+  getLiveMarketsDetails: () => api.get("/owner/live-markets/details"),
+  getLiveMarketsSummary: () => api.get("/owner/live-markets/summary"),
+  getLiveMarketsPnl: () => api.get("/owner/live-markets/pnl"),
 
   // Notifications
   getNotifications: () => api.get("/owner/notifications"),

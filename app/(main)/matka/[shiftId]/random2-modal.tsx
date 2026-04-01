@@ -141,9 +141,9 @@ export function Random2Modal({ open, onClose, onSave }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-slate-900 border border-slate-700 rounded-lg shadow-xl w-full max-w-lg mx-4">
+      <div className="bg-nav-dark border border-nav-btn rounded-lg shadow-xl w-full max-w-lg mx-4">
         {/* Header */}
-        <div className="flex items-center justify-between bg-teal-700 text-white px-5 py-3 rounded-t-lg">
+        <div className="flex items-center justify-between bg-matka-hover text-white px-5 py-3 rounded-t-lg">
           <h2 className="text-lg font-bold">Random</h2>
           <button
             onClick={onClose}
@@ -156,7 +156,7 @@ export function Random2Modal({ open, onClose, onSave }: Props) {
         {/* Body */}
         <div className="p-5 space-y-4 max-h-[75vh] overflow-auto">
           {/* Notes */}
-          <div className="text-slate-400 text-xs space-y-1">
+          <div className="text-content-text text-xs space-y-1">
             <p>NOTE: Dara number should be 2 digit without any separator.</p>
             <p>NOTE: Akhar number should be 1 digit without any separator.</p>
           </div>
@@ -164,7 +164,7 @@ export function Random2Modal({ open, onClose, onSave }: Props) {
           {/* ── Dara Section ── */}
           <div className="grid grid-cols-[1fr_auto] gap-3 items-start">
             <div>
-              <label className="text-sm font-semibold text-slate-300 block mb-1">
+              <label className="text-sm font-semibold text-nav-text block mb-1">
                 Dara
               </label>
               <textarea
@@ -178,16 +178,16 @@ export function Random2Modal({ open, onClose, onSave }: Props) {
                   }
                 }}
                 rows={3}
-                className="w-full border border-slate-600 bg-slate-800 text-white rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 resize-y font-mono"
+                className="w-full border border-nav-btn bg-nav-surface text-white rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-matka-ring resize-y font-mono"
                 placeholder="e.g. 12 45 87 56"
               />
             </div>
             <div className="w-28">
               <div className="flex items-center justify-between mb-1">
-                <label className="text-sm font-semibold text-slate-300">
+                <label className="text-sm font-semibold text-nav-text">
                   Amount
                 </label>
-                <span className="text-teal-400 text-xs font-bold">
+                <span className="text-matka-text text-xs font-bold">
                   {daraTotal}
                 </span>
               </div>
@@ -203,7 +203,7 @@ export function Random2Modal({ open, onClose, onSave }: Props) {
                     baharRef.current?.focus();
                   }
                 }}
-                className="w-full border border-slate-600 bg-slate-800 text-white rounded px-3 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-teal-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="w-full border border-nav-btn bg-nav-surface text-white rounded px-3 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-matka-ring [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
             </div>
           </div>
@@ -211,7 +211,7 @@ export function Random2Modal({ open, onClose, onSave }: Props) {
           {/* ── Akhar Bahar Section ── */}
           <div className="grid grid-cols-[1fr_auto] gap-3 items-end">
             <div>
-              <label className="text-sm font-semibold text-slate-300 block mb-1">
+              <label className="text-sm font-semibold text-nav-text block mb-1">
                 Akhar Bahar
               </label>
               <input
@@ -227,16 +227,16 @@ export function Random2Modal({ open, onClose, onSave }: Props) {
                     baharAmtRef.current?.focus();
                   }
                 }}
-                className="w-full border border-slate-600 bg-slate-800 text-white rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 font-mono"
+                className="w-full border border-nav-btn bg-nav-surface text-white rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-matka-ring font-mono"
                 placeholder="e.g. 123456"
               />
             </div>
             <div className="w-28">
               <div className="flex items-center justify-between mb-1">
-                <label className="text-sm font-semibold text-slate-300">
+                <label className="text-sm font-semibold text-nav-text">
                   Amount
                 </label>
-                <span className="text-teal-400 text-xs font-bold">
+                <span className="text-matka-text text-xs font-bold">
                   {baharTotal}
                 </span>
               </div>
@@ -252,7 +252,7 @@ export function Random2Modal({ open, onClose, onSave }: Props) {
                     anderRef.current?.focus();
                   }
                 }}
-                className="w-full border border-slate-600 bg-slate-800 text-white rounded px-3 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-teal-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="w-full border border-nav-btn bg-nav-surface text-white rounded px-3 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-matka-ring [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
             </div>
           </div>
@@ -260,7 +260,7 @@ export function Random2Modal({ open, onClose, onSave }: Props) {
           {/* ── Akhar Andar Section ── */}
           <div className="grid grid-cols-[1fr_auto] gap-3 items-end">
             <div>
-              <label className="text-sm font-semibold text-slate-300 block mb-1">
+              <label className="text-sm font-semibold text-nav-text block mb-1">
                 Akhar Andar
               </label>
               <input
@@ -276,16 +276,16 @@ export function Random2Modal({ open, onClose, onSave }: Props) {
                     anderAmtRef.current?.focus();
                   }
                 }}
-                className="w-full border border-slate-600 bg-slate-800 text-white rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 font-mono"
+                className="w-full border border-nav-btn bg-nav-surface text-white rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-matka-ring font-mono"
                 placeholder="e.g. 123"
               />
             </div>
             <div className="w-28">
               <div className="flex items-center justify-between mb-1">
-                <label className="text-sm font-semibold text-slate-300">
+                <label className="text-sm font-semibold text-nav-text">
                   Amount
                 </label>
-                <span className="text-teal-400 text-xs font-bold">
+                <span className="text-matka-text text-xs font-bold">
                   {anderTotal}
                 </span>
               </div>
@@ -301,28 +301,28 @@ export function Random2Modal({ open, onClose, onSave }: Props) {
                     handleSave();
                   }
                 }}
-                className="w-full border border-slate-600 bg-amber-100 text-black rounded px-3 py-2 text-sm text-center font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="w-full border border-nav-btn bg-matka-input-bg text-black rounded px-3 py-2 text-sm text-center font-bold focus:outline-none focus:ring-2 focus:ring-matka-ring [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
             </div>
           </div>
 
           {/* Total */}
-          <div className="text-center font-bold text-white text-lg pt-2 border-t border-slate-700">
+          <div className="text-center font-bold text-white text-lg pt-2 border-t border-nav-btn">
             TOTAL AMOUNT : {totalAmount}
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-4 px-5 py-3 border-t border-slate-700">
+        <div className="flex justify-end gap-4 px-5 py-3 border-t border-nav-btn">
           <button
             onClick={handleSave}
-            className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-8 py-2 rounded text-sm transition-colors"
+            className="bg-matka hover:bg-matka-hover text-white font-semibold px-8 py-2 rounded text-sm transition-colors"
           >
             Save
           </button>
           <button
             onClick={onClose}
-            className="text-slate-300 hover:text-white font-semibold px-6 py-2 rounded text-sm transition-colors"
+            className="text-nav-text hover:text-white font-semibold px-6 py-2 rounded text-sm transition-colors"
           >
             Close
           </button>

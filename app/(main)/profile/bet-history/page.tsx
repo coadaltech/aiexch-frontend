@@ -50,20 +50,20 @@ export default function BetHistoryPage() {
     switch (status) {
       case "won":
         return (
-          <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+          <Badge className="bg-live/20 text-live-text border-live/30">
             Won
           </Badge>
         );
       case "lost":
         return (
-          <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
+          <Badge className="bg-danger/20 text-danger border-danger/30">
             Lost
           </Badge>
         );
       case "pending":
       case "matched":
         return (
-          <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+          <Badge className="bg-status-yellow-dark/20 text-status-yellow border-status-yellow-dark/30">
             Pending
           </Badge>
         );
@@ -109,7 +109,7 @@ export default function BetHistoryPage() {
             <div className="text-xs sm:text-sm text-muted-foreground">Total Bets</div>
           </Card>
           <Card className="p-3 sm:p-4 text-center min-w-0">
-            <div className="text-xl sm:text-2xl font-bold text-green-400">{totalWins}</div>
+            <div className="text-xl sm:text-2xl font-bold text-live-text">{totalWins}</div>
             <div className="text-xs sm:text-sm text-muted-foreground">Wins</div>
           </Card>
           <Card className="p-3 sm:p-4 text-center min-w-0">
@@ -121,7 +121,7 @@ export default function BetHistoryPage() {
           <Card className="p-3 sm:p-4 text-center min-w-0">
             <div
               className={`text-lg sm:text-2xl font-bold truncate ${
-                netProfit >= 0 ? "text-green-400" : "text-red-400"
+                netProfit >= 0 ? "text-live-text" : "text-danger"
               }`}
               title={`${netProfit >= 0 ? "+" : ""}₹${netProfit.toLocaleString()}`}
             >
@@ -203,7 +203,7 @@ export default function BetHistoryPage() {
                   <div
                     className={`font-semibold ${
                       bet.status === "won"
-                        ? "text-green-400"
+                        ? "text-live-text"
                         : "text-foreground"
                     }`}
                   >
@@ -223,7 +223,7 @@ export default function BetHistoryPage() {
 
               {bet.status === "won" && (
                 <div className="mt-3 pt-3 border-t border-border">
-                  <div className="flex items-center gap-2 text-green-400">
+                  <div className="flex items-center gap-2 text-live-text">
                     <TrendingUp className="w-4 h-4" />
                     <span className="text-sm font-semibold">
                       Profit: +₹
@@ -237,7 +237,7 @@ export default function BetHistoryPage() {
 
               {bet.status === "lost" && (
                 <div className="mt-3 pt-3 border-t border-border">
-                  <div className="flex items-center gap-2 text-red-400">
+                  <div className="flex items-center gap-2 text-danger">
                     <TrendingDown className="w-4 h-4" />
                     <span className="text-sm font-semibold">
                       Loss: -₹{Number(bet.stake).toLocaleString()}

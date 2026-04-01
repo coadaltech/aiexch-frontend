@@ -143,15 +143,15 @@ function renderRunners({
           {["WINNER", "LOSER", "REMOVED"].includes(status) ? (
             <div className="flex items-center justify-center min-w-[100px] px-4 py-2 rounded">
               {status === "WINNER" && (
-                <span className="text-green-500 text-sm font-bold">
+                <span className="text-live-text text-sm font-bold">
                   🏆 WINNER
                 </span>
               )}
               {status === "LOSER" && (
-                <span className="text-red-500 text-sm font-bold">❌ LOSER</span>
+                <span className="text-danger text-sm font-bold">❌ LOSER</span>
               )}
               {status === "REMOVED" && (
-                <span className="text-red-200 text-sm font-bold">REMOVED</span>
+                <span className="text-danger-hover text-sm font-bold">REMOVED</span>
               )}
             </div>
           ) : (

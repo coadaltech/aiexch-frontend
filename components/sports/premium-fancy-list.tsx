@@ -102,7 +102,7 @@ export function PremiumFancyList({
                     className={`text-white text-xs px-2 py-1 rounded flex items-center justify-center text-center min-w-[50px] ${
                       fancy.GameStatus === "ACTIVE"
                         ? "bg-chart-3 cursor-pointer hover:bg-chart-3/80"
-                        : "bg-gray-600 cursor-not-allowed"
+                        : "bg-content-text-muted cursor-not-allowed"
                     }`}
                     onClick={() =>
                       fancy.GameStatus === "ACTIVE" &&
@@ -138,7 +138,7 @@ export function PremiumFancyList({
                     className={`text-white text-xs px-2 py-1 flex items-center justify-center rounded text-center min-w-[50px] ${
                       fancy.GameStatus === "ACTIVE"
                         ? "bg-chart-2 cursor-pointer hover:bg-chart-2/80"
-                        : "bg-gray-600 cursor-not-allowed"
+                        : "bg-content-text-muted cursor-not-allowed"
                     }`}
                     onClick={() =>
                       fancy.GameStatus === "ACTIVE" &&

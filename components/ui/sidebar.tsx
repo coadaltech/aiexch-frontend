@@ -211,7 +211,9 @@ function Sidebar({
         "group peer text-sidebar-foreground hidden md:flex flex-col h-full shrink-0 transition-[width,margin] duration-200 ease-linear overflow-hidden",
         state === "expanded"
           ? "w-(--sidebar-width)"
-          : "w-0",
+          : collapsible === "icon"
+            ? "w-(--sidebar-width-icon)"
+            : "w-0",
         className
       )}
       data-state={state}
@@ -224,7 +226,12 @@ function Sidebar({
       <div
         data-sidebar="sidebar"
         data-slot="sidebar-inner"
-        className="bg-sidebar flex h-full w-(--sidebar-width) flex-col"
+        className="bg-sidebar flex h-full flex-col"
+        style={{
+          width: collapsible === "icon" && state === "collapsed"
+            ? "var(--sidebar-width-icon)"
+            : "var(--sidebar-width)"
+        }}
       >
         {children}
       </div>

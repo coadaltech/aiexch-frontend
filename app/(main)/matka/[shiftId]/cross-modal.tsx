@@ -115,9 +115,9 @@ export function CrossModal({ open, onClose, onSave }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-slate-900 border border-slate-700 rounded-lg shadow-xl w-full max-w-md mx-4">
+      <div className="bg-nav-dark border border-nav-btn rounded-lg shadow-xl w-full max-w-md mx-4">
         {/* Header */}
-        <div className="flex items-center justify-between bg-teal-700 text-white px-5 py-3 rounded-t-lg">
+        <div className="flex items-center justify-between bg-matka-hover text-white px-5 py-3 rounded-t-lg">
           <h2 className="text-lg font-bold">Cross</h2>
           <button
             onClick={onClose}
@@ -130,18 +130,18 @@ export function CrossModal({ open, onClose, onSave }: Props) {
         {/* Body */}
         <div className="p-5 space-y-4">
           {/* Input row */}
-          <div className="border border-teal-600 rounded-lg p-3">
+          <div className="border border-matka rounded-lg p-3">
             <div className="grid grid-cols-4 gap-2 mb-2">
-              <span className="text-xs font-bold text-teal-400 text-center">
+              <span className="text-xs font-bold text-matka-text text-center">
                 ANDER
               </span>
-              <span className="text-xs font-bold text-teal-400 text-center">
+              <span className="text-xs font-bold text-matka-text text-center">
                 BAHAR
               </span>
-              <span className="text-xs font-bold text-teal-400 text-center">
+              <span className="text-xs font-bold text-matka-text text-center">
                 AMOUNT
               </span>
-              <span className="text-xs font-bold text-teal-400 text-center">
+              <span className="text-xs font-bold text-matka-text text-center">
                 JODA
               </span>
             </div>
@@ -158,7 +158,7 @@ export function CrossModal({ open, onClose, onSave }: Props) {
                   }
                 }}
                 maxLength={10}
-                className="border border-slate-600 bg-slate-800 text-white rounded px-2 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="border border-nav-btn bg-nav-surface text-white rounded px-2 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-matka-ring"
                 placeholder=""
               />
               <input
@@ -173,7 +173,7 @@ export function CrossModal({ open, onClose, onSave }: Props) {
                   }
                 }}
                 maxLength={10}
-                className="border border-slate-600 bg-slate-800 text-white rounded px-2 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="border border-nav-btn bg-nav-surface text-white rounded px-2 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-matka-ring"
                 placeholder=""
               />
               <input
@@ -188,7 +188,7 @@ export function CrossModal({ open, onClose, onSave }: Props) {
                     jodaRef.current?.focus();
                   }
                 }}
-                className="border border-slate-600 bg-slate-800 text-white rounded px-2 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-teal-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="border border-nav-btn bg-nav-surface text-white rounded px-2 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-matka-ring [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 placeholder=""
               />
               <input
@@ -203,7 +203,7 @@ export function CrossModal({ open, onClose, onSave }: Props) {
                   }
                 }}
                 maxLength={1}
-                className="border border-slate-600 bg-amber-100 text-black rounded px-2 py-2 text-sm text-center font-bold focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="border border-nav-btn bg-matka-input-bg text-black rounded px-2 py-2 text-sm text-center font-bold focus:outline-none focus:ring-2 focus:ring-matka-ring"
                 placeholder=""
               />
             </div>
@@ -225,7 +225,7 @@ export function CrossModal({ open, onClose, onSave }: Props) {
               {crossNumbers.map((n) => (
                 <span
                   key={n}
-                  className="bg-teal-800 text-teal-200 text-xs px-2 py-0.5 rounded font-mono"
+                  className="bg-matka-dark text-matka-text text-xs px-2 py-0.5 rounded font-mono"
                 >
                   {n}
                 </span>
@@ -234,7 +234,7 @@ export function CrossModal({ open, onClose, onSave }: Props) {
           )}
 
           {/* Instructions
-          <div className="space-y-1 text-slate-400 text-xs">
+          <div className="space-y-1 text-nav-text-muted text-xs">
             <p>
               1. अगर JODA &quot;Y&quot; है तो 00-99 JODA की ENTRY होगी
             </p>
@@ -246,16 +246,16 @@ export function CrossModal({ open, onClose, onSave }: Props) {
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-4 px-5 py-3 border-t border-slate-700">
+        <div className="flex justify-end gap-4 px-5 py-3 border-t border-nav-btn">
           <button
             onClick={handleSave}
-            className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-8 py-2 rounded text-sm transition-colors"
+            className="bg-matka hover:bg-matka-hover text-white font-semibold px-8 py-2 rounded text-sm transition-colors"
           >
             Save
           </button>
           <button
             onClick={onClose}
-            className="text-slate-300 hover:text-white font-semibold px-6 py-2 rounded text-sm transition-colors"
+            className="text-nav-text hover:text-white font-semibold px-6 py-2 rounded text-sm transition-colors"
           >
             Close
           </button>

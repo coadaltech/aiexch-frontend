@@ -27,7 +27,7 @@ const AccessDeniedPage = async () => {
       title: "Access Limitation",
       portalLink: "/",
       portalText: "Go Home",
-      button: "bg-slate-600 hover:bg-slate-700 text-white",
+      button: "bg-nav-btn hover:bg-nav-btn/80 text-white",
     };
 
   };
@@ -43,16 +43,16 @@ const AccessDeniedPage = async () => {
             <div
               className={clsx(
                 "rounded-full p-4 border shadow-inner",
-                "bg-red-100 border-red-200"
+                "bg-error-light-bg border-error-light-border"
               )}
             >
-              <ShieldX className="h-12 w-12 text-red-600" />
+              <ShieldX className="h-12 w-12 text-danger-strong" />
             </div>
           </div>
 
           {/* Heading */}
           <div className="space-y-2">
-            <h1 className="text-2xl font-bold text-red-700">
+            <h1 className="text-2xl font-bold text-danger-strong">
               Access Restricted
             </h1>
           </div>
@@ -74,8 +74,8 @@ const AccessDeniedPage = async () => {
           </div>
 
           {/* Footer */}
-          <div className="pt-4 border-t border-gray-200">
-            <p className="text-xs text-gray-500">
+          <div className="pt-4 border-t border-content-border-light">
+            <p className="text-xs text-content-text-muted">
               If you believe this is an error, please contact support for role
               verification and access request.
             </p>

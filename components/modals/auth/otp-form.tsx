@@ -38,8 +38,8 @@ export function OtpForm({
       <h2 className="text-2xl font-bold text-foreground mb-4">Verify Email</h2>
       
       {error && (
-        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4">
-          <p className="text-red-400 text-sm">{error}</p>
+        <div className="bg-danger/10 border border-danger/20 rounded-lg p-3 mb-4">
+          <p className="text-danger text-sm">{error}</p>
         </div>
       )}
 

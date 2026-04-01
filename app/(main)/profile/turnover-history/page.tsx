@@ -113,7 +113,7 @@ export default function TurnoverHistory() {
             </div>
             <div
               className={`text-2xl font-bold ${
-                totalNetResult >= 0 ? "text-green-400" : "text-red-400"
+                totalNetResult >= 0 ? "text-live-text" : "text-danger"
               }`}
             >
               ${totalNetResult.toFixed(2)}
@@ -213,13 +213,13 @@ export default function TurnoverHistory() {
                     </td>
                     <td
                       className={`p-4 text-right font-semibold ${
-                        item.netResult >= 0 ? "text-green-400" : "text-red-400"
+                        item.netResult >= 0 ? "text-live-text" : "text-danger"
                       }`}
                     >
                       ${item.netResult.toFixed(2)}
                     </td>
                     <td className="p-4 text-center">
-                      <Badge className="bg-green-500/20 text-green-400">
+                      <Badge className="bg-live/20 text-live-text">
                         {item.status}
                       </Badge>
                     </td>

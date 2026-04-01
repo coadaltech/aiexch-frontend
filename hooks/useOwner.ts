@@ -994,3 +994,27 @@ export const useReorderMatkaShifts = () => {
     onError: () => toast.error("Failed to reorder shifts"),
   });
 };
+
+export const useLiveMarketsDetails = () => {
+  return useQuery({
+    queryKey: ["live-markets-details"],
+    queryFn: () => ownerApi.getLiveMarketsDetails().then((res) => res.data.data),
+    refetchInterval: 30000,
+  });
+};
+
+export const useLiveMarketsSummary = () => {
+  return useQuery({
+    queryKey: ["live-markets-summary"],
+    queryFn: () => ownerApi.getLiveMarketsSummary().then((res) => res.data.data),
+    refetchInterval: 30000,
+  });
+};
+
+export const useLiveMarketsPnl = () => {
+  return useQuery({
+    queryKey: ["live-markets-pnl"],
+    queryFn: () => ownerApi.getLiveMarketsPnl().then((res) => res.data.data),
+    refetchInterval: 15000,
+  });
+};

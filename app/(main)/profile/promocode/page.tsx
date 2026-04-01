@@ -95,11 +95,11 @@ export default function PromoCodePage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
-        return "text-green-400 bg-green-400/10 border-green-400/20";
+        return "text-live-text bg-live-text/10 border-live-text/20";
       case "expired":
-        return "text-red-400 bg-red-400/10 border-red-400/20";
+        return "text-danger bg-danger/10 border-danger/20";
       case "used":
-        return "text-blue-400 bg-blue-400/10 border-blue-400/20";
+        return "text-section-title bg-section-title/10 border-section-title/20";
       default:
         return "text-muted-foreground bg-muted border-border";
     }
@@ -155,14 +155,14 @@ export default function PromoCodePage() {
             </div>
 
             {redeemStatus === "success" && (
-              <div className="flex items-center gap-2 text-green-400 text-sm">
+              <div className="flex items-center gap-2 text-live-text text-sm">
                 <CheckCircle className="w-4 h-4" />
                 Promo code redeemed successfully!
               </div>
             )}
 
             {redeemStatus === "error" && (
-              <div className="flex items-center gap-2 text-red-400 text-sm">
+              <div className="flex items-center gap-2 text-danger text-sm">
                 <Clock className="w-4 h-4" />
                 {errorMessage || "Invalid or expired promo code"}
               </div>

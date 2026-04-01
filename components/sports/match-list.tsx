@@ -75,7 +75,7 @@ export function MatchList({
 
                       {/* Live Badge */}
                       {isLive && (
-                        <span className="ml-2 text-xs text-green-500 font-semibold animate-pulse">
+                        <span className="ml-2 text-xs text-live-text font-semibold animate-pulse">
                           ● LIVE
                         </span>
                       )}

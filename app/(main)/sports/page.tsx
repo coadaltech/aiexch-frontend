@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { api } from "@/lib/api";
+import { ChevronRight, Zap } from "lucide-react";
 
 interface Sport {
   id?: string;
@@ -43,6 +44,8 @@ const getSportIcon = (sportName: string): string => {
   return "play-button.svg";
 };
 
+const LIVE_SPORTS = new Set(["4", "1", "2", "7"]);
+
 const matkaItem: Sport = { eventType: "matka", name: "Matka" };
 const extraGames: Sport[] = [
   { eventType: "lotry", name: "Lotry" },
@@ -53,7 +56,6 @@ const extraGames: Sport[] = [
 export default function SportsPage() {
   const [sports, setSports] = useState<Sport[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchSports = async () => {
@@ -62,10 +64,7 @@ export default function SportsPage() {
         const response = await api.get("/api/sports/sports-list");
         const data = response.data.data || [];
         setSports([...data, matkaItem, ...extraGames]);
-      } catch (err) {
-        console.error("Error fetching sports:", err);
-        setError("Failed to load sports");
-        // Fallback to static data if API fails
+      } catch {
         setSports([
           { eventType: "4", name: "Cricket" },
           { eventType: "-4", name: "KABADDI" },
@@ -81,7 +80,6 @@ export default function SportsPage() {
         setLoading(false);
       }
     };
-
     fetchSports();
   }, []);
 
@@ -94,69 +92,77 @@ export default function SportsPage() {
     return sport.name || sport.title || sport.displayName || "Unknown Sport";
   };
 
+  const isLive = (sport: Sport): boolean => {
+    const et = String(sport.id || sport.eventType || "");
+    return LIVE_SPORTS.has(et);
+  };
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center w-full mt-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="text-muted-foreground">Loading sports...</p>
+      <div className="bg-[#0c314d] min-h-full p-4">
+        <div className="h-8 w-32 bg-[#174b73] rounded animate-pulse mb-4" />
+        <div className="space-y-2">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="h-14 bg-[#0a2a42] rounded-xl animate-pulse border border-[#1b5785]/30" />
+          ))}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 p-5">
+    <div className="bg-[#0c314d] min-h-full">
       {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-3xl md:text-4xl font-bold text-foreground">
-          All Sports
-        </h1>
-        <p className="text-muted-foreground">
-          Select a sport to view matches and place bets
-        </p>
+      <div className="bg-[#0a2a42] border-b border-[#1b5785]/50 px-4 py-3 flex items-center gap-2.5">
+        <div className="w-1 h-5 bg-[#79a430] rounded-full" />
+        <h1 className="text-white font-bold text-sm font-condensed tracking-wide">ALL SPORTS</h1>
       </div>
 
-      {/* Error Message */}
-      {error && (
-        <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-lg">
-          {error}
-        </div>
-      )}
-
-      {/* Sports Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-4 md:gap-6">
+      {/* Sport list */}
+      <div className="p-3 space-y-2">
         {sports.map((sport, index) => {
           const sportName = getSportName(sport);
           const sportLink = getSportLink(sport);
           const icon = getSportIcon(sportName);
+          const live = isLive(sport);
 
           return (
             <Link
               key={index}
               href={sportLink}
-              className="group relative bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-sm rounded-xl p-6 border border-primary/30 hover:border-primary/70 transition-all duration-500 hover:scale-105 hover:-translate-y-1 cursor-pointer text-center block overflow-hidden"
+              className="flex items-center gap-3 bg-[#0a2a42] hover:bg-[#0f3d5e] border border-[#1b5785]/40 hover:border-[#1b5785] rounded-xl px-4 py-3 transition-colors group"
             >
-              {/* Glowing effect on hover */}
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-primary via-purple-500 to-amber-500 rounded-xl opacity-0 group-hover:opacity-20 blur transition-opacity duration-500 -z-10"></div>
-
-              {/* Animated shine */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-
-              <div className="flex flex-col items-center relative z-10">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-primary/20 to-amber-500/20 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-125 group-hover:rotate-6 transition-all duration-500 shadow-lg group-hover:shadow-primary/30 border border-primary/30 group-hover:border-primary/60">
-                  <Image
-                    src={`/sports-icons/${icon}`}
-                    height={48}
-                    width={48}
-                    alt={sportName}
-                    className="w-10 h-10 sm:w-12 sm:h-12"
-                  />
-                </div>
-                <h3 className="text-slate-200 font-semibold text-sm md:text-base group-hover:text-primary transition-colors duration-300">
-                  {sportName}
-                </h3>
+              {/* Icon */}
+              <div className="w-10 h-10 rounded-lg bg-[#174b73] flex items-center justify-center shrink-0 border border-[#1b5785]/60 group-hover:border-[#66c4ff]/40 transition-colors">
+                <Image
+                  src={`/sports-icons/${icon}`}
+                  height={24}
+                  width={24}
+                  alt={sportName}
+                  className="w-6 h-6 opacity-90"
+                />
               </div>
+
+              {/* Name + live badge */}
+              <div className="flex-1 min-w-0">
+                <span className="text-white font-semibold text-sm">{sportName}</span>
+                {live && (
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <span className="w-1.5 h-1.5 bg-[#79a430] rounded-full animate-pulse" />
+                    <span className="text-[10px] text-[#79a430] font-bold">LIVE</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Live events badge */}
+              {live && (
+                <div className="flex items-center gap-1 shrink-0 bg-[#79a430]/10 border border-[#79a430]/30 rounded-lg px-2 py-0.5">
+                  <Zap className="w-3 h-3 text-[#79a430]" />
+                  <span className="text-[10px] text-[#79a430] font-bold">LIVE</span>
+                </div>
+              )}
+
+              <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 shrink-0 transition-colors" />
             </Link>
           );
         })}
@@ -164,10 +170,8 @@ export default function SportsPage() {
 
       {/* Empty State */}
       {!loading && sports.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground text-lg">
-            No sports available at the moment
-          </p>
+        <div className="text-center py-16">
+          <p className="text-white/50 text-sm">No sports available at the moment</p>
         </div>
       )}
     </div>

@@ -60,13 +60,13 @@ export default function Notifications() {
       case "bonus":
         return <Gift className="w-5 h-5 text-primary" />;
       case "transaction":
-        return <CreditCard className="w-5 h-5 text-green-400" />;
+        return <CreditCard className="w-5 h-5 text-live-text" />;
       case "security":
-        return <Shield className="w-5 h-5 text-yellow-400" />;
+        return <Shield className="w-5 h-5 text-status-yellow" />;
       case "system":
-        return <Settings className="w-5 h-5 text-blue-400" />;
+        return <Settings className="w-5 h-5 text-section-title" />;
       case "promotion":
-        return <Bell className="w-5 h-5 text-purple-400" />;
+        return <Bell className="w-5 h-5 text-accent-purple-light" />;
       default:
         return <Bell className="w-5 h-5 text-muted-foreground" />;
     }
@@ -77,13 +77,13 @@ export default function Notifications() {
       case "bonus":
         return "bg-primary/10";
       case "transaction":
-        return "bg-green-400/10";
+        return "bg-live-text/10";
       case "security":
-        return "bg-yellow-400/10";
+        return "bg-status-yellow/10";
       case "system":
-        return "bg-blue-400/10";
+        return "bg-section-title/10";
       case "promotion":
-        return "bg-purple-400/10";
+        return "bg-accent-purple-light/10";
       default:
         return "bg-muted";
     }

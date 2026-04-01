@@ -221,9 +221,9 @@ export function RandomModal({ open, onClose, onSave }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-slate-900 border border-slate-700 rounded-lg shadow-xl w-full max-w-md mx-4">
+      <div className="bg-nav-dark border border-nav-btn rounded-lg shadow-xl w-full max-w-md mx-4">
         {/* Header */}
-        <div className="flex items-center justify-between bg-teal-700 text-white px-5 py-3 rounded-t-lg">
+        <div className="flex items-center justify-between bg-matka-hover text-white px-5 py-3 rounded-t-lg">
           <h2 className="text-lg font-bold">Random</h2>
           <button
             onClick={onClose}
@@ -238,7 +238,7 @@ export function RandomModal({ open, onClose, onSave }: Props) {
           {/* Number rows */}
           {numbers.map((val, idx) => (
             <div key={idx} className="flex items-center gap-4">
-              <span className="text-sm font-semibold text-slate-300 w-24 flex-shrink-0">
+              <span className="text-sm font-semibold text-nav-text w-24 flex-shrink-0">
                 NUMBER
               </span>
               <input
@@ -251,8 +251,8 @@ export function RandomModal({ open, onClose, onSave }: Props) {
                 onKeyDown={(e) => handleNumberKeyDown(idx, e)}
                 className={`flex-1 rounded px-3 py-2 text-sm text-white text-right focus:outline-none focus:ring-2 ${
                   errors.has(idx)
-                    ? "border-2 border-red-500 bg-red-950/40 focus:ring-red-400"
-                    : "border border-slate-600 bg-slate-800 focus:ring-teal-500"
+                    ? "border-2 border-danger bg-danger/10 focus:ring-danger"
+                    : "border border-nav-btn bg-nav-surface focus:ring-matka-ring"
                 }`}
                 placeholder=""
               />
@@ -260,11 +260,11 @@ export function RandomModal({ open, onClose, onSave }: Props) {
           ))}
 
           {/* Divider */}
-          <div className="border-t border-slate-700 my-3" />
+          <div className="border-t border-nav-btn my-3" />
 
           {/* Amount */}
           <div className="flex items-center gap-4">
-            <span className="text-sm font-semibold text-slate-300 w-24 flex-shrink-0">
+            <span className="text-sm font-semibold text-nav-text w-24 flex-shrink-0">
               AMOUNT
             </span>
             <input
@@ -274,14 +274,14 @@ export function RandomModal({ open, onClose, onSave }: Props) {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               onKeyDown={handleAmountKeyDown}
-              className="flex-1 border border-slate-600 bg-slate-800 text-white rounded px-3 py-2 text-sm text-right focus:outline-none focus:ring-2 focus:ring-teal-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="flex-1 border border-nav-btn bg-nav-surface text-white rounded px-3 py-2 text-sm text-right focus:outline-none focus:ring-2 focus:ring-matka-ring [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               placeholder="AMOUNT"
             />
           </div>
 
           {/* PLT Amount */}
           <div className="flex items-center gap-4">
-            <span className="text-sm font-semibold text-slate-300 w-24 flex-shrink-0">
+            <span className="text-sm font-semibold text-nav-text w-24 flex-shrink-0">
               PLT-AMOUNT
             </span>
             <input
@@ -291,7 +291,7 @@ export function RandomModal({ open, onClose, onSave }: Props) {
               value={pltAmount}
               onChange={(e) => setPltAmount(e.target.value)}
               onKeyDown={handlePltKeyDown}
-              className="flex-1 border border-slate-600 bg-slate-800 text-white rounded px-3 py-2 text-sm text-right focus:outline-none focus:ring-2 focus:ring-teal-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="flex-1 border border-nav-btn bg-nav-surface text-white rounded px-3 py-2 text-sm text-right focus:outline-none focus:ring-2 focus:ring-matka-ring [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               placeholder="PLT-AMOUNT"
             />
           </div>
@@ -303,16 +303,16 @@ export function RandomModal({ open, onClose, onSave }: Props) {
         </div>
 
         {/* Footer */}
-        <div className="flex justify-center gap-4 px-5 py-3 border-t border-slate-700">
+        <div className="flex justify-center gap-4 px-5 py-3 border-t border-nav-btn">
           <button
             onClick={handleSave}
-            className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-8 py-2 rounded text-sm transition-colors"
+            className="bg-matka hover:bg-matka-hover text-white font-semibold px-8 py-2 rounded text-sm transition-colors"
           >
             Save
           </button>
           <button
             onClick={onClose}
-            className="text-slate-300 hover:text-white font-semibold px-8 py-2 rounded text-sm transition-colors"
+            className="text-nav-text hover:text-white font-semibold px-8 py-2 rounded text-sm transition-colors"
           >
             Cancel
           </button>

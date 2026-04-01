@@ -21,13 +21,13 @@ export function BetSlip({ matchId }: { matchId: string }) {
   const displayedBets = activeTab === "match" ? matchBets : allBets;
 
   const TabBar = () => (
-    <div className="flex gap-1 bg-slate-800/60 rounded-lg p-0.5 mb-2 flex-shrink-0">
+    <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5 mb-2 flex-shrink-0">
       <button
         onClick={() => setActiveTab("match")}
         className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-all cursor-pointer ${
           activeTab === "match"
-            ? "bg-[#3730a3] text-white shadow-sm"
-            : "text-white/60 hover:text-white"
+            ? "bg-[#174b73] text-white shadow-sm"
+            : "text-gray-500 hover:text-gray-800"
         }`}
       >
         This Match ({matchBets.length})
@@ -36,8 +36,8 @@ export function BetSlip({ matchId }: { matchId: string }) {
         onClick={() => setActiveTab("all")}
         className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-all cursor-pointer ${
           activeTab === "all"
-            ? "bg-[#3730a3] text-white shadow-sm"
-            : "text-white/60 hover:text-white"
+            ? "bg-[#174b73] text-white shadow-sm"
+            : "text-gray-500 hover:text-gray-800"
         }`}
       >
         All Bets ({allBets.length})
@@ -46,9 +46,9 @@ export function BetSlip({ matchId }: { matchId: string }) {
   );
 
   const EmptyState = ({ message }: { message: string }) => (
-    <div className="flex-1 min-h-0 flex flex-col items-center justify-center p-8 rounded-xl border border-border bg-slate-100/40 dark:bg-slate-900/50 text-center shadow-inner">
-      <div className="text-4xl mb-3 animate-bounce text-teal-500">🎯</div>
-      <p className="text-base font-medium text-gray-500 dark:text-gray-400 mb-1">{message}</p>
+    <div className="flex-1 min-h-0 flex flex-col items-center justify-center p-8 rounded-xl border border-gray-200 bg-gray-50 text-center shadow-inner">
+      <div className="text-4xl mb-3 animate-bounce text-matka-ring">🎯</div>
+      <p className="text-base font-medium text-gray-600 mb-1">{message}</p>
       <span className="text-xs text-gray-400">
         {activeTab === "match"
           ? "Bets placed on this match will show up here."
@@ -61,10 +61,10 @@ export function BetSlip({ matchId }: { matchId: string }) {
     displayedBets.length === 0 ? (
       <EmptyState message="No bet found" />
     ) : (
-      <div className="flex-1 min-h-0 overflow-y-auto rounded-xl border border-border scrollbar-hide">
+      <div className="flex-1 min-h-0 overflow-y-auto rounded-xl border border-gray-200 scrollbar-hide">
         <table className="w-full text-sm border-collapse table-fixed">
           <thead className="sticky top-0 z-10">
-            <tr className="bg-[#0C1529] text-white font-bold">
+            <tr className="bg-[#174b73] text-white font-bold">
               <th className="text-left py-2 px-2 w-auto">Matched Bet</th>
               <th className="text-center py-2 px-1 w-14">Odds</th>
               <th className="text-right py-2 px-2 w-16">Stake</th>
@@ -100,11 +100,11 @@ export function BetSlip({ matchId }: { matchId: string }) {
             onClick={() => setIsOpen(false)}
           >
             <Card
-              className="fixed inset-x-4 top-1/2 -translate-y-1/2 p-4 max-h-[80vh] overflow-hidden flex flex-col"
+              className="fixed inset-x-4 top-1/2 -translate-y-1/2 p-4 max-h-[80vh] overflow-hidden flex flex-col bg-white border border-gray-200"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-between items-center mb-2 flex-shrink-0">
-                <h3 className="text-foreground font-semibold">Current bets</h3>
+                <h3 className="text-gray-800 font-semibold">Current bets</h3>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -124,7 +124,7 @@ export function BetSlip({ matchId }: { matchId: string }) {
       </div>
 
       {/* Desktop: Right Panel */}
-      <div className="hidden lg:block h-full w-full z-40">
+      <div className="hidden lg:block h-full w-full z-40 p-2">
         <div className="h-full flex flex-col">
           <TabBar />
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
@@ -147,11 +147,11 @@ function CurrentBetTableRow({ bet }: { bet: any }) {
   const oddsFormatted = bet.odds != null ? String(Number(bet.odds)) : "-";
   const isLay = bet.betType === 1 || bet.betType === "lay";
   const rowBg = isLay
-    ? "bg-[#39111A]/40 text-foreground"
-    : "bg-green-900/40 text-foreground";
+    ? "bg-pink-50 text-gray-800"
+    : "bg-blue-50 text-gray-800";
 
   return (
-    <tr className={rowBg + " border-b border-black"} >
+    <tr className={rowBg + " border-b border-gray-200"} >
       <td className="py-2 px-2 text-left text-xs truncate max-w-0" title={matchedBetLabel}>{matchedBetLabel}</td>
       <td className="py-2 px-1 text-center text-xs font-medium">{oddsFormatted}</td>
       <td className="py-2 px-2 text-right text-xs font-medium">{stakeFormatted}</td>

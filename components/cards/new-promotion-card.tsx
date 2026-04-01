@@ -32,15 +32,15 @@ const getActionColor = (type?: string) => {
   switch (lowerType) {
     case "deposit":
     case "deposit bonus":
-      return "bg-green-600";
+      return "bg-promo-deposit";
     case "free_spins":
     case "free spins":
-      return "bg-blue-600";
+      return "bg-promo-spins";
     case "cashback":
-      return "bg-purple-600";
+      return "bg-promo-cashback";
     case "no_deposit":
     case "no deposit":
-      return "bg-orange-600";
+      return "bg-promo-nodeposit";
     default:
       return "bg-primary";
   }

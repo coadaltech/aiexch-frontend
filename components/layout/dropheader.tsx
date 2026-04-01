@@ -60,7 +60,7 @@ export default function Dropheader({ leftMenu, rightMenu }: HeaderProps) {
   };
 
   return (
-    <div className="lg:block hidden bg-gradient-to-r from-slate-800 via-slate-750 to-slate-800 border-b border-slate-700/30 shadow-sm mx-6 rounded-2xl">
+    <div className="lg:block hidden bg-[#0c314d] border-b border-[#1b5785]/50 shadow-sm">
       <div className="flex items-center justify-between w-full px-2 sm:px-4 lg:px-6 py-2 sm:py-2.5 gap-2">
         {/* LEFT SECTION - Main Navigation */}
         <nav className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto scrollbar-hide whitespace-nowrap flex-1 min-w-0">
@@ -70,10 +70,10 @@ export default function Dropheader({ leftMenu, rightMenu }: HeaderProps) {
               <button
                 key={index}
                 onClick={() => handleNavigation(item.link, item.label)}
-                className={cn(`group relative px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all duration-200 rounded-lg flex items-center gap-1 sm:gap-1.5 touch-manipulation flex-shrink-0 cursor-pointer ${active
-                  ? "text-white bg-[#00BC8A]/50"
-                  : "text-slate-200 hover:text-white hover:bg-slate-700/40"
-                  }`, item.label == "Cricket" && "bg-slate-700/50 hover:bg-slate-700 rounded-r-none -mr-1", item.label == "Sports" && "bg-slate-700/50 hover:bg-slate-700 rounded-l-none", (item.label == "Sports" && active) && "bg-[#00BC8A]/50", (item.label == "Cricket" && active) && "bg-[#00BC8A]/50")}
+                className={cn(`group relative px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium transition-all duration-150 flex items-center gap-1 touch-manipulation flex-shrink-0 cursor-pointer border-b-2 rounded-t-lg ${active
+                  ? "text-[#66c4ff] border-[#66c4ff]"
+                  : "text-white/80 border-transparent hover:text-white hover:border-white/30"
+                  }`, item.label == "Cricket" && "text-[#93c738] border-[#79a430]/60", item.label == "Sports" && "", (item.label == "Sports" && active) && "text-[#66c4ff] border-[#66c4ff]", (item.label == "Cricket" && active) && "text-[#93c738] border-[#93c738]")}
               >
                 <span className="whitespace-nowrap">{item.label}</span>
                 {/* <ChevronDown className="h-3 w-3 sm:h-3.5 sm:w-3.5 opacity-70 group-hover:opacity-100 transition-opacity flex-shrink-0" /> */}

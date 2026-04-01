@@ -69,10 +69,10 @@ function useAllMatchOdds(matchIds: string[], eventTypeId: string) {
 function OddsCell({ back, lay }: { back: number | null; lay: number | null }) {
   return (
     <div className="flex w-[88px] sm:w-[120px] shrink-0">
-      <div className="flex-1 bg-[#72BBEF] text-center py-3 text-[11px] sm:text-xs font-bold text-black border-l border-white/30">
+      <div className="flex-1 bg-back text-center py-3 text-[11px] sm:text-xs font-bold text-black border-l border-white/30">
         {back ?? "-"}
       </div>
-      <div className="flex-1 bg-[#FAA9BA] text-center py-3 text-[11px] sm:text-xs font-bold text-black border-l border-white/30">
+      <div className="flex-1 bg-lay text-center py-3 text-[11px] sm:text-xs font-bold text-black border-l border-white/30">
         {lay ?? "-"}
       </div>
     </div>
@@ -128,53 +128,38 @@ function MatchRow({
   return (
     <Link
       href={`/sports/${sport}/${match.seriesId}/${match.id}`}
-      className="block bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+      className="block bg-[#0c314d] hover:bg-[#0f3d5e] transition-colors"
     >
       <div className="flex items-center">
         {/* Match info */}
         <div className="flex-1 min-w-0 py-2 px-3">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">
+            <span className="text-[10px] text-white/40 whitespace-nowrap">
               {formatToIST(match.openDate)}
             </span>
-            <span className="text-muted-foreground text-[10px]">|</span>
             {match.inPlay ? (
-              <>
-                <span className="flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                  <span className="text-[10px] text-green-400 font-semibold hidden sm:inline">
-                    {match.seriesName}
-                  </span>
-                </span>
-                <span className="text-[10px] text-red-500 font-bold ml-1">
-                  Live Now
-                </span>
-              </>
+              <span className="flex items-center gap-1 ml-1">
+                <span className="w-1.5 h-1.5 bg-[#79a430] rounded-full animate-pulse" />
+                <span className="text-[10px] text-[#79a430] font-bold">LIVE</span>
+              </span>
             ) : (
-              <span className="text-[10px] text-muted-foreground hidden sm:inline">
+              <span className="text-[10px] text-white/30 hidden sm:inline">
                 {match.seriesName}
               </span>
             )}
           </div>
           <div className="flex items-center gap-1.5 mt-0.5">
-            <h4 className="font-semibold text-xs sm:text-sm text-foreground truncate">
+            <h4 className="font-semibold text-xs sm:text-sm text-white truncate">
               {match.name}
             </h4>
-            {/* Market badges - right after match name */}
             {matchOddsMarket && (
-              <span className="text-[8px] sm:text-[9px] bg-sky-600/80 text-white px-1 py-0.5 rounded font-medium shrink-0">
-                O
-              </span>
+              <span className="text-[8px] bg-[#4090e0]/80 text-white px-1 py-0.5 rounded font-medium shrink-0">O</span>
             )}
             {hasBookmaker && (
-              <span className="text-[8px] sm:text-[9px] bg-emerald-600/80 text-white px-1 py-0.5 rounded font-medium shrink-0">
-                BM
-              </span>
+              <span className="text-[8px] bg-[#20b888]/80 text-white px-1 py-0.5 rounded font-medium shrink-0">BM</span>
             )}
             {hasFancy && (
-              <span className="text-[8px] sm:text-[9px] bg-orange-500/80 text-white px-1 py-0.5 rounded font-medium shrink-0">
-                F
-              </span>
+              <span className="text-[8px] bg-[#e88030]/80 text-white px-1 py-0.5 rounded font-medium shrink-0">F</span>
             )}
           </div>
         </div>
@@ -184,10 +169,10 @@ function MatchRow({
 
         {/* Draw (hidden on small screens) */}
         <div className="hidden sm:flex w-[120px] shrink-0">
-          <div className="flex-1 bg-[#72BBEF] text-center py-3 text-xs font-bold text-black border-l border-white/30">
+          <div className="flex-1 bg-back text-center py-3 text-xs font-bold text-black border-l border-white/30">
             {draw.back ?? "-"}
           </div>
-          <div className="flex-1 bg-[#FAA9BA] text-center py-3 text-xs font-bold text-black border-l border-white/30">
+          <div className="flex-1 bg-lay text-center py-3 text-xs font-bold text-black border-l border-white/30">
             {draw.lay ?? "-"}
           </div>
         </div>
@@ -259,11 +244,8 @@ export function CricketMatchesList({
   if (isLoading) {
     return (
       <div className="space-y-1">
-        {[...Array(5)].map((_, i) => (
-          <div
-            key={i}
-            className="h-14 bg-muted/30 animate-pulse rounded"
-          />
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="h-12 bg-[#174b73]/40 animate-pulse rounded-lg" />
         ))}
       </div>
     );
@@ -285,9 +267,9 @@ export function CricketMatchesList({
   if (matchesWithOdds.length === 0) {
     if (emptyText) {
       return (
-        <div className="py-12 text-center">
-          <p className="text-muted-foreground text-lg">{emptyText}</p>
-          <p className="text-muted-foreground text-sm mt-1">Check back later for live action.</p>
+        <div className="py-8 text-center">
+          <p className="text-white/50 text-sm">{emptyText}</p>
+          <p className="text-white/30 text-xs mt-1">Check back later for live action.</p>
         </div>
       );
     }
@@ -295,19 +277,17 @@ export function CricketMatchesList({
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full rounded-lg overflow-hidden">
       {/* Header row */}
-      <div className="flex items-center bg-[#2AABA4] text-white text-[10px] sm:text-xs font-bold rounded-t-lg overflow-hidden">
+      <div className="flex items-center bg-[#174b73] text-white text-[10px] sm:text-xs font-bold font-condensed tracking-wide">
         <div className="flex-1 py-2 px-3" />
         <div className="w-[88px] sm:w-[120px] text-center py-2">1</div>
-        <div className="w-[88px] sm:w-[120px] text-center py-2 hidden sm:block">
-          x
-        </div>
+        <div className="w-[88px] sm:w-[120px] text-center py-2 hidden sm:block">X</div>
         <div className="w-[88px] sm:w-[120px] text-center py-2">2</div>
       </div>
 
       {/* Match rows */}
-      <div className="border border-border/30 rounded-b-lg overflow-hidden divide-y divide-border/20">
+      <div className="divide-y divide-[#1b5785]/40 border border-[#1b5785]/40 border-t-0 rounded-b-lg overflow-hidden">
         {matchesWithOdds.map((match) => (
           <MatchRow
             key={match.id}

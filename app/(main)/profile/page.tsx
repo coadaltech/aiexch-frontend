@@ -72,7 +72,7 @@ export default function DashboardContent() {
                 <div className="w-12 h-12 lg:w-20 lg:h-20 bg-primary rounded-xl lg:rounded-2xl flex items-center justify-center">
                   <User className="w-6 h-6 lg:w-10 lg:h-10 text-primary-foreground" />
                 </div>
-                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 lg:w-6 lg:h-6 bg-green-500 rounded-full border-2 border-background"></div>
+                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 lg:w-6 lg:h-6 bg-live rounded-full border-2 border-background"></div>
               </div>
               <div>
                 <h1 className="text-lg lg:text-3xl font-bold text-foreground">

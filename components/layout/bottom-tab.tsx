@@ -5,7 +5,6 @@ import {
   Home,
   User,
   Receipt,
-  MoreHorizontal,
   Shield,
   Info,
   FileText,
@@ -78,11 +77,6 @@ export default function BottomNavigation() {
 
   const moreMenuItems = getMoreMenuItems(isLoggedIn);
 
-  const openMoreModal = () => {
-    setIsMoreModalOpen(true);
-    document.body.style.overflow = "hidden";
-  };
-
   const closeMoreModal = () => {
     setIsMoreModalOpen(false);
     document.body.style.overflow = "unset";
@@ -101,7 +95,7 @@ export default function BottomNavigation() {
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 w-full rounded-t-2xl z-40 bg-gradient-to-r from-slate-800 via-slate-750 to-slate-800 border-t border-slate-700/30 lg:hidden body-modal-open:hidden">
+      <div className="fixed bottom-0 left-0 right-0 w-full z-40 bg-[#174b73] border-t border-[#1b5785] lg:hidden body-modal-open:hidden">
         <div className="flex items-center justify-around  px-2 py-2">
           {visibleNavItems.map((item) => {
             const Icon = item.icon;
@@ -133,7 +127,7 @@ export default function BottomNavigation() {
                 ${
                   isActive
                     ? "text-primary"
-                    : "text-slate-400 hover:text-primary hover:bg-slate-700/50"
+                    : "text-nav-text-muted hover:text-primary hover:bg-nav-btn/50"
                 }
               `}
               >
@@ -143,7 +137,7 @@ export default function BottomNavigation() {
                 ${
                   isActive
                     ? "text-primary scale-110 "
-                    : "text-white  group-hover:bg-muted/80 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900"
+                    : "text-white  group-hover:bg-muted/80 bg-gradient-to-r from-nav-dark via-nav-surface to-nav-dark"
                 }
               `}
                 >

@@ -17,14 +17,14 @@ export default function SportsLayout({
 
   return (
     <div className="h-full w-full">
-      <div className="flex w-full h-full">
+      <div className="flex w-full h-full gap-2">
         <div className="h-full w-full lg:flex-1 min-w-0 overflow-y-auto overflow-x-hidden">
           {children}
         </div>
 
         {/* Right Sidebar - Bet Slip (only on match pages, hidden on small screens) */}
         {isMatchPage && matchId && (
-          <div className="hidden lg:block shrink-0 h-full w-[280px] xl:w-[320px] mr-2">
+          <div className="hidden lg:flex shrink-0 h-full w-[280px] xl:w-[320px] bg-white rounded-xl overflow-hidden">
             <BetSlip matchId={matchId} />
           </div>
         )}

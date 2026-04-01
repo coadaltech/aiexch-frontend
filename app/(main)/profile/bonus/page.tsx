@@ -78,13 +78,13 @@ export default function BonusesGifts() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "available":
-        return "text-green-400 bg-green-400/10 border-green-400/20";
+        return "text-live-text bg-live-text/10 border-live-text/20";
       case "claimed":
-        return "text-blue-400 bg-blue-400/10 border-blue-400/20";
+        return "text-section-title bg-section-title/10 border-section-title/20";
       case "expired":
-        return "text-red-400 bg-red-400/10 border-red-400/20";
+        return "text-danger bg-danger/10 border-danger/20";
       case "locked":
-        return "text-yellow-400 bg-yellow-400/10 border-yellow-400/20";
+        return "text-status-yellow bg-status-yellow/10 border-status-yellow/20";
       default:
         return "text-muted-foreground bg-muted border-border";
     }
@@ -147,11 +147,11 @@ export default function BonusesGifts() {
             <div className="text-sm text-casino-secondary-text">Available</div>
           </Card>
           <Card className="bg-casino-dark border-casino-primary/30 p-4 text-center">
-            <div className="text-2xl font-bold text-blue-400">1</div>
+            <div className="text-2xl font-bold text-info-light">1</div>
             <div className="text-sm text-casino-secondary-text">Claimed</div>
           </Card>
           <Card className="bg-casino-dark border-casino-primary/30 p-4 text-center">
-            <div className="text-2xl font-bold text-yellow-400">1</div>
+            <div className="text-2xl font-bold text-status-yellow">1</div>
             <div className="text-sm text-casino-secondary-text">Locked</div>
           </Card>
           <Card className="bg-casino-dark border-casino-primary/30 p-4 text-center">

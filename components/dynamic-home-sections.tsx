@@ -14,110 +14,92 @@ const CASINO_DB_SECTIONS: Array<{
   title: string;
   subtitle?: string;
   link: string;
-  filters?: {
-    provider?: string;
-    type?: string;
-    technology?: string;
-  };
+  filters?: { provider?: string; type?: string; technology?: string };
 }> = [
-    {
-      key: "latest",
-      title: "Latest Casino Picks",
-      subtitle: "Fresh drops from our providers",
-      link: "/casino",
-      filters: {},
-    },
-    {
-      key: "slots",
-      title: "Trending Slots",
-      subtitle: "Spin the hottest reels",
-      link: "/casino?type=slots",
-      filters: { type: "slots" },
-    },
-    {
-      key: "table",
-      title: "Table Classics",
-      subtitle: "Roulette, Blackjack & more",
-      link: "/casino?type=table",
-      filters: { type: "table" },
-    },
-  ];
+  { key: "latest", title: "Latest Casino Picks", subtitle: "Fresh drops from our providers", link: "/casino", filters: {} },
+  { key: "slots",  title: "Trending Slots",       subtitle: "Spin the hottest reels",          link: "/casino?type=slots", filters: { type: "slots" } },
+  { key: "table",  title: "Table Classics",        subtitle: "Roulette, Blackjack & more",      link: "/casino?type=table", filters: { type: "table" } },
+];
 
-function DynamicHomeSections() {
-  const { data: sections, isLoading } = useHomeSections();
-
-  const activeSections = (sections || [])
-    .filter((section: any) => section.status === "active")
-    .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
-
-  if (isLoading) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground text-lg">Loading games...</p>
-      </div>
-    );
-  }
-
-  if (!activeSections.length) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground text-lg">
-          No games available at the moment. Please check back later.
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <CasinoDbSections />
-      {activeSections.map((section: any) => (
-        <SectionWithGames key={section.id} section={section} />
-      ))}
-    </>
-  );
-}
-
-function CasinoDbSections() {
-  return (
-    <>
-      {CASINO_DB_SECTIONS.map((section) => (
-        <CasinoDbCarousel key={section.key} section={section} />
-      ))}
-    </>
-  );
-}
-
-function CasinoDbCarousel({
-  section,
+/* ─── Shared section wrapper ─── */
+function CarouselSection({
+  title,
+  subtitle,
+  link,
+  children,
+  onScrollLeft,
+  onScrollRight,
 }: {
-  section: (typeof CASINO_DB_SECTIONS)[number];
+  title: string;
+  subtitle?: string;
+  link?: string;
+  children: React.ReactNode;
+  onScrollLeft: () => void;
+  onScrollRight: () => void;
 }) {
+  return (
+    <div className="bg-[#0a2a42] rounded-xl border border-[#1b5785]/50 overflow-hidden mt-4">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[#1b5785]/40">
+        <div className="flex items-center gap-2.5">
+          <div className="w-1 h-5 bg-[#79a430] rounded-full" />
+          <div>
+            <h2 className="text-sm font-bold text-white font-condensed tracking-wide">
+              {title.toUpperCase()}
+            </h2>
+            {subtitle && (
+              <p className="text-[10px] text-white/40 mt-0.5">{subtitle}</p>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {link && (
+            <a href={link} className="text-[#66c4ff] text-xs font-medium hover:text-white transition-colors mr-1">
+              View All
+            </a>
+          )}
+          <button
+            aria-label="Scroll left"
+            onClick={onScrollLeft}
+            className="h-7 w-7 flex items-center justify-center rounded-lg bg-[#174b73] hover:bg-[#1b5785] text-white transition-colors border border-[#1b5785]"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button
+            aria-label="Scroll right"
+            onClick={onScrollRight}
+            className="h-7 w-7 flex items-center justify-center rounded-lg bg-[#174b73] hover:bg-[#1b5785] text-white transition-colors border border-[#1b5785]"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+      <div className="px-4 py-3">{children}</div>
+    </div>
+  );
+}
+
+/* ─── Casino DB carousel ─── */
+function CasinoDbCarousel({ section }: { section: (typeof CASINO_DB_SECTIONS)[number] }) {
   const { data, isLoading } = useCasinoGamesFromDb(section.filters, 12);
   const scrollRef = useRef<HTMLDivElement>(null);
-
   const games = useMemo(() => {
     if (!data?.pages?.length) return [];
     return data.pages.flatMap((page) => page?.data || []);
   }, [data]);
 
+  const scrollBy = (dir: number) =>
+    scrollRef.current?.scrollBy({ left: dir * 320, behavior: "smooth" });
+
   if (isLoading) {
     return (
-      <div className="w-full pt-4">
-        <div className="mb-2">
-          <div className="flex items-center justify-between">
-            <div className="space-y-2">
-              <Skeleton className="h-6 w-48" />
-              {section.subtitle && (
-                <Skeleton className="h-4 w-64 bg-muted/60" />
-              )}
-            </div>
-            <Skeleton className="h-10 w-10 rounded-full" />
-          </div>
+      <div className="bg-[#0a2a42] rounded-xl border border-[#1b5785]/50 overflow-hidden mt-4">
+        <div className="flex items-center gap-2.5 px-4 py-3 border-b border-[#1b5785]/40">
+          <div className="w-1 h-5 bg-[#79a430] rounded-full" />
+          <Skeleton className="h-4 w-40 bg-[#174b73]" />
         </div>
-        <div className="flex gap-3 overflow-x-auto scrollbar-hide -mr-4 pr-4 pb-4">
-          {Array.from({ length: 6 }).map((_, idx) => (
-            <Skeleton key={idx} className="h-48 w-40 rounded-lg" />
+        <div className="flex gap-3 px-4 py-3 overflow-hidden">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-44 w-36 shrink-0 rounded-lg bg-[#174b73]" />
           ))}
         </div>
       </div>
@@ -126,157 +108,83 @@ function CasinoDbCarousel({
 
   if (!games.length) return null;
 
-  const scrollBy = (direction: number) => {
-    if (!scrollRef.current) return;
-    scrollRef.current.scrollBy({
-      left: direction * 320,
-      behavior: "smooth",
-    });
-  };
-
   return (
-    <div className="w-full pt-6">
-      <div className="mb-4">
-        <div className="flex items-center justify-between">
-          <div className="relative group">
-            <div className="absolute -inset-1  opacity-20 group-hover:opacity-30 transition duration-500"></div>
-            <div className="relative flex items-center gap-3">
-              <div className="w-1 h-8 bg-gradient-to-b from-primary to-amber-500 rounded-full animate-pulse"></div>
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-primary via-amber-400 to-primary bg-clip-text text-transparent animate-gradient">
-                  {section.title.toUpperCase()}
-                </h2>
-                {section.subtitle && (
-                  <p className="text-slate-400 text-sm mt-1">
-                    {section.subtitle}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <button
-              aria-label="Scroll left"
-              onClick={() => scrollBy(-1)}
-              className="group relative bg-gradient-to-br from-slate-800 to-slate-900 text-primary hover:text-amber-400 p-2.5 rounded-full border border-primary/30 hover:border-primary/60 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-primary/20 active:scale-95"
-            >
-              <ChevronLeft className="w-5 h-5 transition-transform group-hover:-translate-x-0.5" />
-              <div className="absolute inset-0 rounded-full bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity blur-sm"></div>
-            </button>
-            <button
-              aria-label="Scroll right"
-              onClick={() => scrollBy(1)}
-              className="group relative bg-gradient-to-br from-slate-800 to-slate-900 text-primary hover:text-amber-400 p-2.5 rounded-full border border-primary/30 hover:border-primary/60 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-primary/20 active:scale-95"
-            >
-              <ChevronRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
-              <div className="absolute inset-0 rounded-full bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity blur-sm"></div>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div
-        ref={scrollRef}
-        className="flex gap-4 overflow-x-auto scrollbar-hide -mr-4 pr-4 scroll-smooth pb-6"
-      >
+    <CarouselSection
+      title={section.title}
+      subtitle={section.subtitle}
+      link={section.link}
+      onScrollLeft={() => scrollBy(-1)}
+      onScrollRight={() => scrollBy(1)}
+    >
+      <div ref={scrollRef} className="flex gap-3 overflow-x-auto scrollbar-hide scroll-smooth pb-1">
         {games.map((game: any) => (
           <CasinoGameCard key={game.id || game.uuid} game={game} />
         ))}
       </div>
-    </div>
+    </CarouselSection>
   );
 }
 
+/* ─── Dynamic section from admin ─── */
 function SectionWithGames({ section }: { section: any }) {
   const { data: games } = useSectionGames(section.id);
-
   const activeGames = (games || [])
-    .filter((game: any) => game.status === "active")
+    .filter((g: any) => g.status === "active")
     .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
-
   if (!activeGames.length) return null;
-
   return (
     <SectionCarousel
       title={section.title}
-      type={section.type as GameType}
       subtitle={section.subtitle}
+      type={section.type as GameType}
       games={activeGames}
     />
   );
 }
 
-function SectionCarousel({
-  title,
-  subtitle,
-  type,
-  games,
-}: {
-  title: string;
-  subtitle?: string;
-  type: GameType;
-  games: Game[];
-}) {
+function SectionCarousel({ title, subtitle, type, games }: { title: string; subtitle?: string; type: GameType; games: Game[] }) {
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  const scrollBy = (direction: number) => {
-    if (!scrollRef.current) return;
-    scrollRef.current.scrollBy({
-      left: direction * 320,
-      behavior: "smooth",
-    });
-  };
+  const scrollBy = (dir: number) =>
+    scrollRef.current?.scrollBy({ left: dir * 320, behavior: "smooth" });
 
   return (
-    <div className="w-full pt-6">
-      <div className="mb-4">
-        <div className="flex items-center justify-between">
-          <div className="relative group">
-            <div className="absolute -inset-1  opacity-20 group-hover:opacity-30 transition duration-500"></div>
-            <div className="relative flex items-center gap-3">
-              <div className="w-1 h-8 bg-gradient-to-b from-primary to-amber-500 rounded-full animate-pulse"></div>
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-primary via-amber-400 to-primary bg-clip-text text-transparent animate-gradient">
-                  {title.toUpperCase()}
-                </h2>
-                {subtitle && (
-                  <p className="text-slate-400 text-sm mt-1">
-                    {subtitle}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <button
-              aria-label="Scroll left"
-              onClick={() => scrollBy(-1)}
-              className="group relative bg-gradient-to-br from-slate-800 to-slate-900 text-primary hover:text-amber-400 p-2.5 rounded-full border border-primary/30 hover:border-primary/60 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-primary/20 active:scale-95"
-            >
-              <ChevronLeft className="w-5 h-5 transition-transform group-hover:-translate-x-0.5" />
-              <div className="absolute inset-0 rounded-full bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity blur-sm"></div>
-            </button>
-            <button
-              aria-label="Scroll right"
-              onClick={() => scrollBy(1)}
-              className="group relative bg-gradient-to-br from-slate-800 to-slate-900 text-primary hover:text-amber-400 p-2.5 rounded-full border border-primary/30 hover:border-primary/60 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-primary/20 active:scale-95"
-            >
-              <ChevronRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
-              <div className="absolute inset-0 rounded-full bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity blur-sm"></div>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div
-        ref={scrollRef}
-        className="flex gap-4 overflow-x-auto scrollbar-hide -mr-4 pr-4 scroll-smooth pb-6"
-      >
+    <CarouselSection
+      title={title}
+      subtitle={subtitle}
+      onScrollLeft={() => scrollBy(-1)}
+      onScrollRight={() => scrollBy(1)}
+    >
+      <div ref={scrollRef} className="flex gap-3 overflow-x-auto scrollbar-hide scroll-smooth pb-1">
         {games.map((game) => (
           <GameCard key={game.id} type={type} game={game} />
         ))}
       </div>
-    </div>
+    </CarouselSection>
+  );
+}
+
+/* ─── Root export ─── */
+function DynamicHomeSections() {
+  const { data: sections, isLoading } = useHomeSections();
+  const activeSections = (sections || [])
+    .filter((s: any) => s.status === "active")
+    .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4 mt-4">
+        {[1, 2].map((i) => (
+          <div key={i} className="bg-[#0a2a42] rounded-xl border border-[#1b5785]/50 h-52 animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {CASINO_DB_SECTIONS.map((s) => <CasinoDbCarousel key={s.key} section={s} />)}
+      {activeSections.map((s: any) => <SectionWithGames key={s.id} section={s} />)}
+    </>
   );
 }
 

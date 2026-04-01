@@ -134,7 +134,7 @@ export default function AccountStatement() {
                   <div className="text-xs sm:text-sm text-muted-foreground">
                     Total Winnings
                   </div>
-                  <div className="text-base sm:text-lg font-semibold text-green-400 truncate" title={`₹${statement.totalWinnings.toFixed(2)}`}>
+                  <div className="text-base sm:text-lg font-semibold text-live-text truncate" title={`₹${statement.totalWinnings.toFixed(2)}`}>
                     ₹{statement.totalWinnings.toFixed(2)}
                   </div>
                 </div>

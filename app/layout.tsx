@@ -1,6 +1,6 @@
 import type React from "react";
 import type { Metadata } from "next";
-import { Inter, Cinzel } from "next/font/google";
+import { Roboto, Roboto_Condensed } from "next/font/google";
 import "./globals.css";
 import BottomNavigation from "@/components/layout/bottom-tab";
 import MainLayout from "@/components/main-layout";
@@ -16,14 +16,18 @@ import { MetadataLoader } from "@/components/metadata-loader";
 import { ThemeScript } from "@/components/theme-script";
 import NextTopLoader from "nextjs-toploader";
 
-const inter = Inter({
+const roboto = Roboto({
   subsets: ["latin"],
-  variable: "--font-inter",
+  weight: ["300", "400", "500", "700"],
+  variable: "--font-roboto",
+  display: "swap",
 });
 
-const cinzel = Cinzel({
+const robotoCondensed = Roboto_Condensed({
   subsets: ["latin"],
-  variable: "--font-cinzel",
+  weight: ["400", "600", "700"],
+  variable: "--font-roboto-condensed",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -44,7 +48,7 @@ export default function RootLayout({
         <ThemeScript />
       </head>
       <body
-        className={`${inter.variable} ${cinzel.variable} min-h-screen`}
+        className={`${roboto.variable} ${robotoCondensed.variable} font-roboto min-h-screen`}
         suppressHydrationWarning={true}
       >
         <Toaster closeButton position="bottom-right" />

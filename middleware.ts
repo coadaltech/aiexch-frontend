@@ -2,7 +2,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Panel role prefixes (duplicated from lib/panel-utils.ts since middleware runs in edge runtime)
 const PANEL_PREFIXES = ["owner", "admin", "super", "master", "agent"] as const;
 const ROLE_NUM_TO_PREFIX: Record<number, string> = {
   0: "owner",
@@ -22,12 +21,10 @@ function roleToPrefix(role: string | number | null): string {
   return "owner";
 }
 
-/** Check if pathname starts with any panel prefix */
 function isPanelPathname(pathname: string): boolean {
   return PANEL_PREFIXES.some((p) => pathname === `/${p}` || pathname.startsWith(`/${p}/`));
 }
 
-/** Get the sub-path after the panel prefix. e.g. "/admin/users" → "/users", "/admin" → "" */
 function panelSubPath(pathname: string): string {
   for (const p of PANEL_PREFIXES) {
     if (pathname === `/${p}`) return "";
@@ -36,96 +33,104 @@ function panelSubPath(pathname: string): string {
   return "";
 }
 
-const isAuthenticated = async (request: NextRequest) => {
-  const token = request.cookies.get("refreshToken")?.value;
-  return !!token;
-};
-
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Check auth first
-  const isAuth = await isAuthenticated(request);
-  const token = request.cookies.get("accessToken")?.value;
+  const hasRefreshToken = !!request.cookies.get("refreshToken")?.value;
+  const accessToken = request.cookies.get("accessToken")?.value;
 
   let userRole: string | number | null = null;
-
-  if (token) {
+  if (accessToken) {
     try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
+      const payload = JSON.parse(atob(accessToken.split(".")[1]));
       userRole = payload.role ?? null;
     } catch {
-      // invalid token
+      // invalid or expired access token
     }
   }
 
-  const isPanelRole = userRole != null && (
-    typeof userRole === "number"
+  const isPanelRole =
+    userRole != null &&
+    (typeof userRole === "number"
       ? PANEL_ROLES_NUM.includes(userRole)
-      : PANEL_ROLES_STR.includes(String(userRole).toLowerCase())
-  );
+      : PANEL_ROLES_STR.includes(String(userRole).toLowerCase()));
 
-  const isAuthRoute = pathname.startsWith("/login") || pathname.startsWith("/signup") || pathname.startsWith("/forgot-password");
+  const isPanelRoute = isPanelPathname(pathname);
+  const isAuthRoute =
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/signup") ||
+    pathname.startsWith("/forgot-password");
 
-  if (isAuth && userRole) {
+  // ── Panel route guards ────────────────────────────────────────────────────
+
+  if (isPanelRoute) {
+    // No session at all (logged out, demo user, anyone without cookies) → /login
+    if (!hasRefreshToken) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+
+    // Has session but access token is missing/expired → /login to re-authenticate
+    // NOTE: use == null (not !userRole) because owner role is 0 which is falsy
+    if (userRole === null || userRole === undefined) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+
+    // Authenticated but not a panel role (normal user) → /access-denied
+    if (!isPanelRole) {
+      return NextResponse.redirect(new URL("/access-denied", request.url));
+    }
+
+    // Valid panel user — enforce correct prefix and sub-route access
     const userPrefix = roleToPrefix(userRole);
+    const currentPrefix = PANEL_PREFIXES.find(
+      (p) => pathname === `/${p}` || pathname.startsWith(`/${p}/`)
+    )!;
 
-    // Panel users visiting non-panel routes → redirect to their panel
-    if (isPanelRole && !isPanelPathname(pathname) && !isAuthRoute) {
-      return NextResponse.redirect(new URL(`/${userPrefix}`, request.url));
-    }
-
-    // Handle panel routes
-    if (isPanelPathname(pathname)) {
-      if (!isPanelRole) {
-        return NextResponse.redirect(new URL("/access-denied", request.url));
-      }
-
-      const currentPrefix = PANEL_PREFIXES.find(
-        (p) => pathname === `/${p}` || pathname.startsWith(`/${p}/`)
-      )!;
-
-      // If user is on wrong prefix (e.g. admin visiting /owner/*), redirect to correct prefix
-      if (currentPrefix !== userPrefix) {
-        const sub = panelSubPath(pathname);
-        return NextResponse.redirect(new URL(`/${userPrefix}${sub}`, request.url));
-      }
-
-      // --- Access control checks (use the sub-path which is prefix-independent) ---
+    // Wrong prefix → redirect to their correct panel prefix
+    if (currentPrefix !== userPrefix) {
       const sub = panelSubPath(pathname);
-      const isOwnerRole = userPrefix === "owner";
-      const isAdminRole = userPrefix === "admin";
-
-      // Owner-only routes: matka
-      if (sub.startsWith("/matka") && !isOwnerRole) {
-        return NextResponse.redirect(new URL("/access-denied", request.url));
-      }
-
-      // Owner-only routes: marketing
-      const marketingSubs = ["/promotions", "/promocodes", "/banners", "/popups"];
-      if (marketingSubs.some((r) => sub.startsWith(r)) && !isOwnerRole) {
-        return NextResponse.redirect(new URL("/access-denied", request.url));
-      }
-
-      // Admin-only B2C routes: QR codes & withdrawal methods
-      if (sub.startsWith("/qrcodes") || sub.startsWith("/withdrawal-methods")) {
-        if (!isAdminRole) {
-          return NextResponse.redirect(new URL("/access-denied", request.url));
-        }
-      }
-
-      // Rewrite /<role>/* to /owner/* so Next.js finds the actual pages
-      if (currentPrefix !== "owner") {
-        const rewriteUrl = request.nextUrl.clone();
-        rewriteUrl.pathname = `/owner${sub}`;
-        return NextResponse.rewrite(rewriteUrl);
-      }
-
-      return NextResponse.next();
+      return NextResponse.redirect(new URL(`/${userPrefix}${sub}`, request.url));
     }
+
+    const sub = panelSubPath(pathname);
+    const isOwnerRole = userPrefix === "owner";
+    const isAdminRole = userPrefix === "admin";
+
+    if (sub.startsWith("/matka") && !isOwnerRole) {
+      return NextResponse.redirect(new URL("/access-denied", request.url));
+    }
+
+    const marketingSubs = ["/promotions", "/promocodes", "/banners", "/popups"];
+    if (marketingSubs.some((r) => sub.startsWith(r)) && !isOwnerRole) {
+      return NextResponse.redirect(new URL("/access-denied", request.url));
+    }
+
+    if (
+      (sub.startsWith("/qrcodes") || sub.startsWith("/withdrawal-methods")) &&
+      !isAdminRole
+    ) {
+      return NextResponse.redirect(new URL("/access-denied", request.url));
+    }
+
+    // Rewrite /<role>/* → /owner/* so Next.js finds the actual page files
+    if (currentPrefix !== "owner") {
+      const rewriteUrl = request.nextUrl.clone();
+      rewriteUrl.pathname = `/owner${sub}`;
+      return NextResponse.rewrite(rewriteUrl);
+    }
+
+    return NextResponse.next();
   }
 
-  // move user away from / to /home
+  // ── Non-panel routes ──────────────────────────────────────────────────────
+
+  // Panel users must stay in their panel — redirect them away from regular site pages
+  if (hasRefreshToken && isPanelRole && !isAuthRoute) {
+    const userPrefix = roleToPrefix(userRole);
+    return NextResponse.redirect(new URL(`/${userPrefix}`, request.url));
+  }
+
+  // Redirect / → /home
   if (pathname === "/") {
     return NextResponse.redirect(new URL("/home", request.url));
   }
@@ -141,6 +146,6 @@ export const config = {
     "/super/:path*",
     "/master/:path*",
     "/agent/:path*",
-    "/profile/:path*"
+    "/profile/:path*",
   ],
 };

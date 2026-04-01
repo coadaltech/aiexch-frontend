@@ -65,11 +65,11 @@ export default function TransactionHistory() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "completed":
-        return "text-green-400 bg-green-400/10";
+        return "text-live-text bg-live-text/10";
       case "pending":
-        return "text-yellow-400 bg-yellow-400/10";
+        return "text-status-yellow bg-status-yellow/10";
       case "failed":
-        return "text-red-400 bg-red-400/10";
+        return "text-danger bg-danger/10";
       default:
         return "text-muted-foreground bg-muted";
     }
@@ -170,8 +170,8 @@ export default function TransactionHistory() {
                       <div
                         className={`p-2 rounded-full ${
                           ["deposit", "promocode"].includes(transaction.type)
-                            ? "bg-green-400/10 text-green-400"
-                            : "bg-red-400/10 text-red-400"
+                            ? "bg-live-text/10 text-live-text"
+                            : "bg-danger/10 text-danger"
                         }`}
                       >
                         {["deposit", "promocode"].includes(transaction.type) ? (
@@ -211,8 +211,8 @@ export default function TransactionHistory() {
                       <div
                         className={`font-bold text-base sm:text-lg ${
                           transaction.type === "deposit"
-                            ? "text-green-400"
-                            : "text-red-400"
+                            ? "text-live-text"
+                            : "text-danger"
                         }`}
                       >
                         {transaction.type === "deposit" ? "+" : "-"}₹

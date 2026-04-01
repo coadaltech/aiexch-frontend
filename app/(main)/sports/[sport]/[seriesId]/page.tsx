@@ -95,7 +95,7 @@ export default function SeriesMatchesPage({
         </SportPoster>
         <div className="px-4 mt-6">
           <Card className="p-8 text-center">
-            <div className="text-red-500 mb-2">
+            <div className="text-danger mb-2">
               <p className="font-semibold">Error Loading Data</p>
               <p className="text-sm">{error?.message || "Failed to fetch data"}</p>
             </div>
@@ -199,7 +199,7 @@ function MatchCard({ match, showLive }: { match: any; showLive: boolean }) {
           <div className="flex items-center gap-2 mb-1">
             <h3 className="font-semibold text-sm">{matchName}</h3>
             {showLive && (
-              <span className="text-[10px] bg-red-600 text-white px-2 py-0.5 rounded-full animate-pulse">
+              <span className="text-[10px] bg-danger-strong text-white px-2 py-0.5 rounded-full animate-pulse">
                 LIVE
               </span>
             )}

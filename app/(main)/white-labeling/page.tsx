@@ -91,23 +91,23 @@ export default function WhiteLabeling() {
             <div>
               <h3 className="text-xl font-semibold text-casino-primary-text mb-4">Platform Features</h3>
               <ul className="space-y-2 text-casino-secondary-text">
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> 500+ Casino Games</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> Live Dealer Games</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> Sports Betting</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> Mobile Responsive</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> Payment Gateway Integration</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> KYC/AML Compliance</li>
+                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-live-text" /> 500+ Casino Games</li>
+                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-live-text" /> Live Dealer Games</li>
+                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-live-text" /> Sports Betting</li>
+                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-live-text" /> Mobile Responsive</li>
+                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-live-text" /> Payment Gateway Integration</li>
+                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-live-text" /> KYC/AML Compliance</li>
               </ul>
             </div>
             <div>
               <h3 className="text-xl font-semibold text-casino-primary-text mb-4">Business Tools</h3>
               <ul className="space-y-2 text-casino-secondary-text">
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> Player Management System</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> Bonus & Promotion Engine</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> Real-time Analytics</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> Risk Management Tools</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> Affiliate System</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> Customer Support Tools</li>
+                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-live-text" /> Player Management System</li>
+                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-live-text" /> Bonus & Promotion Engine</li>
+                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-live-text" /> Real-time Analytics</li>
+                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-live-text" /> Risk Management Tools</li>
+                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-live-text" /> Affiliate System</li>
+                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-live-text" /> Customer Support Tools</li>
               </ul>
             </div>
           </div>

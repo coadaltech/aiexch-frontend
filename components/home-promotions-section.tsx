@@ -1,52 +1,57 @@
 "use client";
 
 import { NewPromotionCard } from "@/components/cards/new-promotion-card";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Gift } from "lucide-react";
 import Link from "next/link";
 import { usePublicPromotions } from "@/hooks/usePublic";
-import { PromotionSkeleton } from "@/components/skeletons/promotion-skeleton";
 
 export default function HomePromotionsSection() {
   const { data: promotions, isLoading } = usePublicPromotions();
-  const featuredPromotions = (promotions || []);
+  const featuredPromotions = promotions || [];
 
   if (isLoading) {
     return (
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-xl font-semibold text-primary">OFFERS</h2>
+      <div className="bg-[#0a2a42] rounded-xl border border-[#1b5785]/50 overflow-hidden">
+        <div className="flex items-center gap-2.5 px-4 py-3 border-b border-[#1b5785]/40">
+          <div className="w-1 h-5 bg-[#79a430] rounded-full" />
+          <Gift className="h-4 w-4 text-[#66c4ff]" />
+          <div className="h-4 w-32 bg-[#174b73] rounded animate-pulse" />
         </div>
-        <PromotionSkeleton count={3} />
+        <div className="flex gap-3 px-4 py-3 overflow-hidden">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-32 w-52 shrink-0 bg-[#174b73] rounded-lg animate-pulse" />
+          ))}
+        </div>
       </div>
     );
   }
 
-  if (featuredPromotions.length === 0) {
-    return null;
-  }
+  if (featuredPromotions.length === 0) return null;
 
   return (
-    <div className="mt-8 sm:mt-12 hide-scrollbar">
-      <div className="flex items-center justify-between mb-4">
-        <div className="relative group">
-          <div className="absolute -inset-1  opacity-20 group-hover:opacity-30 transition duration-500"></div>
-          <div className="relative flex items-center gap-3">
-            <div className="w-1 h-8 bg-gradient-to-b from-primary to-amber-500 rounded-full animate-pulse"></div>
-            <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-primary via-amber-400 to-primary bg-clip-text text-transparent animate-gradient">
-              EXCLUSIVE OFFERS
-            </h2>
-          </div>
+    <div className="bg-[#0a2a42] rounded-xl border border-[#1b5785]/50 overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[#1b5785]/40">
+        <div className="flex items-center gap-2.5">
+          <div className="w-1 h-5 bg-[#79a430] rounded-full" />
+          <Gift className="h-4 w-4 text-[#66c4ff]" />
+          <h2 className="text-sm font-bold text-white font-condensed tracking-wide">
+            EXCLUSIVE OFFERS
+          </h2>
+          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#f06888] text-white">
+            HOT
+          </span>
         </div>
         <Link
           href="/promotions"
-          className="group relative bg-gradient-to-br from-slate-800 to-slate-900 text-primary hover:text-amber-400 p-2.5 rounded-full border border-primary/30 hover:border-primary/60 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-primary/20 active:scale-95"
+          className="flex items-center gap-1 text-[#66c4ff] text-xs font-medium hover:text-white transition-colors"
         >
-          <ChevronRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
-          <div className="absolute inset-0 rounded-full bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity blur-sm"></div>
+          View All <ChevronRight className="h-3.5 w-3.5" />
         </Link>
       </div>
 
-      <div className="flex gap-4 overflow-x-auto scrollbar-hide -mr-4 pr-4 scroll-smooth pb-6">
+      {/* Scrollable promotions */}
+      <div className="flex gap-3 px-4 py-3 overflow-x-auto scrollbar-hide scroll-smooth">
         {featuredPromotions.map((promotion) => (
           <NewPromotionCard
             key={promotion.id}
