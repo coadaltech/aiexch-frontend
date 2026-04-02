@@ -45,6 +45,7 @@ function QuickBetPanel({
   betDelayRemaining,
   onCancelDelay,
   stakeButtons,
+  currentOdds,
 }: {
   data: QuickBetData;
   stake: string;
@@ -55,8 +56,10 @@ function QuickBetPanel({
   betDelayRemaining?: number;
   onCancelDelay?: () => void;
   stakeButtons?: { label: string; value: number }[];
+  currentOdds?: string;
 }) {
   const { market, runner, odds } = data;
+  const displayOdds = currentOdds ?? odds;
   const marketName = market?.marketName || "";
   const runnerName = runner?.name || "";
 
@@ -112,9 +115,9 @@ function QuickBetPanel({
         <div className="flex items-center">
           <input
             type="text"
-            value={odds}
+            value={displayOdds}
             readOnly
-            className="w-14 sm:w-16 bg-gray-50 text-gray-800 text-[10px] sm:text-xs py-1.5 px-2 text-center border border-gray-300 rounded cursor-default"
+            className="w-20 sm:w-24 bg-gray-50 text-gray-900 text-sm sm:text-base font-bold py-1.5 px-2 text-center border border-gray-300 rounded cursor-default"
           />
         </div>
 
@@ -124,10 +127,10 @@ function QuickBetPanel({
               type="number"
               value={stake}
               onChange={(e) => handleStake(e.target.value)}
-              placeholder="1"
+              placeholder="0"
               autoFocus
               disabled={isDelaying}
-              className={`w-14 sm:w-16 bg-gray-50 text-gray-800 text-[10px] sm:text-xs py-1.5 px-2 text-center border rounded focus:ring-1 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+              className={`w-20 sm:w-24 bg-gray-50 text-gray-900 text-sm sm:text-base font-bold py-1.5 px-2 text-center border rounded focus:ring-1 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
                 stakeError
                   ? "border-red-400 focus:ring-red-400"
                   : "border-gray-300 focus:ring-[#174b73]"
@@ -177,7 +180,7 @@ function QuickBetPanel({
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={() => onPlaceBet(stake, odds)}
+            onClick={() => onPlaceBet(stake, displayOdds)}
             disabled={!canPlace}
             className="min-w-[84px] sm:min-w-[96px] px-4 sm:px-5 py-1.5 sm:py-2 rounded text-xs sm:text-sm font-semibold bg-live hover:bg-cta-deposit-from-hover disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors flex items-center justify-center gap-1.5"
           >
@@ -477,6 +480,24 @@ export default function MatchPage() {
       toast.error(`Bet panel closed — ${reason}`);
     }
   }, [markets, quickBet, cancelBetDelay]);
+
+  // Derive the current live price for the open QuickBetPanel so it updates in real-time
+  const liveQuickBetOdds = useMemo(() => {
+    if (!quickBet) return undefined;
+    const liveMarket = markets.find((m: any) => m.marketId === quickBet.marketId);
+    if (!liveMarket) return undefined;
+    const liveRunner = liveMarket.runners?.find(
+      (r: any) => r.selectionId?.toString() === quickBet.runner.selectionId?.toString()
+    );
+    if (!liveRunner) return undefined;
+    const prices = quickBet.isLay ? liveRunner.lay : liveRunner.back;
+    if (!prices?.length) return undefined;
+    const item = prices[quickBet.priceIndex];
+    if (!item) return undefined;
+    const rawPrice = item?.price ?? item?.[0] ?? null;
+    if (rawPrice == null) return undefined;
+    return String(toDecimalOdds(parseFloat(String(rawPrice))));
+  }, [markets, quickBet]);
 
   // Filter out admin-disabled/hidden markets for user-facing view
   const visibleMarkets = useMemo(
@@ -1002,8 +1023,8 @@ export default function MatchPage() {
 
   const oddsBtnClass =
     "flex-1 min-w-0 px-1 py-1.5 flex flex-col items-center justify-center rounded cursor-pointer leading-tight";
-  const oddsPriceClass = "text-black font-bold text-xs sm:text-[13px]";
-  const oddsSizeClass = "text-black font-medium text-[9px] sm:text-[10px]";
+  const oddsPriceClass = "text-black font-bold text-sm sm:text-base";
+  const oddsSizeClass = "text-black font-medium text-[11px] sm:text-xs";
 
   // Runner name cell: shows name + per-runner P&L from DB function
   const RunnerNameCell = ({
@@ -1229,6 +1250,7 @@ export default function MatchPage() {
                       betDelayRemaining={betDelayRemaining}
                       onCancelDelay={cancelBetDelay}
                       stakeButtons={customStakes}
+                      currentOdds={liveQuickBetOdds}
                     />
                   )}
               </div>
@@ -1350,6 +1372,7 @@ export default function MatchPage() {
                       betDelayRemaining={betDelayRemaining}
                       onCancelDelay={cancelBetDelay}
                       stakeButtons={customStakes}
+                      currentOdds={liveQuickBetOdds}
                     />
                   )}
               </div>
@@ -1453,6 +1476,7 @@ export default function MatchPage() {
                       betDelayRemaining={betDelayRemaining}
                       onCancelDelay={cancelBetDelay}
                       stakeButtons={customStakes}
+                      currentOdds={liveQuickBetOdds}
                     />
                   )}
                 </div>

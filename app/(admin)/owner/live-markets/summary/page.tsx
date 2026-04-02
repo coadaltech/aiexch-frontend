@@ -7,14 +7,6 @@ import { cn } from "@/lib/utils";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
-const MARKET_TYPE_LABELS: Record<number, string> = {
-  0: "Match Odds",
-  1: "Tied Match",
-  2: "Complete Match",
-  3: "Bookmaker",
-  4: "Fancy",
-};
-
 const EVENT_TYPE_LABELS: Record<number, string> = {
   1: "Soccer",
   2: "Tennis",
@@ -23,20 +15,6 @@ const EVENT_TYPE_LABELS: Record<number, string> = {
 
 function eventTypeLabel(id: number) {
   return EVENT_TYPE_LABELS[id] ?? `Sport ${id}`;
-}
-
-function marketTypeLabel(type: number | null) {
-  if (type == null) return "—";
-  return MARKET_TYPE_LABELS[type] ?? `Type ${type}`;
-}
-
-function marketTypeBadgeClass(type: number | null) {
-  switch (type) {
-    case 0: return "bg-blue-100 text-blue-700";
-    case 3: return "bg-purple-100 text-purple-700";
-    case 4: return "bg-orange-100 text-orange-700";
-    default: return "bg-gray-100 text-gray-600";
-  }
 }
 
 function pnlClass(v: number) {
@@ -52,6 +30,8 @@ function fmt(v: number) {
 
 type SummaryRow = {
   market_id: string;
+  runner_id: string | null;
+  runner_name: string | null;
   pnl: number;
   event_type_id: number;
   match_id: number;
@@ -62,11 +42,25 @@ type SummaryRow = {
   competition_name: string | null;
 };
 
+type RunnerEntry = {
+  runner_id: string | null;
+  runner_name: string | null;
+  pnl: number;
+};
+
+type MarketEntry = {
+  market_id: string;
+  market_name: string | null;
+  runners: RunnerEntry[];
+};
+
 type MatchGroup = {
   match_id: number;
   event_name: string;
   competition_name: string;
-  markets: SummaryRow[];
+  normal: MarketEntry[];
+  bookmaker: MarketEntry[];
+  fancy: MarketEntry[];
   total_pnl: number;
 };
 
@@ -75,6 +69,128 @@ type EventTypeGroup = {
   matches: MatchGroup[];
   total_pnl: number;
 };
+
+// ─── Subcomponents ───────────────────────────────────────────────────────────
+
+function SectionHeader({ label }: { label: string }) {
+  return (
+    <div className="px-3 py-2 bg-gray-100 border-b border-gray-200">
+      <span className="text-xs font-extrabold uppercase tracking-widest text-gray-700">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function NormalSection({ markets }: { markets: MarketEntry[] }) {
+  if (!markets.length) return null;
+  return (
+    <div className="flex-1 min-w-0 border-r border-gray-200 last:border-r-0">
+      <SectionHeader label="Normal" />
+      <div className="divide-y divide-gray-100">
+        {markets.map((m) => (
+          <div key={m.market_id}>
+            {/* Market name as sub-header when multiple runners */}
+            {m.runners.length > 1 && (
+              <div className="px-3 pt-2 pb-0.5">
+                <span className="text-xs font-semibold text-gray-500 truncate block">
+                  {m.market_name ?? `Market ${m.market_id}`}
+                </span>
+              </div>
+            )}
+            {m.runners.map((r, i) => (
+              <div key={`${m.market_id}-${r.runner_id ?? i}`} className="flex items-center justify-between px-3 py-2 gap-2">
+                <span className="text-sm font-medium text-gray-800 truncate flex-1 min-w-0">
+                  {m.runners.length === 1
+                    ? (m.market_name ?? `Market ${m.market_id}`)
+                    : (r.runner_name ?? `Runner ${r.runner_id}`)}
+                </span>
+                <span className={cn("text-sm font-bold tabular-nums shrink-0", pnlClass(r.pnl))}>
+                  {fmt(r.pnl)}
+                </span>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function BookmakerSection({ markets }: { markets: MarketEntry[] }) {
+  if (!markets.length) return null;
+  return (
+    <div className="flex-1 min-w-0 border-r border-gray-200 last:border-r-0">
+      <SectionHeader label="Bookmaker" />
+      <div className="divide-y divide-gray-100">
+        {markets.map((m) =>
+          m.runners.map((r, i) => (
+            <div key={`${m.market_id}-${r.runner_id ?? i}`} className="flex items-center justify-between px-3 py-2 gap-2">
+              <span className="text-sm font-medium text-gray-800 truncate flex-1 min-w-0">
+                {r.runner_name ?? `Runner ${r.runner_id}`}
+              </span>
+              <span className={cn("text-sm font-bold tabular-nums shrink-0", pnlClass(r.pnl))}>
+                {fmt(r.pnl)}
+              </span>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+function FancySection({ markets }: { markets: MarketEntry[] }) {
+  if (!markets.length) return null;
+  return (
+    <div className="flex-1 min-w-0 border-r border-gray-200 last:border-r-0">
+      <SectionHeader label="Fancy" />
+      <div className="divide-y divide-gray-100">
+        {markets.map((m) => (
+          <div key={m.market_id} className="flex items-center justify-between px-3 py-2 gap-2">
+            <span className="text-sm font-medium text-gray-800 truncate flex-1 min-w-0">
+              {m.market_name ?? `Market ${m.market_id}`}
+            </span>
+            <span className={cn("text-sm font-bold tabular-nums shrink-0", pnlClass(m.runners[0]?.pnl ?? 0))}>
+              {fmt(m.runners[0]?.pnl ?? 0)}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MatchCard({ group }: { group: MatchGroup }) {
+  const hasNormal = group.normal.length > 0;
+  const hasBookmaker = group.bookmaker.length > 0;
+  const hasFancy = group.fancy.length > 0;
+
+  return (
+    <div className="rounded-lg border border-gray-200 overflow-hidden bg-white">
+      {/* Match header */}
+      <div className="flex items-center justify-between px-4 py-2.5 bg-[#174b73]">
+        <div className="min-w-0">
+          <p className="text-[10px] text-white/60 truncate">{group.competition_name}</p>
+          <p className="text-sm font-semibold text-white truncate">{group.event_name}</p>
+        </div>
+        <div className={cn(
+          "text-sm font-bold shrink-0 ml-4",
+          group.total_pnl >= 0 ? "text-green-300" : "text-red-300"
+        )}>
+          {fmt(group.total_pnl)}
+        </div>
+      </div>
+
+      {/* Sections row */}
+      <div className="flex divide-x divide-gray-200">
+        {hasNormal && <NormalSection markets={group.normal} />}
+        {hasFancy && <FancySection markets={group.fancy} />}
+        {hasBookmaker && <BookmakerSection markets={group.bookmaker} />}
+      </div>
+    </div>
+  );
+}
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
@@ -86,15 +202,14 @@ export default function LiveMarketsSummaryPage() {
 
     // event_type_id → match_id → MatchGroup
     const eventMap = new Map<number, Map<number, MatchGroup>>();
-    let total = 0;
+    // market_id → MarketEntry (within its match group section)
+    const marketEntryMap = new Map<string, MarketEntry>();
 
     for (const raw of data as any[]) {
       const row: SummaryRow = {
         ...raw,
         pnl: parseFloat(raw.pnl ?? "0"),
       };
-
-      total += row.pnl;
 
       const etId = row.event_type_id ?? 0;
       if (!eventMap.has(etId)) eventMap.set(etId, new Map());
@@ -107,13 +222,54 @@ export default function LiveMarketsSummaryPage() {
           match_id: matchKey,
           event_name: row.event_name || `Match ${matchKey}`,
           competition_name: row.competition_name ?? "—",
-          markets: [],
+          normal: [],
+          bookmaker: [],
+          fancy: [],
           total_pnl: 0,
         });
       }
       const g = matchMap.get(matchKey)!;
-      g.markets.push(row);
-      g.total_pnl += row.pnl;
+
+      // Find or create MarketEntry
+      const mKey = row.market_id;
+      if (!marketEntryMap.has(mKey)) {
+        const entry: MarketEntry = {
+          market_id: mKey,
+          market_name: row.market_name,
+          runners: [],
+        };
+        marketEntryMap.set(mKey, entry);
+
+        // Place in the right section
+        if (row.market_type === 3) {
+          g.bookmaker.push(entry);
+        } else if (row.market_type === 4) {
+          g.fancy.push(entry);
+        } else {
+          g.normal.push(entry);
+        }
+      }
+
+      marketEntryMap.get(mKey)!.runners.push({
+        runner_id: row.runner_id,
+        runner_name: row.runner_name,
+        pnl: row.pnl,
+      });
+    }
+
+    // Recalculate match total_pnl using worst-case (min runner) per market
+    let total = 0;
+    for (const [, matchMap] of eventMap) {
+      for (const [, g] of matchMap) {
+        g.total_pnl = 0;
+        for (const m of [...g.normal, ...g.bookmaker]) {
+          if (m.runners.length > 0) {
+            g.total_pnl += Math.min(...m.runners.map((r) => r.pnl));
+          }
+        }
+        for (const m of g.fancy) g.total_pnl += m.runners[0]?.pnl ?? 0;
+        total += g.total_pnl;
+      }
     }
 
     const eventGroups: EventTypeGroup[] = Array.from(eventMap.entries()).map(
@@ -127,7 +283,6 @@ export default function LiveMarketsSummaryPage() {
       }
     );
 
-    // Sort: Cricket (4) first, then Soccer (1), Tennis (2), others
     const ORDER: Record<number, number> = { 4: 0, 1: 1, 2: 2 };
     eventGroups.sort((a, b) => (ORDER[a.event_type_id] ?? 99) - (ORDER[b.event_type_id] ?? 99));
 
@@ -154,14 +309,12 @@ export default function LiveMarketsSummaryPage() {
         </button>
       </div>
 
-      {/* Loading */}
       {isLoading && (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       )}
 
-      {/* Error */}
       {isError && !isLoading && (
         <div className="text-center py-16 text-red-500">
           Failed to load P&L data.{" "}
@@ -169,17 +322,16 @@ export default function LiveMarketsSummaryPage() {
         </div>
       )}
 
-      {/* Empty */}
       {!isLoading && !isError && !hasData && (
         <div className="text-center py-16 text-gray-400">
           No P&amp;L data found. Data appears once bets are placed.
         </div>
       )}
 
-      {/* Total P&L card */}
       {hasData && (
         <>
-          <div className={cn(
+          {/* Total P&L card */}
+          {/* <div className={cn(
             "rounded-xl border p-4 flex items-center gap-4",
             totalPnl >= 0 ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"
           )}>
@@ -191,75 +343,25 @@ export default function LiveMarketsSummaryPage() {
               <p className={cn("text-2xl font-bold", pnlClass(totalPnl))}>
                 {fmt(totalPnl)}
               </p>
-              <p className="text-xs text-gray-400 mt-0.5">
-                Worst-case scenario across all open positions
-              </p>
             </div>
-          </div>
+          </div> */}
 
           {/* Per event-type breakdown */}
           <div className="space-y-5">
             {eventGroups.map((et) => (
               <div key={et.event_type_id}>
-                {/* Event type header */}
                 <div className="flex items-center justify-between mb-2 px-1">
                   <span className="text-xs font-bold uppercase tracking-widest text-gray-500">
                     {eventTypeLabel(et.event_type_id)}
                   </span>
-                  <span className={cn("text-xs font-bold", pnlClass(et.total_pnl))}>
+                  {/* <span className={cn("text-xs font-bold", pnlClass(et.total_pnl))}>
                     {fmt(et.total_pnl)}
-                  </span>
+                  </span> */}
                 </div>
 
-                {/* Matches under this event type */}
                 <div className="space-y-3">
                   {et.matches.map((g) => (
-                    <div key={g.match_id} className="rounded-lg border border-gray-200 overflow-hidden bg-white">
-                      {/* Match header */}
-                      <div className="flex items-center justify-between px-4 py-2.5 bg-[#174b73]">
-                        <div className="min-w-0">
-                          <p className="text-[10px] text-white/60 truncate">{g.competition_name}</p>
-                          <p className="text-sm font-semibold text-white truncate">{g.event_name}</p>
-                        </div>
-                        <div className={cn(
-                          "text-sm font-bold shrink-0 ml-4",
-                          g.total_pnl >= 0 ? "text-green-300" : "text-red-300"
-                        )}>
-                          {fmt(g.total_pnl)}
-                        </div>
-                      </div>
-
-                      {/* Markets table */}
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b border-gray-100 bg-gray-50">
-                            <th className="text-left px-4 py-2 text-xs text-gray-500 font-medium">Market</th>
-                            <th className="text-left px-4 py-2 text-xs text-gray-500 font-medium">Type</th>
-                            <th className="text-right px-4 py-2 text-xs text-gray-500 font-medium">Your P&amp;L</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                          {g.markets.map((m) => (
-                            <tr key={m.market_id} className="hover:bg-gray-50/50">
-                              <td className="px-4 py-2.5 text-gray-800 truncate max-w-[160px]">
-                                {m.market_name ?? `Market ${m.market_id}`}
-                              </td>
-                              <td className="px-4 py-2.5">
-                                <span className={cn(
-                                  "text-[10px] font-medium px-1.5 py-0.5 rounded",
-                                  marketTypeBadgeClass(m.market_type)
-                                )}>
-                                  {marketTypeLabel(m.market_type)}
-                                </span>
-                              </td>
-                              <td className={cn("px-4 py-2.5 text-right tabular-nums", pnlClass(m.pnl))}>
-                                {fmt(m.pnl)}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                    <MatchCard key={g.match_id} group={g} />
                   ))}
                 </div>
               </div>

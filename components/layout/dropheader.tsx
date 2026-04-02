@@ -72,7 +72,7 @@ export default function Dropheader({ leftMenu, rightMenu }: HeaderProps) {
                 onClick={() => handleNavigation(item.link, item.label)}
                 className={cn(`group relative px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium transition-all duration-150 flex items-center gap-1 touch-manipulation flex-shrink-0 cursor-pointer border-b-2 rounded-t-lg ${active
                   ? "text-[#66c4ff] border-[#66c4ff]"
-                  : "text-white/80 border-transparent hover:text-white hover:border-white/30"
+                  : "text-white border-transparent hover:text-white hover:border-white/30"
                   }`, item.label == "Cricket" && "text-[#93c738] border-[#79a430]/60", item.label == "Sports" && "", (item.label == "Sports" && active) && "text-[#66c4ff] border-[#66c4ff]", (item.label == "Cricket" && active) && "text-[#93c738] border-[#93c738]")}
               >
                 <span className="whitespace-nowrap">{item.label}</span>
