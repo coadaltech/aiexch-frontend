@@ -1001,9 +1001,9 @@ export default function MatchPage() {
   };
 
   const oddsBtnClass =
-    "flex-1 min-w-0 px-1 py-1 flex flex-col items-center justify-center border-none rounded cursor-pointer leading-tight";
-  const oddsPriceClass = "text-black font-bold text-[10px] sm:text-xs";
-  const oddsSizeClass = "text-black font-medium text-[8px] sm:text-[9px]";
+    "flex-1 min-w-0 px-1 py-1.5 flex flex-col items-center justify-center rounded cursor-pointer leading-tight";
+  const oddsPriceClass = "text-black font-bold text-xs sm:text-[13px]";
+  const oddsSizeClass = "text-black font-medium text-[9px] sm:text-[10px]";
 
   // Runner name cell: shows name + per-runner P&L from DB function
   const RunnerNameCell = ({
@@ -1034,7 +1034,7 @@ export default function MatchPage() {
     return (
       <div className="min-w-0 pr-1 flex flex-col gap-0.5">
         <div className="flex items-center gap-4"> 
-        <span className="text-gray-900 font-semibold text-[11px] sm:text-xs truncate block leading-tight">
+        <span className="text-gray-900 font-semibold text-xs sm:text-sm truncate block leading-tight">
           {displayName ?? runner.name}
         </span>
         {betDelay != null && (
@@ -1168,7 +1168,7 @@ export default function MatchPage() {
                                       null,
                                       2 - posIdx
                                     )}
-                                    className={`${oddsBtnClass} hover:bg-back-hover transition-colors bg-back w-24`}
+                                    className={`${oddsBtnClass} transition-colors w-24 ${posIdx === 2 ? "bg-back hover:bg-back-hover" : "bg-white hover:bg-back/30 border border-back/50"}`}
                                   >
                                     <span className={oddsPriceClass}>{item.price}</span>
                                     <span className={oddsSizeClass}>{formatAmount(item.size)}</span>
@@ -1196,7 +1196,7 @@ export default function MatchPage() {
                                       null,
                                       layIdx
                                     )}
-                                    className={`${oddsBtnClass} hover:bg-lay-hover transition-colors bg-lay w-24`}
+                                    className={`${oddsBtnClass} transition-colors w-24 ${layIdx === 0 ? "bg-lay hover:bg-lay-hover" : "bg-white hover:bg-lay/30 border border-lay/50"}`}
                                   >
                                     <span className={oddsPriceClass}>{layItem.price ? layItem.price : "0"}</span>
                                     <span className={oddsSizeClass}>{formatAmount(layItem.size)}</span>
@@ -1290,7 +1290,7 @@ export default function MatchPage() {
                                       null,
                                       2 - posIdx
                                     )}
-                                    className={`${oddsBtnClass} hover:bg-back-hover transition-colors bg-back w-24`}
+                                    className={`${oddsBtnClass} transition-colors w-24 ${posIdx === 2 ? "bg-back hover:bg-back-hover" : "bg-white hover:bg-back/30 border border-back/50"}`}
                                   >
                                     <span className={oddsPriceClass}>{item.price}</span>
                                     <span className={oddsSizeClass}>{formatAmount(item.size)}</span>
@@ -1318,7 +1318,7 @@ export default function MatchPage() {
                                       null,
                                       layIdx
                                     )}
-                                    className={`${oddsBtnClass} hover:bg-lay-hover transition-colors bg-lay w-24`}
+                                    className={`${oddsBtnClass} transition-colors w-24 ${layIdx === 0 ? "bg-lay hover:bg-lay-hover" : "bg-white hover:bg-lay/30 border border-lay/50"}`}
                                   >
                                     <span className={oddsPriceClass}>{layItem.price ? layItem.price : "0"}</span>
                                     <span className={oddsSizeClass}>{formatAmount(layItem.size)}</span>
@@ -1396,7 +1396,7 @@ export default function MatchPage() {
                                     onClick={() =>
                                       handleLayClick(market, runner, toDecimalOdds(layItem.price), String(layItem.line ?? ""), layIdx)
                                     }
-                                    className={`${oddsBtnClass} hover:bg-back-hover transition-colors bg-back w-24`}
+                                    className={`${oddsBtnClass} transition-colors w-24 ${layIdx === 0 ? "bg-back hover:bg-back-hover" : "bg-white hover:bg-back/30 border border-back/50"}`}
                                   >
                                     <span className={oddsPriceClass}>{layItem.line}</span>
                                     <span className={oddsSizeClass}>{formatAmount(layItem.price)}</span>
