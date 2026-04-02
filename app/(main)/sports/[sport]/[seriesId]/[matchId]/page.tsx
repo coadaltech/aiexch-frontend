@@ -8,11 +8,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useBetting, useMyBets, useMarketExposure, useFancyMarketExposure } from "@/hooks/useBetting";
 import { useLiveMatch } from "@/hooks/useLiveMatch";
 import { useSeries } from "@/hooks/useSportsApi";
+import { useStakeSettings, DEFAULT_STAKES } from "@/hooks/useUserQueries";
 import { sportsApi } from "@/lib/api";
 import { getSportConfig } from "@/lib/sports-config";
 import { addDemoBets } from "@/lib/demo-bets";
 import type { DemoBet } from "@/lib/demo-bets";
 import { toast } from "sonner";
+import { Timer } from "lucide-react";
 
 type RunnerSummary = {
   id: string;
@@ -42,6 +44,7 @@ function QuickBetPanel({
   isLoading,
   betDelayRemaining,
   onCancelDelay,
+  stakeButtons,
 }: {
   data: QuickBetData;
   stake: string;
@@ -51,6 +54,7 @@ function QuickBetPanel({
   isLoading?: boolean;
   betDelayRemaining?: number;
   onCancelDelay?: () => void;
+  stakeButtons?: { label: string; value: number }[];
 }) {
   const { market, runner, odds } = data;
   const marketName = market?.marketName || "";
@@ -68,7 +72,7 @@ function QuickBetPanel({
     ? `Max bet is ${maxBet}`
     : null;
 
-  const quickStakes = [100, 500, 1000, 5000, 10000, 50000];
+  const resolvedStakes = stakeButtons && stakeButtons.length > 0 ? stakeButtons : DEFAULT_STAKES;
   const isDelaying = betDelayRemaining != null && betDelayRemaining > 0;
 
   const handleStake = (val: string) => {
@@ -157,15 +161,15 @@ function QuickBetPanel({
       {/* Quick stake buttons + actions */}
       <div className="flex flex-wrap items-center gap-2 justify-end">
         <div className="flex flex-wrap gap-1.5 sm:gap-2">
-          {quickStakes.map((amount) => (
+          {resolvedStakes.map((btn) => (
             <button
-              key={amount}
+              key={btn.value}
               type="button"
               disabled={isDelaying}
-              onClick={() => onStakeChange(String(amount))}
+              onClick={() => onStakeChange(String(btn.value))}
               className="px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-semibold rounded bg-sports-header hover:bg-sports-header/80 text-white transition-colors disabled:opacity-50"
             >
-              {amount >= 1000 ? amount / 1000 + "K" : amount}
+              {btn.label}
             </button>
           ))}
         </div>
@@ -212,12 +216,11 @@ function toBettingType(bettingType: string): string {
 }
 
 // Convert price to international decimal odds.
-// Non-decimal prices (whole numbers like 150, 100) are Indian format → divide by 100.
-// Prices already in decimal (e.g. 1.50, 2.40) are passed through as-is.
+// Values >= 10 are Indian format (e.g. 24, 24.5, 150) → divide by 100.
+// Values < 10 are already decimal odds (e.g. 1.50, 2.40) → pass through as-is.
 function toDecimalOdds(price: number): number {
-  const str = price.toString();
-  if (str.includes('.')) return price; // already decimal
-  return price / 100;
+  if (price >= 10) return price / 100;
+  return price;
 }
 
 export default function MatchPage() {
@@ -242,6 +245,7 @@ export default function MatchPage() {
   const config = getSportConfig(sport);
   const eventTypeId = config?.eventTypeId ?? "4";
   const { data: seriesData = [] } = useSeries(config?.eventTypeId ?? null);
+  const { data: customStakes } = useStakeSettings(!!user && !user.isDemo);
   const { status, isConnected, matchOdds: wsMarkets, bookmakers: wsBookmakers, sessions: wsSessions } = useLiveMatch(matchId, eventTypeId);
 
   // Try to use cached odds data from the sport listing page for instant display
@@ -418,6 +422,15 @@ export default function MatchPage() {
     // Never go empty if we had data before — keep last good markets until new data arrives
     if (result.length > 0) {
       lastGoodMarkets.current = result;
+      console.log("[MatchPage] markets updated:", result.map((m: any) => ({
+        marketId: m.marketId,
+        marketName: m.marketName,
+        marketType: m.marketType,
+        bettingType: m.bettingType,
+        status: m.status,
+        runnersCount: m.runners?.length,
+      })));
+      console.log("[MatchPage] full markets data:", result);
       return result;
     }
     return lastGoodMarkets.current;
@@ -427,6 +440,12 @@ export default function MatchPage() {
   const marketsRef = useRef(markets);
   useEffect(() => {
     marketsRef.current = markets;
+  }, [markets]);
+
+  // Track last market data update time for the live clock
+  const [lastMarketUpdate, setLastMarketUpdate] = useState<Date | null>(null);
+  useEffect(() => {
+    if (markets.length > 0) setLastMarketUpdate(new Date());
   }, [markets]);
 
   // Cleanup bet delay timer on unmount
@@ -992,11 +1011,13 @@ export default function MatchPage() {
     marketId,
     displayName,
     isFancy,
+    betDelay,
   }: {
     runner: any;
     marketId: string;
     displayName?: string;
     isFancy?: boolean;
+    betDelay?: number;
   }) => {
     const runnerId = runner.selectionId?.toString() ?? "";
     let pnl: number | null = null;
@@ -1012,9 +1033,21 @@ export default function MatchPage() {
 
     return (
       <div className="min-w-0 pr-1 flex flex-col gap-0.5">
+        <div className="flex items-center gap-4"> 
         <span className="text-gray-900 font-semibold text-[11px] sm:text-xs truncate block leading-tight">
           {displayName ?? runner.name}
         </span>
+        {betDelay != null && (
+          <span className=" flex items-center text-[8px] sm:text-[9px] text-black font-medium leading-tight">
+            <Timer size={20}/> 
+             <span>
+            {betDelay}s
+
+            </span>
+          </span>
+        )}
+        </div>
+        
         {pnl !== null && (
           <span
             className={`text-[9px] sm:text-[10px] font-semibold leading-tight ${
@@ -1031,29 +1064,56 @@ export default function MatchPage() {
   return (
     <div className="px-2 sm:px-3 py-2 w-full max-w-full min-w-0 min-h-full">
       {/* Match header */}
-      {(matchInfo || series || matchFromSeries) && (
-        <div className="bg-white border border-gray-200 rounded-lg px-3 sm:px-4 py-3 mb-2">
-          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-            <div className="min-w-0 flex-1">
-              <h1 className="text-gray-900 font-semibold text-base sm:text-lg truncate">
-                {[series?.name, matchFromSeries?.name || matchInfo?.eventName || "Match"]
-                  .filter(Boolean)
-                  .join(" - ")}
-              </h1>
+      {(matchInfo || series || matchFromSeries) && (() => {
+        const matchOddsMarket = visibleMarkets.find((m: any) => m.marketType === "MATCH_ODDS");
+        const runnerNames = matchOddsMarket?.runners?.map((r: any) => r.name).filter(Boolean) ?? [];
+        const openDate = matchFromSeries?.openDate || matchInfo?.startTime;
+        const clockStr = lastMarketUpdate
+          ? lastMarketUpdate.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) +
+            "." +
+            String(lastMarketUpdate.getMilliseconds()).padStart(3, "0")
+          : null;
+
+        return (
+          <div className="bg-white border border-gray-200 rounded-lg px-3 sm:px-4 py-3 mb-2">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                {series?.name && (
+                  <p className="text-black font-bold text-base sm:text-lg truncate leading-tight mb-0.5">
+                    {series.name}
+                  </p>
+                )}
+                <h1 className="text-gray-700 font-semibold text-base sm:text-lg truncate leading-tight">
+                  {matchFromSeries?.name || matchInfo?.eventName || "Match"}
+                </h1>
+                {/* {runnerNames.length > 0 && (
+                  <p className="text-gray-500 text-[11px] sm:text-xs truncate mt-0.5">
+                    {runnerNames.join(" vs ")}
+                  </p>
+                )} */}
+              </div>
+              <div className="shrink-0 text-right">
+                {openDate && (
+                  <span className="text-gray-500 text-xs sm:text-sm block">
+                    {formatDate(openDate)}
+                  </span>
+                )}
+                {clockStr && (
+                  <span className="text-background font-mono text-[11px] sm:text-xs block mt-0.5">
+                    {clockStr}
+                  </span>
+                )}
+              </div>
             </div>
-            {(matchFromSeries?.openDate || matchInfo?.startTime) && (
-              <span className="text-gray-500 text-xs sm:text-sm shrink-0">
-                {formatDate(matchFromSeries?.openDate || matchInfo?.startTime)}
-              </span>
-            )}
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       <div className="space-y-1">
         {visibleMarkets.map(
           (market) =>
-            (market.bettingType == "ODDS" || market.bettingType == "BOOKMAKER") && (
+            (market.bettingType == "ODDS" || market.bettingType == "BOOKMAKER") &&
+            market.marketType !== "TOURNAMENT_WINNER" && (
               <div
                 key={market.marketId}
                 className="rounded overflow-hidden border border-gray-200"
@@ -1062,6 +1122,131 @@ export default function MatchPage() {
                   <div className="min-w-0 flex flex-col gap-0.5">
                     <h3 className="font-semibold text-white text-[11px] sm:text-xs truncate leading-tight">
                       {market.marketName}
+                    </h3>
+                    <p className="text-white/70 text-[9px] flex items-center sm:text-[10px] truncate leading-tight">
+                      Min: {market.marketCondition?.["minBet"] ?? "-"} / Max:{" "}
+                      {market.marketCondition?.["maxBet"] ?? "-"}
+                      {market.marketCondition?.betDelay != null && (
+                        <span className="flex items-center ml-1 text-yellow-300">· <Timer size={15}/> <span>{market.marketCondition.betDelay}s </span></span>
+                      )}
+                    </p>
+                  </div>
+                  <div className="justify-self-end font-semibold uppercase bg-back text-black text-[10px] sm:text-xs py-0.5 px-1.5 rounded">
+                    Back
+                  </div>
+                  <div className="font-semibold uppercase bg-lay text-black text-[10px] sm:text-xs py-0.5 px-1.5 rounded w-fit">
+                    Lay
+                  </div>
+                </div>
+                <div className="divide-y divide-gray-100">
+                  {market.runners.map((runner: any) => (
+                    <div
+                      key={runner.selectionId}
+                      className="px-2 sm:px-3 py-1 grid grid-cols-3 gap-1 sm:gap-2 items-center min-h-0 bg-white"
+                    >
+                      <RunnerNameCell
+                        runner={runner}
+                        marketId={market.marketId}
+                      />
+                      <div className="col-span-2 gap-2 relative flex min-h-[2.25rem]">
+                        <div className="flex-1 flex flex-col items-end min-w-0">
+                          <div className="gap-1 flex justify-end items-center flex-wrap">
+                            {(() => {
+                              const backItems = runner.back || [];
+                              const positions = Array(3).fill(null);
+                              backItems.forEach((item: any, idx: number) => {
+                                if (idx < 3) positions[2 - idx] = item;
+                              });
+                              return positions.map((item, posIdx) =>
+                                item ? (
+                                  <button
+                                    key={`back-${posIdx}`}
+                                    onClick={() => handleBackClick(
+                                      market,
+                                      runner,
+                                      toDecimalOdds(item.price),
+                                      null,
+                                      2 - posIdx
+                                    )}
+                                    className={`${oddsBtnClass} hover:bg-back-hover transition-colors bg-back w-24`}
+                                  >
+                                    <span className={oddsPriceClass}>{item.price}</span>
+                                    <span className={oddsSizeClass}>{formatAmount(item.size)}</span>
+                                  </button>
+                                ) : (
+                                  <button key={`empty-back-${posIdx}`} className={`${oddsBtnClass} bg-back-disabled w-24`} disabled>
+                                    <span className={oddsPriceClass}>-</span>
+                                    <span className={oddsSizeClass}>-</span>
+                                  </button>
+                                )
+                              );
+                            })()}
+                          </div>
+                        </div>
+                        <div className="flex-1 flex flex-col items-start min-w-0">
+                          <div className="gap-1 flex justify-start items-center flex-wrap">
+                            {runner.lay && runner.lay.length > 0
+                              ? runner.lay.map((layItem: any, layIdx: number) => (
+                                  <button
+                                    key={layIdx}
+                                    onClick={() => handleLayClick(
+                                      market,
+                                      runner,
+                                      toDecimalOdds(layItem.price),
+                                      null,
+                                      layIdx
+                                    )}
+                                    className={`${oddsBtnClass} hover:bg-lay-hover transition-colors bg-lay w-24`}
+                                  >
+                                    <span className={oddsPriceClass}>{layItem.price ? layItem.price : "0"}</span>
+                                    <span className={oddsSizeClass}>{formatAmount(layItem.size)}</span>
+                                  </button>
+                                ))
+                              : null}
+                            {Array.from({ length: Math.max(0, 3 - (runner.lay?.length || 0)) }).map((_, emptyIdx) => (
+                              <button key={`empty-lay-${emptyIdx}`} className={`${oddsBtnClass} bg-lay-disabled w-24`} disabled>
+                                <span className={oddsPriceClass}>-</span>
+                                <span className={oddsSizeClass}>-</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        {backLayOverlay(market)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {quickBet &&
+                  quickBet.marketId === market.marketId &&
+                  (quickBet.bettingType === "ODDS" || quickBet.bettingType === "BOOKMAKER") && (
+                    <QuickBetPanel
+                      data={quickBet}
+                      stake={quickBetStake}
+                      onStakeChange={setQuickBetStake}
+                      onClose={handleQuickBetClose}
+                      onPlaceBet={handleQuickBetPlace}
+                      isLoading={isPlacing}
+                      betDelayRemaining={betDelayRemaining}
+                      onCancelDelay={cancelBetDelay}
+                      stakeButtons={customStakes}
+                    />
+                  )}
+              </div>
+            )
+        )}
+
+        {visibleMarkets.some((m) => m.marketType === "TOURNAMENT_WINNER") && (
+          visibleMarkets
+            .filter((m: any) => m.marketType === "TOURNAMENT_WINNER")
+            .map((market: any) => (
+              <div
+                key={market.marketId}
+                className="rounded overflow-hidden border border-gray-200"
+              >
+                <div className="grid grid-cols-3 gap-1 sm:gap-2 px-2 sm:px-3 py-1 border-b border-gray-200 bg-[#174b73] items-center">
+                  <div className="min-w-0 flex flex-col gap-0.5">
+                    <h3 className="font-semibold text-white text-[11px] sm:text-xs truncate leading-tight">
+                      {market.marketName || "Tournament Winner"}
                     </h3>
                     <p className="text-white/70 text-[9px] sm:text-[10px] truncate leading-tight">
                       Min: {market.marketCondition?.["minBet"] ?? "-"} / Max:{" "}
@@ -1105,13 +1290,13 @@ export default function MatchPage() {
                                       null,
                                       2 - posIdx
                                     )}
-                                    className={`${oddsBtnClass} hover:bg-back-hover transition-colors bg-back w-20`}
+                                    className={`${oddsBtnClass} hover:bg-back-hover transition-colors bg-back w-24`}
                                   >
                                     <span className={oddsPriceClass}>{item.price}</span>
                                     <span className={oddsSizeClass}>{formatAmount(item.size)}</span>
                                   </button>
                                 ) : (
-                                  <button key={`empty-back-${posIdx}`} className={`${oddsBtnClass} bg-back-disabled w-20`} disabled>
+                                  <button key={`empty-back-${posIdx}`} className={`${oddsBtnClass} bg-back-disabled w-24`} disabled>
                                     <span className={oddsPriceClass}>-</span>
                                     <span className={oddsSizeClass}>-</span>
                                   </button>
@@ -1133,7 +1318,7 @@ export default function MatchPage() {
                                       null,
                                       layIdx
                                     )}
-                                    className={`${oddsBtnClass} hover:bg-lay-hover transition-colors bg-lay w-20`}
+                                    className={`${oddsBtnClass} hover:bg-lay-hover transition-colors bg-lay w-24`}
                                   >
                                     <span className={oddsPriceClass}>{layItem.price ? layItem.price : "0"}</span>
                                     <span className={oddsSizeClass}>{formatAmount(layItem.size)}</span>
@@ -1141,7 +1326,7 @@ export default function MatchPage() {
                                 ))
                               : null}
                             {Array.from({ length: Math.max(0, 3 - (runner.lay?.length || 0)) }).map((_, emptyIdx) => (
-                              <button key={`empty-lay-${emptyIdx}`} className={`${oddsBtnClass} bg-lay-disabled w-20`} disabled>
+                              <button key={`empty-lay-${emptyIdx}`} className={`${oddsBtnClass} bg-lay-disabled w-24`} disabled>
                                 <span className={oddsPriceClass}>-</span>
                                 <span className={oddsSizeClass}>-</span>
                               </button>
@@ -1154,8 +1339,7 @@ export default function MatchPage() {
                   ))}
                 </div>
                 {quickBet &&
-                  quickBet.marketId === market.marketId &&
-                  (quickBet.bettingType === "ODDS" || quickBet.bettingType === "BOOKMAKER") && (
+                  quickBet.marketId === market.marketId && (
                     <QuickBetPanel
                       data={quickBet}
                       stake={quickBetStake}
@@ -1165,10 +1349,11 @@ export default function MatchPage() {
                       isLoading={isPlacing}
                       betDelayRemaining={betDelayRemaining}
                       onCancelDelay={cancelBetDelay}
+                      stakeButtons={customStakes}
                     />
                   )}
               </div>
-            )
+            ))
         )}
 
         {visibleMarkets.some((m) => m.bettingType === "LINE") && (
@@ -1199,6 +1384,7 @@ export default function MatchPage() {
                           marketId={market.marketId}
                           displayName={market.marketName}
                           isFancy
+                          betDelay={market.marketCondition?.betDelay}
                         />
                         <div className="col-span-2 gap-2 relative flex min-h-[2.25rem]">
                           <div className="flex-1 flex flex-col items-end min-w-0">
@@ -1210,14 +1396,14 @@ export default function MatchPage() {
                                     onClick={() =>
                                       handleLayClick(market, runner, toDecimalOdds(layItem.price), String(layItem.line ?? ""), layIdx)
                                     }
-                                    className={`${oddsBtnClass} hover:bg-back-hover transition-colors bg-back w-20`}
+                                    className={`${oddsBtnClass} hover:bg-back-hover transition-colors bg-back w-24`}
                                   >
                                     <span className={oddsPriceClass}>{layItem.line}</span>
                                     <span className={oddsSizeClass}>{formatAmount(layItem.price)}</span>
                                   </button>
                                 ))
                               ) : (
-                                <button className={`${oddsBtnClass} bg-back-disabled w-20`} disabled>
+                                <button className={`${oddsBtnClass} bg-back-disabled w-24`} disabled>
                                   <span className={oddsPriceClass}>-</span>
                                   <span className={oddsSizeClass}>-</span>
                                 </button>
@@ -1233,14 +1419,14 @@ export default function MatchPage() {
                                     onClick={() =>
                                       handleBackClick(market, runner, toDecimalOdds(backItem.price), String(backItem.line ?? ""), backIdx)
                                     }
-                                    className={`${oddsBtnClass} hover:bg-lay-hover transition-colors bg-lay w-20`}
+                                    className={`${oddsBtnClass} hover:bg-lay-hover transition-colors bg-lay w-24`}
                                   >
                                     <span className={oddsPriceClass}>{backItem.line}</span>
                                     <span className={oddsSizeClass}>{formatAmount(backItem.price)}</span>
                                   </button>
                                 ))
                               ) : (
-                                <button className={`${oddsBtnClass} bg-lay-disabled w-20`} disabled>
+                                <button className={`${oddsBtnClass} bg-lay-disabled w-24`} disabled>
                                   <span className={oddsPriceClass}>-</span>
                                   <span className={oddsSizeClass}>-</span>
                                 </button>
@@ -1266,6 +1452,7 @@ export default function MatchPage() {
                       isLoading={isPlacing}
                       betDelayRemaining={betDelayRemaining}
                       onCancelDelay={cancelBetDelay}
+                      stakeButtons={customStakes}
                     />
                   )}
                 </div>

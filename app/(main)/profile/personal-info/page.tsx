@@ -164,13 +164,13 @@ export default function PersonalInfoScreen() {
               onClick={() => router.back()}
               variant="ghost"
               size="sm"
-              className="text-foreground hover:bg-muted shrink-0"
+              className="text-black hover:text-foreground hover:bg-muted shrink-0"
             >
               <ArrowLeft className="w-4 h-4" />
             </Button>
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <User className="w-5 h-5 sm:w-6 sm:h-6 text-primary shrink-0" />
-              <h1 className="text-foreground font-bold text-base sm:text-lg lg:text-2xl truncate">
+              <h1 className="text-black font-bold text-base sm:text-lg lg:text-2xl truncate">
                 Personal Information
               </h1>
             </div>
@@ -196,7 +196,7 @@ export default function PersonalInfoScreen() {
           )}
         </div>
 
-        <div className="lg:grid lg:grid-cols-4 lg:gap-6 xl:gap-8 space-y-6 lg:space-y-0">
+        <div className="">
           {/* Profile Overview Card */}
           {/* <div className="lg:col-span-1"> */}
           {/*   <Card className="p-4 sm:p-6 text-center"> */}

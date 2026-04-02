@@ -147,8 +147,8 @@ function CurrentBetTableRow({ bet }: { bet: any }) {
   const oddsFormatted = bet.odds != null ? String(Number(bet.odds)) : "-";
   const isLay = bet.betType === 1 || bet.betType === "lay";
   const rowBg = isLay
-    ? "bg-pink-50 text-gray-800"
-    : "bg-blue-50 text-gray-800";
+    ? "bg-pink-300 text-gray-800"
+    : "bg-blue-300 text-gray-800";
 
   return (
     <tr className={rowBg + " border-b border-gray-200"} >

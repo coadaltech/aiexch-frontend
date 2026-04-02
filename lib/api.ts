@@ -475,6 +475,11 @@ export const userApi = {
   }) => api.post("/profile/withdraw", data),
   getBalance: () => api.get("/profile/balance"),
   getLedgerInfo: () => api.get("/betting/ledger-info"),
+
+  // Stake settings
+  getStakeSettings: () => api.get("/profile/stake-settings"),
+  saveStakeSettings: (stakes: { label: string; value: number }[]) =>
+    api.put("/profile/stake-settings", { stakes }),
 };
 
 export const publicApi = {

@@ -225,13 +225,16 @@ export function CricketMatchesList({
     });
   }, [seriesData]);
 
-  const displayMatches = maxMatches
-    ? allMatches.slice(0, maxMatches)
-    : allMatches;
+  // Fetch odds for a wider pool so maxMatches is applied after filtering
+  const oddsPoolSize = maxMatches ? maxMatches * 4 : allMatches.length;
+  const oddsPool = useMemo(
+    () => allMatches.slice(0, oddsPoolSize),
+    [allMatches, oddsPoolSize]
+  );
 
   const matchIds = useMemo(
-    () => displayMatches.map((m) => m.id),
-    [displayMatches]
+    () => oddsPool.map((m) => m.id),
+    [oddsPool]
   );
 
   const { data: oddsMap = {}, isLoading: oddsLoading } = useAllMatchOdds(
@@ -251,18 +254,20 @@ export function CricketMatchesList({
     );
   }
 
-  // Filter to only matches that have odds data (or odds still loading)
-  const matchesWithOdds = displayMatches.filter((m) => {
-    if (oddsLoading) return true; // show all while loading
-    const markets = oddsMap[m.id];
-    if (!markets || markets.length === 0) return false;
-    const mo = markets.find(
-      (mk: any) => mk.marketName === "Match Odds" || mk.marketType === "MATCH_ODDS"
-    );
-    return mo?.runners?.some(
-      (r: any) => r.back?.[0]?.price != null || r.lay?.[0]?.price != null
-    );
-  });
+  // Filter to only matches that have odds data (or odds still loading), then apply maxMatches
+  const matchesWithOdds = oddsPool
+    .filter((m) => {
+      if (oddsLoading) return true; // show all while loading
+      const markets = oddsMap[m.id];
+      if (!markets || markets.length === 0) return false;
+      const mo = markets.find(
+        (mk: any) => mk.marketName === "Match Odds" || mk.marketType === "MATCH_ODDS"
+      );
+      return mo?.runners?.some(
+        (r: any) => r.back?.[0]?.price != null || r.lay?.[0]?.price != null
+      );
+    })
+    .slice(0, maxMatches ?? undefined);
 
   if (matchesWithOdds.length === 0) {
     if (emptyText) {

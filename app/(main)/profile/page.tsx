@@ -20,6 +20,7 @@ import {
   Briefcase,
   Headphones,
   BookOpen,
+  SlidersHorizontal,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, lazy, Suspense } from "react";
@@ -225,6 +226,12 @@ export default function DashboardContent() {
               description="Get help now"
               onClick={() => router.push("/live-support")}
             /> */}
+          <MenuCard
+            icon={SlidersHorizontal}
+            title="Stake Settings"
+            description="Customise your quick-stake buttons"
+            onClick={() => router.push("/profile/stake-settings")}
+          />
           <MenuCard
             icon={LogOut}
             title="Sign Out"

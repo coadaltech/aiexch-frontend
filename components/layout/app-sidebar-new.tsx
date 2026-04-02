@@ -30,6 +30,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Loader2,
+  SlidersHorizontal,
 } from "lucide-react";
 import { MenuGroup, MenuItem } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
@@ -81,6 +82,7 @@ const getMenuGroups = (isLoggedIn: boolean): MenuGroup[] => {
       items: [
         { title: "Profile", icon: User, link: "/profile" },
         { title: "Bet History", icon: Club, link: "/profile/bet-history" },
+        { title: "Stake Settings", icon: SlidersHorizontal, link: "/profile/stake-settings" },
         { title: "Account Statement", icon: Receipt, link: "/profile/account-statement" },
       ],
     },
