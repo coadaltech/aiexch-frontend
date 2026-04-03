@@ -425,15 +425,15 @@ export default function MatchPage() {
     // Never go empty if we had data before — keep last good markets until new data arrives
     if (result.length > 0) {
       lastGoodMarkets.current = result;
-      console.log("[MatchPage] markets updated:", result.map((m: any) => ({
-        marketId: m.marketId,
-        marketName: m.marketName,
-        marketType: m.marketType,
-        bettingType: m.bettingType,
-        status: m.status,
-        runnersCount: m.runners?.length,
-      })));
-      console.log("[MatchPage] full markets data:", result);
+      // console.log("[MatchPage] markets updated:", result.map((m: any) => ({
+      //   marketId: m.marketId,
+      //   marketName: m.marketName,
+      //   marketType: m.marketType,
+      //   bettingType: m.bettingType,
+      //   status: m.status,
+      //   runnersCount: m.runners?.length,
+      // })));
+      // console.log("[MatchPage] full markets data:", result);
       return result;
     }
     return lastGoodMarkets.current;

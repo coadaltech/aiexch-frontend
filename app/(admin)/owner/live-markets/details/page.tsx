@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useLiveMarketsDetails, useLiveMarketsPnl } from "@/hooks/useOwner";
 import { useLiveMatch } from "@/hooks/useLiveMatch";
-import { ChevronDown, Activity, Loader2, RefreshCw } from "lucide-react";
+import { Activity, Loader2, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -280,18 +280,19 @@ type EventTypeGroup = {
   matches: MatchGroup[];
 };
 
-// ─── Single match card ───────────────────────────────────────────────────────
+// ─── Match detail view (only mounts WebSocket when a match is selected) ─────
 
-function MatchCard({
+function MatchDetailView({
   match,
   oddsExposureMap,
   fancyExposureMap,
+  onBack,
 }: {
   match: MatchGroup;
   oddsExposureMap: Map<string, Map<string, number>>;
   fancyExposureMap: Map<string, number>;
+  onBack: () => void;
 }) {
-  const [open, setOpen] = useState(true);
   const { matchOdds, bookmakers, sessions } = useLiveMatch(match.matchId, match.eventTypeId);
 
   const allMarkets = useMemo(() => {
@@ -320,46 +321,83 @@ function MatchCard({
   const showPlaceholders = allMarkets.length === 0;
 
   return (
-    <div className="rounded-lg border border-gray-200 overflow-hidden bg-white">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-[#174b73] text-white text-left"
-      >
-        <div className="min-w-0">
-          <p className="text-[10px] text-white/70 truncate">{match.competitionName}</p>
-          <p className="font-semibold text-sm truncate">
-            {match.eventName || `Match ${match.matchId}`}
-          </p>
+    <div className="space-y-4">
+      {/* Back + match header */}
+      <div>
+        <button
+          onClick={onBack}
+          className="flex items-center text-gray-600 hover:text-gray-900 mb-3 transition-colors"
+        >
+          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Matches
+        </button>
+        <div className="rounded-lg bg-[#174b73] px-4 py-3 text-white">
+          <p className="text-[10px] text-white/70">{match.competitionName}</p>
+          <p className="font-semibold text-sm">{match.eventName || `Match ${match.matchId}`}</p>
+          <p className="text-[10px] text-white/50 mt-0.5">{match.markets.length} market{match.markets.length !== 1 ? "s" : ""}</p>
         </div>
-        <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", open && "rotate-180")} />
-      </button>
+      </div>
 
-      {open && (
-        <div className="p-2 space-y-2">
-          {showPlaceholders ? (
-            <div className="space-y-2">
-              {match.markets.map((m) => (
-                <div key={m.market_id} className="rounded border border-gray-200 px-3 py-2 flex items-center justify-between bg-gray-50">
-                  <span className="text-sm text-gray-700">{m.market_name}</span>
-                  <span className="text-xs text-gray-400 flex items-center gap-1">
-                    <Loader2 className="h-3 w-3 animate-spin" /> Connecting...
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <>
-              {oddsMarkets.map((market) => (
-                <OddsMarket key={market.marketId} market={market} oddsExposureMap={oddsExposureMap} />
-              ))}
-              <FancyMarkets markets={fancyMarkets} fancyExposureMap={fancyExposureMap} />
-              {oddsMarkets.length === 0 && fancyMarkets.length === 0 && (
-                <p className="text-center text-sm text-gray-400 py-4">No open markets at this time</p>
-              )}
-            </>
-          )}
+      {/* Markets */}
+      <div className="space-y-2">
+        {showPlaceholders ? (
+          <div className="space-y-2">
+            {match.markets.map((m) => (
+              <div key={m.market_id} className="rounded border border-gray-200 px-3 py-2 flex items-center justify-between bg-gray-50">
+                <span className="text-sm text-gray-700">{m.market_name}</span>
+                <span className="text-xs text-gray-400 flex items-center gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin" /> Connecting...
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <>
+            {oddsMarkets.map((market) => (
+              <OddsMarket key={market.marketId} market={market} oddsExposureMap={oddsExposureMap} />
+            ))}
+            <FancyMarkets markets={fancyMarkets} fancyExposureMap={fancyExposureMap} />
+            {oddsMarkets.length === 0 && fancyMarkets.length === 0 && (
+              <p className="text-center text-sm text-gray-400 py-4">No open markets at this time</p>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Match list item ────────────────────────────────────────────────────────
+
+function MatchListItem({
+  match,
+  onClick,
+}: {
+  match: MatchGroup;
+  onClick: () => void;
+}) {
+  return (
+    <div
+      onClick={onClick}
+      className="flex items-center justify-between p-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors cursor-pointer"
+    >
+      <div className="min-w-0 flex-1">
+        <p className="text-xs text-gray-400">{match.competitionName}</p>
+        <p className="font-medium text-gray-900 text-sm truncate">
+          {match.eventName || `Match ${match.matchId}`}
+        </p>
+      </div>
+      <div className="flex items-center gap-3 shrink-0">
+        <div className="text-center">
+          <p className="text-sm font-semibold text-gray-900">{match.markets.length}</p>
+          <p className="text-[10px] text-gray-500">Markets</p>
         </div>
-      )}
+        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </div>
     </div>
   );
 }
@@ -369,6 +407,7 @@ function MatchCard({
 export default function LiveMarketsDetailsPage() {
   const { data, isLoading, isError, refetch, isFetching } = useLiveMarketsDetails();
   const { data: pnlData } = useLiveMarketsPnl();
+  const [selectedMatch, setSelectedMatch] = useState<MatchGroup | null>(null);
 
   // Build oddsExposureMap: marketId → runnerId → pnl
   const oddsExposureMap = useMemo(() => {
@@ -393,7 +432,6 @@ export default function LiveMarketsDetailsPage() {
   const eventTypeGroups = useMemo<EventTypeGroup[]>(() => {
     if (!data?.length) return [];
 
-    // event_type_id → match_id → MatchGroup
     const eventMap = new Map<number, Map<string, MatchGroup>>();
 
     for (const row of data as any[]) {
@@ -429,6 +467,19 @@ export default function LiveMarketsDetailsPage() {
       }));
   }, [data]);
 
+  // ── Selected match detail view ──
+  if (selectedMatch) {
+    return (
+      <MatchDetailView
+        match={selectedMatch}
+        oddsExposureMap={oddsExposureMap}
+        fancyExposureMap={fancyExposureMap}
+        onBack={() => setSelectedMatch(null)}
+      />
+    );
+  }
+
+  // ── Match list view ──
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -469,7 +520,6 @@ export default function LiveMarketsDetailsPage() {
         <div className="space-y-5">
           {eventTypeGroups.map((et) => (
             <div key={et.eventTypeId}>
-              {/* Event type section header */}
               <div className="flex items-center gap-2 mb-2 px-1">
                 <span className="text-xs font-bold uppercase tracking-widest text-gray-500">
                   {eventTypeLabel(et.eventTypeId)}
@@ -477,13 +527,12 @@ export default function LiveMarketsDetailsPage() {
                 <span className="text-xs text-gray-400">({et.matches.length} match{et.matches.length !== 1 ? "es" : ""})</span>
               </div>
 
-              <div className="space-y-3">
+              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                 {et.matches.map((match) => (
-                  <MatchCard
+                  <MatchListItem
                     key={match.matchId}
                     match={match}
-                    oddsExposureMap={oddsExposureMap}
-                    fancyExposureMap={fancyExposureMap}
+                    onClick={() => setSelectedMatch(match)}
                   />
                 ))}
               </div>

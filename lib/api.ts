@@ -307,6 +307,12 @@ export const ownerApi = {
   updateCompetitionStatus: (sportId: string, data: { competitions: Array<{ id: string; isActive: boolean }> }) =>
     api.post(`/owner/sports-games/competitions/${sportId}/update-status`, data),
 
+  // Events (per-competition)
+  getCompetitionEvents: (competitionId: string) =>
+    api.get(`/owner/sports-games/events/${competitionId}`),
+  updateEventStatus: (competitionId: string, data: { events: Array<{ id: string; isActive: boolean }> }) =>
+    api.post(`/owner/sports-games/events/${competitionId}/update-status`, data),
+
   // Home Sections
   getHomeSections: () => api.get("/owner/home-sections"),
   createHomeSection: (data: any) => api.post("/owner/home-sections", data),

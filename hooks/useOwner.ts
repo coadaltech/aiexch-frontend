@@ -773,6 +773,39 @@ export const useCurrencyHistory = (currencyId: string | null) => {
 };
 
 // ═══════════════════════════════════════════════════════════
+//  Competition Events Management
+// ═══════════════════════════════════════════════════════════
+
+export const useCompetitionEvents = (competitionId: string | null) => {
+  return useQuery({
+    queryKey: ["competition-events", competitionId],
+    queryFn: () =>
+      ownerApi.getCompetitionEvents(competitionId!).then((res) => res.data),
+    enabled: !!competitionId,
+  });
+};
+
+export const useUpdateEventStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      competitionId,
+      events,
+    }: {
+      competitionId: string;
+      events: Array<{ id: string; isActive: boolean }>;
+    }) => ownerApi.updateEventStatus(competitionId, { events }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["competition-events", variables.competitionId],
+      });
+      toast.success("Event statuses updated");
+    },
+    onError: () => toast.error("Failed to update event statuses"),
+  });
+};
+
+// ═══════════════════════════════════════════════════════════
 //  Market Management
 // ═══════════════════════════════════════════════════════════
 

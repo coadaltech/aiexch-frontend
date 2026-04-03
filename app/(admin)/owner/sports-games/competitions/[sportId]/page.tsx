@@ -403,6 +403,7 @@ export default function CompetitionsPage() {
                     type="checkbox"
                     checked={isSelected}
                     onChange={() => handleSelectCompetition(competition.id)}
+                    onClick={(e) => e.stopPropagation()}
                     className="h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-2 focus:ring-blue-500 cursor-pointer"
                   />
                 ) : (
@@ -412,9 +413,16 @@ export default function CompetitionsPage() {
                     }`}
                   />
                 )}
-                <div className="flex-1">
+                <div
+                  className="flex-1 cursor-pointer"
+                  onClick={() =>
+                    router.push(
+                      `${panelPrefix}/sports-games/competitions/${sportId}/events/${competition.id}`,
+                    )
+                  }
+                >
                   <div className="flex items-center gap-2">
-                    <h3 className="font-medium text-gray-900">
+                    <h3 className="font-medium text-gray-900 hover:text-blue-600 transition-colors">
                       {competition.name}
                     </h3>
                     {isChanged && (
@@ -422,7 +430,6 @@ export default function CompetitionsPage() {
                         Modified
                       </span>
                     )}
-                    {/* Owner: show if a whitelabel has overridden this competition */}
                     {isOwner && !competition.isActive && (
                       <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">
                         Globally Inactive
@@ -432,7 +439,7 @@ export default function CompetitionsPage() {
                   <p className="text-sm text-gray-500">ID: {competition.id}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-4">
                 <div className="text-center">
                   <p className="text-lg font-semibold text-gray-900">
                     {competition.totalEvents}

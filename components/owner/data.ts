@@ -12,7 +12,6 @@ import {
   Wallet,
   Image,
   Banknote,
-  LineChart,
   Megaphone,
   Ticket,
   PanelTop,
@@ -53,7 +52,6 @@ export function getNavigation(prefix: string): NavItem[] {
       icon: Trophy,
       subItems: [
         { name: "Sports Games", href: `${prefix}/sports-games`, icon: Trophy },
-        { name: "Market Management", href: `${prefix}/market-management`, icon: LineChart },
         { name: "Custom Markets", href: `${prefix}/custom-markets`, icon: Wrench },
         { name: "Matka", href: `${prefix}/matka`, icon: Dice6 },
       ],

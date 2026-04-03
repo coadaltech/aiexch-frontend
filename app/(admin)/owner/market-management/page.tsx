@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { usePanelPrefix } from "@/hooks/usePanelPrefix";
 import { useLiveMatch } from "@/hooks/useLiveMatch";
 import {
   useEventSettings,
@@ -921,9 +923,14 @@ function OddsHistoryPanel({ eventId }: { eventId: string }) {
 // ═══════════════════════════════════════════════════════════
 //  MAIN PAGE
 // ═══════════════════════════════════════════════════════════
-export default function MarketManagementPage() {
+function MarketManagementContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const panelPrefix = usePanelPrefix();
+  const preselectedEventId = searchParams.get("eventId");
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeEventId, setActiveEventId] = useState("");
+  const [activeEventId, setActiveEventId] = useState(preselectedEventId || "");
   const [activeEventTypeId, setActiveEventTypeId] = useState("4");
   const [activeTab, setActiveTab] = useState<"markets" | "history">("markets");
   const [filter, setFilter] = useState<"all" | "active" | "disabled">(
@@ -987,6 +994,15 @@ export default function MarketManagementPage() {
       <div className="">
         {/* Header */}
         <div className="mb-6">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center text-gray-600 hover:text-gray-900 mb-4 transition-colors"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Events
+          </button>
           <h1 className="text-2xl font-bold text-gray-800">Market Management</h1>
           <p className="text-gray-600 mt-1">
             View live markets, manage settings, and review odds history
@@ -1221,5 +1237,13 @@ export default function MarketManagementPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function MarketManagementPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading...</div>}>
+      <MarketManagementContent />
+    </Suspense>
   );
 }
