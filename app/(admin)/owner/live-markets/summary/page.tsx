@@ -170,15 +170,15 @@ function MatchCard({ group }: { group: MatchGroup }) {
     <div className="rounded-lg border border-gray-200 overflow-hidden bg-white">
       {/* Match header */}
       <div className="flex items-center justify-between px-4 py-2.5 bg-[#174b73]">
-        <div className="min-w-0">
-          <p className="text-[10px] text-white/60 truncate">{group.competition_name}</p>
-          <p className="text-sm font-semibold text-white truncate">{group.event_name}</p>
+        <div className="min-w-0 flex items-center gap-2">
+          <p className="text-sm font-semibold text-white truncate">{group.competition_name} / </p>
+          <p className="text-sm font-semibold text-white truncate"> {group.event_name}</p>
         </div>
         <div className={cn(
           "text-sm font-bold shrink-0 ml-4",
           group.total_pnl >= 0 ? "text-green-300" : "text-red-300"
         )}>
-          {fmt(group.total_pnl)}
+          {/* {fmt(group.total_pnl)} */}
         </div>
       </div>
 
