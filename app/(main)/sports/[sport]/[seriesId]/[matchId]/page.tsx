@@ -219,10 +219,12 @@ function toBettingType(bettingType: string): string {
 }
 
 // Convert price to international decimal odds.
-// Values >= 10 are Indian format (e.g. 24, 24.5, 150) → divide by 100.
+// Values 10–99 are Indian format (e.g. 24, 24.5) → divide by 100 and add 1.
+// Values >= 100 are Indian format (e.g. 150) → divide by 100 only.
 // Values < 10 are already decimal odds (e.g. 1.50, 2.40) → pass through as-is.
 function toDecimalOdds(price: number): number {
-  if (price >= 10) return price / 100;
+  if (price >= 10 && price < 100) return price / 100 + 1;
+  if (price >= 100) return price / 100;
   return price;
 }
 
