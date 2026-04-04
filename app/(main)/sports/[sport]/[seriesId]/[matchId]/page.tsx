@@ -1154,10 +1154,10 @@ export default function MatchPage() {
               >
                 <div className="grid grid-cols-3 gap-1 sm:gap-2 px-2 sm:px-3 py-1 border-b border-gray-200 bg-[#174b73] items-center">
                   <div className="min-w-0 flex flex-col gap-0.5">
-                    <h3 className="font-semibold text-white text-[11px] sm:text-xs truncate leading-tight">
+                    <h3 className="font-bold text-white text-sm sm:text-base truncate leading-tight">
                       {market.marketName}
                     </h3>
-                    <p className="text-white/70 text-[9px] flex items-center sm:text-[10px] truncate leading-tight">
+                    <p className="text-white/70 text-xs flex items-center sm:text-sm truncate leading-tight">
                       Min: {market.marketCondition?.["minBet"] ?? "-"} / Max:{" "}
                       {market.marketCondition?.["maxBet"] ?? "-"}
                       {market.marketCondition?.betDelay != null && (
@@ -1165,10 +1165,10 @@ export default function MatchPage() {
                       )}
                     </p>
                   </div>
-                  <div className="justify-self-end font-semibold uppercase bg-back text-black text-[10px] sm:text-xs py-0.5 px-1.5 rounded">
+                  <div className="justify-self-end font-bold uppercase bg-back text-black text-xs sm:text-sm py-0.5 px-1.5 rounded">
                     Back
                   </div>
-                  <div className="font-semibold uppercase bg-lay text-black text-[10px] sm:text-xs py-0.5 px-1.5 rounded w-fit">
+                  <div className="font-bold uppercase bg-lay text-black text-xs sm:text-sm py-0.5 px-1.5 rounded w-fit">
                     Lay
                   </div>
                 </div>
@@ -1280,18 +1280,18 @@ export default function MatchPage() {
               >
                 <div className="grid grid-cols-3 gap-1 sm:gap-2 px-2 sm:px-3 py-1 border-b border-gray-200 bg-[#174b73] items-center">
                   <div className="min-w-0 flex flex-col gap-0.5">
-                    <h3 className="font-semibold text-white text-[11px] sm:text-xs truncate leading-tight">
+                    <h3 className="font-bold text-white text-sm sm:text-base truncate leading-tight">
                       {market.marketName || "Tournament Winner"}
                     </h3>
-                    <p className="text-white/70 text-[9px] sm:text-[10px] truncate leading-tight">
+                    <p className="text-white/70 text-xs sm:text-sm truncate leading-tight">
                       Min: {market.marketCondition?.["minBet"] ?? "-"} / Max:{" "}
                       {market.marketCondition?.["maxBet"] ?? "-"}
                     </p>
                   </div>
-                  <div className="justify-self-end font-semibold uppercase bg-back text-black text-[10px] sm:text-xs py-0.5 px-1.5 rounded">
+                  <div className="justify-self-end font-bold uppercase bg-back text-black text-xs sm:text-sm py-0.5 px-1.5 rounded">
                     Back
                   </div>
-                  <div className="font-semibold uppercase bg-lay text-black text-[10px] sm:text-xs py-0.5 px-1.5 rounded w-fit">
+                  <div className="font-bold uppercase bg-lay text-black text-xs sm:text-sm py-0.5 px-1.5 rounded w-fit">
                     Lay
                   </div>
                 </div>
@@ -1395,13 +1395,13 @@ export default function MatchPage() {
         {visibleMarkets.some((m) => m.bettingType === "LINE") && (
         <div className="rounded overflow-hidden border border-gray-200">
           <div className="grid grid-cols-3 gap-1 sm:gap-2 px-2 sm:px-3 py-1 border-b border-gray-200 bg-[#174b73] items-center">
-            <h3 className="font-semibold text-white text-[11px] sm:text-xs truncate leading-tight" style={{gridColumn: "1"}}>
+            <h3 className="font-bold text-white text-sm sm:text-base truncate leading-tight" style={{gridColumn: "1"}}>
               Fancy
             </h3>
-            <div className="justify-self-end font-semibold uppercase bg-lay text-black text-[10px] sm:text-xs py-0.5 px-1.5 rounded w-fit">
+            <div className="justify-self-end font-bold uppercase bg-lay text-black text-xs sm:text-sm py-0.5 px-1.5 rounded w-fit">
               NO
             </div>
-            <div className="w-fit font-semibold uppercase bg-back text-black text-[10px] sm:text-xs py-0.5 px-1.5 rounded">
+            <div className="w-fit font-bold uppercase bg-back text-black text-xs sm:text-sm py-0.5 px-1.5 rounded">
               YES
             </div>
           </div>
@@ -1468,7 +1468,7 @@ export default function MatchPage() {
                                 </button>
                               )}
                             </div>
-                            <div className="hidden sm:flex flex-col text-[9px] text-black leading-tight text-right shrink-0">
+                            <div className="hidden sm:flex flex-col text-xs text-black font-bold leading-tight text-right shrink-0">
                               <span>Max:{market.marketCondition?.["maxBet"] ?? "-"}</span>
                               <span>MKT:{market.marketCondition?.["potLimit"] ?? market.marketCondition?.["maxProfit"] ?? "-"}</span>
                             </div>

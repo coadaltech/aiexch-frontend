@@ -138,8 +138,10 @@ export function BetSlip({ matchId }: { matchId: string }) {
 
 /** Table row for current (placed) bets: Matched Bet (left), Odds (center), Stake (right); Back = green, Lay = maroon */
 function CurrentBetTableRow({ bet }: { bet: any }) {
-  const matchedBetLabel =
-    bet.selectionName && bet.marketName
+  const isFancy = bet.marketType === "fancy";
+  const matchedBetLabel = isFancy
+    ? bet.marketName || bet.selectionName || "Bet"
+    : bet.selectionName && bet.marketName
       ? `${bet.selectionName} - ${bet.marketName}`
       : bet.selectionName || bet.marketName || "Bet";
   const stakeFormatted =
