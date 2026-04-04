@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useBetSlip } from "@/contexts/BetSlipContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useBetting, useMyBets, useMarketExposure, useFancyMarketExposure } from "@/hooks/useBetting";
+import { useBetting, useMyBets, useMarketExposure, useFancyMarketExposure, useFancyExposureChart } from "@/hooks/useBetting";
 import { useLiveMatch } from "@/hooks/useLiveMatch";
 import { useSeries } from "@/hooks/useSportsApi";
 import { useStakeSettings, DEFAULT_STAKES } from "@/hooks/useUserQueries";
@@ -246,6 +246,8 @@ export default function MatchPage() {
   useMyBets("matched");
   const { data: marketExposureMap } = useMarketExposure();
   const { data: fancyExposureMap } = useFancyMarketExposure();
+  const [exposureChartMarket, setExposureChartMarket] = useState<{ marketId: string; name: string } | null>(null);
+  const { data: exposureChartData, isLoading: isExposureChartLoading } = useFancyExposureChart(exposureChartMarket?.marketId ?? null);
 
   const config = getSportConfig(sport);
   const eventTypeId = config?.eventTypeId ?? "4";
@@ -1054,15 +1056,24 @@ export default function MatchPage() {
       pnl = marketRunners?.get(runnerId) ?? null;
     }
 
+    const handleNameClick = () => {
+      if (isFancy) {
+        setExposureChartMarket({ marketId: String(marketId), name: displayName ?? runner.name });
+      }
+    };
+
     return (
       <div className="min-w-0 pr-1 flex flex-col gap-0.5">
-        <div className="flex items-center gap-4"> 
-        <span className="text-gray-900 font-semibold text-xs sm:text-sm truncate block leading-tight">
+        <div className="flex items-center gap-4">
+        <span
+          className={`text-gray-900 font-bold text-sm sm:text-base truncate block leading-tight ${isFancy ? "cursor-pointer" : ""}`}
+          onClick={handleNameClick}
+        >
           {displayName ?? runner.name}
         </span>
         {betDelay != null && (
           <span className=" flex items-center text-[8px] sm:text-[9px] text-black font-medium leading-tight">
-            <Timer size={20}/> 
+            <Timer size={20}/>
              <span>
             {betDelay}s
 
@@ -1070,10 +1081,10 @@ export default function MatchPage() {
           </span>
         )}
         </div>
-        
+
         {pnl !== null && (
           <span
-            className={`text-[9px] sm:text-[10px] font-semibold leading-tight ${
+            className={`text-[10px] sm:text-xs font-bold leading-tight ${
               pnl >= 0 ? "text-live-text" : "text-danger"
             }`}
           >
@@ -1165,7 +1176,7 @@ export default function MatchPage() {
                   {market.runners.map((runner: any) => (
                     <div
                       key={runner.selectionId}
-                      className="px-2 sm:px-3 py-1 grid grid-cols-3 gap-1 sm:gap-2 items-center min-h-0 bg-white"
+                      className="px-2 sm:px-3 grid grid-cols-3 gap-1 sm:gap-2 items-center min-h-0 bg-white"
                     >
                       <RunnerNameCell
                         runner={runner}
@@ -1206,8 +1217,8 @@ export default function MatchPage() {
                             })()}
                           </div>
                         </div>
-                        <div className="flex-1 flex flex-col items-start min-w-0">
-                          <div className="gap-1 flex justify-start items-center flex-wrap">
+                        <div className="flex-1 flex flex-col items-start min-w-0 ">
+                          <div className="gap-1 flex justify-start items-center flex-wrap ">
                             {runner.lay && runner.lay.length > 0
                               ? runner.lay.map((layItem: any, layIdx: number) => (
                                   <button
@@ -1387,10 +1398,10 @@ export default function MatchPage() {
             <h3 className="font-semibold text-white text-[11px] sm:text-xs truncate leading-tight" style={{gridColumn: "1"}}>
               Fancy
             </h3>
-            <div className="justify-self-end font-semibold uppercase bg-back text-black text-[10px] sm:text-xs py-0.5 px-1.5 rounded w-fit">
+            <div className="justify-self-end font-semibold uppercase bg-lay text-black text-[10px] sm:text-xs py-0.5 px-1.5 rounded w-fit">
               NO
             </div>
-            <div className="w-fit font-semibold uppercase bg-lay text-black text-[10px] sm:text-xs py-0.5 px-1.5 rounded">
+            <div className="w-fit font-semibold uppercase bg-back text-black text-[10px] sm:text-xs py-0.5 px-1.5 rounded">
               YES
             </div>
           </div>
@@ -1402,7 +1413,7 @@ export default function MatchPage() {
                     {market.runners.map((runner: any) => (
                       <div
                         key={runner.selectionId}
-                        className="px-2 sm:px-3 py-1 grid grid-cols-3 gap-1 sm:gap-2 items-center min-h-0 bg-white"
+                        className="px-2 sm:px-3  grid grid-cols-3 gap-1 sm:gap-2 items-center min-h-0 bg-white"
                       >
                         <RunnerNameCell
                           runner={runner}
@@ -1487,6 +1498,54 @@ export default function MatchPage() {
         </div>
         )}
       </div>
+
+      {/* Fancy Exposure Chart Modal */}
+      {exposureChartMarket && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setExposureChartMarket(null)}>
+          <div className="bg-white rounded-lg shadow-xl w-[90vw] max-w-md max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 py-3 bg-sports-header text-white">
+              <div>
+                <h3 className="font-semibold text-sm">Exposure</h3>
+                <p className="text-xs text-white/80">{exposureChartMarket.name}</p>
+              </div>
+              <button onClick={() => setExposureChartMarket(null)} className="text-white hover:text-white/70 text-xl leading-none">&times;</button>
+            </div>
+            {isExposureChartLoading ? (
+              <div className="flex items-center justify-center py-10">
+                <span className="w-6 h-6 border-2 border-sports-header border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : exposureChartData && exposureChartData.length > 0 ? (
+              <div className="overflow-y-auto max-h-[60vh]">
+                <table className="w-full text-sm">
+                  <tbody>
+                    {exposureChartData.map((row) => (
+                      <tr
+                        key={row.run}
+                        className={row.profit >= 0 ? "bg-blue-200" : "bg-red-200"}
+                      >
+                        <td className="px-4 py-2 font-medium text-gray-800 border-b border-gray-200">{row.run}</td>
+                        <td className={`px-4 py-2 text-right font-semibold border-b border-gray-200 ${row.profit >= 0 ? "text-gray-800" : "text-danger"}`}>
+                          {row.profit.toFixed(2)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center text-gray-500 text-sm py-10">No exposure data</div>
+            )}
+            <div className="px-4 py-3 border-t border-gray-200 flex justify-center">
+              <button
+                onClick={() => setExposureChartMarket(null)}
+                className="px-6 py-1.5 text-sm font-medium border border-gray-300 rounded hover:bg-gray-50 text-gray-700"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

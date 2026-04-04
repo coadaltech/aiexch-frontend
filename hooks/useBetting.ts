@@ -131,6 +131,25 @@ export const useMarketExposure = (enabled = true) => {
   });
 };
 
+// Fetch detailed run-by-run exposure chart for a single fancy market
+export const useFancyExposureChart = (marketId: string | null) => {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["fancy-exposure-chart", marketId],
+    queryFn: async () => {
+      const response = await api.get(`/betting/fancy-exposure-chart?marketId=${marketId}`);
+      return response.data;
+    },
+    select: (data) => {
+      const rows: { run: number; runner_profit: string }[] = data.data || [];
+      return rows.map((r) => ({ run: r.run, profit: parseFloat(r.runner_profit) || 0 }));
+    },
+    enabled: !!marketId && !!user && !user.isDemo,
+    staleTime: 5000,
+  });
+};
+
 // Fetch per-market worst-case profit/loss for fancy/session markets (market_type = 4)
 // Returns a map: marketId → profit (min across all run scenarios)
 export const useFancyMarketExposure = (enabled = true) => {

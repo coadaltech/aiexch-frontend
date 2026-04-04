@@ -10,10 +10,11 @@ export function getAuthCookie(name: string): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
-export function setAuthCookie(name: string, value: string, maxAgeSeconds: number) {
+export function setAuthCookie(name: string, value: string) {
   if (typeof document === "undefined") return;
   const secure = window.location.protocol === "https:" ? "; Secure" : "";
-  document.cookie = `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${maxAgeSeconds}; SameSite=Lax${secure}`;
+  // No Max-Age or Expires → session cookie → cleared when browser closes
+  document.cookie = `${name}=${encodeURIComponent(value)}; Path=/; SameSite=Lax${secure}`;
 }
 
 export function clearAuthCookie(name: string) {
@@ -22,8 +23,8 @@ export function clearAuthCookie(name: string) {
 }
 
 export function storeTokens(accessToken: string, refreshToken?: string) {
-  setAuthCookie("accessToken", accessToken, 60 * 15);
-  if (refreshToken) setAuthCookie("refreshToken", refreshToken, 60 * 60 * 24 * 7);
+  setAuthCookie("accessToken", accessToken);
+  if (refreshToken) setAuthCookie("refreshToken", refreshToken);
 }
 
 export function clearTokens() {
@@ -300,6 +301,9 @@ export const ownerApi = {
   updateSportsGame: (id: string, data: any) =>
     api.put(`/owner/sports-games/${id}`, data),
   deleteSportsGame: (id: string) => api.delete(`/owner/sports-games/${id}`),
+
+  // Sync all competitions from external API
+  syncCompetitions: () => api.post("/owner/sports-games/sync-competitions"),
 
   // Competitions (per-sport, role + whitelabel aware)
   getCompetitions: (sportId: string) =>

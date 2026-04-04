@@ -474,10 +474,31 @@ function MarketCard({ market }: { market: any }) {
   const [maxBet, setMaxBet] = useState("");
   const [betDelay, setBetDelay] = useState("");
 
+  // Optimistic local overrides — applied immediately on toggle, cleared when
+  // the next WebSocket push arrives with the confirmed state.
+  const [optimistic, setOptimistic] = useState<Record<string, boolean>>({});
+  const prevMarketRef = useRef(market);
+
+  // When the WebSocket pushes a new market object, clear optimistic overrides
+  // so the UI reflects the server-confirmed state.
+  useEffect(() => {
+    const prev = prevMarketRef.current;
+    if (
+      prev.adminDisabled !== market.adminDisabled ||
+      prev.adminHidden !== market.adminHidden ||
+      prev.status !== market.status
+    ) {
+      setOptimistic({});
+    }
+    prevMarketRef.current = market;
+  }, [market.adminDisabled, market.adminHidden, market.status]);
+
   const isCustom = market.isCustom || market.marketType === "CUSTOM";
-  const isDisabled = market.adminDisabled;
-  const isHidden = market.adminHidden;
-  const isSuspended = market.status === "SUSPENDED";
+
+  // Apply optimistic overrides on top of WebSocket state
+  const isDisabled = optimistic.isActive !== undefined ? !optimistic.isActive : market.adminDisabled;
+  const isHidden = optimistic.isVisible !== undefined ? !optimistic.isVisible : market.adminHidden;
+  const isSuspended = optimistic.suspended !== undefined ? optimistic.suspended : market.status === "SUSPENDED";
 
   // Color bar at top of card
   const statusColor = isDisabled
@@ -489,6 +510,8 @@ function MarketCard({ market }: { market: any }) {
         : "bg-green-500";
 
   const handleToggle = (field: string, value: boolean) => {
+    // Immediately update UI optimistically
+    setOptimistic((prev) => ({ ...prev, [field]: value }));
     setPendingField(field);
     updateMarket.mutate(
       {
@@ -499,7 +522,17 @@ function MarketCard({ market }: { market: any }) {
         bettingType: market.bettingType || "ODDS",
         [field]: value,
       },
-      { onSettled: () => setPendingField(null) }
+      {
+        onSettled: () => setPendingField(null),
+        onError: () => {
+          // Revert optimistic update on failure
+          setOptimistic((prev) => {
+            const next = { ...prev };
+            delete next[field];
+            return next;
+          });
+        },
+      }
     );
   };
 

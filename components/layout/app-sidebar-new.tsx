@@ -154,7 +154,7 @@ function SportAccordionItem({
         }`}
       >
         <Trophy className="h-4 w-4 flex-shrink-0" />
-        <span className="flex-1 text-left">{sport.title}</span>
+        <span className={`flex-1 text-left font-bold text-base ${isSportActive ? "text-white" : "text-black"}`}>{sport.title}</span>
         {expanded ? (
           <ChevronDown className="h-3.5 w-3.5 opacity-60" />
         ) : (
@@ -180,10 +180,10 @@ function SportAccordionItem({
                 <div key={series.id}>
                   <button
                     onClick={() => toggleSeries(series.id)}
-                    className={`w-full flex items-center gap-2 px-2.5 py-2 text-xs font-medium transition-colors cursor-pointer border-b border-gray-100 ${
+                    className={`w-full flex items-center gap-2 px-2.5 py-2 text-sm transition-colors cursor-pointer border-b border-gray-100 ${
                       isSeriesActive
-                        ? "bg-[#174b73]/10 text-[#174b73] font-semibold"
-                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                        ? "bg-[#174b73]/10 text-[#174b73] font-bold"
+                        : "text-black font-bold hover:bg-gray-50"
                     }`}
                   >
                     <span className="flex-1 text-left truncate">{series.name}</span>
@@ -210,17 +210,17 @@ function SportAccordionItem({
                           <button
                             key={matchId}
                             onClick={() => router.push(`/sports/${sport.basePath}/${series.id}/${matchId}`)}
-                            className={`w-full text-left px-2.5 py-1.5 text-[11px] transition-colors cursor-pointer border-b border-gray-100 ${
+                            className={`w-full text-left px-2.5 py-1.5 text-xs transition-colors cursor-pointer border-b border-gray-100 ${
                               isMatchActive
-                                ? "bg-[#174b73]/10 text-[#174b73] font-semibold"
-                                : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+                                ? "bg-[#174b73]/10 text-[#174b73] font-bold"
+                                : "text-black font-bold hover:bg-gray-50"
                             }`}
                             title={matchName}
                           >
                             {team2 ? (
                               <div className="flex flex-col leading-tight">
                                 <span className="truncate">{team1}</span>
-                                <span className="truncate text-[10px] opacity-70">v {team2}</span>
+                                <span className="truncate text-[11px] opacity-80">v {team2}</span>
                               </div>
                             ) : (
                               <span className="truncate block">{matchName}</span>
@@ -406,7 +406,7 @@ export function AppSidebar() {
                   ].map(({ label, icon: Icon }) => (
                     <button
                       key={label}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium bg-[#174b73] hover:bg-[#0c314d] text-white transition-colors cursor-pointer"
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-bold bg-[#174b73] hover:bg-[#0c314d] text-white transition-colors cursor-pointer"
                     >
                       <Icon className="h-4 w-4 flex-shrink-0" />
                       <span className="flex-1 text-left">{label}</span>
@@ -452,8 +452,8 @@ export function AppSidebar() {
                     <button
                       key={game.title}
                       onClick={() => router.push(game.href)}
-                      className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors cursor-pointer border-b border-gray-100 ${
-                        pathname.startsWith(game.href) ? "bg-[#174b73] text-white" : "text-gray-700 hover:bg-gray-50"
+                      className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold transition-colors cursor-pointer border-b border-gray-100 ${
+                        pathname.startsWith(game.href) ? "bg-[#174b73] text-white" : "text-black hover:bg-gray-50"
                       }`}
                     >
                       <Trophy className="h-4 w-4 flex-shrink-0" />
@@ -474,7 +474,7 @@ export function AppSidebar() {
                   ].map(({ label, icon: Icon }) => (
                     <button
                       key={label}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium bg-[#174b73] hover:bg-[#0c314d] text-white transition-colors cursor-pointer"
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-bold bg-[#174b73] hover:bg-[#0c314d] text-white transition-colors cursor-pointer"
                     >
                       <Icon className="h-4 w-4 flex-shrink-0" />
                       <span className="flex-1 text-left">{label}</span>
@@ -500,7 +500,7 @@ export function AppSidebar() {
                           >
                             <div className="relative flex items-center w-full gap-3">
                               <item.icon className={`h-5 w-5 flex-shrink-0 ${isActive ? "text-white" : "text-gray-500"}`} />
-                              <span className={`flex-1 text-sm font-medium ${isActive ? "text-white" : "text-gray-700"}`}>
+                              <span className={`flex-1 text-sm font-bold ${isActive ? "text-white" : "text-black"}`}>
                                 {item.title}
                               </span>
                             </div>
@@ -514,7 +514,7 @@ export function AppSidebar() {
                 {/* Sports section */}
                 <div className="mb-4">
                   <div className="mb-2 px-2">
-                    <h3 className="text-xs font-semibold text-[#174b73] uppercase tracking-wider">Sports</h3>
+                    <h3 className="text-xs font-bold text-[#174b73] uppercase tracking-wider">Sports</h3>
                   </div>
                   <div className="space-y-0.5">
                     {sports.map((sport) => (
@@ -529,10 +529,10 @@ export function AppSidebar() {
                       <button
                         key={game.title}
                         onClick={() => router.push(game.href)}
-                        className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer ${
+                        className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 cursor-pointer ${
                           pathname.startsWith(game.href)
                             ? "bg-[#174b73] text-white shadow-md"
-                            : "text-gray-700 hover:bg-gray-100"
+                            : "text-black hover:bg-gray-100"
                         }`}
                       >
                         <Trophy className="h-4 w-4 flex-shrink-0" />
@@ -548,7 +548,7 @@ export function AppSidebar() {
                     <div key={group.title} className="mb-4">
                       {group.title && (
                         <div className="mb-2 px-2">
-                          <h3 className="text-xs font-semibold text-[#174b73] uppercase tracking-wider">
+                          <h3 className="text-xs font-bold text-[#174b73] uppercase tracking-wider">
                             {group.title}
                           </h3>
                         </div>
@@ -571,7 +571,7 @@ export function AppSidebar() {
                               >
                                 <div className="relative flex items-center w-full gap-3">
                                   <item.icon className={`h-5 w-5 flex-shrink-0 ${isLogoutItem ? "text-red-500" : isActive ? "text-white" : "text-gray-500"}`} />
-                                  <span className={`flex-1 text-sm font-medium ${isLogoutItem ? "text-red-600" : isActive ? "text-white" : "text-gray-700"}`}>
+                                  <span className={`flex-1 text-sm font-bold ${isLogoutItem ? "text-red-600" : isActive ? "text-white" : "text-black"}`}>
                                     {item.title}
                                   </span>
                                 </div>

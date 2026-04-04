@@ -25,6 +25,7 @@ import {
   Activity,
   LayoutList,
   FileText,
+  RefreshCw,
 } from "lucide-react";
 
 export type NavItem = {
@@ -52,6 +53,7 @@ export function getNavigation(prefix: string): NavItem[] {
       icon: Trophy,
       subItems: [
         { name: "Sports Games", href: `${prefix}/sports-games`, icon: Trophy },
+        { name: "Fetch Competitions", href: `${prefix}/fetch-competitions`, icon: RefreshCw },
         { name: "Custom Markets", href: `${prefix}/custom-markets`, icon: Wrench },
         { name: "Matka", href: `${prefix}/matka`, icon: Dice6 },
       ],
