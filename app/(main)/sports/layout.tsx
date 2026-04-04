@@ -24,7 +24,7 @@ export default function SportsLayout({
 
         {/* Right Sidebar - Bet Slip (only on match pages, hidden on small screens) */}
         {isMatchPage && matchId && (
-          <div className="hidden lg:flex shrink-0 h-full w-[280px] xl:w-[320px] bg-white rounded-xl overflow-hidden">
+          <div className="hidden lg:flex shrink-0 h-full w-[320px] xl:w-[380px] bg-white rounded-xl overflow-hidden">
             <BetSlip matchId={matchId} />
           </div>
         )}

@@ -24,7 +24,7 @@ export function BetSlip({ matchId }: { matchId: string }) {
     <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5 mb-2 flex-shrink-0">
       <button
         onClick={() => setActiveTab("match")}
-        className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-all cursor-pointer ${
+        className={`flex-1 text-sm font-bold py-2 rounded-md transition-all cursor-pointer ${
           activeTab === "match"
             ? "bg-[#174b73] text-white shadow-sm"
             : "text-gray-500 hover:text-gray-800"
@@ -34,7 +34,7 @@ export function BetSlip({ matchId }: { matchId: string }) {
       </button>
       <button
         onClick={() => setActiveTab("all")}
-        className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-all cursor-pointer ${
+        className={`flex-1 text-sm font-bold py-2 rounded-md transition-all cursor-pointer ${
           activeTab === "all"
             ? "bg-[#174b73] text-white shadow-sm"
             : "text-gray-500 hover:text-gray-800"
@@ -62,12 +62,12 @@ export function BetSlip({ matchId }: { matchId: string }) {
       <EmptyState message="No bet found" />
     ) : (
       <div className="flex-1 min-h-0 overflow-y-auto rounded-xl border border-gray-200 scrollbar-hide">
-        <table className="w-full text-sm border-collapse table-fixed">
+        <table className="w-full text-base border-collapse table-fixed">
           <thead className="sticky top-0 z-10">
             <tr className="bg-[#174b73] text-white font-bold">
-              <th className="text-left py-2 px-2 w-auto">Matched Bet</th>
-              <th className="text-center py-2 px-1 w-14">Odds</th>
-              <th className="text-right py-2 px-2 w-16">Stake</th>
+              <th className="text-left py-2.5 px-3 w-auto text-sm">Matched Bet</th>
+              <th className="text-center py-2.5 px-1 w-16 text-sm">Odds</th>
+              <th className="text-right py-2.5 px-3 w-20 text-sm">Stake</th>
             </tr>
           </thead>
           <tbody>
@@ -139,14 +139,16 @@ export function BetSlip({ matchId }: { matchId: string }) {
 /** Table row for current (placed) bets: Matched Bet (left), Odds (center), Stake (right); Back = green, Lay = maroon */
 function CurrentBetTableRow({ bet }: { bet: any }) {
   const isFancy = bet.marketType === "fancy";
+  const oddsFormatted = bet.odds != null ? Number(bet.odds) : "-";
   const matchedBetLabel = isFancy
-    ? bet.marketName || bet.selectionName || "Bet"
+    ? `${bet.marketName || bet.selectionName || "Bet"} / ${Number(oddsFormatted) *100}`
     : bet.selectionName && bet.marketName
       ? `${bet.selectionName} - ${bet.marketName}`
       : bet.selectionName || bet.marketName || "Bet";
   const stakeFormatted =
     bet.stake != null ? Number(bet.stake).toFixed(2) : "-";
-  const oddsFormatted = bet.odds != null ? String(Number(bet.odds)) : "-";
+  const userDetail = isFancy ? (bet.details || []).find((d: any) => d.isUserSelection) || (bet.details || [])[0] : null;
+  const lineFormatted = userDetail?.run != null ? String(Number(userDetail.run)) : "-";
   const isLay = bet.betType === 1 || bet.betType === "lay";
   const rowBg = isLay
     ? "bg-pink-300 text-gray-800"
@@ -155,7 +157,7 @@ function CurrentBetTableRow({ bet }: { bet: any }) {
   return (
     <tr className={rowBg + " border-b border-gray-200"} >
       <td className="py-2 px-2 text-left text-xs truncate max-w-0" title={matchedBetLabel}>{matchedBetLabel}</td>
-      <td className="py-2 px-1 text-center text-xs font-medium">{oddsFormatted}</td>
+      <td className="py-2 px-1 text-center text-xs font-medium">{isFancy ? lineFormatted : oddsFormatted}</td>
       <td className="py-2 px-2 text-right text-xs font-medium">{stakeFormatted}</td>
     </tr>
   );

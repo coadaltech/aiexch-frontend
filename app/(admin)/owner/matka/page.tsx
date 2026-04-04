@@ -9,7 +9,6 @@ import {
   Edit,
   Trash2,
   Loader2,
-  Trophy,
   GripVertical,
 } from "lucide-react";
 import {
@@ -20,7 +19,6 @@ import {
 import { useConfirm } from "@/hooks/useConfirm";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { MatkaShiftModal } from "./shift-modal";
-import { MatkaResultModal } from "./result-modal";
 
 export default function OwnerMatkaPage() {
   const [dateFilter, setDateFilter] = useState<string>("");
@@ -34,9 +32,6 @@ export default function OwnerMatkaPage() {
 
   const [shiftModalOpen, setShiftModalOpen] = useState(false);
   const [editShift, setEditShift] = useState<any>(null);
-  const [resultModalOpen, setResultModalOpen] = useState(false);
-  const [resultShift, setResultShift] = useState<any>(null);
-
   // Drag and drop state
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -115,11 +110,6 @@ export default function OwnerMatkaPage() {
       "Are you sure you want to delete this shift? This action cannot be undone.",
       () => deleteMutation.mutate(id)
     );
-  };
-
-  const handleSetResult = (shift: any) => {
-    setResultShift(shift);
-    setResultModalOpen(true);
   };
 
   const formatDate = (d: string) =>
@@ -216,27 +206,9 @@ export default function OwnerMatkaPage() {
                           Next Day
                         </Badge>
                       )}
-                      {shift.result !== null && shift.result !== undefined ? (
-                        <Badge className="bg-amber-600 text-white text-[10px] px-1.5 py-0">
-                          Result: {shift.result}
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-muted-foreground">
-                          Pending
-                        </Badge>
-                      )}
                     </div>
                     <div className="flex-1" />
                     <div className="flex gap-1 shrink-0">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleSetResult(shift)}
-                        title="Set Result"
-                        className="h-8 w-8 p-0 text-amber-500 hover:bg-amber-500/10"
-                      >
-                        <Trophy className="h-4 w-4" />
-                      </Button>
                       <Button
                         size="sm"
                         variant="ghost"
@@ -322,15 +294,6 @@ export default function OwnerMatkaPage() {
           setEditShift(null);
         }}
         shift={editShift}
-      />
-
-      <MatkaResultModal
-        open={resultModalOpen}
-        onClose={() => {
-          setResultModalOpen(false);
-          setResultShift(null);
-        }}
-        shift={resultShift}
       />
 
       <ConfirmDialog
