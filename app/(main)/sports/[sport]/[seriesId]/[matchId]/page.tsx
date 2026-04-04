@@ -1173,7 +1173,9 @@ export default function MatchPage() {
                   </div>
                 </div>
                 <div className="divide-y divide-gray-100">
-                  {market.runners.map((runner: any) => (
+                  {market.runners.map((runner: any) => {
+                    const isRunnerSuspended = runner.status === "SUSPENDED" || runner.status === "REMOVED" || market.status === "SUSPENDED" || !!market.sportingEvent;
+                    return (
                     <div
                       key={runner.selectionId}
                       className="px-2 sm:px-3 grid grid-cols-3 gap-1 sm:gap-2 items-center min-h-0 bg-white"
@@ -1186,6 +1188,14 @@ export default function MatchPage() {
                         <div className="flex-1 flex flex-col items-end min-w-0">
                           <div className="gap-1 flex justify-end items-center flex-wrap">
                             {(() => {
+                              if (isRunnerSuspended) {
+                                return Array(3).fill(null).map((_, posIdx) => (
+                                  <button key={`back-suspended-${posIdx}`} className={`${oddsBtnClass} bg-back-disabled w-24`} disabled>
+                                    <span className={oddsPriceClass}>0</span>
+                                    <span className={oddsSizeClass}>0</span>
+                                  </button>
+                                ));
+                              }
                               const backItems = runner.back || [];
                               const positions = Array(3).fill(null);
                               backItems.forEach((item: any, idx: number) => {
@@ -1219,36 +1229,47 @@ export default function MatchPage() {
                         </div>
                         <div className="flex-1 flex flex-col items-start min-w-0 ">
                           <div className="gap-1 flex justify-start items-center flex-wrap ">
-                            {runner.lay && runner.lay.length > 0
-                              ? runner.lay.map((layItem: any, layIdx: number) => (
-                                  <button
-                                    key={layIdx}
-                                    onClick={() => handleLayClick(
-                                      market,
-                                      runner,
-                                      toDecimalOdds(layItem.price),
-                                      null,
-                                      layIdx
-                                    )}
-                                    className={`${oddsBtnClass} transition-colors w-24 ${layIdx === 0 ? "bg-lay hover:bg-lay-hover" : "bg-white hover:bg-lay/30 border border-lay/50"}`}
-                                  >
-                                    <span className={oddsPriceClass}>{layItem.price ? layItem.price : "0"}</span>
-                                    <span className={oddsSizeClass}>{formatAmount(layItem.size)}</span>
+                            {isRunnerSuspended
+                              ? Array(3).fill(null).map((_, idx) => (
+                                  <button key={`lay-suspended-${idx}`} className={`${oddsBtnClass} bg-lay-disabled w-24`} disabled>
+                                    <span className={oddsPriceClass}>0</span>
+                                    <span className={oddsSizeClass}>0</span>
                                   </button>
                                 ))
-                              : null}
-                            {Array.from({ length: Math.max(0, 3 - (runner.lay?.length || 0)) }).map((_, emptyIdx) => (
-                              <button key={`empty-lay-${emptyIdx}`} className={`${oddsBtnClass} bg-lay-disabled w-24`} disabled>
-                                <span className={oddsPriceClass}>-</span>
-                                <span className={oddsSizeClass}>-</span>
-                              </button>
-                            ))}
+                              : <>
+                                {runner.lay && runner.lay.length > 0
+                                  ? runner.lay.map((layItem: any, layIdx: number) => (
+                                      <button
+                                        key={layIdx}
+                                        onClick={() => handleLayClick(
+                                          market,
+                                          runner,
+                                          toDecimalOdds(layItem.price),
+                                          null,
+                                          layIdx
+                                        )}
+                                        className={`${oddsBtnClass} transition-colors w-24 ${layIdx === 0 ? "bg-lay hover:bg-lay-hover" : "bg-white hover:bg-lay/30 border border-lay/50"}`}
+                                      >
+                                        <span className={oddsPriceClass}>{layItem.price ? layItem.price : "0"}</span>
+                                        <span className={oddsSizeClass}>{formatAmount(layItem.size)}</span>
+                                      </button>
+                                    ))
+                                  : null}
+                                {Array.from({ length: Math.max(0, 3 - (runner.lay?.length || 0)) }).map((_, emptyIdx) => (
+                                  <button key={`empty-lay-${emptyIdx}`} className={`${oddsBtnClass} bg-lay-disabled w-24`} disabled>
+                                    <span className={oddsPriceClass}>-</span>
+                                    <span className={oddsSizeClass}>-</span>
+                                  </button>
+                                ))}
+                              </>
+                            }
                           </div>
                         </div>
                         {backLayOverlay(market)}
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
                 {quickBet &&
                   quickBet.marketId === market.marketId &&
@@ -1296,7 +1317,9 @@ export default function MatchPage() {
                   </div>
                 </div>
                 <div className="divide-y divide-gray-100">
-                  {market.runners.map((runner: any) => (
+                  {market.runners.map((runner: any) => {
+                    const isRunnerSuspended = runner.status === "SUSPENDED" || runner.status === "REMOVED" || market.status === "SUSPENDED" || !!market.sportingEvent;
+                    return (
                     <div
                       key={runner.selectionId}
                       className="px-2 sm:px-3 py-1 grid grid-cols-3 gap-1 sm:gap-2 items-center min-h-0 bg-white"
@@ -1309,6 +1332,14 @@ export default function MatchPage() {
                         <div className="flex-1 flex flex-col items-end min-w-0">
                           <div className="gap-1 flex justify-end items-center flex-wrap">
                             {(() => {
+                              if (isRunnerSuspended) {
+                                return Array(3).fill(null).map((_, posIdx) => (
+                                  <button key={`back-suspended-${posIdx}`} className={`${oddsBtnClass} bg-back-disabled w-24`} disabled>
+                                    <span className={oddsPriceClass}>0</span>
+                                    <span className={oddsSizeClass}>0</span>
+                                  </button>
+                                ));
+                              }
                               const backItems = runner.back || [];
                               const positions = Array(3).fill(null);
                               backItems.forEach((item: any, idx: number) => {
@@ -1342,36 +1373,47 @@ export default function MatchPage() {
                         </div>
                         <div className="flex-1 flex flex-col items-start min-w-0">
                           <div className="gap-1 flex justify-start items-center flex-wrap">
-                            {runner.lay && runner.lay.length > 0
-                              ? runner.lay.map((layItem: any, layIdx: number) => (
-                                  <button
-                                    key={layIdx}
-                                    onClick={() => handleLayClick(
-                                      market,
-                                      runner,
-                                      toDecimalOdds(layItem.price),
-                                      null,
-                                      layIdx
-                                    )}
-                                    className={`${oddsBtnClass} transition-colors w-24 ${layIdx === 0 ? "bg-lay hover:bg-lay-hover" : "bg-white hover:bg-lay/30 border border-lay/50"}`}
-                                  >
-                                    <span className={oddsPriceClass}>{layItem.price ? layItem.price : "0"}</span>
-                                    <span className={oddsSizeClass}>{formatAmount(layItem.size)}</span>
+                            {isRunnerSuspended
+                              ? Array(3).fill(null).map((_, idx) => (
+                                  <button key={`lay-suspended-${idx}`} className={`${oddsBtnClass} bg-lay-disabled w-24`} disabled>
+                                    <span className={oddsPriceClass}>0</span>
+                                    <span className={oddsSizeClass}>0</span>
                                   </button>
                                 ))
-                              : null}
-                            {Array.from({ length: Math.max(0, 3 - (runner.lay?.length || 0)) }).map((_, emptyIdx) => (
-                              <button key={`empty-lay-${emptyIdx}`} className={`${oddsBtnClass} bg-lay-disabled w-24`} disabled>
-                                <span className={oddsPriceClass}>-</span>
-                                <span className={oddsSizeClass}>-</span>
-                              </button>
-                            ))}
+                              : <>
+                                {runner.lay && runner.lay.length > 0
+                                  ? runner.lay.map((layItem: any, layIdx: number) => (
+                                      <button
+                                        key={layIdx}
+                                        onClick={() => handleLayClick(
+                                          market,
+                                          runner,
+                                          toDecimalOdds(layItem.price),
+                                          null,
+                                          layIdx
+                                        )}
+                                        className={`${oddsBtnClass} transition-colors w-24 ${layIdx === 0 ? "bg-lay hover:bg-lay-hover" : "bg-white hover:bg-lay/30 border border-lay/50"}`}
+                                      >
+                                        <span className={oddsPriceClass}>{layItem.price ? layItem.price : "0"}</span>
+                                        <span className={oddsSizeClass}>{formatAmount(layItem.size)}</span>
+                                      </button>
+                                    ))
+                                  : null}
+                                {Array.from({ length: Math.max(0, 3 - (runner.lay?.length || 0)) }).map((_, emptyIdx) => (
+                                  <button key={`empty-lay-${emptyIdx}`} className={`${oddsBtnClass} bg-lay-disabled w-24`} disabled>
+                                    <span className={oddsPriceClass}>-</span>
+                                    <span className={oddsSizeClass}>-</span>
+                                  </button>
+                                ))}
+                              </>
+                            }
                           </div>
                         </div>
                         {backLayOverlay(market)}
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
                 {quickBet &&
                   quickBet.marketId === market.marketId && (
@@ -1410,7 +1452,9 @@ export default function MatchPage() {
               market.bettingType == "LINE" && (
                 <div key={market.marketId} className="border-b border-gray-100 last:border-b-0">
                   <div className="divide-y divide-gray-100">
-                    {market.runners.map((runner: any) => (
+                    {market.runners.map((runner: any) => {
+                      const isRunnerSuspended = runner.status === "SUSPENDED" || runner.status === "REMOVED" || market.status === "SUSPENDED" || !!market.sportingEvent;
+                      return (
                       <div
                         key={runner.selectionId}
                         className="px-2 sm:px-3  grid grid-cols-3 gap-1 sm:gap-2 items-center min-h-0 bg-white"
@@ -1425,7 +1469,12 @@ export default function MatchPage() {
                         <div className="col-span-2 gap-2 relative flex min-h-[2.25rem]">
                           <div className="flex-1 flex flex-col items-end min-w-0">
                             <div className="gap-1 flex justify-end items-center flex-wrap">
-                              {runner.lay && runner.lay.length > 0 ? (
+                              {isRunnerSuspended ? (
+                                <button className={`${oddsBtnClass} bg-back-disabled w-24`} disabled>
+                                  <span className={oddsPriceClass}>0</span>
+                                  <span className={oddsSizeClass}>0</span>
+                                </button>
+                              ) : runner.lay && runner.lay.length > 0 ? (
                                 runner.lay.map((layItem: any, layIdx: number) => (
                                   <button
                                     key={layIdx}
@@ -1448,7 +1497,12 @@ export default function MatchPage() {
                           </div>
                           <div className="flex-1 flex items-center justify-between gap-1 min-w-0">
                             <div className="gap-1 flex justify-start items-center flex-wrap min-w-0">
-                              {runner.back && runner.back.length > 0 ? (
+                              {isRunnerSuspended ? (
+                                <button className={`${oddsBtnClass} bg-lay-disabled w-24`} disabled>
+                                  <span className={oddsPriceClass}>0</span>
+                                  <span className={oddsSizeClass}>0</span>
+                                </button>
+                              ) : runner.back && runner.back.length > 0 ? (
                                 runner.back.map((backItem: any, backIdx: number) => (
                                   <button
                                     key={backIdx}
@@ -1476,7 +1530,8 @@ export default function MatchPage() {
                           {backLayOverlay(market)}
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                   {quickBet && quickBet.marketId === market.marketId && quickBet.bettingType === "LINE" && (
                     <QuickBetPanel
