@@ -170,7 +170,7 @@ function QuickBetPanel({
               type="button"
               disabled={isDelaying}
               onClick={() => onStakeChange(String(btn.value))}
-              className="px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-semibold rounded bg-sports-header hover:bg-sports-header/80 text-white transition-colors disabled:opacity-50"
+              className="px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-semibold rounded bg-gradient-to-b from-sports-header to-sports-header/80 hover:from-sports-header/90 hover:to-sports-header/70 text-white shadow-sm transition-all disabled:opacity-50"
             >
               {btn.label}
             </button>
@@ -182,7 +182,7 @@ function QuickBetPanel({
             type="button"
             onClick={() => onPlaceBet(stake, displayOdds)}
             disabled={!canPlace}
-            className="min-w-[84px] sm:min-w-[96px] px-4 sm:px-5 py-1.5 sm:py-2 rounded text-xs sm:text-sm font-semibold bg-live hover:bg-cta-deposit-from-hover disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors flex items-center justify-center gap-1.5"
+            className="min-w-[84px] sm:min-w-[96px] px-4 sm:px-5 py-1.5 sm:py-2 rounded text-xs sm:text-sm font-semibold bg-gradient-to-b from-cta-deposit-from to-cta-deposit-to hover:from-cta-deposit-from-hover hover:to-cta-deposit-to-hover shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-white transition-all flex items-center justify-center gap-1.5"
           >
             {isLoading ? (
               <>
@@ -199,7 +199,7 @@ function QuickBetPanel({
             type="button"
             onClick={isDelaying ? onCancelDelay : onClose}
             disabled={isLoading}
-            className="px-4 sm:px-5 py-1.5 sm:py-2 rounded text-xs sm:text-sm font-semibold bg-danger-strong hover:bg-danger-strong/80 disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors"
+            className="px-4 sm:px-5 py-1.5 sm:py-2 rounded text-xs sm:text-sm font-semibold bg-gradient-to-b from-danger-strong to-danger-strong/80 hover:from-danger-strong/90 hover:to-danger-strong/70 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-white transition-all"
           >
             Cancel
           </button>
@@ -224,6 +224,12 @@ function toBettingType(bettingType: string): string {
 // Values < 10 are already decimal odds (e.g. 1.50, 2.40) → pass through as-is.
 function toDecimalOdds(price: number): number {
   if (price >= 10 && price < 100) return price / 100 + 1;
+  if (price >= 100) return price / 100;
+  return price;
+}
+
+function toDecimalfancyOdds(price: number): number {
+  if (price >= 10 && price < 100) return price / 100;
   if (price >= 100) return price / 100;
   return price;
 }
@@ -500,7 +506,8 @@ export default function MatchPage() {
     if (!item) return undefined;
     const rawPrice = item?.price ?? item?.[0] ?? null;
     if (rawPrice == null) return undefined;
-    return String(toDecimalOdds(parseFloat(String(rawPrice))));
+    const convertOdds = quickBet.bettingType === "LINE" ? toDecimalfancyOdds : toDecimalOdds;
+    return String(convertOdds(parseFloat(String(rawPrice))));
   }, [markets, quickBet]);
 
   // Filter out admin-disabled/hidden markets for user-facing view
@@ -612,6 +619,7 @@ export default function MatchPage() {
   };
 
   const handleBackClick = (market: any, runner: any, odds: number | string, run?: string | null, priceIndex: number = 0) => {
+    console.log(odds)
     const o = typeof odds === "number" ? odds : parseFloat(String(odds));
     if (o === 0 && odds !== "0") return;
     // Block if market is suspended or ball running
@@ -636,6 +644,7 @@ export default function MatchPage() {
   };
 
   const handleLayClick = (market: any, runner: any, odds: number | string, run?: string | null, priceIndex: number = 0) => {
+    console.log(odds)
     const o = typeof odds === "number" ? odds : parseFloat(String(odds));
     if (o === 0 && odds !== "0") return;
     // Block if market is suspended or ball running
@@ -676,8 +685,9 @@ export default function MatchPage() {
       if (!item) return null;
       const rawPrice = item?.price ?? item?.[0] ?? null;
       if (rawPrice == null) return null;
-      // Convert to decimal odds to match the stored format
-      return String(toDecimalOdds(parseFloat(String(rawPrice))));
+      // Convert to decimal odds — fancy/LINE markets use /100 only (no +1)
+      const convertOdds = liveMarket.bettingType === "LINE" ? toDecimalfancyOdds : toDecimalOdds;
+      return String(convertOdds(parseFloat(String(rawPrice))));
     },
     []
   );
@@ -977,6 +987,9 @@ export default function MatchPage() {
   }
 
   if (pageStatus === "no-data") {
+    const eventDate = matchFromSeries?.openDate || matchInfo?.startTime;
+    const isEventEnded = eventDate && new Date(eventDate) < new Date();
+
     return (
       <div className="px-2 py-1">
         {/* Show match header if available */}
@@ -990,21 +1003,37 @@ export default function MatchPage() {
                     .join(" - ")}
                 </h1>
               </div>
-              {(matchFromSeries?.openDate || matchInfo?.startTime) && (
+              {eventDate && (
                 <span className="text-gray-500 text-xs sm:text-sm shrink-0">
-                  {formatDate(matchFromSeries?.openDate || matchInfo?.startTime)}
+                  {formatDate(eventDate)}
                 </span>
               )}
             </div>
           </div>
         )}
-        <div className="rounded-lg bg-gray-50 flex items-center justify-center py-16">
-          <div className="text-center max-w-md">
-            <h2 className="text-lg font-semibold text-gray-800 mb-2">No Active Markets</h2>
-            <p className="text-gray-500 text-sm mb-1">This match currently has no open markets.</p>
-            <p className="text-xs text-gray-400">Markets will appear automatically when they become available.</p>
+
+        {isEventEnded ? (
+          <div className="rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center py-16">
+            <div className="text-center max-w-md px-4">
+              <div className="w-14 h-14 mx-auto bg-gray-200 rounded-full flex items-center justify-center mb-4">
+                <svg className="w-7 h-7 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+              </div>
+              <h2 className="text-lg font-semibold text-gray-800 mb-2">Event Has Ended</h2>
+              <p className="text-gray-500 text-sm mb-1">This event concluded on {formatDate(eventDate)}.</p>
+              <p className="text-xs text-gray-400">Markets are no longer available for this match.</p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="rounded-lg bg-gray-50 flex items-center justify-center py-16">
+            <div className="text-center max-w-md">
+              <h2 className="text-lg font-semibold text-gray-800 mb-2">No Active Markets</h2>
+              <p className="text-gray-500 text-sm mb-1">This match currently has no open markets.</p>
+              <p className="text-xs text-gray-400">Markets will appear automatically when they become available.</p>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -1212,7 +1241,7 @@ export default function MatchPage() {
                                       null,
                                       2 - posIdx
                                     )}
-                                    className={`${oddsBtnClass} transition-colors w-24 ${posIdx === 2 ? "bg-back hover:bg-back-hover" : "bg-white hover:bg-back/30 border border-back/50"}`}
+                                    className={`${oddsBtnClass} transition-all w-24 ${posIdx === 2 ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back shadow-sm" : "bg-white hover:bg-back/30 border border-back/50"}`}
                                   >
                                     <span className={oddsPriceClass}>{item.price}</span>
                                     <span className={oddsSizeClass}>{formatAmount(item.size)}</span>
@@ -1248,7 +1277,7 @@ export default function MatchPage() {
                                           null,
                                           layIdx
                                         )}
-                                        className={`${oddsBtnClass} transition-colors w-24 ${layIdx === 0 ? "bg-lay hover:bg-lay-hover" : "bg-white hover:bg-lay/30 border border-lay/50"}`}
+                                        className={`${oddsBtnClass} transition-all w-24 ${layIdx === 0 ? "bg-gradient-to-b from-lay to-lay-deep hover:from-lay-hover hover:to-lay shadow-sm" : "bg-white hover:bg-lay/30 border border-lay/50"}`}
                                       >
                                         <span className={oddsPriceClass}>{layItem.price ? layItem.price : "0"}</span>
                                         <span className={oddsSizeClass}>{formatAmount(layItem.size)}</span>
@@ -1322,7 +1351,7 @@ export default function MatchPage() {
                     return (
                     <div
                       key={runner.selectionId}
-                      className="px-2 sm:px-3 py-1 grid grid-cols-3 gap-1 sm:gap-2 items-center min-h-0 bg-white"
+                      className="px-2 sm:px-3 grid grid-cols-3 gap-1 sm:gap-2 items-center min-h-0 bg-white"
                     >
                       <RunnerNameCell
                         runner={runner}
@@ -1356,7 +1385,7 @@ export default function MatchPage() {
                                       null,
                                       2 - posIdx
                                     )}
-                                    className={`${oddsBtnClass} transition-colors w-24 ${posIdx === 2 ? "bg-back hover:bg-back-hover" : "bg-white hover:bg-back/30 border border-back/50"}`}
+                                    className={`${oddsBtnClass} transition-all w-24 ${posIdx === 2 ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back shadow-sm" : "bg-white hover:bg-back/30 border border-back/50"}`}
                                   >
                                     <span className={oddsPriceClass}>{item.price}</span>
                                     <span className={oddsSizeClass}>{formatAmount(item.size)}</span>
@@ -1392,7 +1421,7 @@ export default function MatchPage() {
                                           null,
                                           layIdx
                                         )}
-                                        className={`${oddsBtnClass} transition-colors w-24 ${layIdx === 0 ? "bg-lay hover:bg-lay-hover" : "bg-white hover:bg-lay/30 border border-lay/50"}`}
+                                        className={`${oddsBtnClass} transition-all w-24 ${layIdx === 0 ? "bg-gradient-to-b from-lay to-lay-deep hover:from-lay-hover hover:to-lay shadow-sm" : "bg-white hover:bg-lay/30 border border-lay/50"}`}
                                       >
                                         <span className={oddsPriceClass}>{layItem.price ? layItem.price : "0"}</span>
                                         <span className={oddsSizeClass}>{formatAmount(layItem.size)}</span>
@@ -1479,16 +1508,16 @@ export default function MatchPage() {
                                   <button
                                     key={layIdx}
                                     onClick={() =>
-                                      handleLayClick(market, runner, toDecimalOdds(layItem.price), String(layItem.line ?? ""), layIdx)
+                                      handleLayClick(market, runner, toDecimalfancyOdds(layItem.price), String(layItem.line ?? ""), layIdx)
                                     }
-                                    className={`${oddsBtnClass} transition-colors w-24 ${layIdx === 0 ? "bg-back hover:bg-back-hover" : "bg-white hover:bg-back/30 border border-back/50"}`}
+                                    className={`${oddsBtnClass} bg-gradient-to-b from-lay to-lay-deep hover:from-lay-hover hover:to-lay shadow-sm transition-all w-24`}
                                   >
                                     <span className={oddsPriceClass}>{layItem.line}</span>
                                     <span className={oddsSizeClass}>{formatAmount(layItem.price)}</span>
                                   </button>
                                 ))
                               ) : (
-                                <button className={`${oddsBtnClass} bg-back-disabled w-24`} disabled>
+                                <button className={`${oddsBtnClass} bg-lay-disabled w-24`} disabled>
                                   <span className={oddsPriceClass}>-</span>
                                   <span className={oddsSizeClass}>-</span>
                                 </button>
@@ -1498,7 +1527,7 @@ export default function MatchPage() {
                           <div className="flex-1 flex items-center justify-between gap-1 min-w-0">
                             <div className="gap-1 flex justify-start items-center flex-wrap min-w-0">
                               {isRunnerSuspended ? (
-                                <button className={`${oddsBtnClass} bg-lay-disabled w-24`} disabled>
+                                <button className={`${oddsBtnClass} bg-back-disabled w-24`} disabled>
                                   <span className={oddsPriceClass}>0</span>
                                   <span className={oddsSizeClass}>0</span>
                                 </button>
@@ -1507,9 +1536,9 @@ export default function MatchPage() {
                                   <button
                                     key={backIdx}
                                     onClick={() =>
-                                      handleBackClick(market, runner, toDecimalOdds(backItem.price), String(backItem.line ?? ""), backIdx)
+                                      handleBackClick(market, runner, toDecimalfancyOdds(backItem.price), String(backItem.line ?? ""), backIdx)
                                     }
-                                    className={`${oddsBtnClass} hover:bg-lay-hover transition-colors bg-lay w-24`}
+                                    className={`${oddsBtnClass} transition-all w-24 ${backIdx === 0 ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back shadow-sm" : "bg-white hover:bg-back/30 border border-back/50"}`}
                                   >
                                     <span className={oddsPriceClass}>{backItem.line}</span>
                                     <span className={oddsSizeClass}>{formatAmount(backItem.price)}</span>

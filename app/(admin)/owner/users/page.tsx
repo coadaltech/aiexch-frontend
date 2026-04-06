@@ -103,8 +103,12 @@ export default function UsersPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["owner-users"] });
       toast.success("Profile updated successfully");
+      userModal.close();
     },
-    onError: () => toast.error("Failed to update profile"),
+    onError: (error: any) => {
+      const msg = error.response?.data?.message || "Failed to update profile";
+      toast.error(msg);
+    },
   });
 
   const handleCreateUser = () => {
@@ -122,6 +126,7 @@ export default function UsersPage() {
     if (userModal.data && userModal.data.id) {
       // Edit existing user
       if (userData.type === "user") {
+        const original = userModal.data;
         const userUpdateData: any = {
           role: userData.role,
           membership: userData.membership,
@@ -130,14 +135,22 @@ export default function UsersPage() {
           downline: userData.downline ?? "0.00",
           currencyId: userData.currencyId || null,
         };
-        if (userData.accountStatus !== undefined) userUpdateData.accountStatus = userData.accountStatus;
-        if (userData.betStatus !== undefined) userUpdateData.betStatus = userData.betStatus;
+
+        // Only send status fields if they actually changed, to avoid
+        // the backend demanding currentUserPassword unnecessarily
+        const accountStatusChanged = userData.accountStatus !== undefined && userData.accountStatus !== (original.accountStatus ?? true);
+        const betStatusChanged = userData.betStatus !== undefined && userData.betStatus !== (original.betStatus ?? true);
+        if (accountStatusChanged) userUpdateData.accountStatus = userData.accountStatus;
+        if (betStatusChanged) userUpdateData.betStatus = userData.betStatus;
 
         if (userData.password && userData.password.trim()) {
           userUpdateData.password = userData.password;
         }
 
-        updateUserMutation.mutate({ id: userModal.data.id, ...userUpdateData });
+        updateUserMutation.mutate(
+          { id: userModal.data.id, ...userUpdateData },
+          { onSuccess: () => userModal.close() }
+        );
       } else if (userData.type === "profile") {
         updateProfileMutation.mutate({
           id: userModal.data.id,

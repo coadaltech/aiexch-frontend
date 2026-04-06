@@ -13,13 +13,15 @@ export default function HomeBanner() {
   }
 
   return (
-    <div className="mx-4 rounded-xl overflow-hidden border border-[#1b5785]/40 shadow-lg shadow-black/30">
+    // <div className="mx-4 bg-red-600 rounded-xl overflow-hidden border border-[#1b5785]/40 shadow-lg shadow-black/30">
+    <>
       <BannerCarousel
         banners={banners}
         height="h-[180px] sm:h-[240px] md:h-[280px]"
         autoPlay={true}
         interval={5000}
-      />
-    </div>
+        />
+        </>
+    // </div>
   );
 }

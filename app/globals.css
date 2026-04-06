@@ -137,9 +137,11 @@ th {
   /* ===== Sports / Betting ===== */
   --back: #72BBEF;
   --back-hover: #5caaee;
+  --back-deep: #4a9de0;
   --back-disabled: #3a6088;
   --lay: #f5a0b4;
   --lay-hover: #ee8da2;
+  --lay-deep: #e87a94;
   --lay-disabled: #885060;
   --sports-header: #174b73;
   --table-header: #174b73;
@@ -388,9 +390,11 @@ th {
 
   --color-back: var(--back);
   --color-back-hover: var(--back-hover);
+  --color-back-deep: var(--back-deep);
   --color-back-disabled: var(--back-disabled);
   --color-lay: var(--lay);
   --color-lay-hover: var(--lay-hover);
+  --color-lay-deep: var(--lay-deep);
   --color-lay-disabled: var(--lay-disabled);
   --color-sports-header: var(--sports-header);
   --color-table-header: var(--table-header);

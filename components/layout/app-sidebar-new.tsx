@@ -194,9 +194,21 @@ function SportAccordionItem({
                     )}
                   </button>
 
-                  {isSeriesExpanded && series.matches && series.matches.length > 0 && (
+                  {isSeriesExpanded && series.matches && series.matches.length > 0 && (() => {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const seriesNameLower = series.name?.toLowerCase().trim() || "";
+                    const upcomingMatches = series.matches.filter((match: Match) => {
+                      const matchName = (match.event?.name || (match as any).name || "").toLowerCase().trim();
+                      if (seriesNameLower && matchName === seriesNameLower) return true;
+                      const openDate = match.event?.openDate || (match as any).openDate;
+                      if (!openDate) return true;
+                      return new Date(openDate) >= today;
+                    });
+                    if (upcomingMatches.length === 0) return null;
+                    return (
                     <div className="ml-2 border-l border-gray-200 pl-2 mb-1">
-                      {series.matches.map((match: Match) => {
+                      {upcomingMatches.map((match: Match) => {
                         const matchId = match.event?.id || (match as any).id || (match as any).bfid;
                         const matchName =
                           match.event?.name || (match as any).name || (match as any).eventName ||
@@ -229,7 +241,8 @@ function SportAccordionItem({
                         );
                       })}
                     </div>
-                  )}
+                    );
+                  })()}
                 </div>
               );
             })
