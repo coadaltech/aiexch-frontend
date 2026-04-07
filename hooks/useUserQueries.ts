@@ -4,15 +4,14 @@ import { publicApi, userApi } from "@/lib/api";
 export interface StakeButton { label: string; value: number }
 
 export const DEFAULT_STAKES: StakeButton[] = [
-  { label: "100",       value: 100     },
-  { label: "500",       value: 500     },
-  { label: "1,000",     value: 1000    },
-  { label: "5,000",     value: 5000    },
-  { label: "10,000",    value: 10000   },
-  { label: "50,000",    value: 50000   },
-  { label: "1,00,000",  value: 100000  },
-  { label: "5,00,000",  value: 500000  },
-  { label: "10,00,000", value: 1000000 },
+  { label: "500",   value: 500     },
+  { label: "1K",    value: 1000    },
+  { label: "5K",    value: 5000    },
+  { label: "10K",   value: 10000   },
+  { label: "50K",   value: 50000   },
+  { label: "1L",    value: 100000  },
+  { label: "5L",    value: 500000  },
+  { label: "10L",   value: 1000000 },
 ];
 
 export const useStakeSettings = (enabled = true) => {

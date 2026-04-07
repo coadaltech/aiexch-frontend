@@ -139,16 +139,21 @@ export function BetSlip({ matchId }: { matchId: string }) {
 /** Table row for current (placed) bets: Matched Bet (left), Odds (center), Stake (right); Back = green, Lay = maroon */
 function CurrentBetTableRow({ bet }: { bet: any }) {
   const isFancy = bet.marketType === "fancy";
-  const oddsFormatted = bet.odds != null ? Number(bet.odds) : "-";
+  const capDecimals = (num: number) => {
+    const str = String(num);
+    const decimals = str.includes(".") ? str.split(".")[1].length : 0;
+    return decimals > 4 ? num.toFixed(4) : str;
+  };
+  const oddsFormatted = bet.odds != null ? capDecimals(Number(bet.odds)) : "-";
   const matchedBetLabel = isFancy
-    ? `${bet.marketName || bet.selectionName || "Bet"} / ${Number(oddsFormatted) *100}`
+    ? `${bet.marketName || bet.selectionName || "Bet"} / ${capDecimals(Number(bet.odds) * 100)}`
     : bet.selectionName && bet.marketName
       ? `${bet.selectionName} - ${bet.marketName}`
       : bet.selectionName || bet.marketName || "Bet";
   const stakeFormatted =
     bet.stake != null ? Number(bet.stake).toFixed(2) : "-";
   const userDetail = isFancy ? (bet.details || []).find((d: any) => d.isUserSelection) || (bet.details || [])[0] : null;
-  const lineFormatted = userDetail?.run != null ? String(Number(userDetail.run)) : "-";
+  const lineFormatted = userDetail?.run != null ? capDecimals(Number(userDetail.run)) : "-";
   const isLay = bet.betType === 1 || bet.betType === "lay";
   const rowBg = isLay
     ? "bg-pink-300 text-gray-800"

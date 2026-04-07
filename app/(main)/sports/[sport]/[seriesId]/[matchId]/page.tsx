@@ -35,6 +35,13 @@ type QuickBetData = {
   priceIndex: number;
 };
 
+function formatStakeLabel(value: number): string {
+  if (value >= 10000000) return `${value / 10000000}Cr`;
+  if (value >= 100000) return `${value / 100000}L`;
+  if (value >= 1000) return `${value / 1000}K`;
+  return String(value);
+}
+
 function QuickBetPanel({
   data,
   stake,
@@ -59,7 +66,15 @@ function QuickBetPanel({
   currentOdds?: string;
 }) {
   const { market, runner, odds } = data;
-  const displayOdds = currentOdds ?? odds;
+  const rawOdds = currentOdds ?? odds;
+  const displayOdds = isNaN(parseFloat(rawOdds))
+    ? rawOdds
+    : (() => {
+        const num = parseFloat(rawOdds);
+        const str = String(num);
+        const decimals = str.includes(".") ? str.split(".")[1].length : 0;
+        return decimals > 4 ? num.toFixed(4) : str;
+      })();
   const marketName = market?.marketName || "";
   const runnerName = runner?.name || "";
 
@@ -75,11 +90,14 @@ function QuickBetPanel({
     ? `Max bet is ${maxBet}`
     : null;
 
-  const resolvedStakes = stakeButtons && stakeButtons.length > 0 ? stakeButtons : DEFAULT_STAKES;
+  const resolvedStakes = (stakeButtons && stakeButtons.length > 0 ? stakeButtons : DEFAULT_STAKES).map(
+    (btn) => ({ ...btn, label: formatStakeLabel(btn.value) })
+  );
   const isDelaying = betDelayRemaining != null && betDelayRemaining > 0;
 
   const handleStake = (val: string) => {
-    const n = parseFloat(val) || 0;
+    let n = parseFloat(val) || 0;
+    if (maxBet > 0 && n > maxBet) n = maxBet;
     onStakeChange(n > 0 ? String(n) : "");
   };
 
@@ -127,10 +145,21 @@ function QuickBetPanel({
               type="number"
               value={stake}
               onChange={(e) => handleStake(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  const current = parseFloat(stake) || 0;
+                  handleStake(String(current === 0 ? 500 : current + 500));
+                } else if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  handleStake(String(Math.max(0, (parseFloat(stake) || 0) - 500)));
+                }
+              }}
               placeholder="0"
               autoFocus
               disabled={isDelaying}
-              className={`w-20 sm:w-24 bg-gray-50 text-gray-900 text-sm sm:text-base font-bold py-1.5 px-2 text-center border rounded focus:ring-1 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+              style={{ width: `${Math.max(7, (stake?.length || 1) + 3)}ch` }}
+              className={`min-w-[5rem] sm:min-w-[6rem] bg-gray-50 text-gray-900 text-sm sm:text-base font-bold py-1.5 px-2 text-center border rounded focus:ring-1 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-[width] duration-150 ${
                 stakeError
                   ? "border-red-400 focus:ring-red-400"
                   : "border-gray-300 focus:ring-[#174b73]"
@@ -140,7 +169,10 @@ function QuickBetPanel({
               <button
                 type="button"
                 disabled={isDelaying}
-                onClick={() => handleStake(String((parseFloat(stake) || 0) + 1))}
+                onClick={() => {
+                  const current = parseFloat(stake) || 0;
+                  handleStake(String(current === 0 ? 500 : current + 500));
+                }}
                 className="bg-gray-100 text-gray-600 px-1 py-0.5 text-[10px] hover:bg-gray-200 border border-gray-300 rounded-t disabled:opacity-50"
               >
                 ▲
@@ -148,7 +180,7 @@ function QuickBetPanel({
               <button
                 type="button"
                 disabled={isDelaying}
-                onClick={() => handleStake(String(Math.max(0, (parseFloat(stake) || 0) - 1)))}
+                onClick={() => handleStake(String(Math.max(0, (parseFloat(stake) || 0) - 500)))}
                 className="bg-gray-100 text-gray-600 px-1 py-0.5 text-[10px] hover:bg-gray-200 border border-gray-300 border-t-0 rounded-b disabled:opacity-50"
               >
                 ▼
@@ -509,6 +541,39 @@ export default function MatchPage() {
     const convertOdds = quickBet.bettingType === "LINE" ? toDecimalfancyOdds : toDecimalOdds;
     return String(convertOdds(parseFloat(String(rawPrice))));
   }, [markets, quickBet]);
+
+  // Preview exposure: calculate what exposure would look like if the current quick bet were placed
+  const previewExposure = useMemo(() => {
+    if (!quickBet) return null;
+    const stakeNum = parseFloat(quickBetStake) || 0;
+    if (stakeNum <= 0) return null;
+
+    const { isLay, allRunners, runner, marketId, bettingType } = quickBet;
+    const oddsNum = parseFloat(liveQuickBetOdds ?? quickBet.odds) || 0;
+    if (oddsNum <= 0) return null;
+
+    // Only for odds/bookmaker markets (not fancy/session)
+    if (bettingType === "LINE") return null;
+
+    const selectedId = runner.selectionId?.toString() ?? "";
+    const existingMarket = marketExposureMap?.get(String(marketId));
+
+    const map = new Map<string, number>();
+    for (const r of allRunners) {
+      const rId = r.id;
+      const existing = existingMarket?.get(rId) ?? 0;
+
+      let betPnl: number;
+      if (isLay) {
+        betPnl = rId === selectedId ? -(stakeNum * oddsNum - stakeNum) : stakeNum;
+      } else {
+        betPnl = rId === selectedId ? (stakeNum * oddsNum - stakeNum) : -stakeNum;
+      }
+
+      map.set(rId, existing + betPnl);
+    }
+    return { marketId: String(marketId), runners: map };
+  }, [quickBet, quickBetStake, marketExposureMap, liveQuickBetOdds]);
 
   // Filter out admin-disabled/hidden markets for user-facing view
   const visibleMarkets = useMemo(
@@ -1079,8 +1144,11 @@ export default function MatchPage() {
     if (isFancy) {
       // Fancy markets: per-market worst-case P&L (not per-runner)
       pnl = fancyExposureMap?.get(String(marketId)) ?? null;
+    } else if (previewExposure && previewExposure.marketId === String(marketId)) {
+      // Show preview exposure (existing + hypothetical bet) when quick bet panel is active
+      pnl = previewExposure.runners.get(runnerId) ?? null;
     } else {
-      // Odds/bookmaker markets: per-runner P&L
+      // Odds/bookmaker markets: per-runner P&L from DB
       const marketRunners = marketExposureMap?.get(String(marketId));
       pnl = marketRunners?.get(runnerId) ?? null;
     }
