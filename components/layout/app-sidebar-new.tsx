@@ -31,6 +31,7 @@ import {
   PanelLeftOpen,
   Loader2,
   SlidersHorizontal,
+  Clock,
 } from "lucide-react";
 import { MenuGroup, MenuItem } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
@@ -253,6 +254,72 @@ function SportAccordionItem({
   );
 }
 
+/** Accordion item for Matka with Shifts / Transactions sub-tabs */
+function MatkaAccordionItem({ pathname }: { pathname: string }) {
+  const router = useRouter();
+  const isMatkaActive = pathname.startsWith("/matka");
+  const [expanded, setExpanded] = useState(isMatkaActive);
+
+  useEffect(() => {
+    if (isMatkaActive) setExpanded(true);
+  }, [isMatkaActive]);
+
+  const subTabs = [
+    { title: "Shifts", href: "/matka" },
+    { title: "Transactions", href: "/matka/transactions" },
+  ];
+
+  return (
+    <div className="border-b border-gray-100">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors cursor-pointer ${
+          isMatkaActive ? "bg-[#174b73] text-white" : "text-gray-700 hover:bg-gray-50"
+        }`}
+      >
+        <Trophy className="h-4 w-4 flex-shrink-0" />
+        <span className={`flex-1 text-left font-bold text-base ${isMatkaActive ? "text-white" : "text-black"}`}>
+          Matka
+        </span>
+        {expanded ? (
+          <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+        ) : (
+          <ChevronRight className="h-3.5 w-3.5 opacity-60" />
+        )}
+      </button>
+
+      {expanded && (
+        <div className="ml-3 border-l border-gray-200 pl-2">
+          {subTabs.map((tab) => {
+            const isActive =
+              tab.href === "/matka"
+                ? pathname === "/matka" || (pathname.startsWith("/matka/") && !pathname.startsWith("/matka/transactions"))
+                : pathname.startsWith(tab.href);
+            return (
+              <button
+                key={tab.href}
+                onClick={() => router.push(tab.href)}
+                className={`w-full flex items-center gap-2 px-2.5 py-2 text-sm transition-colors cursor-pointer border-b border-gray-100 ${
+                  isActive
+                    ? "bg-[#174b73]/10 text-[#174b73] font-bold"
+                    : "text-black font-bold hover:bg-gray-50"
+                }`}
+              >
+                {tab.title === "Shifts" ? (
+                  <Clock className="h-3.5 w-3.5 flex-shrink-0" />
+                ) : (
+                  <Receipt className="h-3.5 w-3.5 flex-shrink-0" />
+                )}
+                <span className="flex-1 text-left">{tab.title}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function AppSidebar() {
   const { isLoggedIn, logout } = useAuth();
   const router = useRouter();
@@ -456,8 +523,8 @@ export function AppSidebar() {
                   {sports.map((sport) => (
                     <SportAccordionItem key={sport.eventTypeId} sport={sport} pathname={pathname} />
                   ))}
+                  <MatkaAccordionItem pathname={pathname} />
                   {[
-                    { title: "Matka", href: "/matka" },
                     { title: "Lotry", href: "/lotry" },
                     { title: "Skil Games", href: "/skil-games" },
                     { title: "Jambo", href: "/jambo" },
@@ -533,8 +600,8 @@ export function AppSidebar() {
                     {sports.map((sport) => (
                       <SportAccordionItem key={sport.eventTypeId} sport={sport} pathname={pathname} />
                     ))}
+                    <MatkaAccordionItem pathname={pathname} />
                     {[
-                      { title: "Matka", href: "/matka" },
                       { title: "Lotry", href: "/lotry" },
                       { title: "Skil Games", href: "/skil-games" },
                       { title: "Jambo", href: "/jambo" },
