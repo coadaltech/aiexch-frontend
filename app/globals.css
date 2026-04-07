@@ -67,6 +67,8 @@ th {
 }
 
 /* ===== Dark sections (nav, header, sidebar bg) — white text ===== */
+.bg-\[\#0b1545\], .bg-\[\#142969\], .bg-\[\#1a3578\],
+.bg-\[\#101e50\], .bg-\[\#162d6a\],
 .bg-\[\#0c314d\], .bg-\[\#174b73\], .bg-\[\#1b5785\],
 .bg-\[\#0a2a42\], .bg-\[\#0f3d5e\] {
   color: #ffffff;
@@ -81,119 +83,120 @@ th {
 }
 
 :root {
-  /* ===== 1xBet India Exact Color Theme ===== */
-  --background: #0c314d;       /* 1xBet main bg deep navy */
+  /* ===== Theme: Deep Navy (#142969) + Sky Blue (#84c2f1) ===== */
+  --background: #0b1545;       /* Deepest navy background */
   --foreground: #ffffff;
-  --card: #0a2a42;             /* 1xBet card/content bg */
+  --card: #101e50;             /* Card/content bg */
   --card-foreground: #ffffff;
 
-  --primary: #79a430;          /* 1xBet lime green CTA */
-  --primary-foreground: #ffffff;
+  --primary: #84c2f1;          /* Sky blue CTA */
+  --primary-foreground: #0b1545;
 
-  --secondary: #174b73;        /* 1xBet secondary nav blue */
+  --secondary: #1a3578;        /* Mid navy */
   --secondary-foreground: #ffffff;
 
-  --muted: #0f3d5e;
-  --muted-foreground: #94b8cc;
+  --muted: #142969;
+  --muted-foreground: #8ab4d8;
 
-  --accent: #66c4ff;           /* 1xBet cyan active/hover */
-  --accent-foreground: #0c314d;
+  --accent: #84c2f1;           /* Sky blue active/hover */
+  --accent-foreground: #0b1545;
 
-  --border: #1b5785;
-  --input: #174b73;
-  --ring: #79a430;
+  --border: #1e4088;
+  --input: #1a3578;
+  --ring: #84c2f1;
 
-  --popover: #0f3d5e;
+  --popover: #162d6a;
   --popover-foreground: #ffffff;
 
   /* ===== Chart Palette ===== */
-  --chart-1: #79a430;
+  --chart-1: #84c2f1;
   --chart-2: #f06888;
-  --chart-3: #66c4ff;
-  --chart-4: #93c738;
+  --chart-3: #5ba0d0;
+  --chart-4: #a8d4f5;
   --chart-5: #f0a050;
 
-  --radius: 0.5rem;            /* curved buttons */
-  --success: #79a430;
+  --radius: 0.5rem;
+  --success: #34d399;
   --error: #f06888;
-  --info: #66c4ff;
+  --info: #84c2f1;
 
   /* ===== Sidebar ===== */
-  --sidebar: #0c314d;
+  --sidebar: #0b1545;
   --sidebar-foreground: #ffffff;
-  --sidebar-primary: #79a430;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #174b73;
+  --sidebar-primary: #84c2f1;
+  --sidebar-primary-foreground: #0b1545;
+  --sidebar-accent: #1a3578;
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #1b5785;
-  --sidebar-ring: #79a430;
+  --sidebar-border: #1e4088;
+  --sidebar-ring: #84c2f1;
 
   --header-bg: linear-gradient(
-    180deg,
-    #174b73 0%,
-    #0c314d 100%
+    90deg,
+    #142969 0%,
+    #142669 50%,
+    #84c2f1 100%
   );
 
   /* ===== Sports / Betting ===== */
-  --back: #72BBEF;
-  --back-hover: #5caaee;
-  --back-deep: #4a9de0;
-  --back-disabled: #3a6088;
+  --back: #84c2f1;
+  --back-hover: #6db4e8;
+  --back-deep: #5ba0d0;
+  --back-disabled: #3a5878;
   --lay: #f5a0b4;
   --lay-hover: #ee8da2;
   --lay-deep: #e87a94;
   --lay-disabled: #885060;
-  --sports-header: #174b73;
-  --table-header: #174b73;
+  --sports-header: #142969;
+  --table-header: #142969;
   --lay-row: #2c1822;
 
   /* ===== Navigation / Layout ===== */
-  --nav-active: #66c4ff;       /* 1xBet cyan active */
-  --nav-highlight: #79a430;
-  --sidebar-panel: #0c314d;
-  --sidebar-gradient-from: #0c314d;
-  --sidebar-gradient-to: #0a2a42;
-  --footer-bg: #103856;
+  --nav-active: #84c2f1;
+  --nav-highlight: #84c2f1;
+  --sidebar-panel: #0b1545;
+  --sidebar-gradient-from: #0b1545;
+  --sidebar-gradient-to: #101e50;
+  --footer-bg: #0e1a4a;
 
   /* ===== Button Variants ===== */
-  --btn-default: #79a430;
-  --ghost-hover: #174b73;
+  --btn-default: #142969;
+  --ghost-hover: #1a3578;
 
   /* ===== Navigation Chrome (header, dropheader, bottom-tab) ===== */
-  --nav-dark: #0c314d;
-  --nav-surface: #174b73;
-  --nav-btn: #1b5785;
-  --nav-text: #b8d4e8;
+  --nav-dark: #0b1545;
+  --nav-surface: #1a3578;
+  --nav-btn: #1e4088;
+  --nav-text: #b0cce8;
   --nav-text-secondary: #ffffff;
-  --nav-text-muted: #5888a8;
+  --nav-text-muted: #5878a8;
 
   /* ===== Dropdown / Popover Surfaces ===== */
-  --dropdown-bg: #0f3d5e;
+  --dropdown-bg: #162d6a;
 
   /* ===== Content Area (match pages, cards, tables) ===== */
-  --content-bg: #0a2a42;
+  --content-bg: #101e50;
   --content-bg-light: #ffffff;
-  --content-bg-hover: #0f3d5e;
-  --content-bg-inset: #071e30;
-  --content-border: #1b5785;
-  --content-border-light: #d8dde8;
-  --content-border-medium: #c0c8d8;
-  --content-text: #94b8cc;
-  --content-text-muted: #5c88aa;
+  --content-bg-hover: #162d6a;
+  --content-bg-inset: #091240;
+  --content-border: #1e4088;
+  --content-border-light: #d0d8e8;
+  --content-border-medium: #b8c4d8;
+  --content-text: #8ab4d8;
+  --content-text-muted: #5878a8;
 
   /* ===== CTA Gradients ===== */
-  --cta-deposit-from: #79a430;
-  --cta-deposit-to: #668a28;
-  --cta-deposit-from-hover: #93c738;
-  --cta-deposit-to-hover: #79a430;
-  --cta-login-from: #174b73;
-  --cta-login-to: #1b5785;
-  --cta-login-from-hover: #1b5785;
-  --cta-login-to-hover: #215e90;
+  --cta-deposit-from: #142969;
+  --cta-deposit-to: #84c2f1;
+  --cta-deposit-from-hover: #1a3578;
+  --cta-deposit-to-hover: #9dd0f5;
+  --cta-login-from: #142969;
+  --cta-login-to: #1a3578;
+  --cta-login-from-hover: #1a3578;
+  --cta-login-to-hover: #2a4590;
 
   /* ===== Status Indicators ===== */
-  --live: #79a430;
-  --live-text: #93c738;
+  --live: #34d399;
+  --live-text: #4ee0a8;
   --danger: #f06888;
   --danger-hover: #f8a0b4;
   --danger-strong: #e04060;
@@ -201,38 +204,38 @@ th {
   --warning-text: #f8c070;
 
   /* ===== Section / Accent ===== */
-  --section-title: #66c4ff;
-  --back-row: #071e30;
+  --section-title: #84c2f1;
+  --back-row: #091240;
 
   /* ===== Market Badges ===== */
-  --badge-odds: #4090e0;
-  --badge-bookmaker: #20b888;
+  --badge-odds: #5ba0d0;
+  --badge-bookmaker: #34d399;
   --badge-fancy: #e88030;
 
   /* ===== Matka Theme ===== */
-  --matka: #18b0a8;
-  --matka-hover: #14a098;
-  --matka-dark: #108880;
-  --matka-text: #60e8d8;
-  --matka-ring: #20c8b8;
-  --matka-input-bg: #f0f8f4;
+  --matka: #4a8ec0;
+  --matka-hover: #3d7eb0;
+  --matka-dark: #2d6898;
+  --matka-text: #84c2f1;
+  --matka-ring: #5ba0d0;
+  --matka-input-bg: #eef4fa;
   --matka-result: #e09020;
-  --matka-panna: #a888f0;
+  --matka-panna: #6a8ad0;
 
   /* ===== Decorative Accents (section headers, gradients) ===== */
   --accent-warm: #f0a050;
   --accent-warm-light: #f8b868;
-  --accent-purple: #9078f0;
-  --accent-purple-light: #a898f4;
+  --accent-purple: #6a7ae0;
+  --accent-purple-light: #8a98f0;
   --accent-pink: #e868a0;
-  --accent-emerald: #2dc898;
+  --accent-emerald: #34d399;
   --accent-emerald-light: #50e0b0;
 
   /* ===== Quick Link Gradients ===== */
-  --ql-emerald-from: #2dc898;
-  --ql-emerald-to: #20b080;
-  --ql-purple-from: #9078f0;
-  --ql-purple-to: #7c60e0;
+  --ql-emerald-from: #34d399;
+  --ql-emerald-to: #28b880;
+  --ql-purple-from: #6a7ae0;
+  --ql-purple-to: #5468d0;
   --ql-rose-from: #f06888;
   --ql-rose-to: #e04868;
   --ql-amber-from: #f0a050;
@@ -241,15 +244,15 @@ th {
   --ql-orange-to: #d06820;
 
   /* ===== Promotion Badge Colors ===== */
-  --promo-deposit: #20b888;
-  --promo-spins: #4090e0;
-  --promo-cashback: #7c60e0;
+  --promo-deposit: #34d399;
+  --promo-spins: #5ba0d0;
+  --promo-cashback: #6a7ae0;
   --promo-nodeposit: #d06820;
 
   /* ===== Quick Bet Panel ===== */
-  --quickbet-from: rgba(20, 26, 40, 0.7);
-  --quickbet-via: rgba(26, 32, 48, 0.6);
-  --quickbet-to: #141a28;
+  --quickbet-from: rgba(11, 21, 69, 0.7);
+  --quickbet-via: rgba(20, 41, 105, 0.6);
+  --quickbet-to: #0b1545;
   --quickbet-delay-bg: rgba(100, 60, 10, 0.3);
   --quickbet-delay-border: #c88830;
   --quickbet-delay-text: #f8d080;
@@ -260,13 +263,13 @@ th {
   /* ===== Status Colors (extended) ===== */
   --status-yellow: #f0c040;
   --status-yellow-dark: #d0a028;
-  --info-light: #70a8f0;
+  --info-light: #a8d4f5;
 
   /* ===== Card Component ===== */
-  --card-gradient-from: #0c314d;
-  --card-gradient-via: #0a2a42;
-  --card-gradient-to: #0c314d;
-  --card-accent-border: rgba(91, 138, 245, 0.18);
+  --card-gradient-from: #0b1545;
+  --card-gradient-via: #101e50;
+  --card-gradient-to: #0b1545;
+  --card-accent-border: rgba(132, 194, 241, 0.18);
 
   /* ===== Toast Destructive ===== */
   --toast-dest-text: #f8a0b4;
@@ -276,9 +279,13 @@ th {
 
   /* ===== Misc ===== */
   --star-color: #f0c040;
-  --skeleton-alt: #1b5785;
+  --skeleton-alt: #1e4088;
   --error-light-bg: #fef0f2;
   --error-light-border: #f8d0d8;
+
+  /* ===== Theme Gradient (for buttons & headings) ===== */
+  --theme-gradient: linear-gradient(to right, #142969, #142669, #84c2f1);
+  --theme-gradient-hover: linear-gradient(to right, #1a3578, #1a3078, #9dd0f5);
 }
 
 .light {
@@ -537,6 +544,21 @@ th {
     font-family: var(--font-roboto-condensed), "Roboto Condensed", "Helvetica Neue", Arial, sans-serif;
   }
 
+  /* ===== Theme Gradient for Buttons & Headings ===== */
+  .theme-gradient {
+    background: linear-gradient(to right, #142969, #142669, #84c2f1);
+    color: #ffffff;
+  }
+  .theme-gradient:hover {
+    background: linear-gradient(to right, #1a3578, #1a3078, #9dd0f5);
+  }
+  .theme-gradient-text {
+    background: linear-gradient(to right, #142969, #142669, #84c2f1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
   /* ===== Text color helpers for dark nav/header sections ===== */
   .text-nav {
     color: rgba(255, 255, 255, 0.9);
@@ -583,20 +605,20 @@ th {
   .sidebar-scrollbar::-webkit-scrollbar-thumb {
     background: linear-gradient(
       to bottom,
-      var(--primary),
-      rgba(124, 109, 245, 0.8)
+      #142969,
+      rgba(132, 194, 241, 0.8)
     );
     border-radius: 10px;
-    border: 1px solid rgba(91, 138, 245, 0.3);
+    border: 1px solid rgba(132, 194, 241, 0.3);
   }
 
   .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(
       to bottom,
-      var(--primary),
-      rgba(124, 109, 245, 1)
+      #142969,
+      rgba(132, 194, 241, 1)
     );
-    box-shadow: 0 0 8px rgba(91, 138, 245, 0.5);
+    box-shadow: 0 0 8px rgba(132, 194, 241, 0.5);
   }
 
   .hide-scrollbar {
@@ -626,11 +648,11 @@ th {
   @keyframes glow {
     0%,
     100% {
-      box-shadow: 0 0 20px rgba(91, 138, 245, 0.25);
+      box-shadow: 0 0 20px rgba(132, 194, 241, 0.25);
     }
     50% {
-      box-shadow: 0 0 40px rgba(91, 138, 245, 0.45),
-        0 0 60px rgba(124, 109, 245, 0.2);
+      box-shadow: 0 0 40px rgba(132, 194, 241, 0.45),
+        0 0 60px rgba(20, 41, 105, 0.3);
     }
   }
 

@@ -151,7 +151,7 @@ function SportAccordionItem({
       <button
         onClick={() => setExpanded(!expanded)}
         className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors cursor-pointer ${
-          isSportActive ? "bg-[#174b73] text-white" : "text-gray-700 hover:bg-gray-50"
+          isSportActive ? "bg-[#1a3578] text-white" : "text-gray-700 hover:bg-gray-50"
         }`}
       >
         <Trophy className="h-4 w-4 flex-shrink-0" />
@@ -183,7 +183,7 @@ function SportAccordionItem({
                     onClick={() => toggleSeries(series.id)}
                     className={`w-full flex items-center gap-2 px-2.5 py-2 text-sm transition-colors cursor-pointer border-b border-gray-100 ${
                       isSeriesActive
-                        ? "bg-[#174b73]/10 text-[#174b73] font-bold"
+                        ? "bg-[#1a3578]/10 text-[#1a3578] font-bold"
                         : "text-black font-bold hover:bg-gray-50"
                     }`}
                   >
@@ -225,7 +225,7 @@ function SportAccordionItem({
                             onClick={() => router.push(`/sports/${sport.basePath}/${series.id}/${matchId}`)}
                             className={`w-full text-left px-2.5 py-1.5 text-xs transition-colors cursor-pointer border-b border-gray-100 ${
                               isMatchActive
-                                ? "bg-[#174b73]/10 text-[#174b73] font-bold"
+                                ? "bg-[#1a3578]/10 text-[#1a3578] font-bold"
                                 : "text-black font-bold hover:bg-gray-50"
                             }`}
                             title={matchName}
@@ -274,7 +274,7 @@ function MatkaAccordionItem({ pathname }: { pathname: string }) {
       <button
         onClick={() => setExpanded(!expanded)}
         className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors cursor-pointer ${
-          isMatkaActive ? "bg-[#174b73] text-white" : "text-gray-700 hover:bg-gray-50"
+          isMatkaActive ? "bg-[#1a3578] text-white" : "text-gray-700 hover:bg-gray-50"
         }`}
       >
         <Trophy className="h-4 w-4 flex-shrink-0" />
@@ -301,7 +301,7 @@ function MatkaAccordionItem({ pathname }: { pathname: string }) {
                 onClick={() => router.push(tab.href)}
                 className={`w-full flex items-center gap-2 px-2.5 py-2 text-sm transition-colors cursor-pointer border-b border-gray-100 ${
                   isActive
-                    ? "bg-[#174b73]/10 text-[#174b73] font-bold"
+                    ? "bg-[#1a3578]/10 text-[#1a3578] font-bold"
                     : "text-black font-bold hover:bg-gray-50"
                 }`}
               >
@@ -416,7 +416,7 @@ export function AppSidebar() {
           <button
             onClick={toggleSidebar}
             title={open ? "Collapse sidebar" : "Expand sidebar"}
-            className={`p-1.5 rounded-lg text-gray-400 hover:text-[#174b73] hover:bg-gray-100 transition-colors ${!open ? "w-full flex items-center justify-center h-9" : ""}`}
+            className={`p-1.5 rounded-lg text-gray-400 hover:text-[#1a3578] hover:bg-gray-100 transition-colors ${!open ? "w-full flex items-center justify-center h-9" : ""}`}
           >
             {open
               ? <PanelLeftClose className="h-4 w-4" />
@@ -444,8 +444,8 @@ export function AppSidebar() {
                     isLogoutItem
                       ? "text-red-500 hover:bg-red-50"
                       : isActive
-                        ? "bg-[#174b73] text-white"
-                        : "text-gray-500 hover:bg-gray-100 hover:text-[#174b73]"
+                        ? "bg-[#1a3578] text-white"
+                        : "text-gray-500 hover:bg-gray-100 hover:text-[#1a3578]"
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -486,7 +486,7 @@ export function AppSidebar() {
                   ].map(({ label, icon: Icon }) => (
                     <button
                       key={label}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-bold bg-[#174b73] hover:bg-[#0c314d] text-white transition-colors cursor-pointer"
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-bold bg-gradient-to-r from-[#142969] via-[#142669] to-[#84c2f1] hover:bg-[#0b1545] text-white transition-colors cursor-pointer"
                     >
                       <Icon className="h-4 w-4 flex-shrink-0" />
                       <span className="flex-1 text-left">{label}</span>
@@ -508,7 +508,7 @@ export function AppSidebar() {
                   <button
                     onClick={() => setLiveTab("sports")}
                     className={`flex-1 py-1.5 text-xs font-bold tracking-wide transition-colors cursor-pointer ${
-                      liveTab === "sports" ? "bg-[#174b73] text-white" : "bg-gray-100 text-gray-500 hover:text-gray-800"
+                      liveTab === "sports" ? "bg-[#1a3578] text-white" : "bg-gray-100 text-gray-500 hover:text-gray-800"
                     }`}
                   >
                     SPORTS
@@ -516,7 +516,7 @@ export function AppSidebar() {
                 </div>
 
                 <div className="mb-1 px-1">
-                  <span className="text-[10px] font-bold text-[#174b73] uppercase tracking-widest">Top</span>
+                  <span className="text-[10px] font-bold text-[#1a3578] uppercase tracking-widest">Top</span>
                 </div>
 
                 <div className="space-y-0">
@@ -533,7 +533,7 @@ export function AppSidebar() {
                       key={game.title}
                       onClick={() => router.push(game.href)}
                       className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold transition-colors cursor-pointer border-b border-gray-100 ${
-                        pathname.startsWith(game.href) ? "bg-[#174b73] text-white" : "text-black hover:bg-gray-50"
+                        pathname.startsWith(game.href) ? "bg-[#1a3578] text-white" : "text-black hover:bg-gray-50"
                       }`}
                     >
                       <Trophy className="h-4 w-4 flex-shrink-0" />
@@ -554,7 +554,7 @@ export function AppSidebar() {
                   ].map(({ label, icon: Icon }) => (
                     <button
                       key={label}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-bold bg-[#174b73] hover:bg-[#0c314d] text-white transition-colors cursor-pointer"
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-bold bg-gradient-to-r from-[#142969] via-[#142669] to-[#84c2f1] hover:bg-[#0b1545] text-white transition-colors cursor-pointer"
                     >
                       <Icon className="h-4 w-4 flex-shrink-0" />
                       <span className="flex-1 text-left">{label}</span>
@@ -573,7 +573,7 @@ export function AppSidebar() {
                           <SidebarMenuButton
                             className={`group relative w-full h-full justify-start px-3 py-2.5 rounded-lg transition-all duration-200 cursor-pointer ${
                               isActive
-                                ? "bg-[#174b73] text-white shadow-md"
+                                ? "bg-gradient-to-r from-[#142969] to-[#84c2f1]  text-white shadow-md"
                                 : "bg-transparent text-gray-700 hover:bg-gray-100 border border-transparent"
                             }`}
                             onClick={() => handleItemClick(item)}
@@ -594,7 +594,7 @@ export function AppSidebar() {
                 {/* Sports section */}
                 <div className="mb-4">
                   <div className="mb-2 px-2">
-                    <h3 className="text-xs font-bold text-[#174b73] uppercase tracking-wider">Sports</h3>
+                    <h3 className="text-xs font-bold text-[#1a3578] uppercase tracking-wider">Sports</h3>
                   </div>
                   <div className="space-y-0.5">
                     {sports.map((sport) => (
@@ -611,7 +611,7 @@ export function AppSidebar() {
                         onClick={() => router.push(game.href)}
                         className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 cursor-pointer ${
                           pathname.startsWith(game.href)
-                            ? "bg-[#174b73] text-white shadow-md"
+                            ? "bg-[#1a3578] text-white shadow-md"
                             : "text-black hover:bg-gray-100"
                         }`}
                       >
@@ -628,7 +628,7 @@ export function AppSidebar() {
                     <div key={group.title} className="mb-4">
                       {group.title && (
                         <div className="mb-2 px-2">
-                          <h3 className="text-xs font-bold text-[#174b73] uppercase tracking-wider">
+                          <h3 className="text-xs font-bold text-[#1a3578] uppercase tracking-wider">
                             {group.title}
                           </h3>
                         </div>
@@ -644,7 +644,7 @@ export function AppSidebar() {
                                   isLogoutItem
                                     ? "bg-red-50 text-red-600 hover:bg-red-100 border border-red-200"
                                     : isActive
-                                      ? "bg-[#174b73] text-white shadow-md"
+                                      ? "bg-[#1a3578] text-white shadow-md"
                                       : "bg-transparent text-gray-700 hover:bg-gray-100 border border-transparent"
                                 }`}
                                 onClick={() => handleItemClick(item)}

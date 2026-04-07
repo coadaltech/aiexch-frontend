@@ -99,11 +99,11 @@ export default function SportsPage() {
 
   if (loading) {
     return (
-      <div className="bg-[#0c314d] min-h-full p-4">
-        <div className="h-8 w-32 bg-[#174b73] rounded animate-pulse mb-4" />
+      <div className="bg-gray-50 min-h-full p-4">
+        <div className="h-8 w-32 bg-gray-200 rounded animate-pulse mb-4" />
         <div className="space-y-2">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-14 bg-[#0a2a42] rounded-xl animate-pulse border border-[#1b5785]/30" />
+            <div key={i} className="h-14 bg-gray-200 rounded-xl animate-pulse" />
           ))}
         </div>
       </div>
@@ -111,11 +111,11 @@ export default function SportsPage() {
   }
 
   return (
-    <div className="bg-[#0c314d] min-h-full">
+    <div className="bg-gray-50 min-h-full">
       {/* Header */}
-      <div className="bg-[#0a2a42] border-b border-[#1b5785]/50 px-4 py-3 flex items-center gap-2.5">
-        <div className="w-1 h-5 bg-[#79a430] rounded-full" />
-        <h1 className="text-white font-bold text-sm font-condensed tracking-wide">ALL SPORTS</h1>
+      <div className="bg-gradient-to-r from-[#142969] via-[#142669] to-[#1a3578] border-b border-[#1e4088]/40 px-4 py-3.5 flex items-center gap-2.5 shadow-md">
+        <div className="w-1 h-5 bg-[#84c2f1] rounded-full" />
+        <h1 className="text-white font-bold text-sm font-condensed tracking-wider">ALL SPORTS</h1>
       </div>
 
       {/* Sport list */}
@@ -130,10 +130,10 @@ export default function SportsPage() {
             <Link
               key={index}
               href={sportLink}
-              className="flex items-center gap-3 bg-[#0a2a42] hover:bg-[#0f3d5e] border border-[#1b5785]/40 hover:border-[#1b5785] rounded-xl px-4 py-3 transition-colors group"
+              className="flex items-center gap-3 bg-white hover:bg-gray-50 border border-gray-200 hover:border-[#142969]/30 rounded-xl px-4 py-3 transition-all duration-200 group shadow-sm hover:shadow-md"
             >
               {/* Icon */}
-              <div className="w-10 h-10 rounded-lg bg-[#174b73] flex items-center justify-center shrink-0 border border-[#1b5785]/60 group-hover:border-[#66c4ff]/40 transition-colors">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#1a3578] to-[#142969] flex items-center justify-center shrink-0 border border-[#1e4088]/60 group-hover:border-[#84c2f1]/40 transition-colors">
                 <Image
                   src={`/sports-icons/${icon}`}
                   height={24}
@@ -145,24 +145,24 @@ export default function SportsPage() {
 
               {/* Name + live badge */}
               <div className="flex-1 min-w-0">
-                <span className="text-white font-semibold text-sm">{sportName}</span>
+                <span className="text-gray-900 font-semibold text-sm">{sportName}</span>
                 {live && (
                   <div className="flex items-center gap-1 mt-0.5">
-                    <span className="w-1.5 h-1.5 bg-[#79a430] rounded-full animate-pulse" />
-                    <span className="text-[10px] text-[#79a430] font-bold">LIVE</span>
+                    <span className="w-1.5 h-1.5 bg-[#84c2f1] rounded-full animate-pulse" />
+                    <span className="text-[10px] text-[#142969] font-bold">LIVE</span>
                   </div>
                 )}
               </div>
 
               {/* Live events badge */}
               {live && (
-                <div className="flex items-center gap-1 shrink-0 bg-[#79a430]/10 border border-[#79a430]/30 rounded-lg px-2 py-0.5">
-                  <Zap className="w-3 h-3 text-[#79a430]" />
-                  <span className="text-[10px] text-[#79a430] font-bold">LIVE</span>
+                <div className="flex items-center gap-1 shrink-0 bg-[#84c2f1]/10 border border-[#84c2f1]/30 rounded-lg px-2 py-0.5">
+                  <Zap className="w-3 h-3 text-[#142969]" />
+                  <span className="text-[10px] text-[#142969] font-bold">LIVE</span>
                 </div>
               )}
 
-              <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 shrink-0 transition-colors" />
+              <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-500 shrink-0 transition-colors" />
             </Link>
           );
         })}
@@ -171,7 +171,7 @@ export default function SportsPage() {
       {/* Empty State */}
       {!loading && sports.length === 0 && (
         <div className="text-center py-16">
-          <p className="text-white/50 text-sm">No sports available at the moment</p>
+          <p className="text-gray-500 text-sm">No sports available at the moment</p>
         </div>
       )}
     </div>

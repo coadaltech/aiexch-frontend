@@ -126,7 +126,7 @@ export default function Header() {
   if (isPanelPath(pathname)) return null;
   return (
     <>
-      <header className="fixed w-full pb-0 top-0 z-50 shadow-lg bg-[#174b73]">
+      <header className="fixed w-full pb-0 top-0 z-50 shadow-lg bg-[#ffffff]">
         {/* Top Header Bar - Modern Dark Theme */}
         <div className="">
           <div className="flex items-center justify-between h-11 sm:h-12 px-2 sm:px-4 lg:px-6">
@@ -134,7 +134,7 @@ export default function Header() {
             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-shrink-0">
               <button
                 onClick={toggleSidebar}
-                className="hidden md:flex items-center justify-center h-8 w-8 rounded-lg bg-[#1b5785] hover:bg-[#215e90] text-white transition-colors flex-shrink-0 border border-white/10"
+                className="hidden md:flex items-center justify-center h-8 w-8 rounded-lg bg-[#1e4088] hover:bg-[#2a4590] text-white transition-colors flex-shrink-0 border border-white/10"
                 aria-label="Toggle sidebar"
               >
                 {sidebarOpen
@@ -169,7 +169,7 @@ export default function Header() {
                         <Button
                           onClick={() => setIsTransactionModalOpen(true)}
                           size="sm"
-                          className="xs:flex h-7 sm:h-8 bg-gradient-to-r from-cta-deposit-from to-cta-deposit-to hover:from-cta-deposit-from-hover hover:to-cta-deposit-to-hover text-white font-semibold px-2 sm:px-3 md:px-4 rounded-lg shadow-md text-xs sm:text-sm font-condensed"
+                          className="xs:flex h-7 sm:h-8 bg-[#142669] hover:bg-[#1a3080] text-white font-semibold px-2 sm:px-3 md:px-4 rounded-lg text-xs sm:text-sm font-condensed transition-colors"
                         >
                           <Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5" />
                           <span className="hidden sm:inline">Add Funds</span>
@@ -182,7 +182,7 @@ export default function Header() {
                     <Button
                       size="sm"
                       onClick={() => router.push("/profile")}
-                      className="h-auto py-0.5 bg-[#1b5785] hover:bg-[#215e90] text-white font-medium px-2 sm:px-3 rounded-lg text-xs sm:text-sm touch-manipulation min-w-0 font-condensed"
+                      className="h-auto py-0.5 bg-[#1e4088] hover:bg-[#2a4590] text-white font-medium px-2 sm:px-3 rounded-lg text-xs sm:text-sm touch-manipulation min-w-0 font-condensed"
                     >
                       <Wallet className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5 flex-shrink-0" />
                       {isLoading || ledgerLoading ? (
@@ -201,7 +201,7 @@ export default function Header() {
                     <Button
                       size="sm"
                       onClick={() => router.push("/profile")}
-                      className="h-auto py-0.5 bg-[#1b5785] hover:bg-[#215e90] text-white font-medium px-2 sm:px-3 rounded-lg text-xs sm:text-sm touch-manipulation min-w-0 font-condensed"
+                      className="h-auto py-0.5 bg-[#1e4088] hover:bg-[#2a4590] text-white font-medium px-2 sm:px-3 rounded-lg text-xs sm:text-sm touch-manipulation min-w-0 font-condensed"
                     >
                       {/* <Wallet className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5 flex-shrink-0" /> */}
                       {isLoading || ledgerLoading ? (
@@ -229,7 +229,7 @@ export default function Header() {
                         size="sm"
                         variant="ghost"
                         onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-                        className="flex h-7 sm:h-8 text-white/80 hover:text-white hover:bg-[#1b5785] rounded-lg px-2 sm:px-3 text-xs sm:text-sm touch-manipulation items-center gap-1"
+                        className="flex h-7 sm:h-8 text-black/80 hover:text-white hover:bg-red-600 rounded-lg px-2 sm:px-3 text-xs sm:text-sm touch-manipulation items-center gap-1"
                       >
                         <User className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                         <span className="hidden sm:inline truncate max-w-[80px] lg:max-w-none">
@@ -245,7 +245,7 @@ export default function Header() {
 
                       {/* Dropdown Menu */}
                       {isUserDropdownOpen && (
-                        <div className="absolute right-0 top-full mt-1 w-48 sm:w-56 bg-[#0f3d5e] border border-[#1b5785] rounded-xl shadow-xl shadow-black/40 py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="absolute right-0 top-full mt-1 w-48 sm:w-56 bg-[#142669] border border-[#1e4088] rounded-xl shadow-xl shadow-black/40 py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                           {/* User info header */}
                           <div className="px-3 py-2 border-b border-nav-btn/50">
                             <p className="text-sm font-semibold text-white truncate">
@@ -262,28 +262,28 @@ export default function Header() {
                           <div className="py-1">
                             <button
                               onClick={() => { router.push("/profile"); setIsUserDropdownOpen(false); }}
-                              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white/75 hover:text-white hover:bg-[#174b73] transition-colors cursor-pointer"
+                              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white/75 hover:text-white hover:bg-[#1a3578] transition-colors cursor-pointer"
                             >
                               <User className="h-4 w-4 flex-shrink-0" />
                               Profile
                             </button>
                             <button
                               onClick={() => { router.push("/profile/bet-history"); setIsUserDropdownOpen(false); }}
-                              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white/75 hover:text-white hover:bg-[#174b73] transition-colors cursor-pointer"
+                              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white/75 hover:text-white hover:bg-[#1a3578] transition-colors cursor-pointer"
                             >
                               <History className="h-4 w-4 flex-shrink-0" />
                               Bet History
                             </button>
                             <button
                               onClick={() => { router.push("/profile/account-statement"); setIsUserDropdownOpen(false); }}
-                              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white/75 hover:text-white hover:bg-[#174b73] transition-colors cursor-pointer"
+                              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white/75 hover:text-white hover:bg-[#1a3578] transition-colors cursor-pointer"
                             >
                               <FileText className="h-4 w-4 flex-shrink-0" />
                               Account Statement
                             </button>
                             <button
                               onClick={() => { router.push("/settings"); setIsUserDropdownOpen(false); }}
-                              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white/75 hover:text-white hover:bg-[#174b73] transition-colors cursor-pointer"
+                              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white/75 hover:text-white hover:bg-[#1a3578] transition-colors cursor-pointer"
                             >
                               <Settings className="h-4 w-4 flex-shrink-0" />
                               Settings
@@ -337,7 +337,7 @@ export default function Header() {
                       onClick={() => {
                         setAuthModal(true);
                       }}
-                      className="h-7 sm:h-8 bg-[#1b5785] border border-[#66c4ff]/40 hover:bg-[#215e90] text-white font-semibold px-3 sm:px-4 md:px-5 rounded-lg text-xs sm:text-sm touch-manipulation font-condensed tracking-wide"
+                      className="h-7 sm:h-8 bg-[#1e4088] border border-[#84c2f1]/40 hover:bg-[#2a4590] text-white font-semibold px-3 sm:px-4 md:px-5 rounded-lg text-xs sm:text-sm touch-manipulation font-condensed tracking-wide"
                     >
                       <LogIn className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5" />
                       <span className="hidden sm:inline">Log In</span>

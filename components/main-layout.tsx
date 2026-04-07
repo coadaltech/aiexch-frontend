@@ -45,7 +45,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
 
   return (
     <SidebarProvider>
-      <div style={{ height: 'var(--vh-full)' }} className="overflow-hidden bg-gradient-to-br from-nav-dark via-nav-dark to-nav-dark w-full flex flex-col">
+      <div style={{ height: 'var(--vh-full)' }} className="overflow-hidden bg-gray-200 w-full flex flex-col">
         {/* Fixed Header - always visible at top */}
         <Header />
 

@@ -203,7 +203,7 @@ export default function CasinoPage() {
         {/* Search */}
         <div className="mb-4 sm:mb-6">
           <div className="relative w-full max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-black" />
             <Input
               type="text"
               placeholder="Search games..."
@@ -211,7 +211,7 @@ export default function CasinoPage() {
               onChange={(e) =>
                 setFiltersState((prev) => ({ ...prev, search: e.target.value }))
               }
-              className="pl-10 w-full"
+              className="pl-10 w-full text-black"
             />
           </div>
         </div>
@@ -221,7 +221,7 @@ export default function CasinoPage() {
           {/* Provider Categories Slider */}
           <div className="w-full">
             <div className="flex items-center justify-between mb-2 sm:mb-3">
-              <span className="text-xs sm:text-sm font-semibold text-muted-foreground">
+              <span className="text-xs sm:text-sm font-semibold text-black">
                 Provider
               </span>
               <div className="hidden sm:flex gap-1">
@@ -229,7 +229,7 @@ export default function CasinoPage() {
                   type="button"
                   aria-label="Scroll providers left"
                   onClick={() => scrollHorizontal(providerScrollRef, "left")}
-                  className="p-1.5 rounded-md bg-muted hover:bg-muted/80 text-muted-foreground"
+                  className="p-1.5 rounded-md bg-muted hover:bg-muted/80 text-black"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
@@ -237,7 +237,7 @@ export default function CasinoPage() {
                   type="button"
                   aria-label="Scroll providers right"
                   onClick={() => scrollHorizontal(providerScrollRef, "right")}
-                  className="p-1.5 rounded-md bg-muted hover:bg-muted/80 text-muted-foreground"
+                  className="p-1.5 rounded-md bg-muted hover:bg-muted/80 text-black"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>
@@ -293,7 +293,7 @@ export default function CasinoPage() {
           {/* Type Categories Slider */}
           <div>
             <div className="flex items-center justify-between mb-2 sm:mb-3">
-              <span className="text-xs sm:text-sm font-semibold text-muted-foreground">
+              <span className="text-xs sm:text-sm font-semibold text-black">
                 Game Type
               </span>
               <div className="flex gap-1 sm:gap-2 items-center">
@@ -313,7 +313,7 @@ export default function CasinoPage() {
                     type="button"
                     aria-label="Scroll types left"
                     onClick={() => scrollHorizontal(typeScrollRef, "left")}
-                    className="p-1.5 rounded-md bg-muted hover:bg-muted/80 text-muted-foreground"
+                    className="p-1.5 rounded-md bg-muted hover:bg-muted/80 text-black"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
@@ -321,7 +321,7 @@ export default function CasinoPage() {
                     type="button"
                     aria-label="Scroll types right"
                     onClick={() => scrollHorizontal(typeScrollRef, "right")}
-                    className="p-1.5 rounded-md bg-muted hover:bg-muted/80 text-muted-foreground"
+                    className="p-1.5 rounded-md bg-muted hover:bg-muted/80 text-black"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>
@@ -361,7 +361,7 @@ export default function CasinoPage() {
                       <Icon
                         className={`h-4 w-4 sm:h-5 sm:w-5 ${type === typeOption.value
                           ? "text-primary-foreground"
-                          : "text-muted-foreground"
+                          : "text-black"
                           }`}
                       />
                       <span className="text-center leading-tight">
@@ -377,7 +377,7 @@ export default function CasinoPage() {
 
         {/* Results Count */}
         {!isLoading && (
-          <div className="mb-3 sm:mb-4 text-xs sm:text-sm text-muted-foreground px-1">
+          <div className="mb-3 sm:mb-4 text-xs sm:text-sm text-black px-1">
             {allGames.length > 0
               ? `Showing ${allGames.length} game${allGames.length !== 1 ? "s" : ""
               }`
@@ -400,10 +400,10 @@ export default function CasinoPage() {
           </div>
         ) : allGames.length === 0 ? (
           <div className="text-center py-8 sm:py-12 px-4">
-            <p className="text-muted-foreground text-base sm:text-lg mb-2">
+            <p className="text-black text-base sm:text-lg mb-2">
               No games found
             </p>
-            <p className="text-xs sm:text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-black">
               Try adjusting your filters or search query
             </p>
           </div>
@@ -422,7 +422,7 @@ export default function CasinoPage() {
                 className="flex justify-center py-6 sm:py-8"
               >
                 {isFetchingNextPage && (
-                  <div className="flex items-center gap-2 text-muted-foreground">
+                  <div className="flex items-center gap-2 text-black">
                     <Loader2 className="h-4 w-4 animate-spin" />
                     <span className="text-xs sm:text-sm">
                       Loading more games...
@@ -434,7 +434,7 @@ export default function CasinoPage() {
 
             {/* End of Results */}
             {!hasNextPage && allGames.length > 0 && (
-              <div className="text-center py-6 sm:py-8 text-muted-foreground text-xs sm:text-sm px-4">
+              <div className="text-center py-6 sm:py-8 text-black text-xs sm:text-sm px-4">
                 You've reached the end of the list
               </div>
             )}

@@ -104,10 +104,10 @@ function QuickBetPanel({
   const canPlace = !!stake && stakeNum > 0 && !stakeError && !isLoading && !isDelaying;
 
   return (
-    <div className="px-2 sm:px-3 py-3 border-t border-gray-200 bg-white">
+    <div className={`px-2 sm:px-3 py-3 border-t-2 ${data.isLay ? "border-lay bg-gradient-to-b from-lay/10 to-white" : "border-back bg-gradient-to-b from-back/10 to-white"}`}>
       {/* Bet delay countdown banner */}
       {isDelaying && (
-        <div className="mb-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between">
+        <div className="mb-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-2">
             <span className="w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin inline-block" />
             <span className="text-xs sm:text-sm font-medium text-amber-700">
@@ -162,7 +162,7 @@ function QuickBetPanel({
               className={`min-w-[5rem] sm:min-w-[6rem] bg-gray-50 text-gray-900 text-sm sm:text-base font-bold py-1.5 px-2 text-center border rounded focus:ring-1 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-[width] duration-150 ${
                 stakeError
                   ? "border-red-400 focus:ring-red-400"
-                  : "border-gray-300 focus:ring-[#174b73]"
+                  : "border-gray-300 focus:ring-[#1a3578]"
               } ${isDelaying ? "opacity-50" : ""}`}
             />
             <div className="flex flex-col ml-0.5">
@@ -1019,16 +1019,16 @@ export default function MatchPage() {
   if (pageStatus === "error") {
     return (
       <div className="px-3 py-2">
-        <div className="rounded-lg bg-gray-50 flex items-center justify-center py-16">
+        <div className="rounded-xl bg-gradient-to-b from-[#101e50] to-[#0b1545] border border-[#1e4088]/40 flex items-center justify-center py-16">
           <div className="text-center max-w-md">
-            <div className="w-16 h-16 mx-auto bg-red-100 rounded-full flex items-center justify-center mb-3">
-              <span className="text-red-500 text-3xl">!</span>
+            <div className="w-16 h-16 mx-auto bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center mb-3">
+              <span className="text-red-400 text-3xl">!</span>
             </div>
-            <h2 className="text-lg font-semibold text-gray-800 mb-2">Connection Failed</h2>
-            <p className="text-gray-500 text-sm mb-4">Unable to connect to the live data server.</p>
+            <h2 className="text-lg font-semibold text-white mb-2">Connection Failed</h2>
+            <p className="text-white/50 text-sm mb-4">Unable to connect to the live data server.</p>
             <button
               onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-[#174b73] text-white rounded-lg hover:bg-[#1b5785] text-sm"
+              className="px-5 py-2 bg-gradient-to-r from-[#142969] to-[#84c2f1] text-white rounded-lg hover:from-[#1a3578] hover:to-[#9dd0f5] text-sm font-semibold shadow-lg shadow-[#142969]/30 transition-all"
             >
               Retry
             </button>
@@ -1041,10 +1041,10 @@ export default function MatchPage() {
   if (pageStatus === "connecting" || pageStatus === "connected") {
     return (
       <div className="px-3 py-2">
-        <div className="rounded-lg bg-gray-50 flex items-center justify-center py-16">
+        <div className="rounded-xl bg-gradient-to-b from-[#101e50] to-[#0b1545] border border-[#1e4088]/40 flex items-center justify-center py-16">
           <div className="text-center">
-            <div className="w-12 h-12 mx-auto border-4 border-gray-200 border-t-[#174b73] rounded-full animate-spin mb-3"></div>
-            <p className="text-gray-500 text-sm">Loading match data...</p>
+            <div className="w-12 h-12 mx-auto border-4 border-[#1e4088] border-t-[#84c2f1] rounded-full animate-spin mb-3"></div>
+            <p className="text-white/50 text-sm">Loading match data...</p>
           </div>
         </div>
       </div>
@@ -1059,17 +1059,17 @@ export default function MatchPage() {
       <div className="px-2 py-1">
         {/* Show match header if available */}
         {(matchInfo || series || matchFromSeries) && (
-          <div className="bg-white border border-gray-200 rounded-lg px-3 sm:px-4 py-3 mb-2">
+          <div className="bg-gradient-to-r from-[#142969] via-[#142669] to-[#1a3578] rounded-lg px-3 sm:px-4 py-3 mb-2 shadow-md border border-[#1e4088]/30">
             <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
               <div className="min-w-0 flex-1">
-                <h1 className="text-gray-900 font-semibold text-base sm:text-lg truncate">
+                <h1 className="text-white font-bold text-base sm:text-lg truncate">
                   {[series?.name, matchFromSeries?.name || matchInfo?.eventName || "Match"]
                     .filter(Boolean)
                     .join(" - ")}
                 </h1>
               </div>
               {eventDate && (
-                <span className="text-gray-500 text-xs sm:text-sm shrink-0">
+                <span className="text-white/60 text-xs sm:text-sm shrink-0">
                   {formatDate(eventDate)}
                 </span>
               )}
@@ -1078,24 +1078,24 @@ export default function MatchPage() {
         )}
 
         {isEventEnded ? (
-          <div className="rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center py-16">
+          <div className="rounded-xl bg-gradient-to-b from-[#101e50] to-[#0b1545] border border-[#1e4088]/40 flex items-center justify-center py-16">
             <div className="text-center max-w-md px-4">
-              <div className="w-14 h-14 mx-auto bg-gray-200 rounded-full flex items-center justify-center mb-4">
-                <svg className="w-7 h-7 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <div className="w-14 h-14 mx-auto bg-[#1e4088]/30 rounded-full flex items-center justify-center mb-4 border border-[#1e4088]/40">
+                <svg className="w-7 h-7 text-[#5878a8]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                 </svg>
               </div>
-              <h2 className="text-lg font-semibold text-gray-800 mb-2">Event Has Ended</h2>
-              <p className="text-gray-500 text-sm mb-1">This event concluded on {formatDate(eventDate)}.</p>
-              <p className="text-xs text-gray-400">Markets are no longer available for this match.</p>
+              <h2 className="text-lg font-semibold text-white mb-2">Event Has Ended</h2>
+              <p className="text-white/50 text-sm mb-1">This event concluded on {formatDate(eventDate)}.</p>
+              <p className="text-xs text-white/30">Markets are no longer available for this match.</p>
             </div>
           </div>
         ) : (
-          <div className="rounded-lg bg-gray-50 flex items-center justify-center py-16">
+          <div className="rounded-xl bg-gradient-to-b from-[#101e50] to-[#0b1545] border border-[#1e4088]/40 flex items-center justify-center py-16">
             <div className="text-center max-w-md">
-              <h2 className="text-lg font-semibold text-gray-800 mb-2">No Active Markets</h2>
-              <p className="text-gray-500 text-sm mb-1">This match currently has no open markets.</p>
-              <p className="text-xs text-gray-400">Markets will appear automatically when they become available.</p>
+              <h2 className="text-lg font-semibold text-white mb-2">No Active Markets</h2>
+              <p className="text-white/50 text-sm mb-1">This match currently has no open markets.</p>
+              <p className="text-xs text-white/30">Markets will appear automatically when they become available.</p>
             </div>
           </div>
         )}
@@ -1109,10 +1109,10 @@ export default function MatchPage() {
     const label = market?.status === "SUSPENDED" ? "Suspended" : "Ball Running";
     return (
       <div
-        className="absolute inset-0 flex items-center justify-center z-10 cursor-not-allowed bg-white/60 dark:bg-black/40"
+        className="absolute inset-0 flex items-center justify-center z-10 cursor-not-allowed bg-white/70 backdrop-blur-[1px]"
         onClick={(e) => e.stopPropagation()}
       >
-        <span className="text-danger-strong font-bold text-sm sm:text-base">
+        <span className="text-danger-strong font-bold text-xs sm:text-sm bg-red-50 px-3 py-1 rounded-full border border-red-200/50 shadow-sm">
           {label}
         </span>
       </div>
@@ -1120,9 +1120,9 @@ export default function MatchPage() {
   };
 
   const oddsBtnClass =
-    "flex-1 min-w-0 px-1 py-1.5 flex flex-col items-center justify-center rounded cursor-pointer leading-tight";
-  const oddsPriceClass = "text-black font-bold text-sm sm:text-base";
-  const oddsSizeClass = "text-black font-medium text-[11px] sm:text-xs";
+    "flex-1 min-w-0 px-1 py-1.5 flex flex-col items-center justify-center rounded-md cursor-pointer leading-tight transition-all duration-150";
+  const oddsPriceClass = "text-gray-900 font-bold text-sm sm:text-base";
+  const oddsSizeClass = "text-gray-600 font-medium text-[10px] sm:text-[11px]";
 
   // Runner name cell: shows name + per-runner P&L from DB function
   const RunnerNameCell = ({
@@ -1206,31 +1206,26 @@ export default function MatchPage() {
           : null;
 
         return (
-          <div className="bg-white border border-gray-200 rounded-lg px-3 sm:px-4 py-3 mb-2">
+          <div className="bg-gradient-to-r from-[#142969] via-[#142669] to-[#1a3578] rounded-lg px-3 sm:px-4 py-3 mb-2 shadow-md border border-[#1e4088]/30">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
                 {series?.name && (
-                  <p className="text-black font-bold text-base sm:text-lg truncate leading-tight mb-0.5">
+                  <p className="text-[#84c2f1] font-bold text-xs sm:text-sm truncate leading-tight mb-0.5 uppercase tracking-wide font-condensed">
                     {series.name}
                   </p>
                 )}
-                <h1 className="text-gray-700 font-semibold text-base sm:text-lg truncate leading-tight">
+                <h1 className="text-white font-bold text-base sm:text-lg truncate leading-tight">
                   {matchFromSeries?.name || matchInfo?.eventName || "Match"}
                 </h1>
-                {/* {runnerNames.length > 0 && (
-                  <p className="text-gray-500 text-[11px] sm:text-xs truncate mt-0.5">
-                    {runnerNames.join(" vs ")}
-                  </p>
-                )} */}
               </div>
               <div className="shrink-0 text-right">
                 {openDate && (
-                  <span className="text-gray-500 text-xs sm:text-sm block">
+                  <span className="text-white/60 text-xs sm:text-sm block">
                     {formatDate(openDate)}
                   </span>
                 )}
                 {clockStr && (
-                  <span className="text-background font-mono text-[11px] sm:text-xs block mt-0.5">
+                  <span className="text-[#84c2f1] font-mono text-[11px] sm:text-xs block mt-0.5 bg-black/20 px-2 py-0.5 rounded">
                     {clockStr}
                   </span>
                 )}
@@ -1247,9 +1242,9 @@ export default function MatchPage() {
             market.marketType !== "TOURNAMENT_WINNER" && (
               <div
                 key={market.marketId}
-                className="rounded overflow-hidden border border-gray-200"
+                className="rounded-lg overflow-hidden border border-gray-200 shadow-sm"
               >
-                <div className="grid grid-cols-3 gap-1 sm:gap-2 px-2 sm:px-3 py-1 border-b border-gray-200 bg-[#174b73] items-center">
+                <div className="grid grid-cols-3 gap-1 sm:gap-2 px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578] items-center">
                   <div className="min-w-0 flex flex-col gap-0.5">
                     <h3 className="font-bold text-white text-sm sm:text-base truncate leading-tight">
                       {market.marketName}
@@ -1275,7 +1270,7 @@ export default function MatchPage() {
                     return (
                     <div
                       key={runner.selectionId}
-                      className="px-2 sm:px-3 grid grid-cols-3 gap-1 sm:gap-2 items-center min-h-0 bg-white"
+                      className="px-2 sm:px-3 grid grid-cols-3 gap-1 sm:gap-2 items-center min-h-0 bg-white hover:bg-gray-50/80 transition-colors"
                     >
                       <RunnerNameCell
                         runner={runner}
@@ -1394,9 +1389,9 @@ export default function MatchPage() {
             .map((market: any) => (
               <div
                 key={market.marketId}
-                className="rounded overflow-hidden border border-gray-200"
+                className="rounded-lg overflow-hidden border border-gray-200 shadow-sm"
               >
-                <div className="grid grid-cols-3 gap-1 sm:gap-2 px-2 sm:px-3 py-1 border-b border-gray-200 bg-[#174b73] items-center">
+                <div className="grid grid-cols-3 gap-1 sm:gap-2 px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578] items-center">
                   <div className="min-w-0 flex flex-col gap-0.5">
                     <h3 className="font-bold text-white text-sm sm:text-base truncate leading-tight">
                       {market.marketName || "Tournament Winner"}
@@ -1419,7 +1414,7 @@ export default function MatchPage() {
                     return (
                     <div
                       key={runner.selectionId}
-                      className="px-2 sm:px-3 grid grid-cols-3 gap-1 sm:gap-2 items-center min-h-0 bg-white"
+                      className="px-2 sm:px-3 grid grid-cols-3 gap-1 sm:gap-2 items-center min-h-0 bg-white hover:bg-gray-50/80 transition-colors"
                     >
                       <RunnerNameCell
                         runner={runner}
@@ -1532,8 +1527,8 @@ export default function MatchPage() {
         )}
 
         {visibleMarkets.some((m) => m.bettingType === "LINE") && (
-        <div className="rounded overflow-hidden border border-gray-200">
-          <div className="grid grid-cols-3 gap-1 sm:gap-2 px-2 sm:px-3 py-1 border-b border-gray-200 bg-[#174b73] items-center">
+        <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+          <div className="grid grid-cols-3 gap-1 sm:gap-2 px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578] items-center">
             <h3 className="font-bold text-white text-sm sm:text-base truncate leading-tight" style={{gridColumn: "1"}}>
               Fancy
             </h3>
@@ -1654,8 +1649,8 @@ export default function MatchPage() {
       {/* Fancy Exposure Chart Modal */}
       {exposureChartMarket && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setExposureChartMarket(null)}>
-          <div className="bg-white rounded-lg shadow-xl w-[90vw] max-w-md max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-4 py-3 bg-sports-header text-white">
+          <div className="bg-white rounded-xl shadow-2xl w-[90vw] max-w-md max-h-[80vh] overflow-hidden border border-gray-200" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[#142969] to-[#1a3578] text-white">
               <div>
                 <h3 className="font-semibold text-sm">Exposure</h3>
                 <p className="text-xs text-white/80">{exposureChartMarket.name}</p>

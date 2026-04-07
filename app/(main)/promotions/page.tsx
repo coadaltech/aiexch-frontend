@@ -17,7 +17,7 @@ export default async function PromotionsPage() {
               Promotions
             </h1>
           </div>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+          <p className="text-black text-lg max-w-2xl mx-auto">
             Discover amazing offers, bonuses, and rewards designed to boost your
             gaming experience
           </p>
@@ -28,11 +28,11 @@ export default async function PromotionsPage() {
       <div className="">
         {promotions.length === 0 ? (
           <div className="text-center py-12">
-            <Gift className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-foreground mb-2">
+            <Gift className="w-16 h-16 text-black mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-black mb-2">
               No promotions available
             </h3>
-            <p className="text-muted-foreground">
+            <p className="text-black">
               Check back later for exciting offers and bonuses
             </p>
           </div>

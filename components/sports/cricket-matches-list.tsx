@@ -128,28 +128,28 @@ function MatchRow({
   return (
     <Link
       href={`/sports/${sport}/${match.seriesId}/${match.id}`}
-      className="block bg-[#0c314d] hover:bg-[#0f3d5e] transition-colors"
+      className="block bg-white hover:bg-gray-50 transition-colors"
     >
       <div className="flex items-center">
         {/* Match info */}
         <div className="flex-1 min-w-0 py-2 px-3">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[10px] text-white/40 whitespace-nowrap">
+            <span className="text-[10px] text-gray-400 whitespace-nowrap">
               {formatToIST(match.openDate)}
             </span>
             {match.inPlay ? (
               <span className="flex items-center gap-1 ml-1">
-                <span className="w-1.5 h-1.5 bg-[#79a430] rounded-full animate-pulse" />
-                <span className="text-[10px] text-[#79a430] font-bold">LIVE</span>
+                <span className="w-1.5 h-1.5 bg-[#84c2f1] rounded-full animate-pulse" />
+                <span className="text-[10px] text-[#142969] font-bold">LIVE</span>
               </span>
             ) : (
-              <span className="text-[10px] text-white/30 hidden sm:inline">
+              <span className="text-[10px] text-gray-400 hidden sm:inline">
                 {match.seriesName}
               </span>
             )}
           </div>
           <div className="flex items-center gap-1.5 mt-0.5">
-            <h4 className="font-semibold text-xs sm:text-sm text-white truncate">
+            <h4 className="font-semibold text-xs sm:text-sm text-gray-900 truncate">
               {match.name}
             </h4>
             {matchOddsMarket && (
@@ -248,7 +248,7 @@ export function CricketMatchesList({
     return (
       <div className="space-y-1">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="h-12 bg-[#174b73]/40 animate-pulse rounded-lg" />
+          <div key={i} className="h-12 bg-gray-200 animate-pulse rounded-lg" />
         ))}
       </div>
     );
@@ -273,8 +273,8 @@ export function CricketMatchesList({
     if (emptyText) {
       return (
         <div className="py-8 text-center">
-          <p className="text-white/50 text-sm">{emptyText}</p>
-          <p className="text-white/30 text-xs mt-1">Check back later for live action.</p>
+          <p className="text-gray-500 text-sm">{emptyText}</p>
+          <p className="text-gray-400 text-xs mt-1">Check back later for live action.</p>
         </div>
       );
     }
@@ -282,17 +282,17 @@ export function CricketMatchesList({
   }
 
   return (
-    <div className="w-full rounded-lg overflow-hidden">
+    <div className="w-full rounded-lg overflow-hidden shadow-sm">
       {/* Header row */}
-      <div className="flex items-center bg-[#174b73] text-white text-[10px] sm:text-xs font-bold font-condensed tracking-wide">
-        <div className="flex-1 py-2 px-3" />
-        <div className="w-[88px] sm:w-[120px] text-center py-2">1</div>
-        <div className="w-[88px] sm:w-[120px] text-center py-2 hidden sm:block">X</div>
-        <div className="w-[88px] sm:w-[120px] text-center py-2">2</div>
+      <div className="flex items-center bg-gradient-to-r from-[#142969] to-[#1a3578] text-white text-[10px] sm:text-xs font-bold font-condensed tracking-wider">
+        <div className="flex-1 py-2.5 px-3" />
+        <div className="w-[88px] sm:w-[120px] text-center py-2.5">1</div>
+        <div className="w-[88px] sm:w-[120px] text-center py-2.5 hidden sm:block">X</div>
+        <div className="w-[88px] sm:w-[120px] text-center py-2.5">2</div>
       </div>
 
       {/* Match rows */}
-      <div className="divide-y divide-[#1b5785]/40 border border-[#1b5785]/40 border-t-0 rounded-b-lg overflow-hidden">
+      <div className="divide-y divide-gray-100 border border-gray-200 border-t-0 rounded-b-lg overflow-hidden">
         {matchesWithOdds.map((match) => (
           <MatchRow
             key={match.id}

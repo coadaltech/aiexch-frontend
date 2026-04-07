@@ -472,14 +472,14 @@ export default function JantriPage() {
 
   if (shiftLoading) {
     return (
-      <div className="flex items-center justify-center py-20 bg-[#0c314d] min-h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#79a430]" />
+      <div className="flex items-center justify-center py-20 bg-gray-50 min-h-full">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#84c2f1]" />
       </div>
     );
   }
   if (!shift) {
     return (
-      <div className="text-center py-20 text-white/50 bg-[#0c314d] min-h-full">
+      <div className="text-center py-20 text-white/50 bg-gray-50 min-h-full">
         Shift not found
       </div>
     );
@@ -497,7 +497,7 @@ export default function JantriPage() {
   return (
     <div className="flex flex-col h-full">
       {/* ── Top Header ─────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 sm:gap-3 bg-[#174b73] text-white px-2 sm:px-4 py-2 text-sm flex-wrap border-b border-[#1b5785]/60">
+      <div className="flex items-center gap-2 sm:gap-3 bg-gradient-to-r from-[#142969] via-[#142669] to-[#1a3578] text-white px-2 sm:px-4 py-2 text-sm flex-wrap border-b border-[#1e4088]/60">
         <button
           onClick={() => router.push("/matka")}
           className="hover:bg-white/20 rounded-lg p-1 transition-colors"
@@ -506,21 +506,21 @@ export default function JantriPage() {
         </button>
         <span className="font-semibold uppercase font-condensed tracking-wide">{shift.name}</span>
         <span className={`flex items-center gap-1 rounded-lg px-2 py-0.5 text-xs font-medium ${
-          shiftEnded ? "bg-red-600" : "bg-[#79a430]/20 border border-[#79a430]/40 text-[#79a430]"
+          shiftEnded ? "bg-red-600" : "bg-[#84c2f1]/20 border border-[#84c2f1]/40 text-[#84c2f1]"
         }`}>
           <Clock className="w-3 h-3" />
           {timeLeft}
         </span>
         <div className="flex-1" />
-        <span className="bg-[#0f3d5e] border border-[#1b5785]/60 rounded-lg px-2 py-0.5 text-xs">
+        <span className="bg-white/15 border border-white/20 rounded-lg px-2 py-0.5 text-xs">
           Rate: {shift.daraRate}/{shift.akharRate}
         </span>
         {Number(shift.capping) > 0 && (
-          <span className="bg-[#0f3d5e] border border-[#1b5785]/60 rounded-lg px-2 py-0.5 text-xs">
+          <span className="bg-white/15 border border-white/20 rounded-lg px-2 py-0.5 text-xs">
             Cap: ₹{shift.capping}
           </span>
         )}
-        <span className="bg-[#0f3d5e] border border-[#1b5785]/60 rounded-lg px-2 py-0.5 text-xs hidden sm:inline">
+        <span className="bg-white/15 border border-white/20 rounded-lg px-2 py-0.5 text-xs hidden sm:inline">
           Date: {fmtDate(shift.shiftDate)}
         </span>
         {!isJantriOpen && (
@@ -531,7 +531,7 @@ export default function JantriPage() {
         {/* Mobile sidebar toggle */}
         <button
           onClick={() => setSidebarOpen((p) => !p)}
-          className="lg:hidden bg-[#0f3d5e] hover:bg-[#1b5785] border border-[#1b5785]/60 rounded-lg px-2 py-0.5 text-xs flex items-center gap-1"
+          className="lg:hidden bg-[#162d6a] hover:bg-[#1e4088] border border-[#1e4088]/60 rounded-lg px-2 py-0.5 text-xs flex items-center gap-1"
         >
           Shifts {sidebarOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
         </button>
@@ -539,11 +539,11 @@ export default function JantriPage() {
 
       {/* ── Mobile sidebar (collapsible) ─────────────────────────────── */}
       {sidebarOpen && (
-        <div className="lg:hidden border-b border-[#1b5785]/40 bg-[#0a2a42] max-h-48 overflow-auto">
-          <div className="bg-[#174b73] text-white text-center text-sm font-bold py-1.5 uppercase font-condensed">
+        <div className="lg:hidden border-b border-gray-300 bg-gray-50 max-h-48 overflow-auto">
+          <div className="bg-gradient-to-r from-[#142969] to-[#1a3578] text-white text-center text-sm font-bold py-1.5 uppercase font-condensed">
             {shift.name} {isJantriOpen ? "[LIVE]" : ""}
           </div>
-          <label className="flex items-center gap-2 px-3 py-1.5 border-b border-[#1b5785]/40 cursor-pointer hover:bg-[#0f3d5e]">
+          <label className="flex items-center gap-2 px-3 py-1.5 border-b border-gray-100 cursor-pointer hover:bg-gray-50">
             <input
               type="checkbox"
               checked={selectedShifts.size === allShifts.length}
@@ -554,24 +554,24 @@ export default function JantriPage() {
                   setSelectedShifts(new Set(allShifts.map((s) => s.id)));
                 }
               }}
-              className="h-4 w-4 rounded border-[#1b5785]"
+              className="h-4 w-4 rounded border-[#1e4088]"
             />
-            <span className="text-xs text-white font-medium">Select All</span>
+            <span className="text-xs text-gray-700 font-medium">Select All</span>
           </label>
           {allShifts
             .filter((s) => s.id !== shiftId)
             .map((s) => (
               <label
                 key={s.id}
-                className="flex items-center gap-2 px-3 py-1.5 border-b border-[#1b5785]/30 cursor-pointer hover:bg-[#0f3d5e]"
+                className="flex items-center gap-2 px-3 py-1.5 border-b border-gray-100 cursor-pointer hover:bg-gray-50"
               >
                 <input
                   type="checkbox"
                   checked={selectedShifts.has(s.id)}
                   onChange={() => toggleShift(s.id)}
-                  className="h-4 w-4 rounded border-[#1b5785]"
+                  className="h-4 w-4 rounded border-[#1e4088]"
                 />
-                <span className="text-sm text-white">{s.name}</span>
+                <span className="text-sm text-gray-700">{s.name}</span>
               </label>
             ))}
           <div className="bg-red-700 text-white text-center text-sm font-bold py-1.5">
@@ -583,22 +583,22 @@ export default function JantriPage() {
       {/* ── Main layout ──────────────────────────────────────────────────── */}
       <div className="flex flex-1 overflow-hidden">
         {/* ═══ LEFT: Grid / Quick Entry ═══ */}
-        <div className="flex-1 overflow-auto p-1 sm:p-2 bg-[#0c314d]">
+        <div className="flex-1 overflow-auto p-1 sm:p-2 bg-gray-100">
           {mode === "grid" ? (
             /* ── GRID VIEW ─────────────────────────────────────────── */
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto rounded-lg shadow-sm border border-gray-300">
               <table className="w-full border-collapse text-xs sm:text-sm table-fixed min-w-[500px]">
                 <thead>
                   <tr>
                     {Array.from({ length: COLS }, (_, i) => (
                       <th
                         key={i}
-                        className="bg-[#174b73] text-white text-center py-1.5 px-1 font-bold border border-[#1b5785]/60"
+                        className="bg-gradient-to-b from-[#142969] to-[#1a3578] text-white text-center py-1.5 px-1 font-bold border border-[#1e4088]"
                       >
                         {i + 1}
                       </th>
                     ))}
-                    <th className="bg-[#174b73] text-white text-center py-1.5 px-1 font-bold border border-[#1b5785]/60">
+                    <th className="bg-gradient-to-b from-[#142969] to-[#1a3578] text-white text-center py-1.5 px-1 font-bold border border-[#1e4088]">
                       Total
                     </th>
                   </tr>
@@ -606,7 +606,7 @@ export default function JantriPage() {
                 <tbody>
                   {/* Main 10x10 grid */}
                   {MAIN_GRID.map((row, rowIdx) => (
-                    <tr key={rowIdx}>
+                    <tr key={rowIdx} className={rowIdx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
                       {row.map((num) => {
                         const key = `1:${num}`;
                         const val = amounts[key];
@@ -614,9 +614,9 @@ export default function JantriPage() {
                         return (
                           <td
                             key={num}
-                            className="border border-[#1b5785]/40 p-0 bg-[#0a2a42] relative"
+                            className="border border-gray-300 p-0 relative"
                           >
-                            <span className="absolute top-0 left-0.5 text-[#f0a050] text-[10px] leading-none">
+                            <span className="absolute top-0 left-0.5 text-[#e6900a] text-[10px] leading-none font-bold">
                               {num}
                             </span>
                             <input
@@ -626,17 +626,17 @@ export default function JantriPage() {
                               value={val || ""}
                               onChange={(e) => setAmount(key, e.target.value)}
                               disabled={!isJantriOpen}
-                              className="w-full bg-transparent text-white text-center text-sm pt-4 pb-1 px-0 focus:outline-none focus:bg-[#174b73]/30 disabled:opacity-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              className="w-full bg-transparent text-gray-900 text-center text-sm pt-4 pb-1 px-0 focus:outline-none focus:bg-[#eef6ff] disabled:opacity-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             />
                             {existing > 0 && (
-                              <span className="absolute bottom-0 right-0.5 text-[9px] text-[#79a430]">
+                              <span className="absolute bottom-0 right-0.5 text-[9px] text-[#1a88d4] font-semibold">
                                 {existing}
                               </span>
                             )}
                           </td>
                         );
                       })}
-                      <td className="border border-[#1b5785]/60 bg-[#174b73]/30 text-white text-center text-sm font-semibold px-1 py-1.5">
+                      <td className="border border-gray-300 bg-[#e8edf5] text-[#142969] text-center text-sm font-bold px-1 py-1.5">
                         {rowTotals[rowIdx] || 0}
                       </td>
                     </tr>
@@ -647,18 +647,18 @@ export default function JantriPage() {
                     {colTotals.map((t, i) => (
                       <td
                         key={i}
-                        className="border border-[#1b5785]/60 bg-[#174b73]/40 text-white text-center font-bold py-1"
+                        className="border border-gray-300 bg-[#e8edf5] text-[#142969] text-center font-bold py-1"
                       >
                         {t}
                       </td>
                     ))}
-                    <td className="border border-[#1b5785]/60 bg-[#174b73]/40 text-white text-center font-bold py-1">
+                    <td className="border border-gray-300 bg-[#142969] text-white text-center font-bold py-1">
                       {grandTotal}
                     </td>
                   </tr>
 
                   {/* B row (Bahar Akhar) */}
-                  <tr>
+                  <tr className="bg-[#eef7ff]">
                     {B_LABELS.map((d) => {
                       const numStr = bLabelToNum(d);
                       const key = numStr ? `2:${numStr}` : null;
@@ -667,9 +667,9 @@ export default function JantriPage() {
                       return (
                         <td
                           key={`B${d}`}
-                          className="border border-[#1b5785]/40 p-0 bg-[#0a2a42] relative"
+                          className="border border-gray-300 p-0 relative"
                         >
-                          <span className="absolute top-0 left-0.5 text-[#66c4ff] text-[10px] leading-none">
+                          <span className="absolute top-0 left-0.5 text-[#1a7dc4] text-[10px] leading-none font-bold">
                             B{d}
                           </span>
                           {key ? (
@@ -679,22 +679,20 @@ export default function JantriPage() {
                               value={val || ""}
                               onChange={(e) => setAmount(key, e.target.value)}
                               disabled={!isJantriOpen}
-                              className="w-full bg-transparent text-white text-center text-sm pt-4 pb-1 px-0 focus:outline-none focus:bg-[#174b73]/30 disabled:opacity-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              className="w-full bg-transparent text-gray-900 text-center text-sm pt-4 pb-1 px-0 focus:outline-none focus:bg-[#ddeeff] disabled:opacity-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             />
                           ) : (
-                            <div className="pt-4 pb-1 text-center text-white/40 text-sm">
-                              -
-                            </div>
+                            <div className="pt-4 pb-1 text-center text-gray-400 text-sm">-</div>
                           )}
                           {existing > 0 && (
-                            <span className="absolute bottom-0 right-0.5 text-[9px] text-[#79a430]">
+                            <span className="absolute bottom-0 right-0.5 text-[9px] text-[#1a88d4] font-semibold">
                               {existing}
                             </span>
                           )}
                         </td>
                       );
                     })}
-                    <td className="border border-[#1b5785]/60 bg-[#174b73]/30 text-white text-center text-sm font-semibold px-1 py-1.5">
+                    <td className="border border-gray-300 bg-[#e8edf5] text-[#142969] text-center text-sm font-bold px-1 py-1.5">
                       {B_LABELS.reduce((s, d) => {
                         const n = bLabelToNum(d);
                         return s + (n ? amounts[`2:${n}`] || 0 : 0);
@@ -703,7 +701,7 @@ export default function JantriPage() {
                   </tr>
 
                   {/* A row (Ander Akhar) */}
-                  <tr>
+                  <tr className="bg-[#f5eeff]">
                     {A_LABELS.map((d) => {
                       const numStr = aLabelToNum(d);
                       const key = numStr ? `3:${numStr}` : null;
@@ -712,9 +710,9 @@ export default function JantriPage() {
                       return (
                         <td
                           key={`A${d}`}
-                          className="border border-[#1b5785]/40 p-0 bg-[#0a2a42] relative"
+                          className="border border-gray-300 p-0 relative"
                         >
-                          <span className="absolute top-0 left-0.5 text-[#c084fc] text-[10px] leading-none">
+                          <span className="absolute top-0 left-0.5 text-[#9333ea] text-[10px] leading-none font-bold">
                             A{d}
                           </span>
                           {key ? (
@@ -724,22 +722,20 @@ export default function JantriPage() {
                               value={val || ""}
                               onChange={(e) => setAmount(key, e.target.value)}
                               disabled={!isJantriOpen}
-                              className="w-full bg-transparent text-white text-center text-sm pt-4 pb-1 px-0 focus:outline-none focus:bg-[#174b73]/30 disabled:opacity-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              className="w-full bg-transparent text-gray-900 text-center text-sm pt-4 pb-1 px-0 focus:outline-none focus:bg-[#ede8ff] disabled:opacity-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             />
                           ) : (
-                            <div className="pt-4 pb-1 text-center text-white/40 text-sm">
-                              -
-                            </div>
+                            <div className="pt-4 pb-1 text-center text-gray-400 text-sm">-</div>
                           )}
                           {existing > 0 && (
-                            <span className="absolute bottom-0 right-0.5 text-[9px] text-[#79a430]">
+                            <span className="absolute bottom-0 right-0.5 text-[9px] text-[#1a88d4] font-semibold">
                               {existing}
                             </span>
                           )}
                         </td>
                       );
                     })}
-                    <td className="border border-[#1b5785]/60 bg-[#174b73]/30 text-white text-center text-sm font-semibold px-1 py-1.5">
+                    <td className="border border-gray-300 bg-[#e8edf5] text-[#142969] text-center text-sm font-bold px-1 py-1.5">
                       {A_LABELS.reduce((s, d) => {
                         const n = aLabelToNum(d);
                         return s + (n ? amounts[`3:${n}`] || 0 : 0);
@@ -753,113 +749,124 @@ export default function JantriPage() {
             /* ── QUICK ENTRY VIEW ──────────────────────────────────── */
             <div className="flex flex-col sm:flex-row gap-3 h-full">
               {/* Left: inputs + entry list */}
-              <div className="w-full sm:w-[280px] flex-shrink-0 flex flex-col">
+              <div className="w-full sm:w-[280px] flex-shrink-0 flex flex-col gap-2">
                 {/* Number + Amount inputs */}
-                <div className="flex gap-1 mb-2">
-                  <div className="flex-1">
-                    <div className="bg-[#e6a020] text-white text-[10px] font-bold text-center py-0.5 rounded-t">
-                      NUMBER
+                <div className="bg-white rounded-lg border border-gray-300 shadow-sm overflow-hidden">
+                  <div className="flex">
+                    <div className="flex-1 border-r border-gray-300">
+                      <div className="bg-[#e6900a] text-white text-[10px] font-bold text-center py-1 tracking-wider">
+                        NUMBER
+                      </div>
+                      <input
+                        ref={numberInputRef}
+                        type="text"
+                        value={draftNumber}
+                        onChange={(e) => setDraftNumber(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            amountInputRef.current?.focus();
+                          }
+                        }}
+                        disabled={!isJantriOpen}
+                        placeholder="e.g. 42"
+                        autoFocus
+                        className="w-full bg-transparent text-gray-900 text-center text-sm py-2.5 px-2 focus:outline-none focus:bg-[#eef6ff] disabled:opacity-40 placeholder:text-gray-300"
+                      />
                     </div>
-                    <input
-                      ref={numberInputRef}
-                      type="text"
-                      value={draftNumber}
-                      onChange={(e) => setDraftNumber(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          amountInputRef.current?.focus();
-                        }
-                      }}
-                      disabled={!isJantriOpen}
-                      placeholder=""
-                      autoFocus
-                      className="w-full bg-[#0a2a42] border border-[#1b5785]/60 text-white text-center text-sm py-2 focus:outline-none focus:ring-1 focus:ring-[#79a430] disabled:opacity-40"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <div className="bg-[#174b73] text-white text-[10px] font-bold text-center py-0.5 rounded-t">
-                      AMOUNT
+                    <div className="flex-1">
+                      <div className="bg-[#142969] text-white text-[10px] font-bold text-center py-1 tracking-wider">
+                        AMOUNT
+                      </div>
+                      <input
+                        ref={amountInputRef}
+                        type="number"
+                        min={1}
+                        value={draftAmount}
+                        onChange={(e) => setDraftAmount(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            addFromDraft();
+                          }
+                        }}
+                        disabled={!isJantriOpen}
+                        placeholder="₹"
+                        className="w-full bg-transparent text-gray-900 text-center text-sm py-2.5 px-2 focus:outline-none focus:bg-[#eef6ff] disabled:opacity-40 placeholder:text-gray-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      />
                     </div>
-                    <input
-                      ref={amountInputRef}
-                      type="number"
-                      min={1}
-                      value={draftAmount}
-                      onChange={(e) => setDraftAmount(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          addFromDraft();
-                        }
-                      }}
+                    <button
+                      onClick={addFromDraft}
                       disabled={!isJantriOpen}
-                      placeholder=""
-                      className="w-full bg-[#0a2a42] border border-[#1b5785]/60 text-white text-center text-sm py-2 focus:outline-none focus:ring-1 focus:ring-[#79a430] disabled:opacity-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    />
+                      className="bg-[#84c2f1] hover:bg-[#5aaee8] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold px-4 text-xl transition-colors self-stretch flex items-center"
+                    >
+                      +
+                    </button>
                   </div>
-                  <button
-                    onClick={addFromDraft}
-                    disabled={!isJantriOpen}
-                    className="self-end bg-[#79a430] hover:bg-[#8fb832] disabled:bg-[#174b73] text-white font-bold px-3 py-2 rounded-lg text-lg leading-none"
-                  >
-                    +
-                  </button>
                 </div>
 
                 {/* Entry list */}
-                <div className="flex-1 overflow-auto border border-[#1b5785]/40 rounded-lg bg-[#0a2a42]">
-                  {quickEntries.length === 0 ? (
-                    <div className="text-center text-white/40 text-xs py-8">
-                      No entries yet
-                    </div>
-                  ) : (
-                    <table className="w-full text-xs">
-                      <tbody>
-                        {quickEntries.map((entry) => (
-                          <tr
-                            key={entry.id}
-                            className="border-b border-[#1b5785]/30"
-                          >
-                            <td className="py-1.5 px-2 text-white font-medium text-center">
-                              {entry.numberInput}
-                            </td>
-                            <td className="py-1.5 px-2 text-white text-right">
-                              {entry.amount}
-                            </td>
-                            <td className="py-1 px-1 w-6">
-                              <button
-                                onClick={() => removeQuickEntry(entry.id)}
-                                className="text-red-400 hover:text-red-300 bg-red-500/10 rounded-lg w-5 h-5 flex items-center justify-center text-[10px] font-bold"
-                              >
-                                x
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
+                <div className="flex-1 overflow-hidden flex flex-col rounded-lg border border-gray-300 shadow-sm bg-white">
+                  <div className="bg-[#142969] text-white text-[10px] font-bold text-center py-1 flex">
+                    <span className="flex-1">NUMBER</span>
+                    <span className="flex-1">AMOUNT</span>
+                    <span className="w-8"></span>
+                  </div>
+                  <div className="flex-1 overflow-auto">
+                    {quickEntries.length === 0 ? (
+                      <div className="text-center text-gray-400 text-xs py-10">
+                        No entries yet.<br />Enter number &amp; amount above.
+                      </div>
+                    ) : (
+                      <table className="w-full text-xs">
+                        <tbody>
+                          {quickEntries.map((entry, idx) => (
+                            <tr
+                              key={entry.id}
+                              className={`border-b border-gray-100 ${idx % 2 === 0 ? "bg-white" : "bg-gray-50"}`}
+                            >
+                              <td className="py-1.5 px-2 text-gray-900 font-bold text-center">
+                                {entry.numberInput}
+                              </td>
+                              <td className="py-1.5 px-2 text-[#142969] font-bold text-right">
+                                {entry.amount}
+                              </td>
+                              <td className="py-1 px-1 w-8 text-center">
+                                <button
+                                  onClick={() => removeQuickEntry(entry.id)}
+                                  className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded w-5 h-5 flex items-center justify-center text-[11px] font-bold mx-auto"
+                                >
+                                  ✕
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
                 </div>
 
                 {/* Total count */}
-                <div className="bg-[#174b73] text-white text-center text-sm font-semibold py-1.5 mt-1 rounded-lg">
+                <div className="bg-gradient-to-r from-[#142969] to-[#1a3578] text-white text-center text-sm font-semibold py-1.5 rounded-lg shadow-sm">
                   Total Count : {entryCount}
                 </div>
               </div>
 
               {/* Center: Instructions */}
-              <div className="hidden sm:block flex-1 border border-[#1b5785]/40 rounded-xl bg-[#0a2a42] p-3 overflow-auto">
-                <div className="bg-[#174b73] text-white text-xs font-semibold px-3 py-1.5 rounded-lg mb-3">
-                  Utar Mode Instructions
+              <div className="hidden sm:flex flex-1 flex-col rounded-lg border border-gray-300 shadow-sm overflow-hidden bg-white">
+                <div className="bg-gradient-to-r from-[#142969] to-[#1a3578] text-white text-xs font-bold px-3 py-2 tracking-wide">
+                  UTAR MODE — INSTRUCTIONS
                 </div>
-                <div className="space-y-2 text-white/70 text-xs">
-                  <p>1. Dara Number: should be 1 to 100</p>
-                  <p>2. Bahar Akhar Number: should be 111 to 999 (repeated digit like 111, 222, 333…999)</p>
-                  <p>3. Andar Akhar Number: should be 1111 to 9999 (repeated digit like 1111, 2222…9999)</p>
-                  <p>4. Press <kbd className="bg-[#174b73] px-1.5 py-0.5 rounded text-white font-mono">F12</kbd> for Jantri View</p>
-                  <p>5. Press <kbd className="bg-[#174b73] px-1.5 py-0.5 rounded text-white font-mono">Enter</kbd> after amount to add entry</p>
-                  <p>6. Press <kbd className="bg-[#174b73] px-1.5 py-0.5 rounded text-white font-mono">`~</kbd> for Re-Focus</p>
+                <div className="p-4 space-y-2.5 text-gray-700 text-xs overflow-auto">
+                  <p className="flex gap-2"><span className="text-[#142969] font-bold">1.</span> Dara Number: <span className="font-semibold">1 to 100</span></p>
+                  <p className="flex gap-2"><span className="text-[#142969] font-bold">2.</span> Bahar Akhar: <span className="font-semibold">111 to 999</span> (repeated digit: 111, 222…999)</p>
+                  <p className="flex gap-2"><span className="text-[#142969] font-bold">3.</span> Andar Akhar: <span className="font-semibold">1111 to 9999</span> (repeated digit: 1111, 2222…9999)</p>
+                  <div className="border-t border-gray-100 pt-2 space-y-1.5">
+                    <p>Press <kbd className="bg-gray-100 border border-gray-300 px-1.5 py-0.5 rounded text-gray-800 font-mono text-[11px]">F12</kbd> to switch Jantri / Utar view</p>
+                    <p>Press <kbd className="bg-gray-100 border border-gray-300 px-1.5 py-0.5 rounded text-gray-800 font-mono text-[11px]">Enter</kbd> after amount to add entry</p>
+                    <p>Press <kbd className="bg-gray-100 border border-gray-300 px-1.5 py-0.5 rounded text-gray-800 font-mono text-[11px]">`~</kbd> to re-focus number field</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -867,14 +874,14 @@ export default function JantriPage() {
         </div>
 
         {/* ═══ RIGHT SIDEBAR: Shift list (desktop only) ═══ */}
-        <div className="hidden lg:flex w-[220px] flex-shrink-0 border-l border-[#1b5785]/40 bg-[#0a2a42] flex-col overflow-hidden">
+        <div className="hidden lg:flex w-[220px] flex-shrink-0 border-l border-gray-300 bg-gray-50 flex-col overflow-hidden">
           {/* Current shift header */}
-          <div className="bg-[#174b73] text-white text-center text-sm font-bold py-2 uppercase font-condensed tracking-wide">
+          <div className="bg-gradient-to-r from-[#142969] to-[#1a3578] text-white text-center text-sm font-bold py-2 uppercase font-condensed tracking-wide">
             {shift.name} {isJantriOpen ? "[LIVE]" : ""}
           </div>
 
           {/* Tick to copy */}
-          <label className="flex items-center gap-2 px-3 py-2 border-b border-[#1b5785]/40 cursor-pointer hover:bg-[#0f3d5e]">
+          <label className="flex items-center gap-2 px-3 py-2 border-b border-gray-100 cursor-pointer hover:bg-gray-50">
             <input
               type="checkbox"
               checked={selectedShifts.size === allShifts.length}
@@ -887,9 +894,9 @@ export default function JantriPage() {
                   );
                 }
               }}
-              className="h-4 w-4 rounded border-[#1b5785]"
+              className="h-4 w-4 rounded border-[#1e4088]"
             />
-            <span className="text-xs text-white font-medium">
+            <span className="text-xs text-gray-700 font-medium">
               Tick Shift for Copy Transaction
             </span>
           </label>
@@ -901,32 +908,28 @@ export default function JantriPage() {
               .map((s) => (
                 <label
                   key={s.id}
-                  className="flex items-center gap-2 px-3 py-2 border-b border-[#1b5785]/30 cursor-pointer hover:bg-[#0f3d5e]"
+                  className="flex items-center gap-2 px-3 py-2 border-b border-gray-200 cursor-pointer hover:bg-white"
                 >
                   <input
                     type="checkbox"
                     checked={selectedShifts.has(s.id)}
                     onChange={() => toggleShift(s.id)}
-                    className="h-4 w-4 rounded border-[#1b5785]"
+                    className="h-4 w-4 rounded border-[#1e4088] accent-[#142969]"
                   />
-                  <span className="text-sm text-white">{s.name}</span>
+                  <span className="text-sm text-gray-700 font-medium">{s.name}</span>
                 </label>
               ))}
           </div>
 
-          {/* Applied narration */}
-          <div className="bg-[#174b73] text-white text-[10px] font-semibold px-3 py-1">
-            Applied Narration
-          </div>
           <div className="bg-red-700 text-white text-center text-sm font-bold py-2">
-            Grand Total: {grandTotal}
+            Grand Total: ₹{grandTotal}
           </div>
         </div>
       </div>
 
       {/* ── Bottom Bar: action buttons ─────────────────────────────────── */}
-      <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2 bg-[#0a2a42] border-t border-[#1b5785]/40 text-xs flex-wrap">
-        <span className="text-[#79a430] text-[11px] mr-1 sm:mr-2 hidden sm:inline">
+      <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2 bg-white border-t border-gray-300 shadow-[0_-2px_8px_rgba(0,0,0,0.08)] text-xs flex-wrap">
+        <span className="text-[#142969] text-[11px] mr-1 sm:mr-2 hidden sm:inline">
           [ F12 = Switch View ]
         </span>
         <div className="flex-1 min-w-0" />
@@ -934,48 +937,48 @@ export default function JantriPage() {
         <button
           onClick={() => setRandomModalOpen(true)}
           disabled={!isJantriOpen}
-          className="bg-[#79a430] hover:bg-[#8fb832] disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold px-2 sm:px-3 py-1.5 rounded-lg hidden md:block transition-colors"
+          className="bg-[#142669] hover:bg-[#1a3080] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-2 sm:px-3 py-1.5 rounded-lg hidden md:block transition-colors"
         >
           Random (F4)
         </button>
         <button
           onClick={() => setCrossModalOpen(true)}
           disabled={!isJantriOpen}
-          className="bg-[#79a430] hover:bg-[#8fb832] disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold px-2 sm:px-3 py-1.5 rounded-lg hidden md:block transition-colors"
+          className="bg-[#142669] hover:bg-[#1a3080] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-2 sm:px-3 py-1.5 rounded-lg hidden md:block transition-colors"
         >
           Cross (F6)
         </button>
         <button
           onClick={() => setFromToModalOpen(true)}
           disabled={!isJantriOpen}
-          className="bg-[#79a430] hover:bg-[#8fb832] disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold px-2 sm:px-3 py-1.5 rounded-lg hidden md:block transition-colors"
+          className="bg-[#142669] hover:bg-[#1a3080] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-2 sm:px-3 py-1.5 rounded-lg hidden md:block transition-colors"
         >
           From-To (F7)
         </button>
         <button
           onClick={() => setRandom2ModalOpen(true)}
           disabled={!isJantriOpen}
-          className="bg-[#79a430] hover:bg-[#8fb832] disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold px-2 sm:px-3 py-1.5 rounded-lg hidden md:block transition-colors"
+          className="bg-[#142669] hover:bg-[#1a3080] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-2 sm:px-3 py-1.5 rounded-lg hidden md:block transition-colors"
         >
           Random (F8)
         </button>
         <button
           disabled
-          className="bg-[#174b73] text-white font-semibold px-2 sm:px-3 py-1.5 rounded-lg opacity-70 cursor-not-allowed hidden md:block"
+          className="bg-gray-200 text-gray-500 font-semibold px-2 sm:px-3 py-1.5 rounded-lg opacity-70 cursor-not-allowed hidden md:block"
         >
           J-Daane
         </button>
 
         <button
           onClick={handleClear}
-          className="bg-[#174b73] hover:bg-[#1b5785] text-white font-semibold px-3 sm:px-4 py-1.5 rounded-lg transition-colors border border-[#1b5785]/60"
+          className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-3 sm:px-4 py-1.5 rounded-lg transition-colors border border-gray-300"
         >
           Clear
         </button>
         <button
           onClick={handleSubmit}
           disabled={!isJantriOpen || submitting || grandTotal === 0}
-          className="bg-[#e6a020] hover:bg-[#d09018] disabled:bg-[#174b73] disabled:cursor-not-allowed text-white font-semibold px-3 sm:px-4 py-1.5 rounded-lg transition-colors"
+          className="bg-[#e6a020] hover:bg-[#d09018] disabled:bg-[#1a3578] disabled:cursor-not-allowed text-white font-semibold px-3 sm:px-4 py-1.5 rounded-lg transition-colors"
         >
           {submitting ? "Saving..." : "Save Now"}
         </button>

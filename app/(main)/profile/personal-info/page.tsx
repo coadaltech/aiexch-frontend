@@ -164,13 +164,13 @@ export default function PersonalInfoScreen() {
               onClick={() => router.back()}
               variant="ghost"
               size="sm"
-              className="text-black hover:text-foreground hover:bg-muted shrink-0"
+              className="text-gray-700 hover:text-gray-900 hover:bg-muted shrink-0"
             >
               <ArrowLeft className="w-4 h-4" />
             </Button>
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <User className="w-5 h-5 sm:w-6 sm:h-6 text-primary shrink-0" />
-              <h1 className="text-black font-bold text-base sm:text-lg lg:text-2xl truncate">
+              <h1 className="text-gray-900 font-bold text-base sm:text-lg lg:text-2xl truncate">
                 Personal Information
               </h1>
             </div>

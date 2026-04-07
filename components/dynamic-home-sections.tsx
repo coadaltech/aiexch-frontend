@@ -38,36 +38,36 @@ function CarouselSection({
   onScrollRight: () => void;
 }) {
   return (
-    <div className="bg-[#0a2a42] rounded-xl border border-[#1b5785]/50 overflow-hidden mt-4">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[#1b5785]/40">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mt-4">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
         <div className="flex items-center gap-2.5">
-          <div className="w-1 h-5 bg-[#79a430] rounded-full" />
+          <div className="w-1 h-5 bg-[#84c2f1] rounded-full" />
           <div>
-            <h2 className="text-sm font-bold text-white font-condensed tracking-wide">
+            <h2 className="text-sm font-bold text-gray-900 font-condensed tracking-wide">
               {title.toUpperCase()}
             </h2>
             {subtitle && (
-              <p className="text-[10px] text-white/40 mt-0.5">{subtitle}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">{subtitle}</p>
             )}
           </div>
         </div>
         <div className="flex items-center gap-2">
           {link && (
-            <a href={link} className="text-[#66c4ff] text-xs font-medium hover:text-white transition-colors mr-1">
+            <a href={link} className="text-[#142969] text-xs font-medium hover:text-[#84c2f1] transition-colors mr-1">
               View All
             </a>
           )}
           <button
             aria-label="Scroll left"
             onClick={onScrollLeft}
-            className="h-7 w-7 flex items-center justify-center rounded-lg bg-[#174b73] hover:bg-[#1b5785] text-white transition-colors border border-[#1b5785]"
+            className="h-7 w-7 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors border border-gray-200"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button
             aria-label="Scroll right"
             onClick={onScrollRight}
-            className="h-7 w-7 flex items-center justify-center rounded-lg bg-[#174b73] hover:bg-[#1b5785] text-white transition-colors border border-[#1b5785]"
+            className="h-7 w-7 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors border border-gray-200"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -92,14 +92,14 @@ function CasinoDbCarousel({ section }: { section: (typeof CASINO_DB_SECTIONS)[nu
 
   if (isLoading) {
     return (
-      <div className="bg-[#0a2a42] rounded-xl border border-[#1b5785]/50 overflow-hidden mt-4">
-        <div className="flex items-center gap-2.5 px-4 py-3 border-b border-[#1b5785]/40">
-          <div className="w-1 h-5 bg-[#79a430] rounded-full" />
-          <Skeleton className="h-4 w-40 bg-[#174b73]" />
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mt-4">
+        <div className="flex items-center gap-2.5 px-4 py-3 border-b border-gray-100">
+          <div className="w-1 h-5 bg-[#84c2f1] rounded-full" />
+          <Skeleton className="h-4 w-40 bg-gray-200" />
         </div>
         <div className="flex gap-3 px-4 py-3 overflow-hidden">
           {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-44 w-36 shrink-0 rounded-lg bg-[#174b73]" />
+            <Skeleton key={i} className="h-44 w-36 shrink-0 rounded-lg bg-gray-200" />
           ))}
         </div>
       </div>
@@ -174,7 +174,7 @@ function DynamicHomeSections() {
     return (
       <div className="space-y-4 mt-4">
         {[1, 2].map((i) => (
-          <div key={i} className="bg-[#0a2a42] rounded-xl border border-[#1b5785]/50 h-52 animate-pulse" />
+          <div key={i} className="bg-gray-200 rounded-xl h-52 animate-pulse" />
         ))}
       </div>
     );

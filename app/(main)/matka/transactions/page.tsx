@@ -43,9 +43,9 @@ export default function MatkaTransactionsPage() {
   };
 
   return (
-    <div className="bg-[#0c314d] min-h-full">
+    <div className="bg-gray-50 min-h-full">
       {/* Header */}
-      <div className="bg-[#0a2a42] border-b border-[#1b5785]/50 px-4 py-3 flex items-center gap-3">
+      <div className="bg-gradient-to-r from-[#142969] via-[#142669] to-[#1a3578] border-b border-[#1e4088]/40 px-4 py-3 flex items-center gap-3">
         <button
           onClick={() => router.push("/matka")}
           className="text-white/60 hover:text-white transition-colors"
@@ -53,7 +53,7 @@ export default function MatkaTransactionsPage() {
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex items-center gap-2.5">
-          <div className="w-1 h-5 bg-[#79a430] rounded-full" />
+          <div className="w-1 h-5 bg-[#84c2f1] rounded-full" />
           <div>
             <h1 className="text-white font-bold text-sm font-condensed tracking-wide">
               MATKA TRANSACTIONS
@@ -71,7 +71,7 @@ export default function MatkaTransactionsPage() {
           {[...Array(6)].map((_, i) => (
             <div
               key={i}
-              className="h-20 bg-[#0a2a42] rounded-xl animate-pulse border border-[#1b5785]/30"
+              className="h-20 bg-gray-200 rounded-xl animate-pulse"
             />
           ))}
         </div>
@@ -83,14 +83,14 @@ export default function MatkaTransactionsPage() {
           {transactions.map((txn) => (
             <div
               key={txn.id}
-              className="bg-[#0a2a42] border border-[#1b5785]/50 rounded-xl px-4 py-3"
+              className="bg-white border border-gray-200 rounded-xl px-4 py-3"
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-white font-bold text-sm">
+                  <h3 className="text-gray-900 font-bold text-sm">
                     {txn.shiftName}
                   </h3>
-                  <div className="flex items-center gap-2 mt-1 text-xs text-white/40">
+                  <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
                     <Calendar className="w-3 h-3" />
                     <span>{formatDate(txn.transactionDate)}</span>
                     <span>·</span>
@@ -98,11 +98,11 @@ export default function MatkaTransactionsPage() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-white font-bold text-sm">
+                  <p className="text-gray-900 font-bold text-sm">
                     ₹{Number(txn.totalAmount).toFixed(2)}
                   </p>
                   {Number(txn.totalCommission) > 0 && (
-                    <p className="text-white/40 text-[10px] mt-0.5">
+                    <p className="text-gray-400 text-[10px] mt-0.5">
                       Comm: ₹{Number(txn.totalCommission).toFixed(2)}
                     </p>
                   )}
@@ -116,11 +116,11 @@ export default function MatkaTransactionsPage() {
       {/* Empty State */}
       {!isLoading && transactions.length === 0 && (
         <div className="text-center py-16">
-          <div className="mx-auto w-14 h-14 bg-[#0a2a42] border border-[#1b5785]/40 rounded-xl flex items-center justify-center mb-3">
-            <Receipt className="w-7 h-7 text-white/30" />
+          <div className="mx-auto w-14 h-14 bg-gray-100 border border-gray-200 rounded-xl flex items-center justify-center mb-3">
+            <Receipt className="w-7 h-7 text-gray-300" />
           </div>
-          <p className="text-white/50 text-sm">No transactions yet</p>
-          <p className="text-white/30 text-xs mt-1">
+          <p className="text-gray-500 text-sm">No transactions yet</p>
+          <p className="text-gray-300 text-xs mt-1">
             Place bets on shifts to see your history
           </p>
         </div>

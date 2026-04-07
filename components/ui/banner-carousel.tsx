@@ -147,9 +147,9 @@ export function BannerCarousel({
     slideDirection === "backward";
 
   return (
-    <div className={`relative w-full ${height} mb-2`}>
+    <div className={`relative w-full ${height} mb-2 px-4`}>
       {/* Main Container */}
-      <div className="relative w-full h-full mt-8 overflow-hidden">
+      <div className="relative w-full h-full mt-2  overflow-hidden">
         {/* Slides Container */}
         <div className="relative w-full h-full flex items-center">
           {/* Previous Slide - sliding out during transition */}
@@ -166,7 +166,7 @@ export function BannerCarousel({
                 <img
                   src={items[prevSlide].imageUrl || items[prevSlide].image}
                   alt={items[prevSlide].title || items[prevSlide].alt}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover object-top"
                 />
               </div>
             </div>
@@ -184,7 +184,7 @@ export function BannerCarousel({
                     items[currentSlide].imageUrl || items[currentSlide].image
                   }
                   alt={items[currentSlide].title || items[currentSlide].alt}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover object-top"
                 />
               </div>
             </div>
@@ -216,7 +216,7 @@ export function BannerCarousel({
                     items[nextSlideIndex].image
                   }
                   alt={items[nextSlideIndex].title || items[nextSlideIndex].alt}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover object-top"
                 />
                 {!isNextSlideTransitioning && (
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-black/20 to-black/40 transition-opacity duration-300" />
@@ -246,7 +246,7 @@ export function BannerCarousel({
                     items[prevSlideIndex].image
                   }
                   alt={items[prevSlideIndex].title || items[prevSlideIndex].alt}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover object-top"
                 />
                 {!isPrevSlideTransitioning && (
                   <div className="absolute inset-0 bg-gradient-to-l from-transparent via-black/20 to-black/40 transition-opacity duration-300" />
@@ -291,7 +291,7 @@ export function BannerCarousel({
                     <img
                       src={item.imageUrl || item.image}
                       alt={item.title || item.alt}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover object-top"
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-black/20 to-black/40" />
                   </div>

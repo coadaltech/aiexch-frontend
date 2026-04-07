@@ -122,10 +122,10 @@ export default function Footer() {
   if (isPanelPath(pathname) || isAuthRoute) return null;
 
   return (
-    <footer className="bg-[#0a2a42] border-t border-[#1b5785]/60 mt-4">
+    <footer className="bg-gradient-to-b from-[#142969] via-[#142669] to-[#84c2f1] border-t border-[#1e4088]/60 mt-4">
 
       {/* ── Section 1: Nav link columns ── */}
-      <div className="border-b border-[#1b5785]/40">
+      <div className="border-b border-[#1e4088]/40">
         <div className="px-4 sm:px-6 py-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
           {FOOTER_COLS.map((col) => (
             <div key={col.title}>
@@ -154,7 +154,7 @@ export default function Footer() {
       </div>
 
       {/* ── Section 2: Partners ── */}
-      <div className="border-b border-[#1b5785]/40 py-4">
+      <div className="border-b border-[#1e4088]/40 py-4">
         <p className="text-white/40 text-[10px] font-bold tracking-widest px-4 sm:px-6 mb-3 font-condensed">
           PARTNERS
         </p>
@@ -179,14 +179,14 @@ export default function Footer() {
           ))}
         </div>
         {/* Thin progress indicator bar (decorative, like 1xBet) */}
-        <div className="mx-4 sm:mx-6 mt-3 h-[3px] bg-[#1b5785]/40 rounded-full">
-          <div className="h-full w-1/3 bg-[#79a430] rounded-full" />
+        <div className="mx-4 sm:mx-6 mt-3 h-[3px] bg-[#1e4088]/40 rounded-full">
+          <div className="h-full w-1/3 bg-[#84c2f1] rounded-full" />
         </div>
       </div>
 
       {/* ── Section 3: Copyright / Support / Social ── */}
-      <div className="border-b border-[#1b5785]/40">
-        <div className="grid lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-[#1b5785]/40">
+      <div className="border-b border-[#1e4088]/40">
+        <div className="grid lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-[#1e4088]/40">
 
           {/* Copyright */}
           <div className="px-4 sm:px-6 py-4 flex flex-col justify-center">
@@ -196,7 +196,7 @@ export default function Footer() {
             <p className="text-white/35 text-[10px] leading-relaxed">
               AIEXCH uses cookies to ensure the best user experience. By remaining
               on the website, you consent to use of cookies.{" "}
-              <Link href="/privacy" className="text-[#66c4ff] underline-offset-2 hover:underline">
+              <Link href="/privacy" className="text-[#84c2f1] underline-offset-2 hover:underline">
                 Find out more
               </Link>
             </p>
@@ -204,7 +204,7 @@ export default function Footer() {
 
           {/* Customer Support */}
           <div className="px-4 sm:px-6 py-4 flex items-center gap-4">
-            <div className="bg-[#174b73] p-3 rounded-full shrink-0">
+            <div className="bg-[#1a3578] p-3 rounded-full shrink-0">
               <Headphones className="h-6 w-6 text-white/80" />
             </div>
             <div>
@@ -212,15 +212,15 @@ export default function Footer() {
                 CUSTOMER SUPPORT
               </p>
               <div className="space-y-0.5">
-                <a href="tel:+918000000001" className="flex items-center gap-1.5 text-white text-xs hover:text-[#66c4ff] transition-colors">
-                  <Phone className="h-3 w-3 text-[#79a430]" />
+                <a href="tel:+918000000001" className="flex items-center gap-1.5 text-white text-xs hover:text-[#84c2f1] transition-colors">
+                  <Phone className="h-3 w-3 text-[#84c2f1]" />
                   +91 800 000 0001
                 </a>
-                <a href="tel:+918000000002" className="flex items-center gap-1.5 text-white text-xs hover:text-[#66c4ff] transition-colors">
-                  <Phone className="h-3 w-3 text-[#79a430]" />
+                <a href="tel:+918000000002" className="flex items-center gap-1.5 text-white text-xs hover:text-[#84c2f1] transition-colors">
+                  <Phone className="h-3 w-3 text-[#84c2f1]" />
                   +91 800 000 0002
                 </a>
-                <Link href="/live-support" className="flex items-center gap-1.5 text-[#66c4ff] text-xs hover:text-white transition-colors mt-1">
+                <Link href="/live-support" className="flex items-center gap-1.5 text-[#84c2f1] text-xs hover:text-white transition-colors mt-1">
                   <MessageCircle className="h-3 w-3" />
                   Live Chat
                 </Link>
@@ -237,7 +237,7 @@ export default function Footer() {
                   key={label}
                   href={href}
                   aria-label={label}
-                  className="w-8 h-8 rounded-full flex items-center justify-center border border-[#1b5785] bg-[#0c314d] hover:scale-110 transition-transform"
+                  className="w-8 h-8 rounded-full flex items-center justify-center border border-[#1e4088] bg-[#0b1545] hover:scale-110 transition-transform"
                   style={{ "--icon-color": color } as React.CSSProperties}
                 >
                   <Icon className="h-4 w-4" style={{ color }} />
@@ -250,7 +250,7 @@ export default function Footer() {
             </div>
 
             {/* Mobile version button */}
-            <button className="w-full sm:w-auto px-4 py-2 bg-[#174b73] hover:bg-[#1b5785] border border-[#1b5785] rounded-lg text-white text-xs font-bold tracking-widest font-condensed transition-colors">
+            <button className="w-full sm:w-auto px-4 py-2 bg-[#1a3578] hover:bg-[#1e4088] border border-[#1e4088] rounded-lg text-white text-xs font-bold tracking-widest font-condensed transition-colors">
               MOBILE VERSION
             </button>
           </div>

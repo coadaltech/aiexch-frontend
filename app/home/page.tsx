@@ -45,18 +45,18 @@ const NOTICES = [
 function NoticeTickerBar() {
   const text = NOTICES.join("   •••   ");
   return (
-    <div className="flex items-center bg-[#0a2a42] border-b border-[#1b5785]/60 h-8 overflow-hidden">
+    <div className="flex items-center bg-gradient-to-r from-[#142969] to-[#1a3578] border-b border-[#1e4088]/60 h-8 overflow-hidden">
       {/* Label */}
-      <div className="flex items-center gap-1.5 bg-[#79a430] px-3 h-full shrink-0 z-10">
-        <Bell className="h-3 w-3 text-white" />
-        <span className="text-white text-[11px] font-bold tracking-wide whitespace-nowrap">
+      <div className="flex items-center gap-1.5 text-black bg-[#ede105] px-3 h-full shrink-0 z-10">
+        <Bell className="h-3 w-3 text-black" />
+        <span className="text-black text-[11px] font-bold tracking-wide whitespace-nowrap">
           NOTICE
         </span>
       </div>
       {/* Scrolling text */}
       <div className="flex-1 overflow-hidden relative">
         <div className="ticker-track flex whitespace-nowrap">
-          <span className="text-[#66c4ff] text-[11px] px-4 inline-block animate-ticker">
+          <span className="text-[#ffffff] text-[11px] px-4 inline-block animate-ticker">
             {text}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{text}
           </span>
         </div>
@@ -67,13 +67,13 @@ function NoticeTickerBar() {
 
 /* ─── Sport category tabs ─── */
 const SPORT_TABS = [
-  { label: "Live", icon: Zap, href: "/sports/all", color: "#79a430", live: true },
-  { label: "Cricket", icon: Trophy, href: "/sports/cricket", color: "#66c4ff" },
-  { label: "Football", icon: Volleyball, href: "/sports/soccer", color: "#66c4ff" },
-  { label: "Tennis", icon: Target, href: "/sports/tennis", color: "#66c4ff" },
+  { label: "Live", icon: Zap, href: "/sports/all", color: "#84c2f1", live: true },
+  { label: "Cricket", icon: Trophy, href: "/sports/cricket", color: "#84c2f1" },
+  { label: "Football", icon: Volleyball, href: "/sports/soccer", color: "#84c2f1" },
+  { label: "Tennis", icon: Target, href: "/sports/tennis", color: "#84c2f1" },
   { label: "Casino", icon: Dices, href: "/casino", color: "#f5a0b4" },
   { label: "Matka", icon: Star, href: "/matka", color: "#f0a050" },
-  { label: "Promotions", icon: Gift, href: "/promotions", color: "#93c738" },
+  { label: "Promotions", icon: Gift, href: "/promotions", color: "#9dd0f5" },
   { label: "Responsible", icon: Shield, href: "/responsible-gaming", color: "#94b8cc" },
 ];
 
@@ -94,11 +94,11 @@ function SportCategoryTabs() {
               style={{ background: `${tab.color}18`, border: `1.5px solid ${tab.color}40` }}
             >
               {tab.live && (
-                <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-[#79a430] rounded-full animate-pulse" />
+                <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-[#84c2f1] rounded-full animate-pulse" />
               )}
               <Icon className="h-5 w-5 sm:h-6 sm:w-6" style={{ color: tab.color }} />
             </div>
-            <span className="text-[10px] sm:text-[11px] text-white/80 font-medium whitespace-nowrap group-hover:text-white transition-colors">
+            <span className="text-[10px] sm:text-[11px] text-gray-500 font-medium whitespace-nowrap group-hover:text-gray-900 transition-colors">
               {tab.label}
             </span>
           </button>
@@ -110,21 +110,21 @@ function SportCategoryTabs() {
 
 /* ─── Stats bar ─── */
 const STATS = [
-  { label: "Live Events", value: "240+", icon: Tv, color: "#79a430" },
-  { label: "Active Users", value: "12K+", icon: Users, color: "#66c4ff" },
+  { label: "Live Events", value: "240+", icon: Tv, color: "#84c2f1" },
+  { label: "Active Users", value: "12K+", icon: Users, color: "#84c2f1" },
   { label: "Markets", value: "1800+", icon: TrendingUp, color: "#f0a050" },
   { label: "Paid Today", value: "₹2.4Cr", icon: Flame, color: "#f06888" },
 ];
 
 function StatsBar() {
   return (
-    <div className="grid grid-cols-4 gap-px bg-[#1b5785]/30 rounded-xl overflow-hidden mx-4">
+    <div className="grid grid-cols-4 gap-px bg-gradient-to-r from-[#142969] to-[#142669] rounded-xl overflow-hidden mx-4">
       {STATS.map((s) => {
         const Icon = s.icon;
         return (
           <div
             key={s.label}
-            className="flex flex-col items-center py-3 px-2 bg-[#0a2a42]"
+            className="flex flex-col items-center py-3 px-2 "
           >
             <Icon className="h-4 w-4 mb-1" style={{ color: s.color }} />
             <span className="text-sm sm:text-base font-bold text-white font-condensed">
@@ -157,28 +157,28 @@ function SectionHeader({
   return (
     <div className="flex items-center justify-between px-4 py-3">
       <div className="flex items-center gap-2.5">
-        <div className="w-1 h-6 bg-[#79a430] rounded-full" />
-        {Icon && <Icon className="h-4 w-4 text-[#66c4ff]" />}
+        <div className="w-1 h-6 bg-[#84c2f1] rounded-full" />
+        {Icon && <Icon className="h-4 w-4 text-[#142969]" />}
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-sm sm:text-base font-bold text-white font-condensed tracking-wide">
+            <h2 className="text-sm sm:text-base font-bold text-gray-900 font-condensed tracking-wide">
               {title}
             </h2>
             {badge && (
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#79a430] text-white animate-pulse">
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#142969] text-white animate-pulse">
                 {badge}
               </span>
             )}
           </div>
           {subtitle && (
-            <p className="text-[10px] text-white/40 mt-0.5">{subtitle}</p>
+            <p className="text-[10px] text-gray-400 mt-0.5">{subtitle}</p>
           )}
         </div>
       </div>
       {href && (
         <Link
           href={href}
-          className="flex items-center gap-1 text-[#66c4ff] text-xs font-medium hover:text-white transition-colors"
+          className="flex items-center gap-1 text-[#142969] text-xs font-medium hover:text-[#84c2f1] transition-colors"
         >
           View All <ChevronRight className="h-3.5 w-3.5" />
         </Link>
@@ -204,12 +204,12 @@ function QuickSportsRow() {
         <Link
           key={s.label}
           href={s.href}
-          className="flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-lg bg-[#174b73] hover:bg-[#1b5785] border border-[#1b5785] hover:border-[#66c4ff]/40 transition-all text-white text-xs font-medium"
+          className="flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-lg bg-white hover:bg-gray-50 border border-gray-200 hover:border-[#142969]/40 transition-all text-gray-700 text-xs font-medium"
         >
           <span>{s.emoji}</span>
           <span>{s.label}</span>
           {s.count && (
-            <span className="text-[9px] bg-[#79a430] text-white px-1 rounded font-bold">
+            <span className="text-[9px] bg-[#84c2f1] text-white px-1 rounded font-bold">
               {s.count}
             </span>
           )}
@@ -222,7 +222,7 @@ function QuickSportsRow() {
 /* ─── Main homepage ─── */
 const Homepage = () => {
   return (
-    <div className="w-full min-w-0 bg-[#0c314d] min-h-full">
+    <div className="w-full min-w-0 bg-[#ffffff] min-h-full">
       <Suspense fallback={null}>
         <ErrorHandler />
       </Suspense>
@@ -231,19 +231,19 @@ const Homepage = () => {
       <NoticeTickerBar />
 
       {/* 2. Hero banner */}
-      <div className="pt-2">
+      <div className="">
         <HomeBanner />
       </div>
 
       {/* 3. Sport category pill tabs */}
-      <SportCategoryTabs />
+      {/* <SportCategoryTabs /> */}
 
       {/* 4. Stats bar */}
       <StatsBar />
 
       {/* 5. Live Cricket Matches */}
       <div className="mt-4">
-        <div className="bg-[#0a2a42] mx-4 rounded-xl overflow-hidden border border-[#1b5785]/50">
+        <div className="bg-gradient-to-r from-[#142969] to-[#142669]  mx-4 rounded-xl overflow-hidden border border-[#1e4088]/50">
           <SectionHeader
             title="CRICKET"
             subtitle="Live & upcoming matches"
