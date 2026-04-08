@@ -67,14 +67,17 @@ function QuickBetPanel({
 }) {
   const { market, runner, odds } = data;
   const rawOdds = currentOdds ?? odds;
-  const displayOdds = isNaN(parseFloat(rawOdds))
-    ? rawOdds
-    : (() => {
-        const num = parseFloat(rawOdds);
-        const str = String(num);
-        const decimals = str.includes(".") ? str.split(".")[1].length : 0;
-        return decimals > 4 ? num.toFixed(4) : str;
-      })();
+  const numOdds = parseFloat(rawOdds);
+  const displayOdds =
+    data.bettingType === "LINE" && data.run != null
+      ? `${data.run} (${Math.round(numOdds * 100)})`
+      : isNaN(numOdds)
+      ? rawOdds
+      : (() => {
+          const str = String(numOdds);
+          const decimals = str.includes(".") ? str.split(".")[1].length : 0;
+          return decimals > 4 ? numOdds.toFixed(4) : str;
+        })();
   const marketName = market?.marketName || "";
   const runnerName = runner?.name || "";
 
@@ -104,7 +107,7 @@ function QuickBetPanel({
   const canPlace = !!stake && stakeNum > 0 && !stakeError && !isLoading && !isDelaying;
 
   return (
-    <div className={`px-2 sm:px-3 py-3 border-t-2 ${data.isLay ? "border-lay bg-gradient-to-b from-lay/10 to-white" : "border-back bg-gradient-to-b from-back/10 to-white"}`}>
+    <div className={`px-2 sm:px-3  border-t-2 ${data.isLay ? "border-lay bg-gradient-to-b from-lay/50 to-lay/10" : "border-back bg-gradient-to-b from-back/50 to-back/10"}`}>
       {/* Bet delay countdown banner */}
       {isDelaying && (
         <div className="mb-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between shadow-sm">
@@ -125,7 +128,7 @@ function QuickBetPanel({
       )}
 
       {/* Top Section: Label, Odds, Stake */}
-      <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-3 justify-end mb-3">
+      <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-3 justify-end mb-1">
         <div className="text-gray-800 font-bold text-xs sm:text-sm truncate max-w-full sm:max-w-none text-right sm:text-left">
           {runnerName} - {marketName.toUpperCase()}
         </div>
@@ -186,10 +189,10 @@ function QuickBetPanel({
                 ▼
               </button>
             </div>
-          </div>
           {stakeError && (
-            <span className="text-danger text-[9px] sm:text-[10px] font-medium">{stakeError}</span>
+            <span className="text-danger text-[9px] sm:text-[10px] font-medium ml-2">{stakeError}</span>
           )}
+          </div>
         </div>
       </div>
 
@@ -214,7 +217,7 @@ function QuickBetPanel({
             type="button"
             onClick={() => onPlaceBet(stake, displayOdds)}
             disabled={!canPlace}
-            className="min-w-[84px] sm:min-w-[96px] px-4 sm:px-5 py-1.5 sm:py-2 rounded text-xs sm:text-sm font-semibold bg-gradient-to-b from-cta-deposit-from to-cta-deposit-to hover:from-cta-deposit-from-hover hover:to-cta-deposit-to-hover shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-white transition-all flex items-center justify-center gap-1.5"
+            className="min-w-[84px] sm:min-w-[96px] px-4 sm:px-5 py-1.5 sm:py-2 rounded text-xs sm:text-sm font-semibold bg-[#142669] hover:from-cta-deposit-from-hover hover:to-cta-deposit-to-hover shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-white transition-all flex items-center justify-center gap-1.5"
           >
             {isLoading ? (
               <>
@@ -522,6 +525,16 @@ export default function MatchPage() {
       toast.error(`Bet panel closed — ${reason}`);
     }
   }, [markets, quickBet, cancelBetDelay]);
+
+  // Auto-close QuickBetPanel after 10s of no stake interaction
+  useEffect(() => {
+    if (!quickBet || isPlacing) return;
+    const timer = setTimeout(() => {
+      setQuickBet(null);
+      setQuickBetStake("");
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, [quickBet, quickBetStake, isPlacing]);
 
   // Derive the current live price for the open QuickBetPanel so it updates in real-time
   const liveQuickBetOdds = useMemo(() => {
@@ -1546,9 +1559,13 @@ export default function MatchPage() {
               market.bettingType == "LINE" && (
                 <div key={market.marketId} className="border-b border-gray-100 last:border-b-0 bg-white">
                   {(() => {
-                    const midIdx = Math.floor((market.runners.length - 1) / 2);
-                    return market.runners.map((runner: any, runnerIdx: number) => {
-                      const isRunnerSuspended = runner.status === "SUSPENDED" || runner.status === "REMOVED" || market.status === "SUSPENDED" || !!market.sportingEvent;
+                    const isMarketSuspended = market.status === "SUSPENDED" || !!market.sportingEvent;
+                    const visibleRunners = isMarketSuspended
+                      ? market.runners
+                      : market.runners.filter((r: any) => r.status !== "SUSPENDED" && r.status !== "REMOVED");
+                    const midIdx = Math.floor((visibleRunners.length - 1) / 2);
+                    return visibleRunners.map((runner: any, runnerIdx: number) => {
+                      const isRunnerSuspended = isMarketSuspended;
                       const showLabel = runnerIdx === midIdx;
                       return (
                         <div key={runner.selectionId} className={`px-2 sm:px-3 grid grid-cols-3 gap-1 sm:gap-2 items-center min-h-0 bg-white${market.runners.length > 1 ? " py-0.5" : ""}`}>

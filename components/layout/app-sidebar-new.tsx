@@ -207,9 +207,14 @@ function SportAccordionItem({
                       return new Date(openDate) >= today;
                     });
                     if (upcomingMatches.length === 0) return null;
+                    const sortedMatches = [...upcomingMatches].sort((a: Match, b: Match) => {
+                      const dateA = new Date(a.event?.openDate || (a as any).openDate || 0).getTime();
+                      const dateB = new Date(b.event?.openDate || (b as any).openDate || 0).getTime();
+                      return dateA - dateB;
+                    });
                     return (
                     <div className="ml-2 border-l border-gray-200 pl-2 mb-1">
-                      {upcomingMatches.map((match: Match) => {
+                      {sortedMatches.map((match: Match) => {
                         const matchId = match.event?.id || (match as any).id || (match as any).bfid;
                         const matchName =
                           match.event?.name || (match as any).name || (match as any).eventName ||
