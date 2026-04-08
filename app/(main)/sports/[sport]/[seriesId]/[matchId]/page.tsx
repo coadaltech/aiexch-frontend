@@ -1544,91 +1544,68 @@ export default function MatchPage() {
           {visibleMarkets.map(
             (market) =>
               market.bettingType == "LINE" && (
-                <div key={market.marketId} className="border-b border-gray-100 last:border-b-0">
-                  <div className="divide-y divide-gray-100">
-                    {market.runners.map((runner: any, runnerIdx: number) => {
+                <div key={market.marketId} className="border-b border-gray-100 last:border-b-0 bg-white">
+                  {(() => {
+                    const midIdx = Math.floor((market.runners.length - 1) / 2);
+                    return market.runners.map((runner: any, runnerIdx: number) => {
                       const isRunnerSuspended = runner.status === "SUSPENDED" || runner.status === "REMOVED" || market.status === "SUSPENDED" || !!market.sportingEvent;
+                      const showLabel = runnerIdx === midIdx;
                       return (
-                      <div
-                        key={runner.selectionId}
-                        className="px-2 sm:px-3  grid grid-cols-3 gap-1 sm:gap-2 items-center min-h-0 bg-white"
-                      >
-                        <RunnerNameCell
-                          runner={runner}
-                          marketId={market.marketId}
-                          displayName={runnerIdx === 0 ? market.marketName : ""}
-                          isFancy
-                          betDelay={runnerIdx === 0 ? market.marketCondition?.betDelay : undefined}
-                        />
-                        <div className="col-span-2 gap-2 relative flex min-h-[2.25rem]">
-                          <div className="flex-1 flex flex-col items-end min-w-0">
-                            <div className="gap-1 flex justify-end items-center flex-wrap">
-                              {isRunnerSuspended ? (
-                                <button className={`${oddsBtnClass} bg-back-disabled w-24`} disabled>
-                                  <span className={oddsPriceClass}>0</span>
-                                  <span className={oddsSizeClass}>0</span>
-                                </button>
-                              ) : runner.lay && runner.lay.length > 0 ? (
-                                runner.lay.map((layItem: any, layIdx: number) => (
-                                  <button
-                                    key={layIdx}
-                                    onClick={() =>
-                                      handleLayClick(market, runner, toDecimalfancyOdds(layItem.price), String(layItem.line ?? ""), layIdx)
-                                    }
-                                    className={`${oddsBtnClass} bg-gradient-to-b from-lay to-lay-deep hover:from-lay-hover hover:to-lay shadow-sm transition-all w-24`}
-                                  >
-                                    <span className={oddsPriceClass}>{layItem.line}</span>
-                                    <span className={oddsSizeClass}>{formatAmount(layItem.price)}</span>
-                                  </button>
-                                ))
-                              ) : (
-                                <button className={`${oddsBtnClass} bg-lay-disabled w-24`} disabled>
-                                  <span className={oddsPriceClass}>-</span>
-                                  <span className={oddsSizeClass}>-</span>
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex-1 flex items-center justify-between gap-1 min-w-0">
-                            <div className="gap-1 flex justify-start items-center flex-wrap min-w-0">
-                              {isRunnerSuspended ? (
-                                <button className={`${oddsBtnClass} bg-back-disabled w-24`} disabled>
-                                  <span className={oddsPriceClass}>0</span>
-                                  <span className={oddsSizeClass}>0</span>
-                                </button>
-                              ) : runner.back && runner.back.length > 0 ? (
-                                runner.back.map((backItem: any, backIdx: number) => (
-                                  <button
-                                    key={backIdx}
-                                    onClick={() =>
-                                      handleBackClick(market, runner, toDecimalfancyOdds(backItem.price), String(backItem.line ?? ""), backIdx)
-                                    }
-                                    className={`${oddsBtnClass} transition-all w-24 ${backIdx === 0 ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back shadow-sm" : "bg-white hover:bg-back/30 border border-back/50"}`}
-                                  >
-                                    <span className={oddsPriceClass}>{backItem.line}</span>
-                                    <span className={oddsSizeClass}>{formatAmount(backItem.price)}</span>
-                                  </button>
-                                ))
-                              ) : (
-                                <button className={`${oddsBtnClass} bg-lay-disabled w-24`} disabled>
-                                  <span className={oddsPriceClass}>-</span>
-                                  <span className={oddsSizeClass}>-</span>
-                                </button>
-                              )}
-                            </div>
-                            {runnerIdx === 0 && (
-                              <div className="hidden sm:flex flex-col text-xs text-black font-bold leading-tight text-right shrink-0">
-                                <span>Max:{market.marketCondition?.["maxBet"] ?? "-"}</span>
-                                <span>MKT:{market.marketCondition?.["potLimit"] ?? market.marketCondition?.["maxProfit"] ?? "-"}</span>
+                        <div key={runner.selectionId} className={`px-2 sm:px-3 grid grid-cols-3 gap-1 sm:gap-2 items-center min-h-0 bg-white${market.runners.length > 1 ? " py-0.5" : ""}`}>
+                          {showLabel ? (
+                            <RunnerNameCell
+                              runner={runner}
+                              marketId={market.marketId}
+                              displayName={market.marketName}
+                              isFancy
+                              betDelay={market.marketCondition?.betDelay}
+                            />
+                          ) : (
+                            <div />
+                          )}
+                          <div className="col-span-2 gap-2 relative flex min-h-[2.25rem]">
+                            <div className="flex-1 flex flex-col items-end min-w-0">
+                              <div className="gap-1 flex justify-end items-center flex-wrap">
+                                {isRunnerSuspended ? (
+                                  <button className={`${oddsBtnClass} bg-back-disabled w-24`} disabled><span className={oddsPriceClass}>0</span><span className={oddsSizeClass}>0</span></button>
+                                ) : runner.lay?.length > 0 ? (
+                                  runner.lay.map((layItem: any, layIdx: number) => (
+                                    <button key={layIdx} onClick={() => handleLayClick(market, runner, toDecimalfancyOdds(layItem.price), String(layItem.line ?? ""), layIdx)} className={`${oddsBtnClass} bg-gradient-to-b from-lay to-lay-deep hover:from-lay-hover hover:to-lay shadow-sm transition-all w-24`}>
+                                      <span className={oddsPriceClass}>{layItem.line}</span><span className={oddsSizeClass}>{formatAmount(layItem.price)}</span>
+                                    </button>
+                                  ))
+                                ) : (
+                                  <button className={`${oddsBtnClass} bg-lay-disabled w-24`} disabled><span className={oddsPriceClass}>-</span><span className={oddsSizeClass}>-</span></button>
+                                )}
                               </div>
-                            )}
+                            </div>
+                            <div className="flex-1 flex items-center justify-between gap-1 min-w-0">
+                              <div className="gap-1 flex justify-start items-center flex-wrap min-w-0">
+                                {isRunnerSuspended ? (
+                                  <button className={`${oddsBtnClass} bg-back-disabled w-24`} disabled><span className={oddsPriceClass}>0</span><span className={oddsSizeClass}>0</span></button>
+                                ) : runner.back?.length > 0 ? (
+                                  runner.back.map((backItem: any, backIdx: number) => (
+                                    <button key={backIdx} onClick={() => handleBackClick(market, runner, toDecimalfancyOdds(backItem.price), String(backItem.line ?? ""), backIdx)} className={`${oddsBtnClass} transition-all w-24 ${backIdx === 0 ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back shadow-sm" : "bg-white hover:bg-back/30 border border-back/50"}`}>
+                                      <span className={oddsPriceClass}>{backItem.line}</span><span className={oddsSizeClass}>{formatAmount(backItem.price)}</span>
+                                    </button>
+                                  ))
+                                ) : (
+                                  <button className={`${oddsBtnClass} bg-lay-disabled w-24`} disabled><span className={oddsPriceClass}>-</span><span className={oddsSizeClass}>-</span></button>
+                                )}
+                              </div>
+                              {showLabel && (
+                                <div className="hidden sm:flex flex-col text-xs text-black font-bold leading-tight text-right shrink-0">
+                                  <span>Max:{market.marketCondition?.["maxBet"] ?? "-"}</span>
+                                  <span>MKT:{market.marketCondition?.["potLimit"] ?? market.marketCondition?.["maxProfit"] ?? "-"}</span>
+                                </div>
+                              )}
+                            </div>
+                            {backLayOverlay(market)}
                           </div>
-                          {backLayOverlay(market)}
                         </div>
-                      </div>
                       );
-                    })}
-                  </div>
+                    });
+                  })()}
                   {quickBet && quickBet.marketId === market.marketId && quickBet.bettingType === "LINE" && (
                     <QuickBetPanel
                       data={quickBet}

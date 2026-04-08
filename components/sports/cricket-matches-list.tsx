@@ -131,37 +131,35 @@ function MatchRow({
       className="block bg-white hover:bg-gray-50 transition-colors"
     >
       <div className="flex items-center">
-        {/* Match info */}
-        <div className="flex-1 min-w-0 py-2 px-3">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[10px] text-gray-400 whitespace-nowrap">
-              {formatToIST(match.openDate)}
+        {/* Match info — all in one line */}
+        <div className="flex-1 min-w-0 py-1.5 px-3 flex items-center gap-1.5">
+          <span className="text-[10px] text-black whitespace-nowrap shrink-0">
+            {formatToIST(match.openDate)}
+          </span>
+          <span className="text-gray-300 shrink-0">·</span>
+          {match.inPlay ? (
+            <span className="flex items-center gap-0.5 shrink-0">
+              <span className="w-1.5 h-1.5 bg-[#84c2f1] rounded-full animate-pulse" />
+              <span className="text-[10px] text-[#142969] font-bold">LIVE</span>
             </span>
-            {match.inPlay ? (
-              <span className="flex items-center gap-1 ml-1">
-                <span className="w-1.5 h-1.5 bg-[#84c2f1] rounded-full animate-pulse" />
-                <span className="text-[10px] text-[#142969] font-bold">LIVE</span>
-              </span>
-            ) : (
-              <span className="text-[10px] text-gray-400 hidden sm:inline">
-                {match.seriesName}
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-1.5 mt-0.5">
-            <h4 className="font-semibold text-xs sm:text-sm text-gray-900 truncate">
-              {match.name}
-            </h4>
-            {matchOddsMarket && (
-              <span className="text-[8px] bg-[#4090e0]/80 text-white px-1 py-0.5 rounded font-medium shrink-0">O</span>
-            )}
-            {hasBookmaker && (
-              <span className="text-[8px] bg-[#20b888]/80 text-white px-1 py-0.5 rounded font-medium shrink-0">BM</span>
-            )}
-            {hasFancy && (
-              <span className="text-[8px] bg-[#e88030]/80 text-white px-1 py-0.5 rounded font-medium shrink-0">F</span>
-            )}
-          </div>
+          ) : (
+            <span className="text-[10px] text-black truncate hidden sm:block shrink-0 max-w-[120px]">
+              {match.seriesName}
+            </span>
+          )}
+          <span className="text-gray-300 shrink-0 hidden sm:inline">·</span>
+          <h4 className="font-semibold text-xs text-gray-900 truncate min-w-0">
+            {match.name}
+          </h4>
+          {matchOddsMarket && (
+            <span className="text-[8px] bg-[#4090e0]/80 text-white px-1 py-0.5 rounded font-medium shrink-0">O</span>
+          )}
+          {hasBookmaker && (
+            <span className="text-[8px] bg-[#20b888]/80 text-white px-1 py-0.5 rounded font-medium shrink-0">BM</span>
+          )}
+          {hasFancy && (
+            <span className="text-[8px] bg-[#e88030]/80 text-white px-1 py-0.5 rounded font-medium shrink-0">F</span>
+          )}
         </div>
 
         {/* Runner 1 (team 1) */}
