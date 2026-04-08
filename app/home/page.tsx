@@ -161,7 +161,7 @@ function SectionHeader({
         {Icon && <Icon className="h-4 w-4 text-[#142969]" />}
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-sm sm:text-base font-bold text-gray-900 font-condensed tracking-wide">
+            <h2 className="text-sm sm:text-base font-bold text-white font-condensed tracking-wide">
               {title}
             </h2>
             {badge && (
@@ -243,7 +243,7 @@ const Homepage = () => {
 
       {/* 5. Live Cricket Matches */}
       <div className="mt-4">
-        <div className="bg-gradient-to-r from-[#142969] to-[#142669]  mx-4 rounded-xl overflow-hidden border border-[#1e4088]/50">
+        <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-4 rounded-xl overflow-hidden border border-[#1e4088]/50">
           <SectionHeader
             title="CRICKET"
             subtitle="Live & upcoming matches"

@@ -68,11 +68,11 @@ function useAllMatchOdds(matchIds: string[], eventTypeId: string) {
 
 function OddsCell({ back, lay }: { back: number | null; lay: number | null }) {
   return (
-    <div className="flex w-[88px] sm:w-[120px] shrink-0">
-      <div className="flex-1 bg-back text-center py-3 text-[11px] sm:text-xs font-bold text-black border-l border-white/30">
+    <div className="flex shrink-0">
+      <div className="w-24 bg-gradient-to-b from-back to-back-deep text-center py-1.5 text-sm sm:text-base font-bold text-gray-900 border-l border-white/30 leading-tight">
         {back ?? "-"}
       </div>
-      <div className="flex-1 bg-lay text-center py-3 text-[11px] sm:text-xs font-bold text-black border-l border-white/30">
+      <div className="w-24 bg-gradient-to-b from-lay to-lay-deep text-center py-1.5 text-sm sm:text-base font-bold text-gray-900 border-l border-white/30 leading-tight">
         {lay ?? "-"}
       </div>
     </div>
@@ -132,8 +132,8 @@ function MatchRow({
     >
       <div className="flex items-center">
         {/* Match info — all in one line */}
-        <div className="flex-1 min-w-0 py-1.5 px-3 flex items-center gap-1.5">
-          <span className="text-[10px] text-black whitespace-nowrap shrink-0">
+        <div className="flex-1 min-w-0 py-1.5 px-3 flex items-center ">
+          <span className="text-[16px] font-bold text-black whitespace-nowrap shrink-0">
             {formatToIST(match.openDate)}
           </span>
           <span className="text-gray-300 shrink-0">·</span>
@@ -143,22 +143,23 @@ function MatchRow({
               <span className="text-[10px] text-[#142969] font-bold">LIVE</span>
             </span>
           ) : (
-            <span className="text-[10px] text-black truncate hidden sm:block shrink-0 max-w-[120px]">
-              {match.seriesName}
-            </span>
+            // <span className="text-[10px] text-black truncate hidden sm:block shrink-0 max-w-[120px]">
+            //   {match.seriesName}
+            // </span>
+            <span></span>
           )}
           <span className="text-gray-300 shrink-0 hidden sm:inline">·</span>
-          <h4 className="font-semibold text-xs text-gray-900 truncate min-w-0">
+          <h4 className=" text-[16px]  mr-2 font-bold text-black truncate min-w-0">
             {match.name}
           </h4>
           {matchOddsMarket && (
-            <span className="text-[8px] bg-[#4090e0]/80 text-white px-1 py-0.5 rounded font-medium shrink-0">O</span>
+            <span className="text-[12px] mr-1 bg-[#4090e0]/80 text-white px-1 py-0.5 rounded font-medium shrink-0">O</span>
           )}
           {hasBookmaker && (
-            <span className="text-[8px] bg-[#20b888]/80 text-white px-1 py-0.5 rounded font-medium shrink-0">BM</span>
+            <span className="text-[12px] mr-1 bg-[#20b888]/80 text-white px-1 py-0.5 rounded font-medium shrink-0">BM</span>
           )}
           {hasFancy && (
-            <span className="text-[8px] bg-[#e88030]/80 text-white px-1 py-0.5 rounded font-medium shrink-0">F</span>
+            <span className="text-[12px] bg-[#e88030]/80 text-white px-1 py-0.5 rounded font-medium shrink-0">F</span>
           )}
         </div>
 
@@ -166,11 +167,11 @@ function MatchRow({
         <OddsCell back={team1.back} lay={team1.lay} />
 
         {/* Draw (hidden on small screens) */}
-        <div className="hidden sm:flex w-[120px] shrink-0">
-          <div className="flex-1 bg-back text-center py-3 text-xs font-bold text-black border-l border-white/30">
+        <div className="hidden sm:flex shrink-0">
+          <div className="w-24 bg-gradient-to-b from-back to-back-deep text-center py-1.5 text-sm sm:text-base font-bold text-gray-900 border-l border-white/30 leading-tight">
             {draw.back ?? "-"}
           </div>
-          <div className="flex-1 bg-lay text-center py-3 text-xs font-bold text-black border-l border-white/30">
+          <div className="w-24 bg-gradient-to-b from-lay to-lay-deep text-center py-1.5 text-sm sm:text-base font-bold text-gray-900 border-l border-white/30 leading-tight">
             {draw.lay ?? "-"}
           </div>
         </div>
@@ -284,9 +285,9 @@ export function CricketMatchesList({
       {/* Header row */}
       <div className="flex items-center bg-gradient-to-r from-[#142969] to-[#1a3578] text-white text-[10px] sm:text-xs font-bold font-condensed tracking-wider">
         <div className="flex-1 py-2.5 px-3" />
-        <div className="w-[88px] sm:w-[120px] text-center py-2.5">1</div>
-        <div className="w-[88px] sm:w-[120px] text-center py-2.5 hidden sm:block">X</div>
-        <div className="w-[88px] sm:w-[120px] text-center py-2.5">2</div>
+        <div className="w-48 text-center py-2.5">1</div>
+        <div className="w-48 text-center py-2.5 hidden sm:block">X</div>
+        <div className="w-48 text-center py-2.5">2</div>
       </div>
 
       {/* Match rows */}
