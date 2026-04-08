@@ -215,7 +215,7 @@ function QuickBetPanel({
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={() => onPlaceBet(stake, displayOdds)}
+            onClick={() => onPlaceBet(stake, rawOdds)}
             disabled={!canPlace}
             className="min-w-[84px] sm:min-w-[96px] px-4 sm:px-5 py-1.5 sm:py-2 rounded text-xs sm:text-sm font-semibold bg-[#142669] hover:from-cta-deposit-from-hover hover:to-cta-deposit-to-hover shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-white transition-all flex items-center justify-center gap-1.5"
           >
