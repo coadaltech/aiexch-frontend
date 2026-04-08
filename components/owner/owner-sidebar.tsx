@@ -180,40 +180,31 @@ function SidebarContent({
 
       <div className="p-3 lg:p-4 border-t border-sidebar-border mt-auto">
         {currentUser && (
-          <div className="px-4 py-3 border-b border-sidebar-border flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-sidebar-foreground">
+          <div className="px-3 py-2 flex items-center gap-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-sidebar-foreground">
               <User className="h-4 w-4" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-sidebar-primary truncate">
                 {currentUser.username ?? currentUser.email ?? "owner"}
               </p>
-              <p className="text-xs text-sidebar-foreground truncate">
+              <p className="text-xs text-sidebar-foreground/70 truncate capitalize">
                 {currentUser.role ? String(currentUser.role).toLowerCase() : "—"}
                 {whitelabelType ? ` · ${whitelabelType}` : ""}
               </p>
             </div>
-            <div
+            <button
               onClick={() => {
                 logout();
                 setOpen?.(false);
               }}
+              className="text-sidebar-foreground/70 hover:text-destructive transition-colors"
+              title="Logout"
             >
-              <LogOut className="h-5 w-5 mr-3 flex-shrink-0" />
-            </div>
+              <LogOut className="h-4 w-4" />
+            </button>
           </div>
         )}
-        {/* <Button */}
-        {/*   variant="ghost" */}
-        {/*   className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent py-3 touch-manipulation" */}
-        {/*   onClick={() => { */}
-        {/*     logout(); */}
-        {/*     setOpen?.(false); */}
-        {/*   }} */}
-        {/* > */}
-        {/*   <span>Logout</span> */}
-        {/*   <LogOut className="h-5 w-5 mr-3 flex-shrink-0" /> */}
-        {/* </Button> */}
       </div>
     </div>
   );

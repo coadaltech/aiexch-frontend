@@ -7,13 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useLogin, useWhitelabelInfo } from "@/hooks/useAuth";
 import { useAuth, createDemoUser, DEMO_BALANCE } from "@/contexts/AuthContext";
-import { Eye, EyeOff, Sparkles, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, Sparkles, UserRound, Lock } from "lucide-react";
 import { Captcha } from "@/components/modals/auth/captcha";
 import { normalizeRole, normalizeMembership, PANEL_ROLE_IDS, PANEL_ROLE_STRINGS } from "@/types/enums";
 import { roleToPrefix } from "@/lib/panel-utils";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [captchaValid, setCaptchaValid] = useState(false);
@@ -33,7 +33,7 @@ export default function LoginPage() {
     setError("");
 
     loginMutation.mutate(
-      { email, password },
+      { username, password },
       {
         onSuccess: (response) => {
           if (response.data.success && response.data.user) {
@@ -44,6 +44,10 @@ export default function LoginPage() {
               membership: string | number;
               balance?: string;
               role?: string | number;
+              upline?: string;
+              downline?: string;
+              groupId?: number | null;
+              currencyId?: string | null;
             };
             const roleStr = normalizeRole(user.role);
             login({
@@ -53,6 +57,10 @@ export default function LoginPage() {
               membership: normalizeMembership(user.membership),
               balance: user.balance ?? "0",
               role: roleStr,
+              upline: user.upline,
+              downline: user.downline,
+              groupId: user.groupId,
+              currencyId: user.currencyId,
             });
             // Check panel access: support both numeric and string role from API
             const isPanelRole = typeof user.role === "number"
@@ -94,18 +102,18 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* Email */}
+        {/* Username */}
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-muted-foreground">
-            Email
+            Username
           </label>
           <div className="relative">
-            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/70" />
+            <UserRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/70" />
             <Input
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              placeholder="Enter your username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               className="h-12 pl-11"
               required
             />

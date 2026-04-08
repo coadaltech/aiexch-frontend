@@ -1,15 +1,18 @@
 "use client";
 
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   useMatkaShift,
   useMatkaShifts,
   useMatkaJantri,
   usePlaceMatka,
+  useMatkaTransaction,
+  useUpdateMatka,
 } from "@/hooks/useMatkaApi";
+import { matkaApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, AlertCircle, ChevronDown, ChevronUp, Clock } from "lucide-react";
+import { ArrowLeft, AlertCircle, ChevronDown, ChevronUp, Clock, X } from "lucide-react";
 import { toast } from "sonner";
 
 function useShiftCountdown(
@@ -122,35 +125,49 @@ function parseNumberInput(
   const s = raw.trim();
   if (!s) return null;
 
+  // Strip leading zeros so "01" == "1", "007" == "7", etc.
+  const normalized = s.replace(/^0+/, "") || "0";
+
   // 4-digit repeated → ander akhar
-  if (ANDER_SET.has(s)) return { key: `3:${s}`, numberType: 3 };
+  if (ANDER_SET.has(normalized)) return { key: `3:${normalized}`, numberType: 3 };
   // 3-digit repeated → bahar akhar
-  if (BAHAR_SET.has(s)) return { key: `2:${s}`, numberType: 2 };
+  if (BAHAR_SET.has(normalized)) return { key: `2:${normalized}`, numberType: 2 };
   // 1-100 → dara
-  const n = parseInt(s, 10);
-  if (!isNaN(n) && n >= 1 && n <= 100 && String(n) === s)
+  const n = parseInt(normalized, 10);
+  if (!isNaN(n) && n >= 1 && n <= 100)
     return { key: `1:${n}`, numberType: 1 };
 
   return null;
 }
 
 type BetMode = "grid" | "quick";
+type EntrySource = "manual" | "random" | "cross" | "fromto" | "random2";
 
 interface QuickEntry {
   id: number;
   numberInput: string;
   amount: string;
+  source?: EntrySource;
 }
 
 export default function JantriPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("edit");
   const shiftId = params.shiftId as string;
   const { isLoggedIn } = useAuth();
 
   const { data: shift, isLoading: shiftLoading } = useMatkaShift(shiftId);
   const { data: jantriTotals = [] } = useMatkaJantri(shiftId);
   const placeMutation = usePlaceMatka();
+  const updateMutation = useUpdateMatka();
+
+  // Edit mode: load existing transaction
+  const { data: editTransaction } = useMatkaTransaction(editId);
+
+  // Clipboard state
+  const [hasClipboard, setHasClipboard] = useState(false);
 
   // All shifts for right sidebar
   const today = new Date().toISOString().split("T")[0];
@@ -190,6 +207,80 @@ export default function JantriPage() {
   const gridFirstCellRef = useRef<HTMLInputElement>(null);
   const [draftNumber, setDraftNumber] = useState("");
   const [draftAmount, setDraftAmount] = useState("");
+
+  // ── Check clipboard on mount ──────────────────────────────────────────
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("matka_clipboard");
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as { transactionId: string; shiftId: string };
+      if (parsed.transactionId) setHasClipboard(true);
+    } catch {
+      // ignore
+    }
+  }, [shiftId]);
+
+  // ── Populate amounts + quick entries when edit transaction loads ─────────
+  useEffect(() => {
+    if (!editTransaction?.details?.length) return;
+    const newAmounts: Record<string, number> = {};
+    const newQuickEntries: QuickEntry[] = [];
+    nextId.current = 1;
+    for (const d of editTransaction.details) {
+      const key = `${d.numberType}:${d.number}`;
+      const amt = Number(d.amount);
+      newAmounts[key] = amt;
+      newQuickEntries.push({
+        id: nextId.current++,
+        numberInput: d.number,
+        amount: String(Math.round(amt)),
+        source: "manual" as EntrySource,
+      });
+    }
+    setAmounts(newAmounts);
+    setQuickEntries(newQuickEntries);
+    setDraftNumber("");
+    setDraftAmount("");
+    // Clear any leftover draft so it doesn't overwrite edit data
+    sessionStorage.removeItem(`matka_draft_${shiftId}`);
+  }, [editTransaction?.details, shiftId]);
+
+  // ── Session storage key ───────────────────────────────────────────────
+  const storageKey = `matka_draft_${shiftId}`;
+
+  // Restore unsaved data from sessionStorage on first mount (skip in edit mode)
+  useEffect(() => {
+    if (!shiftId || editId) return;
+    try {
+      const saved = sessionStorage.getItem(storageKey);
+      if (!saved) return;
+      const parsed = JSON.parse(saved) as {
+        amounts?: Record<string, number>;
+        quickEntries?: QuickEntry[];
+        draftNumber?: string;
+        draftAmount?: string;
+      };
+      if (parsed.amounts && Object.keys(parsed.amounts).length > 0)
+        setAmounts(parsed.amounts);
+      if (parsed.quickEntries && parsed.quickEntries.length > 0) {
+        setQuickEntries(parsed.quickEntries);
+        const maxId = Math.max(0, ...parsed.quickEntries.map((e) => e.id));
+        nextId.current = maxId + 1;
+      }
+      if (parsed.draftNumber) setDraftNumber(parsed.draftNumber);
+      if (parsed.draftAmount) setDraftAmount(parsed.draftAmount);
+    } catch {
+      // ignore corrupt storage
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shiftId]);
+
+  // Persist unsaved data to sessionStorage whenever it changes
+  useEffect(() => {
+    if (!shiftId) return;
+    const data = { amounts, quickEntries, draftNumber, draftAmount };
+    sessionStorage.setItem(storageKey, JSON.stringify(data));
+  }, [amounts, quickEntries, draftNumber, draftAmount, shiftId, storageKey]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [randomModalOpen, setRandomModalOpen] = useState(false);
   const [crossModalOpen, setCrossModalOpen] = useState(false);
@@ -222,7 +313,7 @@ export default function JantriPage() {
 
   // Handle Random/Cross modal save → merge into amounts + quick entries
   const handleRandomSave = useCallback(
-    (entries: { number: string; amount: number }[]) => {
+    (entries: { number: string; amount: number }[], source: EntrySource = "manual") => {
       // Update amounts (source of truth for grid)
       setAmounts((prev) => {
         const next = { ...prev };
@@ -242,6 +333,7 @@ export default function JantriPage() {
           id: nextId.current++,
           numberInput: e.number,
           amount: String(e.amount),
+          source,
         }));
 
       if (newQuickEntries.length > 0) {
@@ -250,6 +342,47 @@ export default function JantriPage() {
     },
     []
   );
+
+  // Per-modal save handlers
+  const handleRandomModalSave = useCallback(
+    (entries: { number: string; amount: number }[]) => handleRandomSave(entries, "random"),
+    [handleRandomSave]
+  );
+  const handleCrossModalSave = useCallback(
+    (entries: { number: string; amount: number }[]) => handleRandomSave(entries, "cross"),
+    [handleRandomSave]
+  );
+  const handleFromToModalSave = useCallback(
+    (entries: { number: string; amount: number }[]) => handleRandomSave(entries, "fromto"),
+    [handleRandomSave]
+  );
+  const handleRandom2ModalSave = useCallback(
+    (entries: { number: string; amount: number }[]) => handleRandomSave(entries, "random2"),
+    [handleRandomSave]
+  );
+
+  // Remove all entries added by a specific modal source
+  const removeBySource = useCallback((source: EntrySource) => {
+    setQuickEntries((prev) => {
+      const toRemove = prev.filter((e) => e.source === source);
+      const remaining = prev.filter((e) => e.source !== source);
+      // Subtract their contributions from amounts
+      setAmounts((prevAmts) => {
+        const next = { ...prevAmts };
+        for (const entry of toRemove) {
+          const parsed = parseNumberInput(entry.numberInput);
+          const amt = parseInt(entry.amount, 10);
+          if (parsed && amt > 0) {
+            const newVal = (next[parsed.key] || 0) - amt;
+            if (newVal <= 0) delete next[parsed.key];
+            else next[parsed.key] = newVal;
+          }
+        }
+        return next;
+      });
+      return remaining;
+    });
+  }, []);
 
   // F12 to switch view
   useEffect(() => {
@@ -292,6 +425,29 @@ export default function JantriPage() {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [amounts, quickEntries, draftNumber, draftAmount]);
+
+  // ── Grid Enter key navigation ─────────────────────────────────────────
+  const handleGridKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      // Allow only digits and control/navigation keys
+      const allowed = ["Backspace", "Delete", "Tab", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End", "Enter"];
+      if (!allowed.includes(e.key) && !/^\d$/.test(e.key)) {
+        e.preventDefault();
+        return;
+      }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const inputs = Array.from(
+          document.querySelectorAll<HTMLInputElement>("[data-grid-input]")
+        );
+        const idx = inputs.indexOf(e.currentTarget);
+        if (idx >= 0 && idx < inputs.length - 1) {
+          inputs[idx + 1].focus();
+        }
+      }
+    },
+    []
+  );
 
   // ── Sync helpers ──────────────────────────────────────────────────────
   const syncQuickToAmounts = useCallback((entries: QuickEntry[]) => {
@@ -369,6 +525,7 @@ export default function JantriPage() {
       id: nextId.current++,
       numberInput: draftNumber,
       amount: draftAmount,
+      source: "manual",
     };
     setQuickEntries((prev) => {
       const updated = [...prev, entry];
@@ -397,6 +554,40 @@ export default function JantriPage() {
     setQuickEntries([]);
     setDraftNumber("");
     setDraftAmount("");
+    sessionStorage.removeItem(storageKey);
+  }, [storageKey]);
+
+  // ── Paste from clipboard ──────────────────────────────────────────────
+  const handlePaste = useCallback(async () => {
+    try {
+      const raw = sessionStorage.getItem("matka_clipboard");
+      if (!raw) return;
+      const { transactionId } = JSON.parse(raw) as { transactionId: string; shiftId: string };
+      const res = await matkaApi.getTransaction(transactionId);
+      const txn = res.data?.data;
+      if (!txn?.details) return;
+      const newAmounts: Record<string, number> = {};
+      const newQuickEntries: QuickEntry[] = [];
+      for (const d of txn.details) {
+        const key = `${d.numberType}:${d.number}`;
+        newAmounts[key] = Number(d.amount);
+        newQuickEntries.push({
+          id: nextId.current++,
+          numberInput: d.number,
+          amount: String(Math.round(Number(d.amount))),
+          source: "manual" as EntrySource,
+        });
+      }
+      setAmounts(newAmounts);
+      setQuickEntries(newQuickEntries);
+      setDraftNumber("");
+      setDraftAmount("");
+      sessionStorage.removeItem("matka_clipboard");
+      setHasClipboard(false);
+      toast.success("Pasted!");
+    } catch {
+      toast.error("Failed to paste");
+    }
   }, []);
 
   // ── Submit ────────────────────────────────────────────────────────────
@@ -417,22 +608,32 @@ export default function JantriPage() {
       toast.error("No bets to submit");
       return;
     }
-    if (selectedShifts.size === 0) {
-      toast.error("Select at least one shift");
-      return;
-    }
 
     setSubmitting(true);
     try {
-      // Place on all selected shifts
-      const promises = Array.from(selectedShifts).map((sid) =>
-        placeMutation.mutateAsync({ shiftId: sid, bets })
-      );
-      await Promise.all(promises);
-      toast.success(
-        `Bet placed on ${selectedShifts.size} shift(s)! Total: ₹${grandTotal * selectedShifts.size}`
-      );
-      handleClear();
+      if (editId) {
+        // Edit mode: update existing transaction
+        await updateMutation.mutateAsync({ id: editId, bets });
+        toast.success("Updated successfully!");
+        sessionStorage.removeItem(storageKey);
+        router.push("/matka/transactions");
+      } else {
+        // New bet: place on all selected shifts
+        if (selectedShifts.size === 0) {
+          toast.error("Select at least one shift");
+          setSubmitting(false);
+          return;
+        }
+        const promises = Array.from(selectedShifts).map((sid) =>
+          placeMutation.mutateAsync({ shiftId: sid, bets })
+        );
+        await Promise.all(promises);
+        toast.success(
+          `Bet placed on ${selectedShifts.size} shift(s)! Total: ₹${grandTotal * selectedShifts.size}`
+        );
+        sessionStorage.removeItem(storageKey);
+        handleClear();
+      }
     } catch (err: any) {
       toast.error(err?.response?.data?.error || "Failed to place bet");
     } finally {
@@ -616,19 +817,21 @@ export default function JantriPage() {
                             key={num}
                             className="border border-gray-300 p-0 relative"
                           >
-                            <span className="absolute top-0 left-0.5 text-[#e6900a] text-[10px] leading-none font-bold">
+                            <span className="absolute top-0.5 bg-yellow-200 p-1 left-0.5 text-black text-[10px] leading-none font-bold ">
                               {num}
                             </span>
                             <input
                               ref={num === "1" ? gridFirstCellRef : undefined}
+                              data-grid-input
                               type="number"
                               min={0}
                               value={val || ""}
                               onChange={(e) => setAmount(key, e.target.value)}
+                              onKeyDown={handleGridKeyDown}
                               disabled={!isJantriOpen}
                               className="w-full bg-transparent text-gray-900 text-center text-sm pt-4 pb-1 px-0 focus:outline-none focus:bg-[#eef6ff] disabled:opacity-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             />
-                            {existing > 0 && (
+                            {editId && existing > 0 && (
                               <span className="absolute bottom-0 right-0.5 text-[9px] text-[#1a88d4] font-semibold">
                                 {existing}
                               </span>
@@ -669,22 +872,24 @@ export default function JantriPage() {
                           key={`B${d}`}
                           className="border border-gray-300 p-0 relative"
                         >
-                          <span className="absolute top-0 left-0.5 text-[#1a7dc4] text-[10px] leading-none font-bold">
+                          <span className="absolute top-0 left-0.5 text-black text-[10px] leading-none font-bold">
                             B{d}
                           </span>
                           {key ? (
                             <input
+                              data-grid-input
                               type="number"
                               min={0}
                               value={val || ""}
                               onChange={(e) => setAmount(key, e.target.value)}
+                              onKeyDown={handleGridKeyDown}
                               disabled={!isJantriOpen}
                               className="w-full bg-transparent text-gray-900 text-center text-sm pt-4 pb-1 px-0 focus:outline-none focus:bg-[#ddeeff] disabled:opacity-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             />
                           ) : (
                             <div className="pt-4 pb-1 text-center text-gray-400 text-sm">-</div>
                           )}
-                          {existing > 0 && (
+                          {editId && existing > 0 && (
                             <span className="absolute bottom-0 right-0.5 text-[9px] text-[#1a88d4] font-semibold">
                               {existing}
                             </span>
@@ -712,22 +917,24 @@ export default function JantriPage() {
                           key={`A${d}`}
                           className="border border-gray-300 p-0 relative"
                         >
-                          <span className="absolute top-0 left-0.5 text-[#9333ea] text-[10px] leading-none font-bold">
+                          <span className="absolute top-0 left-0.5 text-black text-[10px] leading-none font-bold">
                             A{d}
                           </span>
                           {key ? (
                             <input
+                              data-grid-input
                               type="number"
                               min={0}
                               value={val || ""}
                               onChange={(e) => setAmount(key, e.target.value)}
+                              onKeyDown={handleGridKeyDown}
                               disabled={!isJantriOpen}
                               className="w-full bg-transparent text-gray-900 text-center text-sm pt-4 pb-1 px-0 focus:outline-none focus:bg-[#ede8ff] disabled:opacity-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             />
                           ) : (
                             <div className="pt-4 pb-1 text-center text-gray-400 text-sm">-</div>
                           )}
-                          {existing > 0 && (
+                          {editId && existing > 0 && (
                             <span className="absolute bottom-0 right-0.5 text-[9px] text-[#1a88d4] font-semibold">
                               {existing}
                             </span>
@@ -760,12 +967,31 @@ export default function JantriPage() {
                       <input
                         ref={numberInputRef}
                         type="text"
+                        inputMode="numeric"
                         value={draftNumber}
-                        onChange={(e) => setDraftNumber(e.target.value)}
+                        onChange={(e) => {
+                          // Allow digits only
+                          setDraftNumber(e.target.value.replace(/[^0-9]/g, ""));
+                        }}
                         onKeyDown={(e) => {
                           if (e.key === "Enter") {
                             e.preventDefault();
                             amountInputRef.current?.focus();
+                            return;
+                          }
+                          // + key → repeat digit 3× (Bahar Akhar)
+                          if (e.key === "+" || e.key === "=") {
+                            e.preventDefault();
+                            const digit = draftNumber.replace(/^0+/, "");
+                            if (/^[1-9]$/.test(digit)) setDraftNumber(digit.repeat(3));
+                            return;
+                          }
+                          // - key → repeat digit 4× (Ander Akhar)
+                          if (e.key === "-") {
+                            e.preventDefault();
+                            const digit = draftNumber.replace(/^0+/, "");
+                            if (/^[1-9]$/.test(digit)) setDraftNumber(digit.repeat(4));
+                            return;
                           }
                         }}
                         disabled={!isJantriOpen}
@@ -934,34 +1160,94 @@ export default function JantriPage() {
         </span>
         <div className="flex-1 min-w-0" />
 
-        <button
-          onClick={() => setRandomModalOpen(true)}
-          disabled={!isJantriOpen}
-          className="bg-[#142669] hover:bg-[#1a3080] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-2 sm:px-3 py-1.5 rounded-lg hidden md:block transition-colors"
-        >
-          Random (F4)
-        </button>
-        <button
-          onClick={() => setCrossModalOpen(true)}
-          disabled={!isJantriOpen}
-          className="bg-[#142669] hover:bg-[#1a3080] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-2 sm:px-3 py-1.5 rounded-lg hidden md:block transition-colors"
-        >
-          Cross (F6)
-        </button>
-        <button
-          onClick={() => setFromToModalOpen(true)}
-          disabled={!isJantriOpen}
-          className="bg-[#142669] hover:bg-[#1a3080] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-2 sm:px-3 py-1.5 rounded-lg hidden md:block transition-colors"
-        >
-          From-To (F7)
-        </button>
-        <button
-          onClick={() => setRandom2ModalOpen(true)}
-          disabled={!isJantriOpen}
-          className="bg-[#142669] hover:bg-[#1a3080] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-2 sm:px-3 py-1.5 rounded-lg hidden md:block transition-colors"
-        >
-          Random (F8)
-        </button>
+        {/* Random (F4) */}
+        <div className="hidden md:inline-flex items-stretch rounded-lg overflow-hidden">
+          <button
+            onClick={() => setRandomModalOpen(true)}
+            disabled={!isJantriOpen}
+            className="bg-[#142669] hover:bg-[#1a3080] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-3 py-1.5 transition-colors text-xs"
+          >
+            Random (F4)
+          </button>
+          {quickEntries.some((e) => e.source === "random") && (
+            <>
+              <span className="w-px bg-white/20" />
+              <button
+                onClick={() => removeBySource("random")}
+                title="Remove Random entries"
+                className="bg-[#142669] hover:bg-red-600 text-white/50 hover:text-white px-2 transition-colors"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </>
+          )}
+        </div>
+        {/* Cross (F6) */}
+        <div className="hidden md:inline-flex items-stretch rounded-lg overflow-hidden">
+          <button
+            onClick={() => setCrossModalOpen(true)}
+            disabled={!isJantriOpen}
+            className="bg-[#142669] hover:bg-[#1a3080] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-3 py-1.5 transition-colors text-xs"
+          >
+            Cross (F6)
+          </button>
+          {quickEntries.some((e) => e.source === "cross") && (
+            <>
+              <span className="w-px bg-white/20" />
+              <button
+                onClick={() => removeBySource("cross")}
+                title="Remove Cross entries"
+                className="bg-[#142669] hover:bg-red-600 text-white/50 hover:text-white px-2 transition-colors"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </>
+          )}
+        </div>
+        {/* From-To (F7) */}
+        <div className="hidden md:inline-flex items-stretch rounded-lg overflow-hidden">
+          <button
+            onClick={() => setFromToModalOpen(true)}
+            disabled={!isJantriOpen}
+            className="bg-[#142669] hover:bg-[#1a3080] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-3 py-1.5 transition-colors text-xs"
+          >
+            From-To (F7)
+          </button>
+          {quickEntries.some((e) => e.source === "fromto") && (
+            <>
+              <span className="w-px bg-white/20" />
+              <button
+                onClick={() => removeBySource("fromto")}
+                title="Remove From-To entries"
+                className="bg-[#142669] hover:bg-red-600 text-white/50 hover:text-white px-2 transition-colors"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </>
+          )}
+        </div>
+        {/* Random2 (F8) */}
+        <div className="hidden md:inline-flex items-stretch rounded-lg overflow-hidden">
+          <button
+            onClick={() => setRandom2ModalOpen(true)}
+            disabled={!isJantriOpen}
+            className="bg-[#142669] hover:bg-[#1a3080] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-3 py-1.5 transition-colors text-xs"
+          >
+            Random (F8)
+          </button>
+          {quickEntries.some((e) => e.source === "random2") && (
+            <>
+              <span className="w-px bg-white/20" />
+              <button
+                onClick={() => removeBySource("random2")}
+                title="Remove Random2 entries"
+                className="bg-[#142669] hover:bg-red-600 text-white/50 hover:text-white px-2 transition-colors"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </>
+          )}
+        </div>
         <button
           disabled
           className="bg-gray-200 text-gray-500 font-semibold px-2 sm:px-3 py-1.5 rounded-lg opacity-70 cursor-not-allowed hidden md:block"
@@ -975,12 +1261,21 @@ export default function JantriPage() {
         >
           Clear
         </button>
+        {hasClipboard && (
+          <button
+            onClick={handlePaste}
+            disabled={!isJantriOpen}
+            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-3 py-1.5 rounded-lg transition-colors"
+          >
+            Paste
+          </button>
+        )}
         <button
           onClick={handleSubmit}
           disabled={!isJantriOpen || submitting || grandTotal === 0}
           className="bg-[#e6a020] hover:bg-[#d09018] disabled:bg-[#1a3578] disabled:cursor-not-allowed text-white font-semibold px-3 sm:px-4 py-1.5 rounded-lg transition-colors"
         >
-          {submitting ? "Saving..." : "Save Now"}
+          {submitting ? "Saving..." : editId ? "Update" : "Save Now"}
         </button>
       </div>
 
@@ -988,28 +1283,28 @@ export default function JantriPage() {
       <RandomModal
         open={randomModalOpen}
         onClose={() => setRandomModalOpen(false)}
-        onSave={handleRandomSave}
+        onSave={handleRandomModalSave}
       />
 
       {/* Cross Modal */}
       <CrossModal
         open={crossModalOpen}
         onClose={() => setCrossModalOpen(false)}
-        onSave={handleRandomSave}
+        onSave={handleCrossModalSave}
       />
 
       {/* From-To Modal */}
       <FromToModal
         open={fromToModalOpen}
         onClose={() => setFromToModalOpen(false)}
-        onSave={handleRandomSave}
+        onSave={handleFromToModalSave}
       />
 
       {/* Random2 Modal (F8) */}
       <Random2Modal
         open={random2ModalOpen}
         onClose={() => setRandom2ModalOpen(false)}
-        onSave={handleRandomSave}
+        onSave={handleRandom2ModalSave}
       />
     </div>
   );

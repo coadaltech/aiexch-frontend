@@ -120,8 +120,11 @@ api.interceptors.response.use(
         // Network errors, timeouts, 5xx should NOT log the user out.
         const status = refreshError?.response?.status;
         if (typeof window !== "undefined" && (status === 401 || status === 403)) {
-          localStorage.removeItem("user");
+          sessionStorage.removeItem("user");
+          localStorage.removeItem("loginSessionKey");
           clearTokens();
+          // Notify AuthContext so it can update state and redirect
+          window.dispatchEvent(new CustomEvent("auth-session-expired"));
         }
       }
     }
@@ -131,7 +134,7 @@ api.interceptors.response.use(
 );
 
 export interface LoginRequest {
-  email: string;
+  username: string;
   password: string;
 }
 
@@ -635,4 +638,10 @@ export const matkaApi = {
   placeBet: (data: { shiftId: string; bets: { number: string; numberType: number; amount: number }[] }) =>
     api.post("/matka/place", data),
   getMyBets: () => api.get("/matka/my-bets"),
+  getTransaction: (id: string) => api.get(`/matka/transactions/${id}`),
+  deleteTransaction: (id: string) => api.delete(`/matka/transactions/${id}`),
+  updateTransaction: (id: string, data: { bets: { number: string; numberType: number; amount: number }[] }) =>
+    api.put(`/matka/transactions/${id}`, data),
+  getJantriConsolidated: (shiftId: string, date: string) =>
+    api.get(`/matka/shifts/${shiftId}/jantri?date=${date}`),
 };

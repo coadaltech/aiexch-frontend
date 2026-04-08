@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 
 const initialFormData: AuthFormData = {
+  username: "",
   email: "",
   password: "",
   referralCode: "",
@@ -68,11 +69,23 @@ export function AuthModal({
 
     if (mode === "signin") {
       loginMutation.mutate(
-        { email: formData.email, password: formData.password },
+        { username: formData.username, password: formData.password },
         {
           onSuccess: (response) => {
             if (response.data.success && response.data.user) {
-              login(response.data.user);
+              const u = response.data.user as any;
+              login({
+                id: u.id,
+                username: u.username,
+                email: u.email,
+                membership: u.membership,
+                balance: u.balance ?? "0",
+                role: u.role,
+                upline: u.upline,
+                downline: u.downline,
+                groupId: u.groupId,
+                currencyId: u.currencyId,
+              });
               onClose();
               resetForm();
             } else {

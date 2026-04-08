@@ -261,9 +261,9 @@ function toDecimalOdds(price: number): number {
 }
 
 function toDecimalfancyOdds(price: number): number {
-  if (price >= 10 && price < 100) return price / 100;
-  if (price >= 100) return price / 100;
-  return price;
+  // if (price >= 10 && price < 100) return price / 100;
+  // if (price >= 100) return price / 100;
+  return price/100;
 }
 
 export default function MatchPage() {
@@ -1162,12 +1162,14 @@ export default function MatchPage() {
     return (
       <div className="min-w-0 pr-1 flex flex-col gap-0.5">
         <div className="flex items-center gap-4">
-        <span
-          className={`text-gray-900 font-bold text-sm sm:text-base truncate block leading-tight ${isFancy ? "cursor-pointer" : ""}`}
-          onClick={handleNameClick}
-        >
-          {displayName ?? runner.name}
-        </span>
+        {(displayName !== "" || !isFancy) && (
+          <span
+            className={`text-gray-900 font-bold text-sm sm:text-base block leading-tight ${isFancy ? "cursor-pointer" : "truncate"}`}
+            onClick={handleNameClick}
+          >
+            {displayName || runner.name}
+          </span>
+        )}
         {betDelay != null && (
           <span className=" flex items-center text-[8px] sm:text-[9px] text-black font-medium leading-tight">
             <Timer size={20}/>
@@ -1544,7 +1546,7 @@ export default function MatchPage() {
               market.bettingType == "LINE" && (
                 <div key={market.marketId} className="border-b border-gray-100 last:border-b-0">
                   <div className="divide-y divide-gray-100">
-                    {market.runners.map((runner: any) => {
+                    {market.runners.map((runner: any, runnerIdx: number) => {
                       const isRunnerSuspended = runner.status === "SUSPENDED" || runner.status === "REMOVED" || market.status === "SUSPENDED" || !!market.sportingEvent;
                       return (
                       <div
@@ -1554,9 +1556,9 @@ export default function MatchPage() {
                         <RunnerNameCell
                           runner={runner}
                           marketId={market.marketId}
-                          displayName={market.marketName}
+                          displayName={runnerIdx === 0 ? market.marketName : ""}
                           isFancy
-                          betDelay={market.marketCondition?.betDelay}
+                          betDelay={runnerIdx === 0 ? market.marketCondition?.betDelay : undefined}
                         />
                         <div className="col-span-2 gap-2 relative flex min-h-[2.25rem]">
                           <div className="flex-1 flex flex-col items-end min-w-0">
@@ -1614,10 +1616,12 @@ export default function MatchPage() {
                                 </button>
                               )}
                             </div>
-                            <div className="hidden sm:flex flex-col text-xs text-black font-bold leading-tight text-right shrink-0">
-                              <span>Max:{market.marketCondition?.["maxBet"] ?? "-"}</span>
-                              <span>MKT:{market.marketCondition?.["potLimit"] ?? market.marketCondition?.["maxProfit"] ?? "-"}</span>
-                            </div>
+                            {runnerIdx === 0 && (
+                              <div className="hidden sm:flex flex-col text-xs text-black font-bold leading-tight text-right shrink-0">
+                                <span>Max:{market.marketCondition?.["maxBet"] ?? "-"}</span>
+                                <span>MKT:{market.marketCondition?.["potLimit"] ?? market.marketCondition?.["maxProfit"] ?? "-"}</span>
+                              </div>
+                            )}
                           </div>
                           {backLayOverlay(market)}
                         </div>

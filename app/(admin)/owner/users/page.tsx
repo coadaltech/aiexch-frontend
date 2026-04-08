@@ -559,7 +559,7 @@ export default function UsersPage() {
                         {(user as { whitelabelName?: string | null }).whitelabelName ?? "—"}
                       </td>
                       <td className="py-3 px-2 text-foreground font-medium text-sm">
-                        ₹{user.balance || "0.00"}
+                        ₹{(user as any).finalLimit ?? user.balance ?? "0.00"}
                       </td>
                       <td className="py-3 px-2 hidden xl:table-cell">
                         <div className="text-sm">

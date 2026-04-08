@@ -38,14 +38,25 @@ export function AuthForm({
         </div>
       )}
 
-      <Input
-        type="email"
-        placeholder="Email"
-        value={formData.email}
-        onChange={(e) => onFormChange({ ...formData, email: e.target.value })}
-        className="h-12"
-        required
-      />
+      {mode === "signin" ? (
+        <Input
+          type="text"
+          placeholder="Username"
+          value={formData.username}
+          onChange={(e) => onFormChange({ ...formData, username: e.target.value })}
+          className="h-12"
+          required
+        />
+      ) : (
+        <Input
+          type="email"
+          placeholder="Email"
+          value={formData.email}
+          onChange={(e) => onFormChange({ ...formData, email: e.target.value })}
+          className="h-12"
+          required
+        />
+      )}
 
       <div className="relative">
         <Input

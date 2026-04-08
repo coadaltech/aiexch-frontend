@@ -1,6 +1,30 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { matkaApi } from "@/lib/api";
 
+export interface MatkaTransactionDetail {
+  id: string;
+  numberType: number;
+  number: string;
+  amount: string;
+  rate: string;
+  commission: string;
+}
+
+export interface MatkaTransactionFull {
+  id: string;
+  shiftId: string;
+  shiftName: string;
+  shiftDate: string;
+  transactionDate: string;
+  totalAmount: string;
+  totalCommission: string;
+  finalAmount: string;
+  daraRate: string;
+  akharRate: string;
+  addedDate: string;
+  details: MatkaTransactionDetail[];
+}
+
 export interface MatkaShift {
   id: string;
   name: string;
@@ -80,5 +104,53 @@ export const useMatkaMyBets = () => {
       return res.data?.data ?? [];
     },
     staleTime: 30 * 1000,
+  });
+};
+
+export const useMatkaTransaction = (id: string | null) => {
+  return useQuery({
+    queryKey: ["matka-transaction", id],
+    queryFn: async () => {
+      const res = await matkaApi.getTransaction(id!);
+      return res.data?.data as MatkaTransactionFull;
+    },
+    enabled: !!id,
+    staleTime: 0,
+  });
+};
+
+export const useDeleteMatka = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => matkaApi.deleteTransaction(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["matka-my-bets"] });
+      queryClient.invalidateQueries({ queryKey: ["matka-jantri"] });
+    },
+  });
+};
+
+export const useUpdateMatka = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, bets }: { id: string; bets: { number: string; numberType: number; amount: number }[] }) =>
+      matkaApi.updateTransaction(id, { bets }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["matka-jantri"] });
+      queryClient.invalidateQueries({ queryKey: ["matka-my-bets"] });
+      queryClient.invalidateQueries({ queryKey: ["matka-transaction"] });
+    },
+  });
+};
+
+export const useConsolidatedJantri = (shiftId: string | null, date: string | null, enabled: boolean) => {
+  return useQuery({
+    queryKey: ["matka-jantri-consolidated", shiftId, date],
+    queryFn: async () => {
+      const res = await matkaApi.getJantriConsolidated(shiftId!, date!);
+      return (res.data?.data ?? []) as JantriTotal[];
+    },
+    enabled: !!shiftId && !!date && enabled,
+    staleTime: 0,
   });
 };

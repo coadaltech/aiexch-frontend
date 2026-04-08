@@ -290,6 +290,7 @@ export const useOwnerUsers = () => {
           membership: normalizeMembership(u.membership),
         }))
       ),
+    staleTime: 0,
   });
 };
 
