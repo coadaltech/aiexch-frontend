@@ -681,14 +681,14 @@ export default function MatchPage() {
   // Build allRunners for storage in transaction_details
   // LINE markets: only pass the single clicked runner (binary YES/NO market)
   const buildAllRunners = (market: any, clickedRunner: any, clickedPrice: number): RunnerSummary[] => {
+    const convertOdds = market.bettingType === "LINE" ? toDecimalfancyOdds : toDecimalOdds;
     if (market.bettingType === "LINE") {
       return [{ id: clickedRunner.selectionId?.toString() ?? "", name: clickedRunner.name || "", price: clickedPrice }];
     }
     return (market.runners || []).map((r: any) => {
       const isClicked = r.selectionId === clickedRunner.selectionId;
-      const price = isClicked
-        ? clickedPrice
-        : parseFloat(r.back?.[0]?.price || r.lay?.[0]?.price || "0");
+      const rawPrice = parseFloat(r.back?.[0]?.price || r.lay?.[0]?.price || "0");
+      const price = isClicked ? clickedPrice : convertOdds(rawPrice);
       return {
         id: r.selectionId?.toString() ?? "",
         name: r.name || "",

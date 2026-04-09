@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import {
   Bell, ChevronRight, Flame, Trophy, Dices,
   Volleyball, Zap, Target, Star, Users, Tv,
-  TrendingUp, Gift, Shield,
+  TrendingUp, Gift, Shield, Flag, Dog, Wind,
 } from "lucide-react";
 
 /* ─── Error handler ─── */
@@ -227,8 +227,8 @@ const Homepage = () => {
         <ErrorHandler />
       </Suspense>
 
-      {/* 1. Notice ticker */}
-      <NoticeTickerBar />
+      {/* 1. Notice ticker
+      <NoticeTickerBar /> */}
 
       {/* 2. Hero banner */}
       <div className="">
@@ -253,6 +253,86 @@ const Homepage = () => {
           />
           <div className="px-3 pb-3">
             <CricketMatchesList sport="cricket" eventTypeId="4" maxMatches={6} emptyText="No matches right now" />
+          </div>
+        </div>
+      </div>
+
+      {/* 5b. Football Matches */}
+      <div className="mt-4">
+        <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-4 rounded-xl overflow-hidden border border-[#1e4088]/50">
+          <SectionHeader
+            title="FOOTBALL"
+            subtitle="Live & upcoming matches"
+            href="/sports/soccer"
+            icon={Volleyball}
+            badge="LIVE"
+          />
+          <div className="px-3 pb-3">
+            <CricketMatchesList sport="soccer" eventTypeId="1" maxMatches={6} emptyText="No matches right now" />
+          </div>
+        </div>
+      </div>
+
+      {/* 5c. Tennis Matches */}
+      <div className="mt-4">
+        <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-4 rounded-xl overflow-hidden border border-[#1e4088]/50">
+          <SectionHeader
+            title="TENNIS"
+            subtitle="Live & upcoming matches"
+            href="/sports/tennis"
+            icon={Target}
+            badge="LIVE"
+          />
+          <div className="px-3 pb-3">
+            <CricketMatchesList sport="tennis" eventTypeId="2" maxMatches={6} emptyText="No matches right now" />
+          </div>
+        </div>
+      </div>
+
+      {/* 5d. Horse Racing */}
+      <div className="mt-4">
+        <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-4 rounded-xl overflow-hidden border border-[#1e4088]/50">
+          <SectionHeader
+            title="HORSE RACING"
+            subtitle="Live & upcoming races"
+            href="/sports/horse-racing"
+            icon={Wind}
+            badge="LIVE"
+          />
+          <div className="px-3 pb-3">
+            <CricketMatchesList sport="horse-racing" eventTypeId="7" maxMatches={6} emptyText="No races right now" />
+          </div>
+        </div>
+      </div>
+
+      {/* 5e. Greyhound Racing */}
+      <div className="mt-4">
+        <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-4 rounded-xl overflow-hidden border border-[#1e4088]/50">
+          <SectionHeader
+            title="GREYHOUND RACING"
+            subtitle="Live & upcoming races"
+            href="/sports/greyhound-racing"
+            icon={Dog}
+            badge="LIVE"
+          />
+          <div className="px-3 pb-3">
+            <CricketMatchesList sport="greyhound-racing" eventTypeId="4339" maxMatches={6} emptyText="No races right now" />
+          </div>
+        </div>
+      </div>
+
+      {/* 5f. Politics */}
+      <div className="mt-4">
+        <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-4 rounded-xl overflow-hidden border border-[#1e4088]/50">
+          <SectionHeader
+            title="POLITICS"
+            subtitle="Live & upcoming markets"
+            href="/sports/politics"
+            icon={Flag}
+            badge="LIVE"
+          />
+          <div className="px-3 pb-3">
+            <CricketMatchesList sport="politics" eventTypeId="500" maxMatches={6} emptyText="No markets right now" />
           </div>
         </div>
       </div>
