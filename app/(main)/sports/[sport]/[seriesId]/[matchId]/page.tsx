@@ -939,32 +939,30 @@ export default function MatchPage() {
       return;
     }
 
-    // Exposure + limit validation (non-fancy markets only)
-    if (quickBet.bettingType !== "LINE") {
+    // Exposure + limit validation (all markets)
+    {
       const finalLimit = parseFloat(ledger?.finalLimit ?? "0");
       const oddsNum = parseFloat(odds || quickBet.odds) || 0;
       const { isLay, allRunners, runner } = quickBet;
       const selectedId = runner.selectionId?.toString() ?? "";
-      const existingMarket = marketExposureMap?.get(String(quickBet.marketId));
 
-      // Compute projected exposure for every runner after this bet
-      const projectedExposures: number[] = allRunners.map((r) => {
-        const existing = existingMarket?.get(r.id) ?? 0;
-        const betPnl = isLay
+      // Compute P&L of THIS bet alone for every runner (not including existing exposure)
+      const thisBetPnls: number[] = allRunners.map((r) =>
+        isLay
           ? r.id === selectedId ? -(stakeNum * oddsNum - stakeNum) : stakeNum
-          : r.id === selectedId ? (stakeNum * oddsNum - stakeNum) : -stakeNum;
-        return existing + betPnl;
-      });
+          : r.id === selectedId ? (stakeNum * oddsNum - stakeNum) : -stakeNum
+      );
 
-      // Reject if any runner would incur a loss exceeding the final limit
-      const worstLoss = Math.min(...projectedExposures);
-      if (worstLoss < 0 && Math.abs(worstLoss) > finalLimit) {
+      const worstBetLoss = Math.min(...thisBetPnls);
+
+      // Reject if this bet alone causes a loss exceeding the final limit
+      if (worstBetLoss < 0 && Math.abs(worstBetLoss) > finalLimit) {
         toast.error("Bet rejected — potential loss exceeds your available limit.");
         return;
       }
 
-      // If all runners are in profit, still reject if stake exceeds final limit
-      if (worstLoss >= 0 && stakeNum > finalLimit) {
+      // If this bet profits on every runner, still reject if stake exceeds final limit
+      if (worstBetLoss >= 0 && stakeNum > finalLimit) {
         toast.error("Bet rejected — stake exceeds your available limit.");
         return;
       }
