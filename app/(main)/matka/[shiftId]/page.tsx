@@ -10,7 +10,6 @@ import {
   useMatkaTransaction,
   useUpdateMatka,
 } from "@/hooks/useMatkaApi";
-import { matkaApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { ArrowLeft, AlertCircle, ChevronDown, ChevronUp, Clock, X } from "lucide-react";
 import { toast } from "sonner";
@@ -166,8 +165,6 @@ export default function JantriPage() {
   // Edit mode: load existing transaction
   const { data: editTransaction } = useMatkaTransaction(editId);
 
-  // Clipboard state
-  const [hasClipboard, setHasClipboard] = useState(false);
 
   // All shifts for right sidebar
   const today = new Date().toISOString().split("T")[0];
@@ -208,17 +205,6 @@ export default function JantriPage() {
   const [draftNumber, setDraftNumber] = useState("");
   const [draftAmount, setDraftAmount] = useState("");
 
-  // ── Check clipboard on mount ──────────────────────────────────────────
-  useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem("matka_clipboard");
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as { transactionId: string; shiftId: string };
-      if (parsed.transactionId) setHasClipboard(true);
-    } catch {
-      // ignore
-    }
-  }, [shiftId]);
 
   // ── Populate amounts + quick entries when edit transaction loads ─────────
   useEffect(() => {
@@ -557,38 +543,6 @@ export default function JantriPage() {
     sessionStorage.removeItem(storageKey);
   }, [storageKey]);
 
-  // ── Paste from clipboard ──────────────────────────────────────────────
-  const handlePaste = useCallback(async () => {
-    try {
-      const raw = sessionStorage.getItem("matka_clipboard");
-      if (!raw) return;
-      const { transactionId } = JSON.parse(raw) as { transactionId: string; shiftId: string };
-      const res = await matkaApi.getTransaction(transactionId);
-      const txn = res.data?.data;
-      if (!txn?.details) return;
-      const newAmounts: Record<string, number> = {};
-      const newQuickEntries: QuickEntry[] = [];
-      for (const d of txn.details) {
-        const key = `${d.numberType}:${d.number}`;
-        newAmounts[key] = Number(d.amount);
-        newQuickEntries.push({
-          id: nextId.current++,
-          numberInput: d.number,
-          amount: String(Math.round(Number(d.amount))),
-          source: "manual" as EntrySource,
-        });
-      }
-      setAmounts(newAmounts);
-      setQuickEntries(newQuickEntries);
-      setDraftNumber("");
-      setDraftAmount("");
-      sessionStorage.removeItem("matka_clipboard");
-      setHasClipboard(false);
-      toast.success("Pasted!");
-    } catch {
-      toast.error("Failed to paste");
-    }
-  }, []);
 
   // ── Submit ────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
@@ -1261,15 +1215,6 @@ export default function JantriPage() {
         >
           Clear
         </button>
-        {hasClipboard && (
-          <button
-            onClick={handlePaste}
-            disabled={!isJantriOpen}
-            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-3 py-1.5 rounded-lg transition-colors"
-          >
-            Paste
-          </button>
-        )}
         <button
           onClick={handleSubmit}
           disabled={!isJantriOpen || submitting || grandTotal === 0}

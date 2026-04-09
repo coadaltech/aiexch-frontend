@@ -945,6 +945,7 @@ export default function MatchPage() {
       const oddsNum = parseFloat(odds || quickBet.odds) || 0;
       const { isLay, allRunners, runner } = quickBet;
       const selectedId = runner.selectionId?.toString() ?? "";
+      const existingMarket = marketExposureMap?.get(String(quickBet.marketId));
 
       // Compute P&L of THIS bet alone for every runner (not including existing exposure)
       const thisBetPnls: number[] = allRunners.map((r) =>
@@ -955,16 +956,40 @@ export default function MatchPage() {
 
       const worstBetLoss = Math.min(...thisBetPnls);
 
-      // Reject if this bet alone causes a loss exceeding the final limit
-      if (worstBetLoss < 0 && Math.abs(worstBetLoss) > finalLimit) {
-        toast.error("Bet rejected — potential loss exceeds your available limit.");
-        return;
-      }
+      // Check if this would normally be rejected
+      const wouldReject =
+        (worstBetLoss < 0 && Math.abs(worstBetLoss) > finalLimit) ||
+        (worstBetLoss >= 0 && stakeNum > finalLimit);
 
-      // If this bet profits on every runner, still reject if stake exceeds final limit
-      if (worstBetLoss >= 0 && stakeNum > finalLimit) {
-        toast.error("Bet rejected — stake exceeds your available limit.");
-        return;
+      if (wouldReject) {
+        // Hedging exception: allow if this is a LAY bet on a runner whose existing
+        // exposure is in profit, AND placing this bet improves (reduces) the
+        // worst-case loss across all runners compared to the current exposure.
+        const selectedRunnerExisting = existingMarket?.get(selectedId) ?? null;
+        const isHedgingLay = isLay && selectedRunnerExisting !== null && selectedRunnerExisting > 0;
+
+        if (isHedgingLay) {
+          const existingWorstLoss = Math.min(
+            ...allRunners.map((r) => existingMarket?.get(r.id) ?? 0)
+          );
+          const projectedWorstLoss = Math.min(
+            ...allRunners.map((r) => (existingMarket?.get(r.id) ?? 0) + thisBetPnls[allRunners.indexOf(r)])
+          );
+          // Allow only if the worst-case loss improves (becomes less negative)
+          if (projectedWorstLoss > existingWorstLoss) {
+            // Hedging bet — pass through
+          } else {
+            toast.error("Bet rejected — potential loss exceeds your available limit.");
+            return;
+          }
+        } else {
+          toast.error(
+            worstBetLoss >= 0
+              ? "Bet rejected — stake exceeds your available limit."
+              : "Bet rejected — potential loss exceeds your available limit."
+          );
+          return;
+        }
       }
     }
 

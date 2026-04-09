@@ -637,9 +637,19 @@ export const matkaApi = {
     api.get(`/matka/shifts${date ? `?date=${date}` : ""}`),
   getShift: (id: string) => api.get(`/matka/shifts/${id}`),
   getJantri: (shiftId: string) => api.get(`/matka/shifts/${shiftId}/jantri`),
-  placeBet: (data: { shiftId: string; bets: { number: string; numberType: number; amount: number }[] }) =>
-    api.post("/matka/place", data),
-  getMyBets: () => api.get("/matka/my-bets"),
+  placeBet: (data: {
+    shiftId: string;
+    bets: { number: string; numberType: number; amount: number }[];
+    copyReferenceShiftId?: string;
+    whitelabelId?: string;
+  }) => api.post("/matka/place", data),
+  getMyBets: (params?: { shiftId?: string; status?: "active" | "inactive" }) => {
+    const qs = new URLSearchParams();
+    if (params?.shiftId) qs.set("shiftId", params.shiftId);
+    if (params?.status) qs.set("status", params.status);
+    const query = qs.toString();
+    return api.get(`/matka/my-bets${query ? `?${query}` : ""}`);
+  },
   getTransaction: (id: string) => api.get(`/matka/transactions/${id}`),
   deleteTransaction: (id: string) => api.delete(`/matka/transactions/${id}`),
   updateTransaction: (id: string, data: { bets: { number: string; numberType: number; amount: number }[] }) =>

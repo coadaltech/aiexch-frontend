@@ -22,6 +22,9 @@ export interface MatkaTransactionFull {
   daraRate: string;
   akharRate: string;
   addedDate: string;
+  copyReferenceShiftId?: string | null;
+  copyReferenceShiftName?: string | null;
+  whitelabelId?: string | null;
   details: MatkaTransactionDetail[];
 }
 
@@ -96,11 +99,11 @@ export const usePlaceMatka = () => {
   });
 };
 
-export const useMatkaMyBets = () => {
+export const useMatkaMyBets = (params?: { shiftId?: string; status?: "active" | "inactive" }) => {
   return useQuery({
-    queryKey: ["matka-my-bets"],
+    queryKey: ["matka-my-bets", params?.shiftId, params?.status],
     queryFn: async () => {
-      const res = await matkaApi.getMyBets();
+      const res = await matkaApi.getMyBets(params);
       return res.data?.data ?? [];
     },
     staleTime: 30 * 1000,
