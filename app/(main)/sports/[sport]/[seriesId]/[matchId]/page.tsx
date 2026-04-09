@@ -257,16 +257,17 @@ function toBettingType(bettingType: string): string {
 // Values 10–99 are Indian format (e.g. 24, 24.5) → divide by 100 and add 1.
 // Values >= 100 are Indian format (e.g. 150) → divide by 100 only.
 // Values < 10 are already decimal odds (e.g. 1.50, 2.40) → pass through as-is.
-function toDecimalOdds(price: number): number {
+// BETFAIR prices are already in decimal — skip conversion entirely.
+function toDecimalOdds(price: number, provider?: string): number {
+  if (provider?.toUpperCase() === "BETFAIR") return price;
   if (price >= 10 && price < 100) return price / 100 + 1;
   if (price >= 100) return price / 100;
   return price;
 }
 
-function toDecimalfancyOdds(price: number): number {
-  // if (price >= 10 && price < 100) return price / 100;
-  // if (price >= 100) return price / 100;
-  return price/100;
+function toDecimalfancyOdds(price: number, provider?: string): number {
+  if (provider?.toUpperCase() === "BETFAIR") return price;
+  return price / 100;
 }
 
 export default function MatchPage() {
@@ -553,7 +554,7 @@ export default function MatchPage() {
     const rawPrice = item?.price ?? item?.[0] ?? null;
     if (rawPrice == null) return undefined;
     const convertOdds = quickBet.bettingType === "LINE" ? toDecimalfancyOdds : toDecimalOdds;
-    return String(convertOdds(parseFloat(String(rawPrice))));
+    return String(convertOdds(parseFloat(String(rawPrice)), quickBet.market?.provider));
   }, [markets, quickBet]);
 
   // Preview exposure: calculate what exposure would look like if the current quick bet were placed
@@ -688,7 +689,7 @@ export default function MatchPage() {
     return (market.runners || []).map((r: any) => {
       const isClicked = r.selectionId === clickedRunner.selectionId;
       const rawPrice = parseFloat(r.back?.[0]?.price || r.lay?.[0]?.price || "0");
-      const price = isClicked ? clickedPrice : convertOdds(rawPrice);
+      const price = isClicked ? clickedPrice : convertOdds(rawPrice, market.provider);
       return {
         id: r.selectionId?.toString() ?? "",
         name: r.name || "",
@@ -766,7 +767,7 @@ export default function MatchPage() {
       if (rawPrice == null) return null;
       // Convert to decimal odds — fancy/LINE markets use /100 only (no +1)
       const convertOdds = liveMarket.bettingType === "LINE" ? toDecimalfancyOdds : toDecimalOdds;
-      return String(convertOdds(parseFloat(String(rawPrice))));
+      return String(convertOdds(parseFloat(String(rawPrice)), liveMarket.provider));
     },
     []
   );
@@ -1383,7 +1384,7 @@ export default function MatchPage() {
                                     onClick={() => handleBackClick(
                                       market,
                                       runner,
-                                      toDecimalOdds(item.price),
+                                      toDecimalOdds(item.price, market.provider),
                                       null,
                                       2 - posIdx
                                     )}
@@ -1419,7 +1420,7 @@ export default function MatchPage() {
                                         onClick={() => handleLayClick(
                                           market,
                                           runner,
-                                          toDecimalOdds(layItem.price),
+                                          toDecimalOdds(layItem.price, market.provider),
                                           null,
                                           layIdx
                                         )}
@@ -1527,7 +1528,7 @@ export default function MatchPage() {
                                     onClick={() => handleBackClick(
                                       market,
                                       runner,
-                                      toDecimalOdds(item.price),
+                                      toDecimalOdds(item.price, market.provider),
                                       null,
                                       2 - posIdx
                                     )}
@@ -1563,7 +1564,7 @@ export default function MatchPage() {
                                         onClick={() => handleLayClick(
                                           market,
                                           runner,
-                                          toDecimalOdds(layItem.price),
+                                          toDecimalOdds(layItem.price, market.provider),
                                           null,
                                           layIdx
                                         )}
@@ -1655,7 +1656,7 @@ export default function MatchPage() {
                                   <button className={`${oddsBtnClass} bg-back-disabled w-24`} disabled><span className={oddsPriceClass}>0</span><span className={oddsSizeClass}>0</span></button>
                                 ) : runner.lay?.length > 0 ? (
                                   runner.lay.map((layItem: any, layIdx: number) => (
-                                    <button key={layIdx} onClick={() => handleLayClick(market, runner, toDecimalfancyOdds(layItem.price), String(layItem.line ?? ""), layIdx)} className={`${oddsBtnClass} bg-gradient-to-b from-lay to-lay-deep hover:from-lay-hover hover:to-lay shadow-sm transition-all w-24`}>
+                                    <button key={layIdx} onClick={() => handleLayClick(market, runner, toDecimalfancyOdds(layItem.price, market.provider), String(layItem.line ?? ""), layIdx)} className={`${oddsBtnClass} bg-gradient-to-b from-lay to-lay-deep hover:from-lay-hover hover:to-lay shadow-sm transition-all w-24`}>
                                       <span className={oddsPriceClass}>{layItem.line}</span><span className={oddsSizeClass}>{formatAmount(layItem.price)}</span>
                                     </button>
                                   ))
@@ -1670,7 +1671,7 @@ export default function MatchPage() {
                                   <button className={`${oddsBtnClass} bg-back-disabled w-24`} disabled><span className={oddsPriceClass}>0</span><span className={oddsSizeClass}>0</span></button>
                                 ) : runner.back?.length > 0 ? (
                                   runner.back.map((backItem: any, backIdx: number) => (
-                                    <button key={backIdx} onClick={() => handleBackClick(market, runner, toDecimalfancyOdds(backItem.price), String(backItem.line ?? ""), backIdx)} className={`${oddsBtnClass} transition-all w-24 ${backIdx === 0 ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back shadow-sm" : "bg-white hover:bg-back/30 border border-back/50"}`}>
+                                    <button key={backIdx} onClick={() => handleBackClick(market, runner, toDecimalfancyOdds(backItem.price, market.provider), String(backItem.line ?? ""), backIdx)} className={`${oddsBtnClass} transition-all w-24 ${backIdx === 0 ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back shadow-sm" : "bg-white hover:bg-back/30 border border-back/50"}`}>
                                       <span className={oddsPriceClass}>{backItem.line}</span><span className={oddsSizeClass}>{formatAmount(backItem.price)}</span>
                                     </button>
                                   ))
