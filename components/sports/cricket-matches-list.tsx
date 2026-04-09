@@ -39,6 +39,20 @@ interface MatchWithOdds extends FlatMatch {
   markets: any[] | null;
 }
 
+function useBetCounts(matchIds: string[]) {
+  return useQuery({
+    queryKey: ["bet-counts", matchIds.join(",")],
+    queryFn: async () => {
+      if (matchIds.length === 0) return {} as Record<string, number>;
+      const res = await sportsApi.getBetCounts(matchIds);
+      return (res.data?.data ?? {}) as Record<string, number>;
+    },
+    enabled: matchIds.length > 0,
+    staleTime: 30 * 1000,
+    refetchInterval: 30 * 1000,
+  });
+}
+
 function useAllMatchOdds(matchIds: string[], eventTypeId: string) {
   return useQuery({
     queryKey: ["all-match-odds", eventTypeId, matchIds.join(",")],
@@ -83,10 +97,12 @@ function MatchRow({
   match,
   sport,
   markets,
+  betCount,
 }: {
   match: FlatMatch;
   sport: string;
   markets: any[] | null;
+  betCount?: number;
 }) {
   const matchOddsMarket = markets?.find(
     (m: any) => m.marketName === "Match Odds" || m.marketType === "MATCH_ODDS"
@@ -160,6 +176,16 @@ function MatchRow({
           )}
           {hasFancy && (
             <span className="text-[12px] bg-[#e88030]/80 text-white px-1 py-0.5 rounded font-medium shrink-0">F</span>
+          )}
+          {betCount != null && betCount > 0 && (
+            <span className="relative ml-56 shrink-0 group">
+              <span className="text-[14px] text-black bg-yellow-500 p-1 font-medium whitespace-nowrap cursor-default">
+                {betCount}
+              </span>
+              <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-[11px] text-white opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">
+                {betCount} matched bets
+              </span>
+            </span>
           )}
         </div>
 
@@ -240,6 +266,7 @@ export function CricketMatchesList({
     matchIds,
     eventTypeId
   );
+  const { data: betCountMap = {} } = useBetCounts(matchIds);
 
   const isLoading = seriesLoading;
 
@@ -298,6 +325,7 @@ export function CricketMatchesList({
             match={match}
             sport={sport}
             markets={oddsMap[match.id] ?? null}
+            betCount={betCountMap[match.id]}
           />
         ))}
       </div>

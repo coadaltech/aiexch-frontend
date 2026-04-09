@@ -1186,11 +1186,15 @@ export default function MatchPage() {
     const runnerId = runner.selectionId?.toString() ?? "";
     let pnl: number | null = null;
 
+    let prevPnl: number | null = null;
+
     if (isFancy) {
       // Fancy markets: per-market worst-case P&L (not per-runner)
       pnl = fancyExposureMap?.get(String(marketId)) ?? null;
     } else if (previewExposure && previewExposure.marketId === String(marketId)) {
-      // Show preview exposure (existing + hypothetical bet) when quick bet panel is active
+      // Show preview exposure when quick bet panel is active
+      const marketRunners = marketExposureMap?.get(String(marketId));
+      prevPnl = marketRunners?.get(runnerId) ?? null;
       pnl = previewExposure.runners.get(runnerId) ?? null;
     } else {
       // Odds/bookmaker markets: per-runner P&L from DB
@@ -1203,6 +1207,8 @@ export default function MatchPage() {
         setExposureChartMarket({ marketId: String(marketId), name: displayName ?? runner.name });
       }
     };
+
+    const fmtPnl = (v: number) => `${v >= 0 ? "+" : ""}${v.toFixed(2)}`;
 
     return (
       <div className="min-w-0 pr-1 flex flex-col gap-0.5">
@@ -1226,15 +1232,22 @@ export default function MatchPage() {
         )}
         </div>
 
-        {pnl !== null && (
+        {pnl !== null && prevPnl !== null ? (
+          // Preview mode: show "previous => updated"
+          <span className="text-[10px] sm:text-xs font-bold leading-tight flex items-center gap-1">
+            <span className={prevPnl >= 0 ? "text-live-text" : "text-danger"}>{fmtPnl(prevPnl)}</span>
+            <span className="text-gray-400">{"=>"}</span>
+            <span className={pnl >= 0 ? "text-live-text" : "text-danger"}>{fmtPnl(pnl)}</span>
+          </span>
+        ) : pnl !== null ? (
           <span
             className={`text-[10px] sm:text-xs font-bold leading-tight ${
               pnl >= 0 ? "text-live-text" : "text-danger"
             }`}
           >
-            {pnl >= 0 ? "+" : ""}{pnl.toFixed(2)}
+            {fmtPnl(pnl)}
           </span>
-        )}
+        ) : null}
       </div>
     );
   };

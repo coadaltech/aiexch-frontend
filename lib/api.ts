@@ -614,6 +614,8 @@ export const sportsApi = {
     api.get(`/sports/markets/${eventTypeId}/${eventId}`),
   getMarketsWithOdds: (eventTypeId: string, eventId: string) =>
     api.get(`/sports/markets-with-odds/${eventTypeId}/${eventId}`),
+  getBetCounts: (matchIds: string[]) =>
+    api.get(`/sports/bet-counts?matchIds=${matchIds.join(",")}`),
   getBookmakersList: (eventTypeId: string, eventId: string) =>
     api.get(`/sports/bookmakers-list/${eventTypeId}/${eventId}`),
   getOddsResults: (eventTypeId: string, marketIds: string[]) =>
