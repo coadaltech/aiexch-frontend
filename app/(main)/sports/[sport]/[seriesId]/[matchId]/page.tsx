@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useBetting, useMyBets, useMarketExposure, useFancyMarketExposure, useFancyExposureChart } from "@/hooks/useBetting";
 import { useLiveMatch } from "@/hooks/useLiveMatch";
 import { useSeries } from "@/hooks/useSportsApi";
-import { useStakeSettings, DEFAULT_STAKES } from "@/hooks/useUserQueries";
+import { useStakeSettings, useLedger, DEFAULT_STAKES } from "@/hooks/useUserQueries";
 import { sportsApi } from "@/lib/api";
 import { getSportConfig } from "@/lib/sports-config";
 import { addDemoBets } from "@/lib/demo-bets";
@@ -287,6 +287,7 @@ export default function MatchPage() {
   useMyBets("matched");
   const { data: marketExposureMap } = useMarketExposure();
   const { data: fancyExposureMap } = useFancyMarketExposure();
+  const { data: ledger } = useLedger();
   const [exposureChartMarket, setExposureChartMarket] = useState<{ marketId: string; name: string } | null>(null);
   const { data: exposureChartData, isLoading: isExposureChartLoading } = useFancyExposureChart(exposureChartMarket?.marketId ?? null);
 
@@ -936,6 +937,37 @@ export default function MatchPage() {
     if (maxBet > 0 && stakeNum > maxBet) {
       toast.error(`Maximum bet is ${maxBet}`);
       return;
+    }
+
+    // Exposure + limit validation (non-fancy markets only)
+    if (quickBet.bettingType !== "LINE") {
+      const finalLimit = parseFloat(ledger?.finalLimit ?? "0");
+      const oddsNum = parseFloat(odds || quickBet.odds) || 0;
+      const { isLay, allRunners, runner } = quickBet;
+      const selectedId = runner.selectionId?.toString() ?? "";
+      const existingMarket = marketExposureMap?.get(String(quickBet.marketId));
+
+      // Compute projected exposure for every runner after this bet
+      const projectedExposures: number[] = allRunners.map((r) => {
+        const existing = existingMarket?.get(r.id) ?? 0;
+        const betPnl = isLay
+          ? r.id === selectedId ? -(stakeNum * oddsNum - stakeNum) : stakeNum
+          : r.id === selectedId ? (stakeNum * oddsNum - stakeNum) : -stakeNum;
+        return existing + betPnl;
+      });
+
+      // Reject if any runner would incur a loss exceeding the final limit
+      const worstLoss = Math.min(...projectedExposures);
+      if (worstLoss < 0 && Math.abs(worstLoss) > finalLimit) {
+        toast.error("Bet rejected — potential loss exceeds your available limit.");
+        return;
+      }
+
+      // If all runners are in profit, still reject if stake exceeds final limit
+      if (worstLoss >= 0 && stakeNum > finalLimit) {
+        toast.error("Bet rejected — stake exceeds your available limit.");
+        return;
+      }
     }
 
     const betDelay = parseFloat(market?.marketCondition?.betDelay) || 0;
