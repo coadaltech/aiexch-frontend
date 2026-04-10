@@ -563,12 +563,17 @@ export default function MatchPage() {
     const stakeNum = parseFloat(quickBetStake) || 0;
     if (stakeNum <= 0) return null;
 
-    const { isLay, allRunners, runner, marketId, bettingType } = quickBet;
+    const { isLay, allRunners, runner, marketId, bettingType, market } = quickBet;
     const oddsNum = parseFloat(liveQuickBetOdds ?? quickBet.odds) || 0;
     if (oddsNum <= 0) return null;
 
     // Only for odds/bookmaker markets (not fancy/session)
     if (bettingType === "LINE") return null;
+
+    // BETFAIR: profit multiplier = odds - 1 (stake is returned separately)
+    // Others:  profit multiplier = odds as-is (price column stores raw odds)
+    const isBetfair = market?.provider?.toUpperCase() === "BETFAIR";
+    const profitMultiplier = isBetfair ? oddsNum - 1 : oddsNum;
 
     const selectedId = runner.selectionId?.toString() ?? "";
     const existingMarket = marketExposureMap?.get(String(marketId));
@@ -580,9 +585,9 @@ export default function MatchPage() {
 
       let betPnl: number;
       if (isLay) {
-        betPnl = rId === selectedId ? -(stakeNum * oddsNum - stakeNum) : stakeNum;
+        betPnl = rId === selectedId ? -(stakeNum * profitMultiplier) : stakeNum;
       } else {
-        betPnl = rId === selectedId ? (stakeNum * oddsNum - stakeNum) : -stakeNum;
+        betPnl = rId === selectedId ? (stakeNum * profitMultiplier) : -stakeNum;
       }
 
       map.set(rId, existing + betPnl);
@@ -859,6 +864,7 @@ export default function MatchPage() {
             run: qb.run != null ? parseFloat(qb.run) : null,
             type: isLay ? "lay" : "back",
             runners: allRunners,
+            provider: market.provider,
           });
           toast.success("Bet placed.");
         } catch (err: unknown) {
@@ -944,15 +950,19 @@ export default function MatchPage() {
     {
       const finalLimit = parseFloat(ledger?.finalLimit ?? "0");
       const oddsNum = parseFloat(odds || quickBet.odds) || 0;
-      const { isLay, allRunners, runner } = quickBet;
+      const { isLay, allRunners, runner, market } = quickBet;
       const selectedId = runner.selectionId?.toString() ?? "";
       const existingMarket = marketExposureMap?.get(String(quickBet.marketId));
+
+      // BETFAIR: profit multiplier = odds - 1; Others: odds as-is
+      const isBetfairMkt = market?.provider?.toUpperCase() === "BETFAIR";
+      const profitMultiplier = isBetfairMkt ? oddsNum - 1 : oddsNum;
 
       // Compute P&L of THIS bet alone for every runner (not including existing exposure)
       const thisBetPnls: number[] = allRunners.map((r) =>
         isLay
-          ? r.id === selectedId ? -(stakeNum * oddsNum - stakeNum) : stakeNum
-          : r.id === selectedId ? (stakeNum * oddsNum - stakeNum) : -stakeNum
+          ? r.id === selectedId ? -(stakeNum * profitMultiplier) : stakeNum
+          : r.id === selectedId ? (stakeNum * profitMultiplier) : -stakeNum
       );
 
       const worstBetLoss = Math.min(...thisBetPnls);
