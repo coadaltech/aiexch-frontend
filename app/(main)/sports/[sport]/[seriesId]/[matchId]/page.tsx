@@ -980,22 +980,18 @@ export default function MatchPage() {
         (worstBetLoss >= 0 && stakeNum > finalLimit);
 
       if (wouldReject) {
-        // Hedging exception: allow if this is a LAY bet on a runner whose existing
-        // exposure is in profit, AND placing this bet improves (reduces) the
-        // worst-case loss across all runners compared to the current exposure.
-        const selectedRunnerExisting = existingMarket?.get(selectedId) ?? null;
-        const isHedgingLay = isLay && selectedRunnerExisting !== null && selectedRunnerExisting > 0;
-
-        if (isHedgingLay) {
+        // Exposure-reducing exception: allow any bet (back or lay) that improves
+        // (reduces) the overall worst-case loss compared to current exposure.
+        // This lets users hedge their position even after hitting their limit.
+        if (existingMarket) {
           const existingWorstLoss = Math.min(
-            ...allRunners.map((r) => existingMarket?.get(r.id) ?? 0)
+            ...allRunners.map((r) => existingMarket.get(r.id) ?? 0)
           );
           const projectedWorstLoss = Math.min(
-            ...allRunners.map((r) => (existingMarket?.get(r.id) ?? 0) + thisBetPnls[allRunners.indexOf(r)])
+            ...allRunners.map((r, i) => (existingMarket.get(r.id) ?? 0) + thisBetPnls[i])
           );
-          // Allow only if the worst-case loss improves (becomes less negative)
           if (projectedWorstLoss > existingWorstLoss) {
-            // Hedging bet — pass through
+            // Bet reduces exposure — allow it through
           } else {
             toast.error("Bet rejected — potential loss exceeds your available limit.");
             return;

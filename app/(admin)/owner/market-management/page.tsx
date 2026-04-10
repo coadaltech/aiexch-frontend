@@ -516,7 +516,7 @@ function MarketCard({ market }: { market: any }) {
     updateMarket.mutate(
       {
         marketId: market.marketId,
-        eventId: market.eventId || "",
+        eventId: String(market.eventId || ""),
         marketName: market.marketName,
         marketType: market.marketType || market.bettingType || "ODDS",
         bettingType: market.bettingType || "ODDS",
@@ -540,7 +540,7 @@ function MarketCard({ market }: { market: any }) {
     setPendingField("overrides");
     const data: any = {
       marketId: market.marketId,
-      eventId: market.eventId || "",
+      eventId: String(market.eventId || ""),
       marketName: market.marketName,
       marketType: market.marketType || "MATCH_ODDS",
       bettingType: market.bettingType || "ODDS",
