@@ -308,6 +308,10 @@ export const ownerApi = {
   // Sync all competitions from external API
   syncCompetitions: () => api.post("/owner/sports-games/sync-competitions"),
 
+  // Bulk reorder sports (drag-and-drop)
+  reorderSports: (sportsList: Array<{ sportId: number; sortOrder: number }>) =>
+    api.put("/owner/sports-games/reorder", { sports: sportsList }),
+
   // Competitions (per-sport, role + whitelabel aware)
   getCompetitions: (sportId: string) =>
     api.get(`/owner/sports-games/competitions/${sportId}`),

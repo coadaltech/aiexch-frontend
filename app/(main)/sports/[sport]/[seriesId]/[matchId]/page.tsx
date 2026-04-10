@@ -1253,7 +1253,23 @@ export default function MatchPage() {
 
     if (isFancy) {
       // Fancy markets: per-market worst-case P&L (not per-runner)
-      pnl = fancyExposureMap?.get(String(marketId)) ?? null;
+      // Treat 0 as null — API sometimes returns 0 for markets with no real exposure
+      const rawSettled = fancyExposureMap?.get(String(marketId));
+      const settled = rawSettled != null && rawSettled !== 0 ? rawSettled : null;
+      // Show preview if quickBet is active for this fancy market
+      if (quickBet && String(quickBet.marketId) === String(marketId) && quickBet.bettingType === "LINE") {
+        const stakeNum = parseFloat(quickBetStake) || 0;
+        const oddsNum = parseFloat(liveQuickBetOdds ?? quickBet.odds) || 0;
+        if (stakeNum > 0 && oddsNum > 0) {
+          const betPnl = quickBet.isLay ? -(stakeNum * (oddsNum - 1)) : -stakeNum;
+          prevPnl = settled;
+          pnl = (settled ?? 0) + betPnl;
+        } else {
+          pnl = settled;
+        }
+      } else {
+        pnl = settled;
+      }
     } else if (previewExposure && previewExposure.marketId === String(marketId)) {
       // Show preview exposure when quick bet panel is active
       const marketRunners = marketExposureMap?.get(String(marketId));
@@ -1296,12 +1312,20 @@ export default function MatchPage() {
         </div>
 
         {pnl !== null && prevPnl !== null ? (
-          // Preview mode: show "previous => updated"
-          <span className="text-[10px] sm:text-xs font-bold leading-tight flex items-center gap-1">
-            <span className={prevPnl >= 0 ? "text-live-text" : "text-danger"}>{fmtPnl(prevPnl)}</span>
-            <span className="text-gray-400">{"=>"}</span>
-            <span className={pnl >= 0 ? "text-live-text" : "text-danger"}>{fmtPnl(pnl)}</span>
-          </span>
+          // Second bet: previous => overall  diff: betPnl
+          (() => {
+            const diff = pnl - prevPnl;
+            return (
+              <span className="text-[10px] sm:text-xs font-bold leading-tight flex items-center gap-1 flex-wrap">
+                <span className={prevPnl >= 0 ? "text-live-text" : "text-danger"}>{fmtPnl(prevPnl)}</span>
+                <span className="text-gray-400">=&gt;</span>
+                <span className={pnl >= 0 ? "text-live-text" : "text-danger"}>{fmtPnl(pnl)}</span>
+                <span className="text-gray-400">=&gt;</span>
+                <span className="text-gray-500 font-normal">diff:</span>
+                <span className={diff >= 0 ? "text-live-text" : "text-danger"}>{fmtPnl(diff)}</span>
+              </span>
+            );
+          })()
         ) : pnl !== null ? (
           <span
             className={`text-[10px] sm:text-xs font-bold leading-tight ${
@@ -1625,9 +1649,13 @@ export default function MatchPage() {
                 <div key={market.marketId} className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
                   {advHeader}
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", alignItems: "stretch" }} className="bg-white">
-                    <span className="text-gray-800 font-semibold text-sm px-3 flex items-center">{yesRunner?.name ?? "YES"}</span>
+                    <div className="px-3 flex items-center min-h-[2.75rem]">
+                      {yesRunner && <RunnerNameCell runner={yesRunner} marketId={market.marketId} />}
+                    </div>
                     {renderBinaryCell(yesRunner, "back")}
-                    <span className="text-gray-800 font-semibold text-sm px-3 flex items-center">{noRunner?.name ?? "NO"}</span>
+                    <div className="px-3 flex items-center min-h-[2.75rem]">
+                      {noRunner && <RunnerNameCell runner={noRunner} marketId={market.marketId} />}
+                    </div>
                     {renderBinaryCell(noRunner, "lay")}
                   </div>
                   {quickBet && quickBet.marketId === market.marketId && (
@@ -1736,7 +1764,9 @@ export default function MatchPage() {
                           const odds = backItem ? toDecimalOdds(parseFloat(String(backItem.price)), market.provider) : null;
                           return (
                             <div key={runner.selectionId} className="flex items-stretch">
-                              <span className="text-gray-700 text-xs sm:text-sm font-medium truncate flex-1 leading-tight flex items-center px-2 py-1.5">{runner.name}</span>
+                              <div className="flex-1 px-2 py-1.5 min-w-0">
+                                <RunnerNameCell runner={runner} marketId={market.marketId} />
+                              </div>
                               {isRunnerSusp
                                 ? <SuspendedCell className="w-16 min-h-[2.25rem] shrink-0" />
                                 : <button onClick={() => odds != null && handleBackClick(market, runner, odds, null, 0)}
@@ -1918,9 +1948,13 @@ export default function MatchPage() {
                 <div key={market.marketId} className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
                   {advHeader}
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", alignItems: "stretch" }} className="bg-white">
-                    <span className="text-gray-800 font-semibold text-sm px-3 flex items-center">{yesRunner?.name ?? "YES"}</span>
+                    <div className="px-3 flex items-center min-h-[2.75rem]">
+                      {yesRunner && <RunnerNameCell runner={yesRunner} marketId={market.marketId} />}
+                    </div>
                     {renderBinaryCell(yesRunner, "back")}
-                    <span className="text-gray-800 font-semibold text-sm px-3 flex items-center">{noRunner?.name ?? "NO"}</span>
+                    <div className="px-3 flex items-center min-h-[2.75rem]">
+                      {noRunner && <RunnerNameCell runner={noRunner} marketId={market.marketId} />}
+                    </div>
                     {renderBinaryCell(noRunner, "lay")}
                   </div>
                   {quickBet && quickBet.marketId === market.marketId && (
@@ -1944,7 +1978,9 @@ export default function MatchPage() {
                       const backItem = runner.back?.[0];
                       const odds = backItem ? toDecimalOdds(parseFloat(String(backItem.price)), market.provider) : null;
                       return [
-                        <span key={`lbl-${runner.selectionId}`} className="text-gray-800 font-bold text-sm px-3 flex items-center">{runner.name}</span>,
+                        <div key={`lbl-${runner.selectionId}`} className="px-3 flex items-center min-h-[2.75rem]">
+                          <RunnerNameCell runner={runner} marketId={market.marketId} />
+                        </div>,
                         isRunnerSusp
                           ? <SuspendedCell key={`susp-${runner.selectionId}`} className="min-h-[2.75rem]" />
                           : <button key={`btn-${runner.selectionId}`}
@@ -1974,18 +2010,32 @@ export default function MatchPage() {
                     {isMarketSusp
                       ? <SuspendedCell className="w-full min-h-[2.5rem]" />
                       : (
-                        <div className="flex items-center justify-end gap-2 flex-wrap">
+                        <div className="flex items-end justify-end gap-2 flex-wrap">
                           {runners.map((runner: any) => {
                             const backItem = runner.back?.[0];
                             const odds = backItem ? toDecimalOdds(parseFloat(String(backItem.price)), market.provider) : null;
                             const isRunnerSusp = runner.status === "SUSPENDED" || runner.status === "REMOVED";
+                            const rId = runner.selectionId?.toString() ?? "";
+                            const runnerPnl: number | null = (() => {
+                              if (previewExposure && previewExposure.marketId === String(market.marketId)) {
+                                return previewExposure.runners.get(rId) ?? null;
+                              }
+                              return marketExposureMap?.get(String(market.marketId))?.get(rId) ?? null;
+                            })();
                             return (
-                              <button key={runner.selectionId}
-                                disabled={isRunnerSusp || odds == null}
-                                onClick={() => odds != null && handleBackClick(market, runner, odds, null, 0)}
-                                className="w-9 h-9 rounded-full bg-[#142669] hover:bg-[#142669] text-white font-bold text-sm flex items-center justify-center shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-                                {runner.name}
-                              </button>
+                              <div key={runner.selectionId} className="flex flex-col items-center gap-0.5">
+                                <button
+                                  disabled={isRunnerSusp || odds == null}
+                                  onClick={() => odds != null && handleBackClick(market, runner, odds, null, 0)}
+                                  className="w-9 h-9 rounded-full bg-[#142669] hover:bg-[#142669] text-white font-bold text-sm flex items-center justify-center shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                                  {runner.name}
+                                </button>
+                                {runnerPnl !== null && (
+                                  <span className={`text-[9px] font-bold leading-none ${runnerPnl >= 0 ? "text-live-text" : "text-danger"}`}>
+                                    {runnerPnl >= 0 ? "+" : ""}{runnerPnl.toFixed(0)}
+                                  </span>
+                                )}
+                              </div>
                             );
                           })}
                         </div>
@@ -2020,7 +2070,9 @@ export default function MatchPage() {
                           const odds = backItem ? toDecimalOdds(parseFloat(String(backItem.price)), market.provider) : null;
                           return (
                             <div key={runner.selectionId} className="flex items-stretch">
-                              <span className="text-gray-700 text-xs sm:text-sm font-medium truncate flex-1 leading-tight flex items-center px-2 py-1.5">{runner.name}</span>
+                              <div className="flex-1 px-2 py-1.5 min-w-0">
+                                <RunnerNameCell runner={runner} marketId={market.marketId} />
+                              </div>
                               {isRunnerSusp
                                 ? <SuspendedCell className="w-16 min-h-[2.25rem] shrink-0" />
                                 : <button onClick={() => odds != null && handleBackClick(market, runner, odds, null, 0)}

@@ -135,12 +135,7 @@ function SidebarContent({
                 </button>
                 {openGroups.includes(item.name) && (
                   <div className="ml-8 mt-1 space-y-1">
-                    {item.subItems
-                    .filter((subItem) => {
-                      if (subItem.name === "Matka" && currentUser?.role !== "owner") return false;
-                      return true;
-                    })
-                    .map((subItem) => (
+                    {item.subItems.map((subItem) => (
                       <Link
                         key={subItem.name}
                         href={subItem.href}

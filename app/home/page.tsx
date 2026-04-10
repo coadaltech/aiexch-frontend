@@ -289,7 +289,7 @@ const Homepage = () => {
         </div>
       </div>
 
-      {/* 5d. Horse Racing */}
+      {/* 5d. Horse Racing
       <div className="mt-4">
         <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-4 rounded-xl overflow-hidden border border-[#1e4088]/50">
           <SectionHeader
@@ -303,10 +303,10 @@ const Homepage = () => {
             <CricketMatchesList sport="horse-racing" eventTypeId="7" maxMatches={6} emptyText="No races right now" />
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* 5e. Greyhound Racing */}
-      <div className="mt-4">
+      {/* <div className="mt-4">
         <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-4 rounded-xl overflow-hidden border border-[#1e4088]/50">
           <SectionHeader
             title="GREYHOUND RACING"
@@ -319,7 +319,7 @@ const Homepage = () => {
             <CricketMatchesList sport="greyhound-racing" eventTypeId="4339" maxMatches={6} emptyText="No races right now" />
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* 5f. Politics */}
       <div className="mt-4">

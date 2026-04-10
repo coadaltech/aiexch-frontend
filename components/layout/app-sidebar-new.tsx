@@ -50,6 +50,15 @@ const SPORT_LINK_MAPPING: Record<string, { basePath: string; eventTypeId: string
     ])
   );
 
+// Special sports that have dedicated pages instead of a competitions drill-down
+// Key = sport_id as string, value = the path to navigate to on click
+const SPECIAL_SPORT_HREFS: Record<string, string> = {
+  "1001": "/matka",
+  "1002": "/lotry",
+  "1003": "/skil-games",
+  "1004": "/jambo",
+};
+
 // Helper: Get menu groups
 const getMenuGroups = (isLoggedIn: boolean): MenuGroup[] => {
   const baseGroups: MenuGroup[] = [
@@ -100,7 +109,7 @@ const isItemActive = (itemLink: string | undefined, pathname: string): boolean =
   return pathname === itemLink || pathname.startsWith(itemLink + "/");
 };
 
-/** Accordion item for a single sport */
+/** Accordion item for a single API sport (with expandable series/matches) */
 function SportAccordionItem({
   sport,
   pathname,
@@ -325,6 +334,73 @@ function MatkaAccordionItem({ pathname }: { pathname: string }) {
   );
 }
 
+/** Simple link button for special sports (Lottery, Skill Games, Jambo) */
+function SimpleSportButton({
+  title,
+  href,
+  pathname,
+  rounded = false,
+}: {
+  title: string;
+  href: string;
+  pathname: string;
+  rounded?: boolean;
+}) {
+  const router = useRouter();
+  const isActive = pathname.startsWith(href);
+  return (
+    <button
+      onClick={() => router.push(href)}
+      className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold transition-colors cursor-pointer ${
+        rounded ? "rounded-lg " : "border-b border-gray-100 "
+      }${
+        isActive
+          ? rounded
+            ? "bg-[#1a3578] text-white shadow-md"
+            : "bg-[#1a3578] text-white"
+          : rounded
+            ? "text-black hover:bg-gray-100"
+            : "text-black hover:bg-gray-50"
+      }`}
+    >
+      <Trophy className="h-4 w-4 flex-shrink-0" />
+      <span className="flex-1 text-left">{title}</span>
+    </button>
+  );
+}
+
+/** Renders a sport from the DB as the correct component based on its ID */
+function SportItem({
+  sport,
+  pathname,
+  rounded = false,
+}: {
+  sport: { title: string; eventTypeId: string; basePath: string };
+  pathname: string;
+  rounded?: boolean;
+}) {
+  // Matka — special accordion
+  if (sport.eventTypeId === "1001") {
+    return <MatkaAccordionItem pathname={pathname} />;
+  }
+
+  // Other special sports with dedicated pages
+  const specialHref = SPECIAL_SPORT_HREFS[sport.eventTypeId];
+  if (specialHref) {
+    return (
+      <SimpleSportButton
+        title={sport.title}
+        href={specialHref}
+        pathname={pathname}
+        rounded={rounded}
+      />
+    );
+  }
+
+  // Regular API sport — expandable accordion with series/matches
+  return <SportAccordionItem sport={sport} pathname={pathname} />;
+}
+
 export function AppSidebar() {
   const { isLoggedIn, logout } = useAuth();
   const router = useRouter();
@@ -526,24 +602,7 @@ export function AppSidebar() {
 
                 <div className="space-y-0">
                   {sports.map((sport) => (
-                    <SportAccordionItem key={sport.eventTypeId} sport={sport} pathname={pathname} />
-                  ))}
-                  <MatkaAccordionItem pathname={pathname} />
-                  {[
-                    { title: "Lotry", href: "/lotry" },
-                    { title: "Skil Games", href: "/skil-games" },
-                    { title: "Jambo", href: "/jambo" },
-                  ].map((game) => (
-                    <button
-                      key={game.title}
-                      onClick={() => router.push(game.href)}
-                      className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold transition-colors cursor-pointer border-b border-gray-100 ${
-                        pathname.startsWith(game.href) ? "bg-[#1a3578] text-white" : "text-black hover:bg-gray-50"
-                      }`}
-                    >
-                      <Trophy className="h-4 w-4 flex-shrink-0" />
-                      <span className="flex-1 text-left">{game.title}</span>
-                    </button>
+                    <SportItem key={sport.eventTypeId} sport={sport} pathname={pathname} rounded={false} />
                   ))}
                 </div>
               </div>
@@ -603,26 +662,7 @@ export function AppSidebar() {
                   </div>
                   <div className="space-y-0.5">
                     {sports.map((sport) => (
-                      <SportAccordionItem key={sport.eventTypeId} sport={sport} pathname={pathname} />
-                    ))}
-                    <MatkaAccordionItem pathname={pathname} />
-                    {[
-                      { title: "Lotry", href: "/lotry" },
-                      { title: "Skil Games", href: "/skil-games" },
-                      { title: "Jambo", href: "/jambo" },
-                    ].map((game) => (
-                      <button
-                        key={game.title}
-                        onClick={() => router.push(game.href)}
-                        className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 cursor-pointer ${
-                          pathname.startsWith(game.href)
-                            ? "bg-[#1a3578] text-white shadow-md"
-                            : "text-black hover:bg-gray-100"
-                        }`}
-                      >
-                        <Trophy className="h-4 w-4 flex-shrink-0" />
-                        <span className="flex-1 text-left">{game.title}</span>
-                      </button>
+                      <SportItem key={sport.eventTypeId} sport={sport} pathname={pathname} rounded={true} />
                     ))}
                   </div>
                 </div>
