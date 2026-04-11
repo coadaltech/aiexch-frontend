@@ -272,7 +272,7 @@ function toBettingType(bettingType: string): string {
 // BETFAIR prices are already in decimal — skip conversion entirely.
 function toDecimalOdds(price: number, provider?: string): number {
   if (provider?.toUpperCase() === "BETFAIR") return price;
-  if (price >= 10 && price < 100) return price / 100 + 1 ;
+  if (price < 100) return price / 100 ;
   if (price >= 100) return price / 100;
   return price;
 }
@@ -582,9 +582,10 @@ export default function MatchPage() {
     // Only for odds/bookmaker markets (not fancy/session)
     if (bettingType === "LINE") return null;
 
-    // Odds are always in decimal format after toDecimalOdds conversion (e.g. 1.98)
-    // Profit on win = stake * (odds - 1), loss on other runners = stake
-    const profitMultiplier = oddsNum - 1;
+    // BETFAIR: odds are decimal (e.g. 1.98), profit = stake * (odds - 1)
+    // Non-BETFAIR (Indian bookmaker): odds already represent profit ratio (e.g. 0.98), no -1 needed
+    const isBetfairMarket = quickBet.market?.provider?.toUpperCase() === "BETFAIR";
+    const profitMultiplier = isBetfairMarket ? oddsNum - 1 : oddsNum;
 
     const selectedId = runner.selectionId?.toString() ?? "";
     const existingMarket = marketExposureMap?.get(String(marketId));
