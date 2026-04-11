@@ -68,9 +68,10 @@ function QuickBetPanel({
   const { market, runner, odds } = data;
   const rawOdds = currentOdds ?? odds;
   const numOdds = parseFloat(rawOdds);
+  const isBetfair = data.market?.provider?.toUpperCase() === "BETFAIR";
   const displayOdds =
     data.bettingType === "LINE" && data.run != null
-      ? `${data.run} (${Math.round(numOdds * 100)})`
+      ? `${data.run} (${Math.round(isBetfair ? numOdds : numOdds * 100)})`
       : isNaN(numOdds)
       ? rawOdds
       : (() => {
@@ -99,13 +100,7 @@ function QuickBetPanel({
   const isDelaying = betDelayRemaining != null && betDelayRemaining > 0;
 
   const handleStake = (val: string) => {
-    // Allow free typing — only accept digits, no clamping while user is typing
-    if (val === "" || /^\d*$/.test(val)) {
-      onStakeChange(val);
-    }
-  };
-
-  const setStakeClamped = (n: number) => {
+    let n = parseFloat(val) || 0;
     if (maxBet > 0 && n > maxBet) n = maxBet;
     onStakeChange(n > 0 ? String(n) : "");
   };
@@ -158,10 +153,10 @@ function QuickBetPanel({
                 if (e.key === "ArrowUp") {
                   e.preventDefault();
                   const current = parseFloat(stake) || 0;
-                  setStakeClamped(current === 0 ? 500 : current + 500);
+                  handleStake(String(current === 0 ? 500 : current + 500));
                 } else if (e.key === "ArrowDown") {
                   e.preventDefault();
-                  setStakeClamped(Math.max(0, (parseFloat(stake) || 0) - 500));
+                  handleStake(String(Math.max(0, (parseFloat(stake) || 0) - 500)));
                 }
               }}
               placeholder="0"
@@ -180,7 +175,7 @@ function QuickBetPanel({
                 disabled={isDelaying}
                 onClick={() => {
                   const current = parseFloat(stake) || 0;
-                  setStakeClamped(current === 0 ? 500 : current + 500);
+                  handleStake(String(current === 0 ? 500 : current + 500));
                 }}
                 className="bg-gray-100 text-gray-600 px-1 py-0.5 text-[10px] hover:bg-gray-200 border border-gray-300 rounded-t disabled:opacity-50"
               >
@@ -189,7 +184,7 @@ function QuickBetPanel({
               <button
                 type="button"
                 disabled={isDelaying}
-                onClick={() => setStakeClamped(Math.max(0, (parseFloat(stake) || 0) - 500))}
+                onClick={() => handleStake(String(Math.max(0, (parseFloat(stake) || 0) - 500)))}
                 className="bg-gray-100 text-gray-600 px-1 py-0.5 text-[10px] hover:bg-gray-200 border border-gray-300 border-t-0 rounded-b disabled:opacity-50"
               >
                 ▼
@@ -210,7 +205,7 @@ function QuickBetPanel({
               key={btn.value}
               type="button"
               disabled={isDelaying}
-              onClick={() => setStakeClamped(btn.value)}
+              onClick={() => onStakeChange(String(btn.value))}
               className="px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-semibold rounded bg-gradient-to-b from-sports-header to-sports-header/80 hover:from-sports-header/90 hover:to-sports-header/70 text-white shadow-sm transition-all disabled:opacity-50"
             >
               {btn.label}
