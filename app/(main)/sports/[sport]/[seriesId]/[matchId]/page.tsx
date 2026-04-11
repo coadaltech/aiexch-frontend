@@ -98,9 +98,20 @@ function QuickBetPanel({
     (btn) => ({ ...btn, label: formatStakeLabel(btn.value) })
   );
   const isDelaying = betDelayRemaining != null && betDelayRemaining > 0;
+  const stakeInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const t = setTimeout(() => stakeInputRef.current?.focus(), 50);
+    return () => clearTimeout(t);
+  }, [data.marketId, data.runner?.selectionId]);
 
   const handleStake = (val: string) => {
-    let n = parseFloat(val) || 0;
+    if (val === "" || /^\d*$/.test(val)) {
+      onStakeChange(val);
+    }
+  };
+
+  const setStakeClamped = (n: number) => {
     if (maxBet > 0 && n > maxBet) n = maxBet;
     onStakeChange(n > 0 ? String(n) : "");
   };
@@ -146,6 +157,7 @@ function QuickBetPanel({
         <div className="flex flex-col items-end gap-0.5">
           <div className="flex items-center">
             <input
+              ref={stakeInputRef}
               type="number"
               value={stake}
               onChange={(e) => handleStake(e.target.value)}
@@ -153,14 +165,13 @@ function QuickBetPanel({
                 if (e.key === "ArrowUp") {
                   e.preventDefault();
                   const current = parseFloat(stake) || 0;
-                  handleStake(String(current === 0 ? 500 : current + 500));
+                  setStakeClamped(current === 0 ? 500 : current + 500);
                 } else if (e.key === "ArrowDown") {
                   e.preventDefault();
-                  handleStake(String(Math.max(0, (parseFloat(stake) || 0) - 500)));
+                  setStakeClamped(Math.max(0, (parseFloat(stake) || 0) - 500));
                 }
               }}
               placeholder="0"
-              autoFocus
               disabled={isDelaying}
               style={{ width: `${Math.max(7, (stake?.length || 1) + 3)}ch` }}
               className={`min-w-[5rem] sm:min-w-[6rem] bg-gray-50 text-gray-900 text-sm sm:text-base font-bold py-1.5 px-2 text-center border rounded focus:ring-1 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-[width] duration-150 ${
@@ -175,7 +186,7 @@ function QuickBetPanel({
                 disabled={isDelaying}
                 onClick={() => {
                   const current = parseFloat(stake) || 0;
-                  handleStake(String(current === 0 ? 500 : current + 500));
+                  setStakeClamped(current === 0 ? 500 : current + 500);
                 }}
                 className="bg-gray-100 text-gray-600 px-1 py-0.5 text-[10px] hover:bg-gray-200 border border-gray-300 rounded-t disabled:opacity-50"
               >
@@ -184,7 +195,7 @@ function QuickBetPanel({
               <button
                 type="button"
                 disabled={isDelaying}
-                onClick={() => handleStake(String(Math.max(0, (parseFloat(stake) || 0) - 500)))}
+                onClick={() => setStakeClamped(Math.max(0, (parseFloat(stake) || 0) - 500))}
                 className="bg-gray-100 text-gray-600 px-1 py-0.5 text-[10px] hover:bg-gray-200 border border-gray-300 border-t-0 rounded-b disabled:opacity-50"
               >
                 ▼
@@ -205,7 +216,7 @@ function QuickBetPanel({
               key={btn.value}
               type="button"
               disabled={isDelaying}
-              onClick={() => onStakeChange(String(btn.value))}
+              onClick={() => setStakeClamped(btn.value)}
               className="px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-semibold rounded bg-gradient-to-b from-sports-header to-sports-header/80 hover:from-sports-header/90 hover:to-sports-header/70 text-white shadow-sm transition-all disabled:opacity-50"
             >
               {btn.label}
@@ -564,17 +575,16 @@ export default function MatchPage() {
     const stakeNum = parseFloat(quickBetStake) || 0;
     if (stakeNum <= 0) return null;
 
-    const { isLay, allRunners, runner, marketId, bettingType, market } = quickBet;
+    const { isLay, allRunners, runner, marketId, bettingType } = quickBet;
     const oddsNum = parseFloat(liveQuickBetOdds ?? quickBet.odds) || 0;
     if (oddsNum <= 0) return null;
 
     // Only for odds/bookmaker markets (not fancy/session)
     if (bettingType === "LINE") return null;
 
-    // BETFAIR: profit multiplier = odds - 1 (stake is returned separately)
-    // Others:  profit multiplier = odds as-is (price column stores raw odds)
-    const isBetfair = market?.provider?.toUpperCase() === "BETFAIR";
-    const profitMultiplier = isBetfair ? oddsNum - 1 : oddsNum;
+    // Odds are always in decimal format after toDecimalOdds conversion (e.g. 1.98)
+    // Profit on win = stake * (odds - 1), loss on other runners = stake
+    const profitMultiplier = oddsNum - 1;
 
     const selectedId = runner.selectionId?.toString() ?? "";
     const existingMarket = marketExposureMap?.get(String(marketId));
@@ -788,7 +798,7 @@ export default function MatchPage() {
   // Core bet placement logic (called directly or after delay completes)
   const executeBetPlacement = useCallback(
     async (qb: QuickBetData, stakeStr: string, oddsValue: string) => {
-      const { market, runner, allRunners, isLay } = qb;
+      const { market, runner, isLay } = qb;
 
       // Final pre-placement check: market status
       const liveMarket = marketsRef.current.find((m: any) => m.marketId === market.marketId);
@@ -815,6 +825,21 @@ export default function MatchPage() {
       const runnerName = runner?.name || "";
       const stakeNum = parseFloat(stakeStr);
       const oddsNum = parseFloat(oddsValue) || 0;
+
+      // Rebuild allRunners at placement time so all runner prices are consistent
+      // with the same live snapshot — uses oddsValue for the selected runner.
+      const convertOdds = market.bettingType === "LINE" ? toDecimalfancyOdds : toDecimalOdds;
+      const allRunners: RunnerSummary[] = market.bettingType === "LINE"
+        ? [{ id: selId, name: runner.name || "", price: oddsNum }]
+        : (liveMarket ?? market).runners?.map((r: any) => {
+            const isSelected = r.selectionId?.toString() === selId;
+            const rawPrice = parseFloat(isLay ? r.lay?.[0]?.price || r.back?.[0]?.price : r.back?.[0]?.price || r.lay?.[0]?.price || "0");
+            return {
+              id: r.selectionId?.toString() ?? "",
+              name: r.name || "",
+              price: isSelected ? oddsNum : convertOdds(rawPrice, market.provider),
+            };
+          }) ?? qb.allRunners;
       const marketType = toBettingType(market.bettingType);
       const potentialWin = (stakeNum * oddsNum).toFixed(2);
 
@@ -962,9 +987,14 @@ export default function MatchPage() {
       const selectedId = runner.selectionId?.toString() ?? "";
       const existingMarket = marketExposureMap?.get(String(quickBet.marketId));
 
-      // BETFAIR: profit multiplier = odds - 1; Others: odds as-is
       const isBetfairMkt = market?.provider?.toUpperCase() === "BETFAIR";
-      const profitMultiplier = isBetfairMkt ? oddsNum - 1 : oddsNum;
+      const isFancyMkt = quickBet.bettingType === "LINE";
+
+      // For fancy (LINE) markets: back risk = stake, lay risk = stake * (price/100)
+      // For odds markets: profit multiplier = odds - 1 (decimal odds already converted)
+      const profitMultiplier = isFancyMkt
+        ? (isBetfairMkt ? oddsNum / 100 : oddsNum)  // oddsNum is raw for BETFAIR, decimal for others
+        : oddsNum - 1;
 
       // Compute P&L of THIS bet alone for every runner (not including existing exposure)
       const thisBetPnls: number[] = allRunners.map((r) =>
