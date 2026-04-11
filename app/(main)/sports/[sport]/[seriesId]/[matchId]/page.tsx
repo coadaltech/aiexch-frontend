@@ -278,8 +278,8 @@ function toDecimalOdds(price: number, provider?: string): number {
 }
 
 function toDecimalfancyOdds(price: number, provider?: string): number {
-  if ((provider?.toUpperCase() === "BETFAIR") && (price < 10 )) return price;
-  return price  ;
+  if ((provider?.toUpperCase() === "BETFAIR") || (price < 10 )) return price;
+  return price /100 ;
 }
 
 export default function MatchPage() {
