@@ -696,9 +696,10 @@ export default function MatchPage() {
   };
 
   // Format odds price: at most 2 decimal places, no trailing zeros
-  const formatOddsPrice = (price: number | string): string => {
+  const formatOddsPrice = (price: number | string | null | undefined): string => {
+    if (price == null) return "0";
     const num = parseFloat(String(price));
-    if (isNaN(num)) return String(price);
+    if (isNaN(num)) return "0";
     return parseFloat(num.toFixed(2)).toString();
   };
 
