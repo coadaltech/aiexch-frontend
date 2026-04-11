@@ -278,7 +278,7 @@ function toDecimalOdds(price: number, provider?: string): number {
 }
 
 function toDecimalfancyOdds(price: number, provider?: string): number {
-  if (provider?.toUpperCase() === "BETFAIR") return price;
+  if ((provider?.toUpperCase() === "BETFAIR") && (price < 10 )) return price;
   return price / 100;
 }
 
@@ -435,10 +435,10 @@ export default function MatchPage() {
               name: s.RunnerName,
               status: isSuspended || isBallRunning ? "SUSPENDED" : "ACTIVE",
               back: s.BackPrice1
-                ? [{ line: s.BackPrice1, price: s.BackSize1 || 100, size: s.BackSize1 || 100 }]
+                ? [{ line: s.BackPrice1, price: s.BackPrice1, size: s.BackSize1 || 0 }]
                 : null,
               lay: s.LayPrice1
-                ? [{ line: s.LayPrice1, price: s.LaySize1 || 100, size: s.LaySize1 || 100 }]
+                ? [{ line: s.LayPrice1, price: s.LayPrice1, size: s.LaySize1 || 0 }]
                 : null,
             },
           ],
