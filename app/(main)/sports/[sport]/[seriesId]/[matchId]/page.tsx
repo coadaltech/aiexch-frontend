@@ -272,7 +272,7 @@ function toBettingType(bettingType: string): string {
 // BETFAIR prices are already in decimal — skip conversion entirely.
 function toDecimalOdds(price: number, provider?: string): number {
   if (provider?.toUpperCase() === "BETFAIR") return price;
-  if (price >= 10 && price < 100) return price / 100 ;
+  if (price >= 10 && price < 100) return price / 100 + 1 ;
   if (price >= 100) return price / 100;
   return price;
 }
