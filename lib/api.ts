@@ -67,7 +67,8 @@ export const api = axios.create({
 // Attach domain header + Authorization header on every request
 api.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
-    config.headers["x-whitelabel-domain"] = window.location.host;
+    config.headers["x-whitelabel-domain"] =
+      process.env.NEXT_PUBLIC_WHITELABEL_DOMAIN || window.location.host;
     const token = getAuthCookie("accessToken");
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;

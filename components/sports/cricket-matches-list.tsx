@@ -214,11 +214,13 @@ export function CricketMatchesList({
   eventTypeId = EVENT_TYPE_CRICKET,
   maxMatches,
   emptyText,
+  showHeader = true,
 }: {
   sport?: string;
   eventTypeId?: string;
   maxMatches?: number;
   emptyText?: string;
+  showHeader?: boolean;
 }) {
   const {
     data: seriesData = [],
@@ -309,13 +311,14 @@ export function CricketMatchesList({
 
   return (
     <div className="w-full rounded-lg overflow-hidden shadow-sm">
-      {/* Header row */}
-      <div className="flex items-center bg-gradient-to-r from-[#142969] to-[#1a3578] text-white text-[10px] sm:text-xs font-bold font-condensed tracking-wider">
-        <div className="flex-1 py-2.5 px-3" />
-        <div className="w-48 text-center py-2.5">1</div>
-        <div className="w-48 text-center py-2.5 hidden sm:block">X</div>
-        <div className="w-48 text-center py-2.5">2</div>
-      </div>
+      {showHeader && (
+        <div className="flex items-center bg-gradient-to-r from-[#142969] to-[#1a3578] text-white text-[10px] sm:text-xs font-bold font-condensed tracking-wider">
+          <div className="flex-1 py-2.5 px-3" />
+          <div className="w-48 text-center py-2.5">1</div>
+          <div className="w-48 text-center py-2.5 hidden sm:block">X</div>
+          <div className="w-48 text-center py-2.5">2</div>
+        </div>
+      )}
 
       {/* Match rows */}
       <div className="divide-y divide-gray-100 border border-gray-200 border-t-0 rounded-b-lg overflow-hidden">

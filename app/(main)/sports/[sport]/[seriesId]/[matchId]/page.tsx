@@ -261,7 +261,7 @@ function toBettingType(bettingType: string): string {
 // BETFAIR prices are already in decimal — skip conversion entirely.
 function toDecimalOdds(price: number, provider?: string): number {
   if (provider?.toUpperCase() === "BETFAIR") return price;
-  if (price >= 10 && price < 100) return price / 100 + 1;
+  if (price >= 10 && price < 100) return price / 100 ;
   if (price >= 100) return price / 100;
   return price;
 }
@@ -1258,7 +1258,10 @@ export default function MatchPage() {
         const stakeNum = parseFloat(quickBetStake) || 0;
         const oddsNum = parseFloat(liveQuickBetOdds ?? quickBet.odds) || 0;
         if (stakeNum > 0 && oddsNum > 0) {
-          const betPnl = quickBet.isLay ? -(stakeNum * (oddsNum - 1)) : -stakeNum;
+          const isBetfair = quickBet.market?.provider?.toUpperCase() === "BETFAIR";
+          // For fancy: lay risk = stake * (price/100). oddsNum is raw for BETFAIR, /100 for others.
+          const layRisk = isBetfair ? stakeNum * (oddsNum / 100) : stakeNum * oddsNum;
+          const betPnl = quickBet.isLay ? -layRisk : -stakeNum;
           prevPnl = settled;
           pnl = (settled ?? 0) + betPnl;
         } else {

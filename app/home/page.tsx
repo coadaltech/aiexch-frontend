@@ -147,15 +147,17 @@ function SectionHeader({
   href,
   icon: Icon,
   badge,
+  oddsColumns,
 }: {
   title: string;
   subtitle?: string;
   href?: string;
   icon?: React.ElementType;
   badge?: string;
+  oddsColumns?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between px-4 py-3">
+    <div className="flex items-center justify-between px-4 py-2">
       <div className="flex items-center gap-2.5">
         <div className="w-1 h-6 bg-[#84c2f1] rounded-full" />
         {Icon && <Icon className="h-4 w-4 text-[#142969]" />}
@@ -175,14 +177,20 @@ function SectionHeader({
           )}
         </div>
       </div>
-      {href && (
+      {oddsColumns ? (
+        <div className="flex items-center text-white text-[10px] sm:text-xs font-bold font-condensed tracking-wider">
+          <div className="w-48 text-center">1</div>
+          <div className="w-48 text-center hidden sm:block">X</div>
+          <div className="w-48 text-center">2</div>
+        </div>
+      ) : href ? (
         <Link
           href={href}
           className="flex items-center gap-1 text-[#142969] text-xs font-medium hover:text-[#84c2f1] transition-colors"
         >
           View All <ChevronRight className="h-3.5 w-3.5" />
         </Link>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -250,9 +258,10 @@ const Homepage = () => {
             href="/sports/cricket"
             icon={Trophy}
             badge="LIVE"
+            oddsColumns
           />
           <div className="px-3 pb-3">
-            <CricketMatchesList sport="cricket" eventTypeId="4" maxMatches={6} emptyText="No matches right now" />
+            <CricketMatchesList sport="cricket" eventTypeId="4" maxMatches={6} emptyText="No matches right now" showHeader={false} />
           </div>
         </div>
       </div>
@@ -266,9 +275,10 @@ const Homepage = () => {
             href="/sports/soccer"
             icon={Volleyball}
             badge="LIVE"
+            oddsColumns
           />
           <div className="px-3 pb-3">
-            <CricketMatchesList sport="soccer" eventTypeId="1" maxMatches={6} emptyText="No matches right now" />
+            <CricketMatchesList sport="soccer" eventTypeId="1" maxMatches={6} emptyText="No matches right now" showHeader={false} />
           </div>
         </div>
       </div>
@@ -282,9 +292,10 @@ const Homepage = () => {
             href="/sports/tennis"
             icon={Target}
             badge="LIVE"
+            oddsColumns
           />
           <div className="px-3 pb-3">
-            <CricketMatchesList sport="tennis" eventTypeId="2" maxMatches={6} emptyText="No matches right now" />
+            <CricketMatchesList sport="tennis" eventTypeId="2" maxMatches={6} emptyText="No matches right now" showHeader={false} />
           </div>
         </div>
       </div>
@@ -330,9 +341,10 @@ const Homepage = () => {
             href="/sports/politics"
             icon={Flag}
             badge="LIVE"
+            oddsColumns
           />
           <div className="px-3 pb-3">
-            <CricketMatchesList sport="politics" eventTypeId="500" maxMatches={6} emptyText="No markets right now" />
+            <CricketMatchesList sport="politics" eventTypeId="500" maxMatches={6} emptyText="No markets right now" showHeader={false} />
           </div>
         </div>
       </div>
