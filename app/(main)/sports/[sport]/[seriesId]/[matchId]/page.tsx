@@ -1046,7 +1046,10 @@ export default function MatchPage() {
           );
           const projectedNetLoss = projectedWorstLoss < 0 ? Math.abs(projectedWorstLoss) : 0;
           const reducesExposure = projectedWorstLoss > existingWorstLoss;
-          const withinLimit = projectedNetLoss <= finalLimit;
+          // Original limit = finalLimit + current exposure (what the user started with)
+          const currentExposure = existingWorstLoss < 0 ? Math.abs(existingWorstLoss) : 0;
+          const originalLimit = finalLimit + currentExposure;
+          const withinLimit = projectedNetLoss <= originalLimit;
           if (reducesExposure || withinLimit) {
             // Bet reduces exposure or net exposure is within limit — allow it through
           } else {
