@@ -33,6 +33,7 @@ type QuickBetData = {
   run?: string | null;
   isLay: boolean;
   priceIndex: number;
+  isRawOdds?: boolean; // true for ADV markets — odds stored as raw, converted only at placement
 };
 
 function formatStakeLabel(value: number): string {
@@ -270,15 +271,17 @@ function toBettingType(bettingType: string): string {
 // Values >= 100 are Indian format (e.g. 150) → divide by 100 only.
 // Values < 10 are already decimal odds (e.g. 1.50, 2.40) → pass through as-is.
 // BETFAIR prices are already in decimal — skip conversion entirely.
-function toDecimalOdds(price: number, provider?: string): number {
+// WINNING_ODDS are also already in decimal (Betfair-style) — skip conversion and use price-1 for profit.
+function toDecimalOdds(price: number, provider?: string, marketType?: string): number {
   if (provider?.toUpperCase() === "BETFAIR") return price;
+  if (marketType?.toUpperCase() === "WINNING_ODDS") return price;
   if (price < 100) return price / 100 ;
   if (price >= 100) return price / 100;
   return price;
 }
 
 function toDecimalfancyOdds(price: number, provider?: string): number {
-  if ((provider?.toUpperCase() === "BETFAIR") || (price < 10 )) return price;
+  if ((provider?.toUpperCase() === "BETFAIR") && (price < 10 )) return price;
   return price /100 ;
 }
 
@@ -565,8 +568,9 @@ export default function MatchPage() {
     if (!item) return undefined;
     const rawPrice = item?.price ?? item?.[0] ?? null;
     if (rawPrice == null) return undefined;
+    if (quickBet.isRawOdds) return String(parseFloat(String(rawPrice)));
     const convertOdds = quickBet.bettingType === "LINE" ? toDecimalfancyOdds : toDecimalOdds;
-    return String(convertOdds(parseFloat(String(rawPrice)), quickBet.market?.provider));
+    return String(convertOdds(parseFloat(String(rawPrice)), quickBet.market?.provider, quickBet.market?.marketType));
   }, [markets, quickBet]);
 
   // Preview exposure: calculate what exposure would look like if the current quick bet were placed
@@ -576,16 +580,20 @@ export default function MatchPage() {
     if (stakeNum <= 0) return null;
 
     const { isLay, allRunners, runner, marketId, bettingType } = quickBet;
-    const oddsNum = parseFloat(liveQuickBetOdds ?? quickBet.odds) || 0;
-    if (oddsNum <= 0) return null;
+    const rawOddsNum = parseFloat(liveQuickBetOdds ?? quickBet.odds) || 0;
+    if (rawOddsNum <= 0) return null;
 
     // Only for odds/bookmaker markets (not fancy/session)
     if (bettingType === "LINE") return null;
 
-    // BETFAIR: odds are decimal (e.g. 1.98), profit = stake * (odds - 1)
-    // Non-BETFAIR (Indian bookmaker): odds already represent profit ratio (e.g. 0.98), no -1 needed
+    // For ADV markets odds are stored raw — convert now for calculation
     const isBetfairMarket = quickBet.market?.provider?.toUpperCase() === "BETFAIR";
-    const profitMultiplier = isBetfairMarket ? oddsNum - 1 : oddsNum;
+    const isWinningOdds = quickBet.market?.marketType?.toUpperCase() === "WINNING_ODDS";
+    const oddsNum = quickBet.isRawOdds ? toDecimalOdds(rawOddsNum, quickBet.market?.provider, quickBet.market?.marketType) : rawOddsNum;
+
+    // BETFAIR / WINNING_ODDS: decimal odds (e.g. 1.98), profit = stake * (odds - 1)
+    // Non-BETFAIR: profit ratio already (e.g. 0.24), profit = stake * odds
+    const profitMultiplier = (isBetfairMarket || isWinningOdds) ? oddsNum - 1 : oddsNum;
 
     const selectedId = runner.selectionId?.toString() ?? "";
     const existingMarket = marketExposureMap?.get(String(marketId));
@@ -696,12 +704,14 @@ export default function MatchPage() {
     return amount.toFixed(0);
   };
 
-  // Format odds price: at most 2 decimal places, no trailing zeros
+  // Format odds price: use enough decimal places to avoid rounding small values
+  // e.g. 0.035 must not round to 0.04
   const formatOddsPrice = (price: number | string | null | undefined): string => {
     if (price == null) return "0";
     const num = parseFloat(String(price));
     if (isNaN(num)) return "0";
-    return parseFloat(num.toFixed(2)).toString();
+    const dp = num < 0.1 ? 3 : 2;
+    return parseFloat(num.toFixed(dp)).toString();
   };
 
   // Build allRunners for storage in transaction_details
@@ -714,7 +724,7 @@ export default function MatchPage() {
     return (market.runners || []).map((r: any) => {
       const isClicked = r.selectionId === clickedRunner.selectionId;
       const rawPrice = parseFloat(r.back?.[0]?.price || r.lay?.[0]?.price || "0");
-      const price = isClicked ? clickedPrice : convertOdds(rawPrice, market.provider);
+      const price = isClicked ? clickedPrice : convertOdds(rawPrice, market.provider, market.marketType);
       return {
         id: r.selectionId?.toString() ?? "",
         name: r.name || "",
@@ -723,11 +733,9 @@ export default function MatchPage() {
     });
   };
 
-  const handleBackClick = (market: any, runner: any, odds: number | string, run?: string | null, priceIndex: number = 0) => {
-    console.log(odds)
+  const handleBackClick = (market: any, runner: any, odds: number | string, run?: string | null, priceIndex: number = 0, isRawOdds = false) => {
     const o = typeof odds === "number" ? odds : parseFloat(String(odds));
     if (o === 0 && odds !== "0") return;
-    // Block if market is suspended or ball running
     const mktStatus = isMarketBlocked(market.marketId);
     if (mktStatus.blocked) {
       toast.error(mktStatus.reason);
@@ -745,14 +753,13 @@ export default function MatchPage() {
       run: run ?? null,
       isLay: false,
       priceIndex,
+      isRawOdds,
     });
   };
 
-  const handleLayClick = (market: any, runner: any, odds: number | string, run?: string | null, priceIndex: number = 0) => {
-    console.log(odds)
+  const handleLayClick = (market: any, runner: any, odds: number | string, run?: string | null, priceIndex: number = 0, isRawOdds = false) => {
     const o = typeof odds === "number" ? odds : parseFloat(String(odds));
     if (o === 0 && odds !== "0") return;
-    // Block if market is suspended or ball running
     const mktStatus = isMarketBlocked(market.marketId);
     if (mktStatus.blocked) {
       toast.error(mktStatus.reason);
@@ -770,12 +777,14 @@ export default function MatchPage() {
       run: run ?? null,
       isLay: true,
       priceIndex,
+      isRawOdds,
     });
   };
 
   // Helper: get current live price for a specific runner's back/lay slot
+  // isRaw=true: return raw price as-is (for ADV markets that store raw odds)
   const getLivePrice = useCallback(
-    (marketId: string, selectionId: string, isLay: boolean, priceIndex: number = 0): string | null => {
+    (marketId: string, selectionId: string, isLay: boolean, priceIndex: number = 0, isRaw = false): string | null => {
       const liveMarket = marketsRef.current.find(
         (m: any) => m.marketId === marketId
       );
@@ -790,9 +799,10 @@ export default function MatchPage() {
       if (!item) return null;
       const rawPrice = item?.price ?? item?.[0] ?? null;
       if (rawPrice == null) return null;
+      if (isRaw) return String(parseFloat(String(rawPrice)));
       // Convert to decimal odds — fancy/LINE markets use /100 only (no +1)
       const convertOdds = liveMarket.bettingType === "LINE" ? toDecimalfancyOdds : toDecimalOdds;
-      return String(convertOdds(parseFloat(String(rawPrice)), liveMarket.provider));
+      return String(convertOdds(parseFloat(String(rawPrice)), liveMarket.provider, liveMarket.marketType));
     },
     []
   );
@@ -817,7 +827,7 @@ export default function MatchPage() {
 
       // Final pre-placement check: price change on the exact slot user clicked
       const selId = runner.selectionId?.toString() ?? "";
-      const currentPrice = getLivePrice(market.marketId, selId, isLay, qb.priceIndex);
+      const currentPrice = getLivePrice(market.marketId, selId, isLay, qb.priceIndex, qb.isRawOdds);
       if (currentPrice !== null && currentPrice !== oddsValue) {
         toast.error(`Bet cancelled — price changed from ${oddsValue} to ${currentPrice}`);
         return;
@@ -831,6 +841,8 @@ export default function MatchPage() {
       // Rebuild allRunners at placement time so all runner prices are consistent
       // with the same live snapshot — uses oddsValue for the selected runner.
       const convertOdds = market.bettingType === "LINE" ? toDecimalfancyOdds : toDecimalOdds;
+      // For ADV markets odds are stored raw — convert the selected runner's price too
+      const selectedOddsConverted = qb.isRawOdds ? convertOdds(oddsNum, market.provider, market.marketType) : oddsNum;
       const allRunners: RunnerSummary[] = market.bettingType === "LINE"
         ? [{ id: selId, name: runner.name || "", price: oddsNum }]
         : (liveMarket ?? market).runners?.map((r: any) => {
@@ -839,11 +851,12 @@ export default function MatchPage() {
             return {
               id: r.selectionId?.toString() ?? "",
               name: r.name || "",
-              price: isSelected ? oddsNum : convertOdds(rawPrice, market.provider),
+              price: isSelected ? selectedOddsConverted : convertOdds(rawPrice, market.provider, market.marketType),
             };
           }) ?? qb.allRunners;
       const marketType = toBettingType(market.bettingType);
-      const potentialWin = (stakeNum * oddsNum).toFixed(2);
+      // Use converted odds for potentialWin display (raw odds would give inflated values for ADV markets)
+      const potentialWin = (stakeNum * selectedOddsConverted).toFixed(2);
 
       const betPayload = {
         id: `slip-${Date.now()}-${market?.marketId ?? ""}-${runner?.selectionId ?? ""}`,
@@ -884,6 +897,8 @@ export default function MatchPage() {
         toast.success("Bet placed. Balance updated.");
       } else {
         try {
+          // For ADV markets odds were stored raw — convert before sending to DB
+          const dbOddsNum = qb.isRawOdds ? toDecimalOdds(oddsNum, market?.provider, market?.marketType) : oddsNum;
           await placeBetAsync({
             matchId,
             marketId: market.marketId,
@@ -894,7 +909,7 @@ export default function MatchPage() {
             selectionId: runner.selectionId?.toString() ?? "",
             selectionName: runnerName,
             marketName,
-            odds: oddsNum,
+            odds: dbOddsNum,
             stake: stakeNum,
             run: qb.run != null ? parseFloat(qb.run) : null,
             type: isLay ? "lay" : "back",
@@ -963,7 +978,7 @@ export default function MatchPage() {
     }
 
     // Pre-flight: check if price has changed since panel was opened
-    const livePriceNow = getLivePrice(market.marketId, runner.selectionId?.toString() ?? "", isLay, quickBet.priceIndex);
+    const livePriceNow = getLivePrice(market.marketId, runner.selectionId?.toString() ?? "", isLay, quickBet.priceIndex, quickBet.isRawOdds);
     if (livePriceNow !== null && livePriceNow !== oddsValue) {
       toast.error(`Price changed from ${oddsValue} to ${livePriceNow}. Please try again.`);
       handleQuickBetClose();
@@ -990,13 +1005,19 @@ export default function MatchPage() {
       const existingMarket = marketExposureMap?.get(String(quickBet.marketId));
 
       const isBetfairMkt = market?.provider?.toUpperCase() === "BETFAIR";
+      const isWinningOddsMkt = market?.marketType?.toUpperCase() === "WINNING_ODDS";
       const isFancyMkt = quickBet.bettingType === "LINE";
 
-      // For fancy (LINE) markets: back risk = stake, lay risk = stake * (price/100)
-      // For odds markets: profit multiplier = odds - 1 (decimal odds already converted)
+      // For ADV markets odds are stored raw — convert now for calculation
+      const calcOddsNum = quickBet.isRawOdds ? toDecimalOdds(oddsNum, market?.provider, market?.marketType) : oddsNum;
+
+      // calcOddsNum is always in converted form:
+      //   BETFAIR / WINNING_ODDS → decimal odds (e.g. 1.98), profit = stake * (odds - 1)
+      //   non-BETFAIR match/bookmaker → profit ratio (e.g. 0.24), profit = stake * odds
+      //   fancy (any provider) → lay risk ratio (e.g. 1.35), lay risk = stake * odds
       const profitMultiplier = isFancyMkt
-        ? (isBetfairMkt ? oddsNum / 100 : oddsNum)  // oddsNum is raw for BETFAIR, decimal for others
-        : oddsNum - 1;
+        ? calcOddsNum
+        : (isBetfairMkt || isWinningOddsMkt) ? calcOddsNum - 1 : calcOddsNum;
 
       // Compute P&L of THIS bet alone for every runner (not including existing exposure)
       const thisBetPnls: number[] = allRunners.map((r) =>
@@ -1290,9 +1311,8 @@ export default function MatchPage() {
         const stakeNum = parseFloat(quickBetStake) || 0;
         const oddsNum = parseFloat(liveQuickBetOdds ?? quickBet.odds) || 0;
         if (stakeNum > 0 && oddsNum > 0) {
-          const isBetfair = quickBet.market?.provider?.toUpperCase() === "BETFAIR";
-          // For fancy: lay risk = stake * (price/100). oddsNum is raw for BETFAIR, /100 for others.
-          const layRisk = isBetfair ? stakeNum * (oddsNum / 100) : stakeNum * oddsNum;
+          // oddsNum is already converted by toDecimalfancyOdds (/100) for all providers
+          const layRisk = stakeNum * oddsNum;
           const betPnl = quickBet.isLay ? -layRisk : -stakeNum;
           prevPnl = settled;
           pnl = (settled ?? 0) + betPnl;
@@ -1375,7 +1395,7 @@ export default function MatchPage() {
     <div className="px-2 sm:px-3 py-2 w-full max-w-full min-w-0 min-h-full">
       {/* Match header */}
       {(matchInfo || series || matchFromSeries) && (() => {
-        const matchOddsMarket = visibleMarkets.find((m: any) => m.marketType === "MATCH_ODDS");
+        const matchOddsMarket = visibleMarkets.find((m: any) => m.marketType === "MATCH_ODDS" || m.marketType === "WINNING_ODDS");
         const runnerNames = matchOddsMarket?.runners?.map((r: any) => r.name).filter(Boolean) ?? [];
         const openDate = matchFromSeries?.openDate || matchInfo?.startTime;
         const clockStr = lastMarketUpdate
@@ -1501,7 +1521,7 @@ export default function MatchPage() {
                                     onClick={() => handleBackClick(
                                       market,
                                       runner,
-                                      toDecimalOdds(item.price, market.provider),
+                                      toDecimalOdds(item.price, market.provider, market.marketType),
                                       null,
                                       2 - posIdx
                                     )}
@@ -1537,7 +1557,7 @@ export default function MatchPage() {
                                         onClick={() => handleLayClick(
                                           market,
                                           runner,
-                                          toDecimalOdds(layItem.price, market.provider),
+                                          toDecimalOdds(layItem.price, market.provider, market.marketType),
                                           null,
                                           layIdx
                                         )}
@@ -1613,7 +1633,7 @@ export default function MatchPage() {
                                   const positions = Array(3).fill(null);
                                   backItems.forEach((item: any, idx: number) => { if (idx < 3) positions[2 - idx] = item; });
                                   return positions.map((item, posIdx) => item ? (
-                                    <button key={posIdx} onClick={() => handleBackClick(market, runner, toDecimalOdds(item.price, market.provider), null, 2 - posIdx)}
+                                    <button key={posIdx} onClick={() => handleBackClick(market, runner, toDecimalOdds(item.price, market.provider, market.marketType), null, 2 - posIdx)}
                                       className={`${oddsBtnClass} transition-all w-24 ${posIdx === 2 ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back shadow-sm" : "bg-white hover:bg-back/30 border border-back/50"}`}>
                                       <span className={oddsPriceClass}>{formatOddsPrice(item.price)}</span><span className={oddsSizeClass}>{formatAmount(item.size)}</span>
                                     </button>
@@ -1665,14 +1685,14 @@ export default function MatchPage() {
                 if (!runner) return null;
                 const isRunnerSusp = isMarketSusp || runner.status === "SUSPENDED" || runner.status === "REMOVED";
                 const backItem = runner.back?.[0];
-                const odds = backItem ? toDecimalOdds(parseFloat(String(backItem.price)), market.provider) : null;
+                const rawPrice = backItem ? parseFloat(String(backItem.price)) : null;
                 if (isRunnerSusp) return <SuspendedCell className="min-h-[2.75rem]" />;
                 return (
                   <button
-                    onClick={() => odds != null && handleBackClick(market, runner, odds, null, 0)}
+                    onClick={() => rawPrice != null && handleBackClick(market, runner, rawPrice, null, 0, true)}
                     className={`min-h-[2.75rem]  flex flex-col items-center justify-center font-bold text-sm text-gray-900 transition-all ${side === "back" ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back" : "bg-gradient-to-b from-lay to-lay-deep hover:from-lay-hover hover:to-lay"}`}
                   >
-                    <span className="text-base font-bold">{odds != null ? formatOddsPrice(odds) : "-"}</span>
+                    <span className="text-base font-bold">{rawPrice != null ? formatOddsPrice(rawPrice) : "-"}</span>
                     {backItem?.size && <span className="text-[11px]">{formatAmount(parseFloat(String(backItem.size)))}</span>}
                   </button>
                 );
@@ -1714,7 +1734,7 @@ export default function MatchPage() {
                     {runners.flatMap((runner: any) => {
                       const isRunnerSusp = isMarketSusp || runner.status === "SUSPENDED" || runner.status === "REMOVED";
                       const backItem = runner.back?.[0];
-                      const odds = backItem ? toDecimalOdds(parseFloat(String(backItem.price)), market.provider) : null;
+                      const rawPrice = backItem ? parseFloat(String(backItem.price)) : null;
                       return [
                         <span key={`lbl-${runner.selectionId}`} className="text-gray-800 font-bold text-sm px-3 flex items-center">
                           {runner.name}
@@ -1722,9 +1742,9 @@ export default function MatchPage() {
                         isRunnerSusp
                           ? <SuspendedCell key={`susp-${runner.selectionId}`} className="min-h-[2.75rem]" />
                           : <button key={`btn-${runner.selectionId}`}
-                              onClick={() => odds != null && handleBackClick(market, runner, odds, null, 0)}
+                              onClick={() => rawPrice != null && handleBackClick(market, runner, rawPrice, null, 0, true)}
                               className="min-h-[2.75rem] flex items-center justify-center font-bold text-base text-gray-900 bg-back hover:bg-back-hover transition-all">
-                              {odds != null ? formatOddsPrice(odds) : "-"}
+                              {rawPrice != null ? formatOddsPrice(rawPrice) : "-"}
                             </button>,
                       ];
                     })}
@@ -1752,12 +1772,12 @@ export default function MatchPage() {
                         <div className="flex items-center justify-end gap-2 flex-wrap">
                           {runners.map((runner: any) => {
                             const backItem = runner.back?.[0];
-                            const odds = backItem ? toDecimalOdds(parseFloat(String(backItem.price)), market.provider) : null;
+                            const rawPrice = backItem ? parseFloat(String(backItem.price)) : null;
                             const isRunnerSusp = runner.status === "SUSPENDED" || runner.status === "REMOVED";
                             return (
                               <button key={runner.selectionId}
-                                disabled={isRunnerSusp || odds == null}
-                                onClick={() => odds != null && handleBackClick(market, runner, odds, null, 0)}
+                                disabled={isRunnerSusp || rawPrice == null}
+                                onClick={() => rawPrice != null && handleBackClick(market, runner, rawPrice, null, 0, true)}
                                 className="w-9 h-9 rounded-full bg-[#142669] hover:bg-[#142669] text-white font-bold text-sm flex items-center justify-center shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                                 {runner.name}
                               </button>
@@ -1793,7 +1813,7 @@ export default function MatchPage() {
                         {row.map((runner: any) => {
                           const isRunnerSusp = isMarketSusp || runner.status === "SUSPENDED" || runner.status === "REMOVED";
                           const backItem = runner.back?.[0];
-                          const odds = backItem ? toDecimalOdds(parseFloat(String(backItem.price)), market.provider) : null;
+                          const odds = backItem ? toDecimalOdds(parseFloat(String(backItem.price)), market.provider, market.marketType) : null;
                           return (
                             <div key={runner.selectionId} className="flex items-stretch">
                               <div className="flex-1 px-2 py-1.5 min-w-0">
@@ -1964,14 +1984,14 @@ export default function MatchPage() {
                 if (!runner) return null;
                 const isRunnerSusp = isMarketSusp || runner.status === "SUSPENDED" || runner.status === "REMOVED";
                 const backItem = runner.back?.[0];
-                const odds = backItem ? toDecimalOdds(parseFloat(String(backItem.price)), market.provider) : null;
+                const rawPrice = backItem ? parseFloat(String(backItem.price)) : null;
                 if (isRunnerSusp) return <SuspendedCell className="min-h-[2.75rem]" />;
                 return (
                   <button
-                    onClick={() => odds != null && handleBackClick(market, runner, odds, null, 0)}
+                    onClick={() => rawPrice != null && handleBackClick(market, runner, rawPrice, null, 0, true)}
                     className={`min-h-[2.75rem] flex flex-col items-center justify-center font-bold text-sm text-gray-900 transition-all ${side === "back" ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back" : "bg-gradient-to-b from-lay to-lay-deep hover:from-lay-hover hover:to-lay"}`}
                   >
-                    <span className="text-base font-bold">{odds != null ? formatOddsPrice(odds) : "-"}</span>
+                    <span className="text-base font-bold">{rawPrice != null ? formatOddsPrice(rawPrice) : "-"}</span>
                     {backItem?.size && <span className="text-[11px]">{formatAmount(parseFloat(String(backItem.size)))}</span>}
                   </button>
                 );
@@ -2008,7 +2028,7 @@ export default function MatchPage() {
                     {runners.flatMap((runner: any) => {
                       const isRunnerSusp = isMarketSusp || runner.status === "SUSPENDED" || runner.status === "REMOVED";
                       const backItem = runner.back?.[0];
-                      const odds = backItem ? toDecimalOdds(parseFloat(String(backItem.price)), market.provider) : null;
+                      const rawPrice = backItem ? parseFloat(String(backItem.price)) : null;
                       return [
                         <div key={`lbl-${runner.selectionId}`} className="px-3 flex items-center min-h-[2.75rem]">
                           <RunnerNameCell runner={runner} marketId={market.marketId} />
@@ -2016,9 +2036,9 @@ export default function MatchPage() {
                         isRunnerSusp
                           ? <SuspendedCell key={`susp-${runner.selectionId}`} className="min-h-[2.75rem]" />
                           : <button key={`btn-${runner.selectionId}`}
-                              onClick={() => odds != null && handleBackClick(market, runner, odds, null, 0)}
+                              onClick={() => rawPrice != null && handleBackClick(market, runner, rawPrice, null, 0, true)}
                               className="min-h-[2.75rem] flex items-center justify-center font-bold text-base text-gray-900 bg-back hover:bg-back-hover transition-all">
-                              {odds != null ? formatOddsPrice(odds) : "-"}
+                              {rawPrice != null ? formatOddsPrice(rawPrice) : "-"}
                             </button>,
                       ];
                     })}
@@ -2045,7 +2065,7 @@ export default function MatchPage() {
                         <div className="flex items-end justify-end gap-2 flex-wrap">
                           {runners.map((runner: any) => {
                             const backItem = runner.back?.[0];
-                            const odds = backItem ? toDecimalOdds(parseFloat(String(backItem.price)), market.provider) : null;
+                            const rawPrice = backItem ? parseFloat(String(backItem.price)) : null;
                             const isRunnerSusp = runner.status === "SUSPENDED" || runner.status === "REMOVED";
                             const rId = runner.selectionId?.toString() ?? "";
                             const runnerPnl: number | null = (() => {
@@ -2057,8 +2077,8 @@ export default function MatchPage() {
                             return (
                               <div key={runner.selectionId} className="flex flex-col items-center gap-0.5">
                                 <button
-                                  disabled={isRunnerSusp || odds == null}
-                                  onClick={() => odds != null && handleBackClick(market, runner, odds, null, 0)}
+                                  disabled={isRunnerSusp || rawPrice == null}
+                                  onClick={() => rawPrice != null && handleBackClick(market, runner, rawPrice, null, 0, true)}
                                   className="w-9 h-9 rounded-full bg-[#142669] hover:bg-[#142669] text-white font-bold text-sm flex items-center justify-center shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                                   {runner.name}
                                 </button>
@@ -2099,7 +2119,7 @@ export default function MatchPage() {
                         {row.map((runner: any) => {
                           const isRunnerSusp = isMarketSusp || runner.status === "SUSPENDED" || runner.status === "REMOVED";
                           const backItem = runner.back?.[0];
-                          const odds = backItem ? toDecimalOdds(parseFloat(String(backItem.price)), market.provider) : null;
+                          const rawPrice = backItem ? parseFloat(String(backItem.price)) : null;
                           return (
                             <div key={runner.selectionId} className="flex items-stretch">
                               <div className="flex-1 px-2 py-1.5 min-w-0">
@@ -2107,9 +2127,9 @@ export default function MatchPage() {
                               </div>
                               {isRunnerSusp
                                 ? <SuspendedCell className="w-16 min-h-[2.25rem] shrink-0" />
-                                : <button onClick={() => odds != null && handleBackClick(market, runner, odds, null, 0)}
+                                : <button onClick={() => rawPrice != null && handleBackClick(market, runner, rawPrice, null, 0, true)}
                                     className="w-16 min-h-[2.25rem] flex items-center justify-center font-bold text-sm text-gray-900 bg-back hover:bg-back-hover transition-all shrink-0">
-                                    {odds != null ? formatOddsPrice(odds) : "-"}
+                                    {rawPrice != null ? formatOddsPrice(rawPrice) : "-"}
                                   </button>
                               }
                             </div>

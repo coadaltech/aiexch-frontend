@@ -105,7 +105,7 @@ function MatchRow({
   betCount?: number;
 }) {
   const matchOddsMarket = markets?.find(
-    (m: any) => m.marketName === "Match Odds" || m.marketType === "MATCH_ODDS"
+    (m: any) => m.marketName === "Match Odds" || m.marketType === "MATCH_ODDS" || m.marketType === "WINNING_ODDS"
   );
 
   const hasAnyPrice = matchOddsMarket?.runners?.some(
@@ -289,7 +289,7 @@ export function CricketMatchesList({
       const markets = oddsMap[m.id];
       if (!markets || markets.length === 0) return false;
       const mo = markets.find(
-        (mk: any) => mk.marketName === "Match Odds" || mk.marketType === "MATCH_ODDS"
+        (mk: any) => mk.marketName === "Match Odds" || mk.marketType === "MATCH_ODDS" || mk.marketType === "WINNING_ODDS"
       );
       return mo?.runners?.some(
         (r: any) => r.back?.[0]?.price != null || r.lay?.[0]?.price != null
