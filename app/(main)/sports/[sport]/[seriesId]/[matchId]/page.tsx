@@ -847,7 +847,7 @@ export default function MatchPage() {
         ? [{ id: selId, name: runner.name || "", price: oddsNum }]
         : (liveMarket ?? market).runners?.map((r: any) => {
             const isSelected = r.selectionId?.toString() === selId;
-            const rawPrice = parseFloat(isLay ? r.lay?.[0]?.price || r.back?.[0]?.price : r.back?.[0]?.price || r.lay?.[0]?.price || "0");
+            const rawPrice = parseFloat(isLay ? r.lay?.[0]?.price || r.back?.[0]?.price || "0" : r.back?.[0]?.price || r.lay?.[0]?.price || "0");
             return {
               id: r.selectionId?.toString() ?? "",
               name: r.name || "",
