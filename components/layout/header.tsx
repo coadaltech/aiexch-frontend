@@ -32,23 +32,24 @@ import { useSettings } from "@/hooks/usePublic";
 import { publicApi } from "@/lib/api";
 import Dropheader from "./dropheader";
 import { isPanelPath } from "@/lib/panel-utils";
+import { SPORT_ROUTES } from "@/lib/sports-config";
 
-const leftMenu = [
-  { label: "Home", link: "/home" },
-  { label: "Cricket", link: "/sports/4" },
-  { label: "Sports", link: "/sports" },
-  { label: "Tennis", link: "/sports/tennis" },
-  { label: "Soccer", link: "/sports/soccer" },
-  { label: "Horse Racing", link: "/sports/horse-racing" },
-  { label: "Greyhound Racing", link: "/sports/greyhound-racing" },
-  { label: "Matka", link: "/matka" },
-  { label: "Lotry", link: "/lotry" },
-  { label: "Skil Games", link: "/skil-games" },
-  { label: "Jambo", link: "/jambo" },
-  { label: "Live Casino", link: "/casino" },
-  // { label: "Live", link: "/live" },
-  { label: "Promotions", link: "/promotions" },
-];
+// Sport link mapping derived from shared config
+const SPORT_LINK_MAPPING: Record<string, { basePath: string; eventTypeId: string }> =
+  Object.fromEntries(
+    Object.entries(SPORT_ROUTES).map(([, config]) => [
+      config.eventTypeId,
+      { basePath: config.basePath, eventTypeId: config.eventTypeId },
+    ])
+  );
+
+// Special sports that have dedicated pages
+const SPECIAL_SPORT_HREFS: Record<string, string> = {
+  "1001": "/matka",
+  "1002": "/lotry",
+  "1003": "/skil-games",
+  "1004": "/jambo",
+};
 
 const rightMenu = [
   { label: "Profile", link: "/profile" },
@@ -62,6 +63,7 @@ export default function Header() {
   const [authModal, setAuthModal] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const [sports, setSports] = useState<{ label: string; link: string }[]>([]);
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const { user, isLoggedIn, logout, isLoading } = useAuth();
   const { data: whitelabelInfo } = useWhitelabelInfo();
@@ -74,6 +76,39 @@ export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const { open: sidebarOpen, toggleSidebar } = useSidebar();
+
+  useEffect(() => {
+    const fetchSportsList = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/sports/sports-list`
+        );
+        const json = await response.json();
+        const data = json.data ?? [];
+        const items = data.map((sport: any) => {
+          const eventTypeId = String(sport.id || sport.eventType || "");
+          const sportName = sport.name || sport.title || sport.displayName || "Unknown Sport";
+          const specialHref = SPECIAL_SPORT_HREFS[eventTypeId];
+          if (specialHref) return { label: sportName, link: specialHref };
+          const config = SPORT_LINK_MAPPING[eventTypeId];
+          const basePath = config?.basePath || eventTypeId;
+          return { label: sportName, link: `/sports/${basePath}` };
+        });
+        setSports(items);
+      } catch (error) {
+        console.error("Error fetching sports list:", error);
+      }
+    };
+    fetchSportsList();
+  }, []);
+
+  const leftMenu = [
+    { label: "Home", link: "/home" },
+    { label: "IPL 2026", link: "/sports/cricket/101480/28127348" },
+    ...sports,
+    { label: "Live Casino", link: "/casino" },
+    { label: "Promotions", link: "/promotions" },
+  ];
 
   // Listen for custom event to open auth modal
   React.useEffect(() => {

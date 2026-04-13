@@ -39,7 +39,7 @@ export default function SportPage({
           alt={config.title}
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-gray-50 via-black/40 to-transparent" />
+        {/* <div className="absolute inset-0 bg-gradient-to-t from-gray-50 via-black/40 to-transparent" /> */}
         <div className="absolute top-3 left-3">
           <Link
             href="/sports"
@@ -58,7 +58,7 @@ export default function SportPage({
       {/* Matches section */}
       <div className="px-3 py-3">
         <div className="bg-white rounded-xl overflow-hidden border border-gray-200 shadow-md">
-          <div className="flex items-center gap-2.5 px-4 py-3 border-b border-[#1e4088]/30 bg-gradient-to-r from-[#142969]/50 to-transparent">
+          <div className="flex items-center gap-2.5 px-4 py-3 border-b border-[#1e4088]/30 bg-gradient-to-r from-[#142969] to-[#142669]/80">
             <div className="w-1 h-5 bg-[#84c2f1] rounded-full" />
             <h2 className="text-white font-bold text-sm font-condensed tracking-wider">MATCHES</h2>
           </div>

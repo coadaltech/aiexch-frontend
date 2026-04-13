@@ -1044,8 +1044,11 @@ export default function MatchPage() {
           const projectedWorstLoss = Math.min(
             ...allRunners.map((r, i) => (existingMarket.get(r.id) ?? 0) + thisBetPnls[i])
           );
-          if (projectedWorstLoss > existingWorstLoss) {
-            // Bet reduces exposure — allow it through
+          const projectedNetLoss = projectedWorstLoss < 0 ? Math.abs(projectedWorstLoss) : 0;
+          const reducesExposure = projectedWorstLoss > existingWorstLoss;
+          const withinLimit = projectedNetLoss <= finalLimit;
+          if (reducesExposure || withinLimit) {
+            // Bet reduces exposure or net exposure is within limit — allow it through
           } else {
             toast.error("Bet rejected — potential loss exceeds your available limit.");
             return;
