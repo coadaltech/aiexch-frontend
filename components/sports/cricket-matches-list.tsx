@@ -244,16 +244,26 @@ export function CricketMatchesList({
       }
     }
     return matches.sort((a, b) => {
+      // Live matches always first
       if (a.inPlay && !b.inPlay) return -1;
       if (!a.inPlay && b.inPlay) return 1;
-      const dateA = a.openDate ? new Date(a.openDate).getTime() : 0;
-      const dateB = b.openDate ? new Date(b.openDate).getTime() : 0;
-      return dateA - dateB;
+      const now = Date.now();
+      const dateA = a.openDate ? new Date(a.openDate).getTime() : Infinity;
+      const dateB = b.openDate ? new Date(b.openDate).getTime() : Infinity;
+      const aFuture = dateA >= now;
+      const bFuture = dateB >= now;
+      // Upcoming before past
+      if (aFuture && !bFuture) return -1;
+      if (!aFuture && bFuture) return 1;
+      // Both upcoming: nearest start date first
+      if (aFuture && bFuture) return dateA - dateB;
+      // Both past (recently started / live): most recent first
+      return dateB - dateA;
     });
   }, [seriesData]);
 
-  // Fetch odds for a wider pool so maxMatches is applied after filtering
-  const oddsPoolSize = maxMatches ? maxMatches * 4 : allMatches.length;
+  // Fetch odds for a slightly wider pool so maxMatches is applied after filtering
+  const oddsPoolSize = maxMatches ? maxMatches * 2 : allMatches.length;
   const oddsPool = useMemo(
     () => allMatches.slice(0, oddsPoolSize),
     [allMatches, oddsPoolSize]

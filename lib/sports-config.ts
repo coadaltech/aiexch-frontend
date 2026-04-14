@@ -44,6 +44,14 @@ export const SPORT_ROUTES = {
     checkBackText: "Check back later for live action.",
     poster: "/greyhound-poster.jpeg",
   },
+  "politics": {
+    basePath: "politics",
+    eventTypeId: "500",
+    title: "Politics",
+    emptyText: "No live politics at the moment.",
+    checkBackText: "Check back later for live action.",
+    poster: "/greyhound-poster.jpeg",
+  },
 } as const;
 
 export type SportSlug = keyof typeof SPORT_ROUTES;
@@ -54,6 +62,7 @@ export const SPORT_SLUGS: SportSlug[] = [
   "soccer",
   "horse-racing",
   "greyhound-racing",
+  "politics"
 ];
 
 export function getSportConfig(sport: string): (typeof SPORT_ROUTES)[SportSlug] | null {

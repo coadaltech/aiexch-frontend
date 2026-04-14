@@ -279,6 +279,8 @@ export const ownerApi = {
   getLiveMarketsDetails: () => api.get("/owner/live-markets/details"),
   getLiveMarketsSummary: () => api.get("/owner/live-markets/summary"),
   getLiveMarketsPnl: () => api.get("/owner/live-markets/pnl"),
+  getLiveMarketsBets: (matchId: string | number) =>
+    api.get(`/owner/live-markets/bets?matchId=${matchId}`),
 
   // Notifications
   getNotifications: () => api.get("/owner/notifications"),

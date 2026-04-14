@@ -1,10 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useLiveMarketsDetails, useLiveMarketsPnl } from "@/hooks/useOwner";
+import { useLiveMarketsDetails, useLiveMarketsPnl, useLiveMarketsBets } from "@/hooks/useOwner";
 import { useLiveMatch } from "@/hooks/useLiveMatch";
-import { Activity, Loader2, RefreshCw } from "lucide-react";
+import { Activity, Loader2, RefreshCw, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -22,6 +28,28 @@ function pnlColor(v: number) {
 function fmt(v: number) {
   return `${v >= 0 ? "+" : ""}${v.toFixed(2)}`;
 }
+
+function fmtNum(v: string | number | null | undefined) {
+  const n = parseFloat(String(v ?? 0));
+  return isNaN(n) ? "0.00" : n.toFixed(2);
+}
+
+const MARKET_TYPE_LABELS: Record<number, string> = {
+  0: "Match Odds",
+  1: "Tied Match",
+  2: "Complete Match",
+  3: "Bookmaker",
+  4: "Fancy",
+};
+
+const ROLE_LABELS: Record<number, string> = {
+  0: "Owner",
+  3: "Admin",
+  4: "Super",
+  5: "Master",
+  6: "Agent",
+  7: "User",
+};
 
 function normalizeBookmakers(bookmakers: any[]): any[] {
   if (!bookmakers?.length) return [];
@@ -128,7 +156,6 @@ function OddsMarket({
           const pnl = runnerPnlMap?.get(runnerId) ?? null;
           return (
             <div key={runner.selectionId} className="px-2 py-1 grid grid-cols-3 gap-1 items-center bg-white">
-              {/* Runner name + P&L */}
               <div className="min-w-0 flex flex-col gap-0.5">
                 <span className="text-gray-900 font-semibold text-[11px] truncate">{runner.name}</span>
                 {pnl !== null && (
@@ -138,7 +165,6 @@ function OddsMarket({
                 )}
               </div>
               <div className="col-span-2 flex relative min-h-[2.25rem]">
-                {/* Back */}
                 <div className="flex-1 flex justify-end items-center gap-1">
                   {(() => {
                     const backs = runner.back || [];
@@ -158,7 +184,6 @@ function OddsMarket({
                     );
                   })()}
                 </div>
-                {/* Lay */}
                 <div className="flex-1 flex justify-start items-center gap-1">
                   {(() => {
                     const lays = runner.lay || [];
@@ -206,7 +231,7 @@ function FancyMarkets({
         <div className="font-semibold bg-[#faa9ba] text-black text-[10px] py-0.5 px-1.5 rounded w-fit">YES</div>
       </div>
       {markets.map((market) =>
-        market.runners.map((runner: any) => {
+        market.runners.filter((a) => a.status != "SUSPENDED").map((runner: any) => {
           const pnl = fancyExposureMap.get(String(market.marketId)) ?? null;
           return (
             <div key={market.marketId} className="px-2 py-1 grid grid-cols-3 gap-1 items-center bg-white border-b border-gray-100 last:border-b-0">
@@ -280,7 +305,265 @@ type EventTypeGroup = {
   matches: MatchGroup[];
 };
 
-// ─── Match detail view (only mounts WebSocket when a match is selected) ─────
+// ─── Bet Detail Modal ────────────────────────────────────────────────────────
+
+function BetDetailModal({
+  bet,
+  onClose,
+}: {
+  bet: any;
+  onClose: () => void;
+}) {
+  const stake = parseFloat(bet.stake ?? 0);
+  const potReturn = parseFloat(bet.potential_return ?? 0);
+  const potProfit = potReturn - stake;        // user's profit if they win (back bet)
+  const isBack = bet.bet_type === 0;
+
+  // Build hierarchy rows: owner at top, agent at bottom
+  // each level's NET share = cumulative_percent - next_lower_percent
+  const ownerPct  = parseFloat(bet.owner_percent  ?? 0);
+  const adminPct  = parseFloat(bet.admin_percent  ?? 0);
+  const superPct  = parseFloat(bet.super_percent  ?? 0);
+  const masterPct = parseFloat(bet.master_percent ?? 0);
+  const agentPct  = parseFloat(bet.agent_percent  ?? 0);
+
+  type HRow = {
+    role: string;
+    username: string | null;
+    id: string | null;
+    cumPct: number;
+    netPct: number;
+  };
+
+  const hierarchyRows: HRow[] = [
+    { role: "Owner",  username: bet.owner_name,  id: bet.owner_id,  cumPct: ownerPct,  netPct: ownerPct  - adminPct  },
+    { role: "Admin",  username: bet.admin_name,  id: bet.admin_id,  cumPct: adminPct,  netPct: adminPct  - superPct  },
+    { role: "Super",  username: bet.super_name,  id: bet.super_id,  cumPct: superPct,  netPct: superPct  - masterPct },
+    { role: "Master", username: bet.master_name, id: bet.master_id, cumPct: masterPct, netPct: masterPct - agentPct  },
+    { role: "Agent",  username: bet.agent_name,  id: bet.agent_id,  cumPct: agentPct,  netPct: agentPct             },
+  ].filter((r) => r.id);                        // hide levels not present in chain
+
+  return (
+    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-base flex items-center gap-2">
+            <span className={`inline-block px-2 py-0.5 rounded text-[11px] font-bold ${isBack ? "bg-[#72bbef] text-black" : "bg-[#faa9ba] text-black"}`}>
+              {isBack ? "BACK" : "LAY"}
+            </span>
+            Bet Details
+          </DialogTitle>
+        </DialogHeader>
+
+        {/* ── Event & Market ── */}
+        <section>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1.5">Event & Market</p>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm">
+            <Row label="Event"       value={bet.event_name       ?? "—"} />
+            <Row label="Competition" value={bet.competition_name ?? "—"} />
+            <Row label="Market"      value={bet.market_name      ?? "—"} />
+            <Row label="Market Type" value={MARKET_TYPE_LABELS[bet.market_type] ?? bet.market_type} />
+            <Row label="Selection"   value={bet.selection_name   ?? "—"} />
+            {bet.run != null && bet.run !== 0 && <Row label="Run" value={String(bet.run)} />}
+          </div>
+        </section>
+
+        <hr className="border-gray-100" />
+
+        {/* ── Bet Info ── */}
+        <section>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1.5">Bet Info</p>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm">
+            <Row label="Stake"             value={`₹ ${fmtNum(bet.stake)}`} />
+            <Row label="Odds"              value={fmtNum(bet.odds)} />
+            <Row label="Potential Return"  value={`₹ ${fmtNum(bet.potential_return)}`} />
+            <Row label="Potential Profit"  value={`₹ ${fmtNum(potProfit)}`} valueClass={potProfit >= 0 ? "text-green-600" : "text-red-600"} />
+            <Row label="Status"            value={bet.status ?? "—"} />
+            {bet.settled_amount != null && (
+              <Row label="Settled Amount"  value={`₹ ${fmtNum(bet.settled_amount)}`} />
+            )}
+            <Row label="Placed At"         value={bet.matched_at ? new Date(bet.matched_at).toLocaleString() : "—"} />
+          </div>
+        </section>
+
+        <hr className="border-gray-100" />
+
+        {/* ── User & Whitelabel ── */}
+        <section>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1.5">User & Whitelabel</p>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm">
+            <Row label="Username"   value={bet.user_name      ?? "—"} />
+            <Row label="Whitelabel" value={bet.whitelabel_name ?? "—"} />
+            {bet.ip_address && <Row label="IP Address" value={bet.ip_address} />}
+          </div>
+        </section>
+
+        <hr className="border-gray-100" />
+
+        {/* ── Hierarchy P&L ── */}
+        <section>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Commission Hierarchy &amp; P&amp;L Exposure</p>
+          <p className="text-[10px] text-gray-400 mb-2">
+            Exposure = what each level stands to lose if the user wins this bet.
+          </p>
+          <div className="rounded border border-gray-200 overflow-hidden text-xs">
+            <div className="grid grid-cols-4 bg-gray-50 px-3 py-1.5 font-semibold text-gray-600 text-[11px]">
+              <span>Role</span>
+              <span>Username</span>
+              <span className="text-right">Net Share %</span>
+              <span className="text-right">Exposure</span>
+            </div>
+            {hierarchyRows.map((row) => {
+              const exposure = -(potProfit * row.netPct / 100);
+              return (
+                <div
+                  key={row.role}
+                  className="grid grid-cols-4 px-3 py-1.5 border-t border-gray-100 items-center"
+                >
+                  <span className="font-medium text-gray-700">{row.role}</span>
+                  <span className="text-gray-600 truncate">{row.username ?? "—"}</span>
+                  <span className="text-right text-gray-700">{row.netPct.toFixed(2)}%</span>
+                  <span className={cn("text-right font-semibold", exposure >= 0 ? "text-green-600" : "text-red-600")}>
+                    {exposure >= 0 ? "+" : ""}₹{Math.abs(exposure).toFixed(2)}
+                  </span>
+                </div>
+              );
+            })}
+            {hierarchyRows.length === 0 && (
+              <div className="px-3 py-3 text-center text-gray-400 text-xs">No hierarchy data</div>
+            )}
+          </div>
+          <p className="text-[10px] text-gray-400 mt-1">
+            Positive = gain if user loses · Negative = loss if user wins
+          </p>
+        </section>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function Row({
+  label,
+  value,
+  valueClass,
+}: {
+  label: string;
+  value: string;
+  valueClass?: string;
+}) {
+  return (
+    <div className="flex flex-col">
+      <span className="text-[10px] text-gray-400">{label}</span>
+      <span className={cn("font-medium text-gray-900 truncate", valueClass)}>{value}</span>
+    </div>
+  );
+}
+
+// ─── Bets Panel ──────────────────────────────────────────────────────────────
+
+function BetsPanel({ matchId }: { matchId: string }) {
+  const { data: bets, isLoading, isError, isFetching, refetch } = useLiveMarketsBets(matchId);
+  const [selectedBet, setSelectedBet] = useState<any | null>(null);
+
+  const betList: any[] = Array.isArray(bets) ? bets : [];
+
+  return (
+    <>
+      <div className="flex flex-col bg-white rounded-lg border border-gray-200 overflow-hidden h-full">
+        {/* Header */}
+        <div className="flex items-center justify-between px-3 py-2 bg-[#174b73] shrink-0">
+          <span className="text-white font-semibold text-sm">
+            All Bets
+            {betList.length > 0 && (
+              <span className="ml-1.5 bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                {betList.length}
+              </span>
+            )}
+          </span>
+          <button
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="text-white/70 hover:text-white transition-colors disabled:opacity-40"
+          >
+            <RefreshCw className={cn("h-3.5 w-3.5", isFetching && "animate-spin")} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="overflow-y-auto flex-1" style={{ maxHeight: "calc(100vh - 220px)" }}>
+          {isLoading && (
+            <div className="flex items-center justify-center py-10">
+              <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+            </div>
+          )}
+
+          {isError && !isLoading && (
+            <div className="text-center py-8 text-red-500 text-xs px-3">
+              Failed to load bets.{" "}
+              <button onClick={() => refetch()} className="underline">Retry</button>
+            </div>
+          )}
+
+          {!isLoading && !isError && betList.length === 0 && (
+            <div className="text-center py-8 text-gray-400 text-xs px-3">
+              No bets placed on this match yet.
+            </div>
+          )}
+
+          {betList.map((bet) => {
+            const isBack = bet.bet_type === 0;
+            const stake = parseFloat(bet.stake ?? 0);
+            const odds = parseFloat(bet.odds ?? 0);
+            return (
+              <div
+                key={bet.id}
+                className="border-b border-gray-100 last:border-b-0 px-3 py-2 hover:bg-gray-50 transition-colors"
+              >
+                {/* Row 1: selection + type badge + Details */}
+                <div className="flex items-center justify-between gap-2 mb-0.5">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span
+                      className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                        isBack ? "bg-[#72bbef] text-black" : "bg-[#faa9ba] text-black"
+                      }`}
+                    >
+                      {isBack ? "BACK" : "LAY"}
+                    </span>
+                    <span className="text-[11px] font-semibold text-gray-900 truncate">
+                      {bet.selection_name ?? "—"}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setSelectedBet(bet)}
+                    className="shrink-0 flex items-center gap-1 text-[10px] text-[#174b73] hover:text-[#0f3251] font-medium transition-colors"
+                  >
+                    <Eye className="h-3 w-3" />
+                    Details
+                  </button>
+                </div>
+                {/* Row 2: market name */}
+                <p className="text-[10px] text-gray-400 truncate mb-0.5">{bet.market_name}</p>
+                {/* Row 3: stake × odds + username */}
+                <div className="flex items-center justify-between text-[10px]">
+                  <span className="text-gray-600">
+                    ₹{fmtNum(stake)} @ <span className="font-semibold">{odds.toFixed(2)}</span>
+                  </span>
+                  <span className="text-gray-400 truncate max-w-[80px] text-right">{bet.user_name}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {selectedBet && (
+        <BetDetailModal bet={selectedBet} onClose={() => setSelectedBet(null)} />
+      )}
+    </>
+  );
+}
+
+// ─── Match detail view ────────────────────────────────────────────────────────
 
 function MatchDetailView({
   match,
@@ -340,36 +623,44 @@ function MatchDetailView({
         </div>
       </div>
 
-      {/* Markets */}
-      <div className="space-y-2">
-        {showPlaceholders ? (
-          <div className="space-y-2">
-            {match.markets.map((m) => (
-              <div key={m.market_id} className="rounded border border-gray-200 px-3 py-2 flex items-center justify-between bg-gray-50">
-                <span className="text-sm text-gray-700">{m.market_name}</span>
-                <span className="text-xs text-gray-400 flex items-center gap-1">
-                  <Loader2 className="h-3 w-3 animate-spin" /> Connecting...
-                </span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <>
-            {oddsMarkets.map((market) => (
-              <OddsMarket key={market.marketId} market={market} oddsExposureMap={oddsExposureMap} />
-            ))}
-            <FancyMarkets markets={fancyMarkets} fancyExposureMap={fancyExposureMap} />
-            {oddsMarkets.length === 0 && fancyMarkets.length === 0 && (
-              <p className="text-center text-sm text-gray-400 py-4">No open markets at this time</p>
-            )}
-          </>
-        )}
+      {/* Two-column layout: markets left, bets right */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
+        {/* ── Left: Live Markets ── */}
+        <div className="lg:col-span-3 space-y-2">
+          {showPlaceholders ? (
+            <div className="space-y-2">
+              {match.markets.map((m) => (
+                <div key={m.market_id} className="rounded border border-gray-200 px-3 py-2 flex items-center justify-between bg-gray-50">
+                  <span className="text-sm text-gray-700">{m.market_name}</span>
+                  <span className="text-xs text-gray-400 flex items-center gap-1">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Connecting...
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              {oddsMarkets.map((market) => (
+                <OddsMarket key={market.marketId} market={market} oddsExposureMap={oddsExposureMap} />
+              ))}
+              <FancyMarkets markets={fancyMarkets} fancyExposureMap={fancyExposureMap} />
+              {oddsMarkets.length === 0 && fancyMarkets.length === 0 && (
+                <p className="text-center text-sm text-gray-400 py-4">No open markets at this time</p>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* ── Right: Bets Panel ── */}
+        <div className="lg:col-span-2">
+          <BetsPanel matchId={match.matchId} />
+        </div>
       </div>
     </div>
   );
 }
 
-// ─── Match list item ────────────────────────────────────────────────────────
+// ─── Match list item ──────────────────────────────────────────────────────────
 
 function MatchListItem({
   match,
@@ -402,14 +693,13 @@ function MatchListItem({
   );
 }
 
-// ─── Page ────────────────────────────────────────────────────────────────────
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function LiveMarketsDetailsPage() {
   const { data, isLoading, isError, refetch, isFetching } = useLiveMarketsDetails();
   const { data: pnlData } = useLiveMarketsPnl();
   const [selectedMatch, setSelectedMatch] = useState<MatchGroup | null>(null);
 
-  // Build oddsExposureMap: marketId → runnerId → pnl
   const oddsExposureMap = useMemo(() => {
     const map = new Map<string, Map<string, number>>();
     for (const row of (pnlData?.odds ?? []) as any[]) {
@@ -420,7 +710,6 @@ export default function LiveMarketsDetailsPage() {
     return map;
   }, [pnlData]);
 
-  // Build fancyExposureMap: marketId → pnl
   const fancyExposureMap = useMemo(() => {
     const map = new Map<string, number>();
     for (const row of (pnlData?.fancy ?? []) as any[]) {
@@ -467,7 +756,6 @@ export default function LiveMarketsDetailsPage() {
       }));
   }, [data]);
 
-  // ── Selected match detail view ──
   if (selectedMatch) {
     return (
       <MatchDetailView
@@ -479,7 +767,6 @@ export default function LiveMarketsDetailsPage() {
     );
   }
 
-  // ── Match list view ──
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">

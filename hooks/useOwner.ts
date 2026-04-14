@@ -1052,3 +1052,13 @@ export const useLiveMarketsPnl = () => {
     refetchInterval: 15000,
   });
 };
+
+export const useLiveMarketsBets = (matchId: string | number | null) => {
+  return useQuery({
+    queryKey: ["live-markets-bets", matchId],
+    queryFn: () =>
+      ownerApi.getLiveMarketsBets(matchId!).then((res) => res.data.data),
+    enabled: !!matchId,
+    refetchInterval: 15000,
+  });
+};

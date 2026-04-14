@@ -88,7 +88,7 @@ function QuickBetPanel({
   const stakeNum = parseFloat(stake) || 0;
 
   const belowMin = stakeNum > 0 && minBet > 0 && stakeNum < minBet;
-  const aboveMax = stakeNum > 0 && maxBet > 0 && stakeNum > maxBet;
+  const aboveMax = stakeNum > 0 && maxBet >= 0 && stakeNum > maxBet;
   const stakeError = belowMin
     ? `Min bet is ${minBet}`
     : aboveMax
@@ -113,7 +113,8 @@ function QuickBetPanel({
   };
 
   const setStakeClamped = (n: number) => {
-    if (maxBet > 0 && n > maxBet) n = maxBet;
+    // Set the value as-is so the inline stakeError ("Max bet is X") triggers when n > maxBet.
+    // Never silently clamp — user must see the error and decide.
     onStakeChange(n > 0 ? String(n) : "");
   };
 
@@ -935,13 +936,22 @@ export default function MatchPage() {
           let friendlyMessage = rawMessage;
 
           if (rawMessage && rawMessage.includes("Bet rejected")) {
-            if (rawMessage.includes("no available limit")) {
-              friendlyMessage =
-                "You have no available limit to place this bet.";
+            if (rawMessage.includes("minimum bet")) {
+              const m = rawMessage.match(/minimum bet is ([\d.]+)/);
+              friendlyMessage = m
+                ? `Minimum bet for this market is ₹${m[1]}`
+                : "Stake is below the minimum bet for this market.";
+            } else if (rawMessage.includes("maximum bet")) {
+              const m = rawMessage.match(/maximum bet is ([\d.]+)/);
+              friendlyMessage = m
+                ? `Maximum bet for this market is ₹${m[1]}`
+                : "Stake exceeds the maximum bet for this market.";
+            } else if (rawMessage.includes("no available limit")) {
+              friendlyMessage = "You have no available limit to place this bet.";
             } else if (rawMessage.includes("exceeds your available limit")) {
               friendlyMessage = "Insufficient limit to place this bet.";
             } else {
-              friendlyMessage = "Bet rejected due to insufficient limit.";
+              friendlyMessage = rawMessage.replace("Bet rejected: ", "");
             }
           } else if (!rawMessage || (errStatus && errStatus >= 500)) {
             friendlyMessage = "Failed to place bet. Please try again.";

@@ -247,7 +247,7 @@ const Homepage = () => {
       {/* <SportCategoryTabs /> */}
 
       {/* 4. Stats bar */}
-      <StatsBar />
+      {/* <StatsBar /> */}
 
       {/* 5. Live Cricket Matches */}
       <div className="mt-4">
