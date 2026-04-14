@@ -33,10 +33,7 @@ interface FlatMatch {
   inPlay: boolean;
   seriesId: string;
   seriesName: string;
-}
-
-interface MatchWithOdds extends FlatMatch {
-  markets: any[] | null;
+  defaultMarketId: string | null;
 }
 
 function useBetCounts(matchIds: string[]) {
@@ -53,30 +50,53 @@ function useBetCounts(matchIds: string[]) {
   });
 }
 
-function useAllMatchOdds(matchIds: string[], eventTypeId: string) {
+/**
+ * For each match call getMarketsWithOdds(eventTypeId, eventId) — the same
+ * endpoint the match detail page uses, so we know it works.
+ * We then pick the market whose marketId matches defaultMarketId (falling back
+ * to the first market if no exact match), and store only that market's runners.
+ */
+function useMatchOdds(
+  matches: Array<{ id: string; defaultMarketId: string }>,
+  eventTypeId: string
+) {
   return useQuery({
-    queryKey: ["all-match-odds", eventTypeId, matchIds.join(",")],
+    queryKey: [
+      "match-list-odds",
+      eventTypeId,
+      matches.map((m) => m.id).join(","),
+    ],
     queryFn: async () => {
-      if (matchIds.length === 0) return {};
+      if (matches.length === 0) return {} as Record<string, any>;
 
       const results = await Promise.allSettled(
-        matchIds.map(async (id) => {
+        matches.map(async ({ id, defaultMarketId }) => {
           const res = await sportsApi.getMarketsWithOdds(eventTypeId, id);
-          return { id, data: (res.data?.data ?? res.data ?? []) as any[] };
+          const markets: any[] = res.data?.data ?? res.data ?? [];
+
+          // Pick the market whose marketId matches the stored defaultMarketId.
+          // Fall back to the first market in the list if no exact match.
+          const market =
+            markets.find((m: any) => m.marketId === defaultMarketId) ??
+            markets[0] ??
+            null;
+
+          return { id, market };
         })
       );
 
-      const map: Record<string, any[]> = {};
+      const map: Record<string, any> = {};
       for (const result of results) {
-        if (result.status === "fulfilled") {
-          map[result.value.id] = result.value.data;
+        if (result.status === "fulfilled" && result.value.market) {
+          map[result.value.id] = result.value.market;
         }
       }
       return map;
     },
-    enabled: matchIds.length > 0,
+    enabled: matches.length > 0,
     staleTime: 30 * 1000,
     refetchInterval: 30 * 1000,
+    placeholderData: (prev: Record<string, any> | undefined) => prev,
   });
 }
 
@@ -96,36 +116,16 @@ function OddsCell({ back, lay }: { back: number | null; lay: number | null }) {
 function MatchRow({
   match,
   sport,
-  markets,
+  market,
   betCount,
 }: {
   match: FlatMatch;
   sport: string;
-  markets: any[] | null;
+  market: any | null; // one market object from getMarketsWithOdds
   betCount?: number;
 }) {
-  const matchOddsMarket = markets?.find(
-    (m: any) => m.marketName === "Match Odds" || m.marketType === "MATCH_ODDS" || m.marketType === "WINNING_ODDS"
-  );
-
-  const hasAnyPrice = matchOddsMarket?.runners?.some(
-    (r: any) => r.back?.[0]?.price != null || r.lay?.[0]?.price != null
-  );
-  if (!markets || markets.length === 0 || !hasAnyPrice) return null;
-
-  const hasBookmaker = markets.some(
-    (m: any) =>
-      m.marketType === "BOOKMAKER" ||
-      m.marketName?.toLowerCase().includes("bookmaker")
-  );
-  const hasFancy = markets.some(
-    (m: any) =>
-      m.bettingType === "LINE" ||
-      m.marketName?.toLowerCase().includes("fancy") ||
-      m.marketName?.toLowerCase().includes("session")
-  );
-
-  const runners = matchOddsMarket?.runners || [];
+  // getMarketsWithOdds runners have back[]/lay[] arrays same as match detail page
+  const runners: any[] = market?.runners ?? [];
 
   const getRunnerPrice = (index: number) => {
     const runner = runners[index];
@@ -147,8 +147,7 @@ function MatchRow({
       className="block bg-white hover:bg-gray-50 transition-colors"
     >
       <div className="flex items-center">
-        {/* Match info — all in one line */}
-        <div className="flex-1 min-w-0 py-1.5 px-3 flex items-center ">
+        <div className="flex-1 min-w-0 py-1.5 px-3 flex items-center">
           <span className="text-[16px] font-bold text-black whitespace-nowrap shrink-0">
             {formatToIST(match.openDate)}
           </span>
@@ -159,24 +158,15 @@ function MatchRow({
               <span className="text-[10px] text-[#142969] font-bold">LIVE</span>
             </span>
           ) : (
-            // <span className="text-[10px] text-black truncate hidden sm:block shrink-0 max-w-[120px]">
-            //   {match.seriesName}
-            // </span>
-            <span></span>
+            <span />
           )}
           <span className="text-gray-300 shrink-0 hidden sm:inline">·</span>
-          <h4 className=" text-[16px]  mr-2 font-bold text-black truncate min-w-0">
+          <h4 className="text-[16px] mr-2 font-bold text-black truncate min-w-0">
             {match.name}
           </h4>
-          {matchOddsMarket && (
-            <span className="text-[12px] mr-1 bg-[#4090e0]/80 text-white px-1 py-0.5 rounded font-medium shrink-0">O</span>
-          )}
-          {hasBookmaker && (
-            <span className="text-[12px] mr-1 bg-[#20b888]/80 text-white px-1 py-0.5 rounded font-medium shrink-0">BM</span>
-          )}
-          {hasFancy && (
-            <span className="text-[12px] bg-[#e88030]/80 text-white px-1 py-0.5 rounded font-medium shrink-0">F</span>
-          )}
+          <span className="text-[12px] mr-1 bg-[#4090e0]/80 text-white px-1 py-0.5 rounded font-medium shrink-0">
+            O
+          </span>
           {betCount != null && betCount > 0 && (
             <span className="relative ml-56 shrink-0 group">
               <span className="text-[14px] text-black bg-yellow-500 p-1 font-medium whitespace-nowrap cursor-default">
@@ -189,10 +179,8 @@ function MatchRow({
           )}
         </div>
 
-        {/* Runner 1 (team 1) */}
         <OddsCell back={team1.back} lay={team1.lay} />
 
-        {/* Draw (hidden on small screens) */}
         <div className="hidden sm:flex shrink-0">
           <div className="w-24 bg-gradient-to-b from-back to-back-deep text-center py-1.5 text-sm sm:text-base font-bold text-gray-900 border-l border-white/30 leading-tight">
             {draw.back ?? "-"}
@@ -202,7 +190,6 @@ function MatchRow({
           </div>
         </div>
 
-        {/* Runner 2 (team 2) */}
         <OddsCell back={team2.back} lay={team2.lay} />
       </div>
     </Link>
@@ -222,67 +209,92 @@ export function CricketMatchesList({
   emptyText?: string;
   showHeader?: boolean;
 }) {
-  const {
-    data: seriesData = [],
-    isLoading: seriesLoading,
-  } = useSeries(eventTypeId);
+  const { data: seriesData = [], isLoading: seriesLoading } =
+    useSeries(eventTypeId);
+
+  // Start of today in IST (Asia/Kolkata = UTC+5:30).
+  // Events on today's date are included even if their time has already passed.
+  // Recomputed once per mount — fine, changes at most once per day.
+  const startOfTodayIST = useMemo(() => {
+    // "en-CA" gives YYYY-MM-DD format
+    const todayStr = new Date().toLocaleDateString("en-CA", {
+      timeZone: "Asia/Kolkata",
+    });
+    // Parse as midnight IST
+    return new Date(`${todayStr}T00:00:00+05:30`).getTime();
+  }, []);
+
+  // Politics events often have old/fixed openDates — show them all.
+  const isPolitics = eventTypeId === "500";
 
   const allMatches: FlatMatch[] = useMemo(() => {
     const matches: FlatMatch[] = [];
+
     for (const series of seriesData) {
       if (!series.matches) continue;
+
       for (const match of series.matches) {
+        // Only include events that have a defaultMarketId registered in the DB
+        const defaultMarketId: string | null =
+          match.defaultMarketId ?? match.event?.defaultMarketId ?? null;
+        if (!defaultMarketId) continue;
+
+        const openDate: string | null =
+          match.openDate ?? match.event?.openDate ?? null;
+        const inPlay: boolean = match.inPlay ?? false;
+
+        // For non-politics sports: skip any event whose openDate is before
+        // the start of today in IST — no exceptions, even for inPlay events,
+        // because stale DB records can have inPlay=true on old matches.
+        if (!isPolitics && openDate) {
+          const t = new Date(openDate).getTime();
+          if (!isNaN(t) && t < startOfTodayIST) continue;
+        }
+
         matches.push({
-          id: match.id || match.event?.id,
-          name: match.name || match.event?.name || "Unknown",
-          openDate: match.openDate || match.event?.openDate || null,
-          status: match.status || "UNKNOWN",
-          inPlay: match.inPlay ?? false,
+          id: match.id ?? match.event?.id,
+          name: match.name ?? match.event?.name ?? "Unknown",
+          openDate,
+          status: match.status ?? "UNKNOWN",
+          inPlay,
           seriesId: series.id,
           seriesName: series.name,
+          defaultMarketId,
         });
       }
     }
+
+    // Sort: live first → upcoming soonest
     return matches.sort((a, b) => {
-      // Live matches always first
       if (a.inPlay && !b.inPlay) return -1;
       if (!a.inPlay && b.inPlay) return 1;
-      const now = Date.now();
       const dateA = a.openDate ? new Date(a.openDate).getTime() : Infinity;
       const dateB = b.openDate ? new Date(b.openDate).getTime() : Infinity;
-      const aFuture = dateA >= now;
-      const bFuture = dateB >= now;
-      // Upcoming before past
-      if (aFuture && !bFuture) return -1;
-      if (!aFuture && bFuture) return 1;
-      // Both upcoming: nearest start date first
-      if (aFuture && bFuture) return dateA - dateB;
-      // Both past (recently started / live): most recent first
-      return dateB - dateA;
+      return dateA - dateB;
     });
-  }, [seriesData]);
+  }, [seriesData, startOfTodayIST, isPolitics]);
 
-  // Fetch odds for a slightly wider pool so maxMatches is applied after filtering
-  const oddsPoolSize = maxMatches ? maxMatches * 2 : allMatches.length;
-  const oddsPool = useMemo(
-    () => allMatches.slice(0, oddsPoolSize),
-    [allMatches, oddsPoolSize]
+  // Fetch odds for ALL date-filtered candidates — never pre-slice by maxMatches.
+  // This ensures home page sections don't miss events with active prices
+  // that happen to sit beyond the first N in the sorted list.
+  const oddsInput = useMemo(
+    () =>
+      allMatches.map((m) => ({
+        id: m.id,
+        defaultMarketId: m.defaultMarketId!,
+      })),
+    [allMatches]
   );
 
-  const matchIds = useMemo(
-    () => oddsPool.map((m) => m.id),
-    [oddsPool]
-  );
+  const matchIds = useMemo(() => allMatches.map((m) => m.id), [allMatches]);
 
-  const { data: oddsMap = {}, isLoading: oddsLoading } = useAllMatchOdds(
-    matchIds,
+  const { data: marketMap = {}, isLoading: oddsLoading } = useMatchOdds(
+    oddsInput,
     eventTypeId
   );
   const { data: betCountMap = {} } = useBetCounts(matchIds);
 
-  const isLoading = seriesLoading;
-
-  if (isLoading) {
+  if (seriesLoading || (oddsLoading && Object.keys(marketMap).length === 0)) {
     return (
       <div className="space-y-1">
         {[...Array(4)].map((_, i) => (
@@ -292,27 +304,28 @@ export function CricketMatchesList({
     );
   }
 
-  // Filter to only matches that have odds data (or odds still loading), then apply maxMatches
-  const matchesWithOdds = oddsPool
+  // Keep only events that have at least one real price, then apply maxMatches.
+  // Filtering first means home page always fills up to maxMatches from the
+  // full pool rather than only checking the first N events.
+  const visibleMatches = allMatches
     .filter((m) => {
-      if (oddsLoading) return true; // show all while loading
-      const markets = oddsMap[m.id];
-      if (!markets || markets.length === 0) return false;
-      const mo = markets.find(
-        (mk: any) => mk.marketName === "Match Odds" || mk.marketType === "MATCH_ODDS" || mk.marketType === "WINNING_ODDS"
-      );
-      return mo?.runners?.some(
+      const market = marketMap[m.id];
+      if (!market) return false;
+      const runners: any[] = market.runners ?? [];
+      return runners.some(
         (r: any) => r.back?.[0]?.price != null || r.lay?.[0]?.price != null
       );
     })
     .slice(0, maxMatches ?? undefined);
 
-  if (matchesWithOdds.length === 0) {
+  if (visibleMatches.length === 0) {
     if (emptyText) {
       return (
         <div className="py-8 text-center">
           <p className="text-gray-500 text-sm">{emptyText}</p>
-          <p className="text-gray-400 text-xs mt-1">Check back later for live action.</p>
+          <p className="text-gray-400 text-xs mt-1">
+            Check back later for live action.
+          </p>
         </div>
       );
     }
@@ -330,14 +343,13 @@ export function CricketMatchesList({
         </div>
       )}
 
-      {/* Match rows */}
       <div className="divide-y divide-gray-100 border border-gray-200 border-t-0 rounded-b-lg overflow-hidden">
-        {matchesWithOdds.map((match) => (
+        {visibleMatches.map((match) => (
           <MatchRow
             key={match.id}
             match={match}
             sport={sport}
-            markets={oddsMap[match.id] ?? null}
+            market={marketMap[match.id] ?? null}
             betCount={betCountMap[match.id]}
           />
         ))}

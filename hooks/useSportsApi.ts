@@ -21,6 +21,8 @@ export const useSeries = (eventTypeId: string | null, enabled = true) => {
     enabled: enabled && !!eventTypeId,
     staleTime: 60 * 1000, // 1 minute
     refetchInterval: 60 * 1000,
+    // Keep previous data visible during background refetch — no flicker
+    placeholderData: (prev: any[] | undefined) => prev,
   });
 };
 
