@@ -43,6 +43,27 @@ export const useTransactions = (params?: {
   });
 };
 
+export const useAccountStatement = (params: { fromDate: string; toDate: string }) => {
+  return useQuery({
+    queryKey: ["account-statement", params.fromDate, params.toDate],
+    queryFn: () => userApi.getAccountStatement(params),
+    select: (data) => (data.data?.data?.transactions ?? []) as any[],
+    enabled: !!params.fromDate && !!params.toDate,
+  });
+};
+
+export const useBetDetails = (marketId: string | null, voucherId?: string | null) => {
+  return useQuery({
+    queryKey: ["bet-details", marketId, voucherId],
+    queryFn: () => userApi.getBetDetails(marketId!, voucherId),
+    select: (data) => ({
+      bets:      (data.data?.data?.bets      ?? []) as any[],
+      marketPnl: parseFloat(data.data?.data?.marketPnl ?? 0) as number,
+    }),
+    enabled: !!marketId,
+  });
+};
+
 export const useBetHistory = (params?: { result?: string; type?: string }) => {
   return useQuery({
     queryKey: ["betHistory", params],

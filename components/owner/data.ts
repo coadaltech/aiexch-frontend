@@ -24,6 +24,7 @@ import {
   LayoutList,
   FileText,
   RefreshCw,
+  BookOpen,
 } from "lucide-react";
 
 export type NavItem = {
@@ -37,6 +38,7 @@ export type NavItem = {
 export function getNavigation(prefix: string): NavItem[] {
   return [
     { name: "Dashboard", href: prefix, icon: BarChart3 },
+    { name: "Account Statement", href: `${prefix}/account-statement`, icon: BookOpen },
     {
       name: "Live Markets",
       icon: Activity,

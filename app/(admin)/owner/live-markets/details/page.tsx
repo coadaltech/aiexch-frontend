@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useLiveMarketsDetails, useLiveMarketsPnl, useLiveMarketsBets } from "@/hooks/useOwner";
 import { useLiveMatch } from "@/hooks/useLiveMatch";
-import { Activity, Loader2, RefreshCw, Eye } from "lucide-react";
+import { Activity, Loader2, RefreshCw, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -480,14 +481,33 @@ function BetsPanel({ matchId }: { matchId: string }) {
               </span>
             )}
           </span>
-          <button
-            onClick={() => refetch()}
-            disabled={isFetching}
-            className="text-white/70 hover:text-white transition-colors disabled:opacity-40"
-          >
-            <RefreshCw className={cn("h-3.5 w-3.5", isFetching && "animate-spin")} />
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/owner/live-markets/details/all-bets?matchId=${encodeURIComponent(matchId)}`}
+              className="flex items-center gap-1 text-[11px] text-white/90 hover:text-white bg-white/10 hover:bg-white/20 px-2 py-0.5 rounded transition-colors"
+            >
+              <ExternalLink className="h-3 w-3" />
+              Show All
+            </Link>
+            <button
+              onClick={() => refetch()}
+              disabled={isFetching}
+              className="text-white/70 hover:text-white transition-colors disabled:opacity-40"
+            >
+              <RefreshCw className={cn("h-3.5 w-3.5", isFetching && "animate-spin")} />
+            </button>
+          </div>
         </div>
+
+        {/* Column Headers */}
+        {!isLoading && !isError && betList.length > 0 && (
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 border-b border-gray-200 text-[11px] font-semibold uppercase tracking-wide text-gray-600 shrink-0">
+            <span className="flex-1 min-w-0">Username</span>
+            <span className="flex-1 min-w-0">Market</span>
+            <span className="shrink-0 w-14 text-right">Odds</span>
+            <span className="shrink-0 w-20 text-right">Stake</span>
+          </div>
+        )}
 
         {/* Body */}
         <div className="overflow-y-auto flex-1" style={{ maxHeight: "calc(100vh - 220px)" }}>
@@ -515,42 +535,27 @@ function BetsPanel({ matchId }: { matchId: string }) {
             const stake = parseFloat(bet.stake ?? 0);
             const odds = parseFloat(bet.odds ?? 0);
             return (
-              <div
+              <button
                 key={bet.id}
-                className="border-b border-gray-100 last:border-b-0 px-3 py-2 hover:bg-gray-50 transition-colors"
+                onClick={() => setSelectedBet(bet)}
+                className={cn(
+                  "w-full flex items-center gap-2 border-b border-gray-100 last:border-b-0 px-3 py-2 hover:bg-gray-50 transition-colors text-left text-[13px]",
+                  isBack ? "bg-[#eaf4fc]" : "bg-[#fdecf0]"
+                )}
               >
-                {/* Row 1: selection + type badge + Details */}
-                <div className="flex items-center justify-between gap-2 mb-0.5">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span
-                      className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded ${
-                        isBack ? "bg-[#72bbef] text-black" : "bg-[#faa9ba] text-black"
-                      }`}
-                    >
-                      {isBack ? "BACK" : "LAY"}
-                    </span>
-                    <span className="text-[11px] font-semibold text-gray-900 truncate">
-                      {bet.selection_name ?? "—"}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => setSelectedBet(bet)}
-                    className="shrink-0 flex items-center gap-1 text-[10px] text-[#174b73] hover:text-[#0f3251] font-medium transition-colors"
-                  >
-                    <Eye className="h-3 w-3" />
-                    Details
-                  </button>
-                </div>
-                {/* Row 2: market name */}
-                <p className="text-[10px] text-gray-400 truncate mb-0.5">{bet.market_name}</p>
-                {/* Row 3: stake × odds + username */}
-                <div className="flex items-center justify-between text-[10px]">
-                  <span className="text-gray-600">
-                    ₹{fmtNum(stake)} @ <span className="font-semibold">{odds.toFixed(2)}</span>
-                  </span>
-                  <span className="text-gray-400 truncate max-w-[80px] text-right">{bet.user_name}</span>
-                </div>
-              </div>
+                <span className="font-semibold text-gray-900 truncate flex-1 min-w-0" title={bet.user_name}>
+                  {bet.user_name ?? "—"}
+                </span>
+                <span className="text-gray-600 truncate flex-1 min-w-0" title={bet.market_name}>
+                  {bet.market_name ?? "—"}
+                </span>
+                <span className="shrink-0 font-semibold text-gray-900 w-14 text-right">
+                  {odds.toFixed(2)}
+                </span>
+                <span className="shrink-0 text-gray-700 w-20 text-right">
+                  ₹{fmtNum(stake)}
+                </span>
+              </button>
             );
           })}
         </div>

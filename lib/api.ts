@@ -418,6 +418,12 @@ export const ownerApi = {
     return api.get(`/owner/market-management/odds-history?${query}`);
   },
 
+  // Account Statement (owner uses capital account, others use own ID)
+  getAccountStatement: (params: { fromDate: string; toDate: string }) =>
+    api.get(`/owner/account-statement?fromDate=${params.fromDate}&toDate=${params.toDate}`),
+  getBetDetails: (marketId: string) =>
+    api.get(`/owner/account-statement/bet-details?marketId=${encodeURIComponent(marketId)}`),
+
   // Matka Shifts
   getMatkaShifts: (date?: string) =>
     api.get(`/owner/matka/shifts${date ? `?date=${date}` : ""}`),
@@ -495,6 +501,16 @@ export const userApi = {
   }) => api.post("/profile/withdraw", data),
   getBalance: () => api.get("/profile/balance"),
   getLedgerInfo: () => api.get("/betting/ledger-info"),
+
+  // Account ledger statement
+  getAccountStatement: (params: { fromDate: string; toDate: string }) =>
+    api.get(`/profile/account-statement?fromDate=${params.fromDate}&toDate=${params.toDate}`),
+
+  getBetDetails: (marketId: string, voucherId?: string | null) =>
+    api.get(
+      `/profile/account-statement/bet-details?marketId=${encodeURIComponent(marketId)}` +
+      (voucherId ? `&voucherId=${encodeURIComponent(voucherId)}` : ""),
+    ),
 
   // Stake settings
   getStakeSettings: () => api.get("/profile/stake-settings"),
