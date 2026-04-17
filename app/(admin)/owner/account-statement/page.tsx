@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ownerApi } from "@/lib/api";
 import { ArrowLeft, Receipt, CalendarDays } from "lucide-react";
@@ -47,24 +47,6 @@ function isBalanceRow(row: any) {
   return row.voucher_id == null && row.voucher_type == null && row.added_date == null;
 }
 
-function BalanceRow({ label, amount }: { label: string; amount: any }) {
-  const val = parseFloat(amount ?? 0);
-  return (
-    <div className="grid grid-cols-[76px_1fr_200px_200px] items-center px-3 py-2 bg-indigo-50 border-b border-indigo-100">
-      <div className="text-[12px] font-semibold text-indigo-400">—</div>
-      <div className="px-2">
-        <span className="text-[12px] font-bold text-indigo-700 uppercase tracking-wide">{label}</span>
-      </div>
-      <div className="text-right">
-        <span className={`text-sm font-bold ${val >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
-          {val >= 0 ? "+" : ""}₹{fmt(val)}
-        </span>
-      </div>
-      <div className="text-right text-[12px] text-gray-200">—</div>
-    </div>
-  );
-}
-
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function OwnerAccountStatement() {
   const router  = useRouter();
@@ -80,16 +62,34 @@ export default function OwnerAccountStatement() {
     enabled: !!fromDate && !!toDate,
   });
 
-  const allRows      = rows ?? [];
-  const openingRow   = allRows.find(isBalanceRow);
-  const closingRow   = [...allRows].reverse().find(isBalanceRow);
-  const transactions = allRows.filter((r: any) => !isBalanceRow(r));
-
-  const currentBalance = closingRow?.credit ?? openingRow?.credit ?? "0";
-  const totalCredit    = transactions.reduce((s: number, r: any) => s + Math.max(0, parseFloat(r.credit ?? 0)), 0);
-  const totalDebit     = transactions.reduce((s: number, r: any) => s + Math.max(0, parseFloat(r.debit  ?? 0)), 0);
-
   const isOwner = user?.role === "owner";
+
+  const allRows    = rows ?? [];
+  const openingRow = allRows.find(isBalanceRow);
+
+  const openingBalance = parseFloat(openingRow?.credit ?? 0);
+  const { txWithClosing } = useMemo(() => {
+    // Hide Limit vouchers (voucher_type === 2) — internal holds.
+    const visible = allRows.filter(
+      (r: any) => !isBalanceRow(r) && Number(r.voucher_type) !== 2,
+    );
+
+    // Force ASC by date so the running closing accumulates forward.
+    const sorted = [...visible].sort((a: any, b: any) => {
+      const ta = new Date(a.added_date ?? a.voucher_date ?? 0).getTime();
+      const tb = new Date(b.added_date ?? b.voucher_date ?? 0).getTime();
+      return ta - tb;
+    });
+
+    let running = openingBalance;
+    const out = sorted.map((r: any) => {
+      const credit = parseFloat(r.credit ?? 0);
+      const debit  = parseFloat(r.debit  ?? 0);
+      running = running + credit - debit;
+      return { row: r, closing: running };
+    });
+    return { txWithClosing: out };
+  }, [allRows, openingBalance]);
 
   return (
     <div className="min-h-screen w-full bg-gray-50">
@@ -130,23 +130,6 @@ export default function OwnerAccountStatement() {
 
       <div className="p-4 pb-8 space-y-3">
 
-        {!isLoading && !isError && (
-          <div className="grid grid-cols-3 gap-2">
-            <div className="bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-sm">
-              <p className="text-[12px] text-gray-400 uppercase mb-0.5">Balance</p>
-              <p className="text-base font-bold text-blue-600">₹{fmt(currentBalance)}</p>
-            </div>
-            <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 shadow-sm">
-              <p className="text-[12px] text-emerald-600 font-semibold uppercase mb-0.5">Credit</p>
-              <p className="text-base font-bold text-emerald-700">+₹{fmt(totalCredit)}</p>
-            </div>
-            <div className="bg-rose-50 border border-rose-200 rounded-lg px-3 py-2 shadow-sm">
-              <p className="text-[12px] text-rose-600 font-semibold uppercase mb-0.5">Debit</p>
-              <p className="text-base font-bold text-rose-700">-₹{fmt(totalDebit)}</p>
-            </div>
-          </div>
-        )}
-
         {isLoading && (
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
             <div className="h-9 bg-gray-100 animate-pulse border-b border-gray-200" />
@@ -172,87 +155,105 @@ export default function OwnerAccountStatement() {
             </div>
           ) : (
             <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-
-              <div className="grid grid-cols-[76px_1fr_200px_200px] px-3 py-2 bg-[#142969] text-white text-[12px] font-bold uppercase tracking-wide">
-                <span>Date</span>
-                <span>Description</span>
-                <span className="text-right">Credit</span>
-                <span className="text-right">Debit</span>
-              </div>
-
-              {openingRow && <BalanceRow label="Opening Balance" amount={openingRow.credit} />}
-
-              <div className="divide-y divide-gray-100">
-                {transactions.map((row: any, idx: number) => {
-                  const credit  = parseFloat(row.credit ?? 0);
-                  const debit   = parseFloat(row.debit  ?? 0);
-                  const typeCfg = getTypeLabel(row.voucher_type != null ? Number(row.voucher_type) : null);
-
-                  const eventParts = [row.remarks2, row.remarks3].filter(Boolean);
-                  const descLabel  = eventParts.length
-                    ? eventParts.join(" · ")
-                    : row.description || row.remarks1 || row.remarks || row.method || typeCfg.label;
-
-                  return (
-                    <div
-                      key={`${row.voucher_id ?? idx}-${idx}`}
-                      className="grid grid-cols-[76px_1fr_200px_200px] items-start px-3 py-2"
-                    >
-                      <div className="pt-0.5">
-                        <p className="text-[12px] font-semibold text-gray-700 leading-tight">
-                          {formatDateShort(row.added_date || row.voucher_date)}
-                        </p>
-                        <p className="text-[11px] text-gray-400 leading-tight">
-                          {formatTime(row.added_date || row.voucher_date)}
-                        </p>
-                      </div>
-
-                      <div className="min-w-0 px-2">
-                        <div className="flex items-center gap-1 mb-0.5 flex-wrap">
-                          <span className={`text-[11px] font-bold px-1 py-0.5 rounded shrink-0 ${typeCfg.cls}`}>
-                            {typeCfg.label}
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm border-collapse min-w-[820px]">
+                  <thead>
+                    <tr className="bg-[#142969] text-white text-[12px] font-bold uppercase tracking-wide">
+                      <th className="px-3 py-2 text-left">Date</th>
+                      <th className="px-3 py-2 text-right">Credit</th>
+                      <th className="px-3 py-2 text-right">Debit</th>
+                      <th className="px-3 py-2 text-right">Closing</th>
+                      <th className="px-3 py-2 text-left">Whitelabel/User</th>
+                      <th className="px-3 py-2 text-left">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {/* Opening balance row */}
+                    {openingRow && (
+                      <tr className="bg-indigo-50">
+                        <td className="px-3 py-2 text-[12px] text-indigo-400">—</td>
+                        <td className="px-3 py-2 text-right text-gray-200 text-[12px]">—</td>
+                        <td className="px-3 py-2 text-right text-gray-200 text-[12px]">—</td>
+                        <td className="px-3 py-2 text-right">
+                          <span className={`text-sm font-bold ${openingBalance >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                            {openingBalance >= 0 ? "" : "-"}₹{fmt(Math.abs(openingBalance))}
                           </span>
-                        </div>
-                        <p className="text-[13px] text-gray-800 leading-tight capitalize line-clamp-2">{descLabel}</p>
-                        {row.reference && (
-                          <p className="text-[11px] text-gray-400 leading-tight mt-0.5">Ref: {row.reference}</p>
-                        )}
-                        {row.status !== null && row.status !== undefined && Number(row.voucher_type) !== 6 && (
-                          <span className={`inline-block mt-0.5 text-[11px] font-semibold px-1 py-0.5 rounded ${
-                            Number(row.status) === 1 ? "bg-emerald-100 text-emerald-700" :
-                            Number(row.status) === 0 ? "bg-amber-100 text-amber-700"    :
-                                                       "bg-rose-100 text-rose-700"
-                          }`}>
-                            {Number(row.status) === 1 ? "Approved" : Number(row.status) === 0 ? "Pending" : "Rejected"}
-                          </span>
-                        )}
-                      </div>
+                        </td>
+                        <td className="px-3 py-2 text-[12px] text-indigo-400">—</td>
+                        <td className="px-3 py-2">
+                          <span className="text-[12px] font-bold text-indigo-700 uppercase tracking-wide">Opening Balance</span>
+                        </td>
+                      </tr>
+                    )}
 
-                      <div className="text-right pt-0.5">
-                        {credit > 0
-                          ? <span className="text-sm font-bold text-emerald-600">+₹{fmt(credit)}</span>
-                          : <span className="text-[12px] text-gray-200">—</span>}
-                      </div>
+                    {/* Transaction rows */}
+                    {txWithClosing.map(({ row, closing }, idx: number) => {
+                      const credit  = parseFloat(row.credit ?? 0);
+                      const debit   = parseFloat(row.debit  ?? 0);
+                      const typeCfg = getTypeLabel(row.voucher_type != null ? Number(row.voucher_type) : null);
 
-                      <div className="text-right pt-0.5">
-                        {debit > 0
-                          ? <span className="text-sm font-bold text-rose-600">-₹{fmt(debit)}</span>
-                          : <span className="text-[12px] text-gray-200">—</span>}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                      const eventParts = [row.remarks2, row.remarks3].filter(Boolean);
+                      const descLabel  = eventParts.length
+                        ? eventParts.join(" · ")
+                        : row.description || row.remarks1 || row.remarks || row.method || typeCfg.label;
 
-              {closingRow && closingRow !== openingRow && (
-                <BalanceRow label="Closing Balance" amount={closingRow.credit} />
-              )}
+                      const partyLabel = isOwner
+                        ? (row.whitelabel_name || "—")
+                        : (row.opposite_username || "—");
 
-              <div className="grid grid-cols-[76px_1fr_200px_200px] px-3 py-2 bg-gray-50 border-t border-gray-200 text-sm font-bold">
-                <span className="text-gray-400 text-[12px]">{transactions.length} rows</span>
-                <span />
-                <span className="text-right text-emerald-700">+₹{fmt(totalCredit)}</span>
-                <span className="text-right text-rose-700">-₹{fmt(totalDebit)}</span>
+                      return (
+                        <tr key={`${row.voucher_id ?? idx}-${idx}`}>
+                          <td className="px-3 py-2 align-top whitespace-nowrap">
+                            <p className="text-[12px] font-semibold text-gray-700 leading-tight">
+                              {formatDateShort(row.added_date || row.voucher_date)}
+                            </p>
+                            <p className="text-[11px] text-gray-400 leading-tight">
+                              {formatTime(row.added_date || row.voucher_date)}
+                            </p>
+                          </td>
+                          <td className="px-3 py-2 text-right align-top whitespace-nowrap">
+                            {credit > 0
+                              ? <span className="text-sm font-bold text-emerald-600">+₹{fmt(credit)}</span>
+                              : <span className="text-[12px] text-gray-200">—</span>}
+                          </td>
+                          <td className="px-3 py-2 text-right align-top whitespace-nowrap">
+                            {debit > 0
+                              ? <span className="text-sm font-bold text-rose-600">-₹{fmt(debit)}</span>
+                              : <span className="text-[12px] text-gray-200">—</span>}
+                          </td>
+                          <td className="px-3 py-2 text-right align-top whitespace-nowrap">
+                            <span className={`text-sm font-bold ${closing >= 0 ? "text-gray-800" : "text-rose-600"}`}>
+                              {closing >= 0 ? "" : "-"}₹{fmt(Math.abs(closing))}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 align-top">
+                            <span className="text-[13px] font-medium text-gray-800 break-all">{partyLabel}</span>
+                          </td>
+                          <td className="px-3 py-2 align-top min-w-[220px]">
+                            <div className="flex items-center gap-1 mb-0.5 flex-wrap">
+                              <span className={`text-[11px] font-bold px-1 py-0.5 rounded shrink-0 ${typeCfg.cls}`}>
+                                {typeCfg.label}
+                              </span>
+                            </div>
+                            <p className="text-[13px] text-gray-800 leading-tight capitalize line-clamp-2">{descLabel}</p>
+                            {row.reference && (
+                              <p className="text-[11px] text-gray-400 leading-tight mt-0.5">Ref: {row.reference}</p>
+                            )}
+                            {row.status !== null && row.status !== undefined && Number(row.voucher_type) !== 6 && (
+                              <span className={`inline-block mt-0.5 text-[11px] font-semibold px-1 py-0.5 rounded ${
+                                Number(row.status) === 1 ? "bg-emerald-100 text-emerald-700" :
+                                Number(row.status) === 0 ? "bg-amber-100 text-amber-700"    :
+                                                           "bg-rose-100 text-rose-700"
+                              }`}>
+                                {Number(row.status) === 1 ? "Approved" : Number(row.status) === 0 ? "Pending" : "Rejected"}
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
           )

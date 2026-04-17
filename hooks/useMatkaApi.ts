@@ -157,3 +157,50 @@ export const useConsolidatedJantri = (shiftId: string | null, date: string | nul
     staleTime: 0,
   });
 };
+
+// ── User Live Prediction (player's own bets per-number + P/L) ───────────────
+export interface UserLivePredictionRow {
+  nums: number;
+  num_type: 1 | 2 | 3;
+  sale: string;
+  profit: string;
+}
+
+export interface UserLivePredictionResponse {
+  shift: MatkaShift;
+  numbers: UserLivePredictionRow[];
+}
+
+export const useMatkaUserLivePrediction = (shiftId: string | null) => {
+  return useQuery({
+    queryKey: ["matka-user-live-prediction", shiftId],
+    queryFn: async () => {
+      const res = await matkaApi.getUserLivePrediction(shiftId!);
+      return res.data?.data as UserLivePredictionResponse;
+    },
+    enabled: !!shiftId,
+    staleTime: 10 * 1000,
+    refetchInterval: 15 * 1000,
+  });
+};
+
+// ── Declared Matka Results history (read-only) ──────────────────────────────
+export interface MatkaDeclaredHistoryRow {
+  id: string;
+  runs: number;
+  declared_at: string;
+  shift_name: string | null;
+  shift_date: string | null;
+  shift_id: string | null;
+}
+
+export const useMatkaDeclaredHistoryPublic = (limit = 50) => {
+  return useQuery({
+    queryKey: ["matka-declared-history-public", limit],
+    queryFn: async () => {
+      const res = await matkaApi.getDeclaredHistory(limit);
+      return (res.data?.data ?? []) as MatkaDeclaredHistoryRow[];
+    },
+    staleTime: 30 * 1000,
+  });
+};

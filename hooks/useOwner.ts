@@ -361,6 +361,8 @@ export const useCreateVoucher = () => {
     mutationFn: (data: any) => ownerApi.createVoucher(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vouchers"] });
+      queryClient.invalidateQueries({ queryKey: ["owner-users"] });
+      queryClient.invalidateQueries({ queryKey: ["user-ledger"] });
       toast.success("Voucher created successfully");
     },
     onError: (error: any) => {
@@ -1029,6 +1031,136 @@ export const useReorderMatkaShifts = () => {
   });
 };
 
+// ── Matka Live Prediction ───────────────────────────────────────────────────
+export interface LivePredictionRow {
+  nums: number;
+  num_type: 1 | 2 | 3;   // 1=dara 1-100, 2=bahar 111-999, 3=ander 1111-9999
+  sale: string;
+  profit: string;
+  declared_count: number;
+}
+
+export interface LivePredictionResponse {
+  shift: {
+    id: string;
+    name: string;
+    shiftDate: string;
+    endTime: string;
+    daraRate: string;
+    akharRate: string;
+  };
+  numbers: LivePredictionRow[];
+  meta?: {
+    viewerId: string;
+    viewerRole: number;
+    txCount: number;
+    commCount: number;
+  };
+}
+
+export interface LivePredictionWhitelabelRow {
+  whitelabelId: string | null;
+  whitelabelName: string;
+  sale: string;
+  profit: string;
+  lastWinStatus: "W" | "L";
+  consecutiveCount: number;
+}
+
+export interface DeclaredHistoryRow {
+  id: string;
+  runs: number;
+  declared_at: string;
+  shift_name: string | null;
+  shift_date: string | null;
+  shift_id: string | null;
+}
+
+export const useMatkaLivePrediction = (shiftId: string | null) => {
+  return useQuery({
+    queryKey: ["matka-live-prediction", shiftId],
+    queryFn: async () => {
+      const res = await ownerApi.getMatkaLivePrediction(shiftId!);
+      return res.data?.data as LivePredictionResponse;
+    },
+    enabled: !!shiftId,
+    staleTime: 10 * 1000,
+    refetchInterval: 15 * 1000,
+  });
+};
+
+export const useMatkaLivePredictionWhitelabels = (
+  shiftId: string | null,
+  nums: number | null
+) => {
+  return useQuery({
+    queryKey: ["matka-live-prediction-whitelabels", shiftId, nums],
+    queryFn: async () => {
+      const res = await ownerApi.getMatkaLivePredictionWhitelabels(
+        shiftId!,
+        nums!
+      );
+      return (res.data?.data ?? []) as LivePredictionWhitelabelRow[];
+    },
+    enabled: !!shiftId && !!nums,
+    staleTime: 10 * 1000,
+  });
+};
+
+export const useMatkaLivePredictionJantri = (
+  shiftId: string | null,
+  whitelabelId: string | null,
+  enabled: boolean
+) => {
+  return useQuery({
+    queryKey: ["matka-live-prediction-jantri", shiftId, whitelabelId],
+    queryFn: async () => {
+      const res = await ownerApi.getMatkaLivePredictionJantri(
+        shiftId!,
+        whitelabelId!
+      );
+      return (res.data?.data ?? []) as {
+        nums: number;
+        num_type: 1 | 2 | 3;
+        sale: string;
+      }[];
+    },
+    enabled: !!shiftId && !!whitelabelId && enabled,
+    staleTime: 10 * 1000,
+  });
+};
+
+export const useDeclareMatkaResult = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ shiftId, result }: { shiftId: string; result: number }) =>
+      ownerApi.declareMatkaResult(shiftId, result),
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["matka-live-prediction"] });
+      queryClient.invalidateQueries({
+        queryKey: ["matka-declared-history"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["matka-live-prediction-whitelabels", vars.shiftId],
+      });
+      toast.success("Result declared");
+    },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.error ?? "Failed to declare result"),
+  });
+};
+
+export const useMatkaDeclaredHistory = (limit = 50) => {
+  return useQuery({
+    queryKey: ["matka-declared-history", limit],
+    queryFn: async () => {
+      const res = await ownerApi.getMatkaDeclaredHistory(limit);
+      return (res.data?.data ?? []) as DeclaredHistoryRow[];
+    },
+    staleTime: 30 * 1000,
+  });
+};
+
 export const useLiveMarketsDetails = () => {
   return useQuery({
     queryKey: ["live-markets-details"],
@@ -1060,5 +1192,15 @@ export const useLiveMarketsBets = (matchId: string | number | null) => {
       ownerApi.getLiveMarketsBets(matchId!).then((res) => res.data.data),
     enabled: !!matchId,
     refetchInterval: 15000,
+  });
+};
+
+export const useLiveMarketsBetLog = (transactionId: string | null) => {
+  return useQuery({
+    queryKey: ["live-markets-bet-log", transactionId],
+    queryFn: () =>
+      ownerApi.getLiveMarketsBetLog(transactionId!).then((res) => res.data.data),
+    enabled: !!transactionId,
+    staleTime: 60_000,
   });
 };

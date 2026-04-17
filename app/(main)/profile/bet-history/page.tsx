@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Trophy, Clock } from "lucide-react";
+import { ArrowLeft, Trophy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMyBets } from "@/hooks/useBetting";
 import { useMatkaMyBets } from "@/hooks/useMatkaApi";
@@ -110,82 +110,60 @@ export default function BetHistoryPage() {
             </div>
           )}
 
-          {filteredSports.map((bet: any) => {
-            const statusCfg = STATUS_CONFIG[bet.status as keyof typeof STATUS_CONFIG]
-              ?? { label: bet.status, style: "text-gray-600 bg-gray-100 border-gray-300" };
-            const isBack    = bet.betType === 0 || bet.betType === "back";
-            const profit    = Number(bet.payout || 0) - Number(bet.stake);
-            const potential = Number(bet.payout || Number(bet.stake) * Number(bet.odds));
-            const isPending = bet.status === "pending" || bet.status === "matched";
+          {filteredSports.length > 0 && (
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-x-auto">
+              <table className="w-full border-separate border-spacing-0">
+                <thead>
+                  <tr className="bg-[#142969] text-white text-[13px] font-bold uppercase tracking-wide">
+                    <th className="px-3 py-2.5 text-left whitespace-nowrap">Date</th>
+                    <th className="px-3 py-2.5 text-left whitespace-nowrap">Sport</th>
+                    <th className="px-3 py-2.5 text-left whitespace-nowrap">Team</th>
+                    <th className="px-3 py-2.5 text-left whitespace-nowrap">Market</th>
+                    <th className="px-3 py-2.5 text-right whitespace-nowrap">Odds</th>
+                    <th className="px-3 py-2.5 text-right whitespace-nowrap">Stake</th>
+                    <th className="px-3 py-2.5 text-center whitespace-nowrap">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredSports.map((bet: any) => {
+                    const statusCfg = STATUS_CONFIG[bet.status as keyof typeof STATUS_CONFIG]
+                      ?? { label: bet.status, style: "text-gray-700 bg-white/70 border-gray-300" };
+                    const isBack = bet.betType === 0 || bet.betType === "back";
+                    const teamLabel = bet.eventName || bet.selectionName || "—";
+                    const rowBg = isBack ? "bg-blue-300" : "bg-pink-300";
 
-            return (
-              <div
-                key={bet.id}
-                className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm"
-                style={{ borderLeft: `3px solid ${isBack ? "#5ba0d0" : "#e87a94"}` }}
-              >
-                {/* Main row */}
-                <div className="flex items-center gap-2 px-3 py-2">
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${isBack ? "bg-sky-100 text-sky-700" : "bg-pink-100 text-pink-700"}`}>
-                    {isBack ? "BACK" : "LAY"}
-                  </span>
-
-                  <div className="flex-1 min-w-0">
-                    {(bet.sportName || bet.competitionName || bet.eventName) && (
-                      <p className="text-[10px] text-gray-400 truncate leading-tight mb-0.5">
-                        {[bet.sportName, bet.competitionName, bet.eventName].filter(Boolean).join(" · ")}
-                      </p>
-                    )}
-                    <p className="text-sm font-semibold text-gray-900 truncate leading-tight">
-                      {bet.marketName || "—"}
-                    </p>
-                    {bet.runnerName && (
-                      <p className="text-xs text-gray-500 truncate leading-tight">{bet.runnerName}</p>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-3 shrink-0 text-right">
-                    <div>
-                      <p className="text-[10px] text-gray-400 leading-none">Odds</p>
-                      <p className="text-sm font-bold text-gray-900">{Number(bet.odds)}</p>
-                    </div>
-                    <div className="w-px h-6 bg-gray-200" />
-                    <div>
-                      <p className="text-[10px] text-gray-400 leading-none">Stake</p>
-                      <p className="text-sm font-bold text-gray-900">₹{Number(bet.stake).toLocaleString()}</p>
-                    </div>
-                    <div className="w-px h-6 bg-gray-200" />
-                    <div>
-                      <p className="text-[10px] text-gray-400 leading-none">{bet.status === "won" ? "Won" : "Pot."}</p>
-                      <p className={`text-sm font-bold ${bet.status === "won" ? "text-emerald-600" : bet.status === "lost" ? "text-rose-500" : "text-gray-900"}`}>
-                        ₹{potential.toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-
-                  <Badge variant="outline" className={`shrink-0 text-[10px] px-1.5 py-0 border ml-1 ${statusCfg.style}`}>
-                    {statusCfg.label}
-                  </Badge>
-                </div>
-
-                {/* Footer row: date + result */}
-                <div className="flex items-center justify-between px-3 py-1 bg-gray-50 border-t border-gray-100">
-                  <span className="text-[10px] text-gray-400">{formatDate(bet.addedDate)}</span>
-                  {bet.status === "won" && (
-                    <span className="text-[11px] font-semibold text-emerald-600">Profit: +₹{profit.toLocaleString()}</span>
-                  )}
-                  {bet.status === "lost" && (
-                    <span className="text-[11px] font-semibold text-rose-600">Loss: -₹{Number(bet.stake).toLocaleString()}</span>
-                  )}
-                  {isPending && (
-                    <span className="flex items-center gap-1 text-[10px] text-amber-600">
-                      <Clock className="w-3 h-3 shrink-0" /> Awaiting result
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+                    return (
+                      <tr key={bet.id} className={`${rowBg} text-gray-800 border-t border-white/40`}>
+                        <td className="px-3 py-2.5 text-[13px] font-semibold whitespace-nowrap">
+                          {formatDate(bet.addedDate)}
+                        </td>
+                        <td className="px-3 py-2.5 text-[13px] font-semibold whitespace-nowrap">
+                          {bet.sportName || "—"}
+                        </td>
+                        <td className="px-3 py-2.5 text-[14px] font-bold whitespace-nowrap">
+                          {teamLabel}
+                        </td>
+                        <td className="px-3 py-2.5 text-[14px] font-medium whitespace-nowrap">
+                          {bet.marketName || "—"}
+                        </td>
+                        <td className="px-3 py-2.5 text-[14px] font-bold whitespace-nowrap text-right">
+                          @ {Number(bet.odds)}
+                        </td>
+                        <td className="px-3 py-2.5 text-[14px] font-bold whitespace-nowrap text-right">
+                          ₹{Number(bet.stake).toLocaleString()}
+                        </td>
+                        <td className="px-3 py-2.5 text-center">
+                          <Badge variant="outline" className={`text-[11px] px-2 py-0.5 border ${statusCfg.style}`}>
+                            {statusCfg.label}
+                          </Badge>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* Matka transactions — shown only on "All" tab */}

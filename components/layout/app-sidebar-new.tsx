@@ -32,6 +32,7 @@ import {
   Loader2,
   SlidersHorizontal,
   Clock,
+  TrendingUp,
 } from "lucide-react";
 import { MenuGroup, MenuItem } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
@@ -281,6 +282,7 @@ function MatkaAccordionItem({ pathname }: { pathname: string }) {
   const subTabs = [
     { title: "Shifts", href: "/matka" },
     { title: "Transactions", href: "/matka/transactions" },
+    { title: "Declared Results", href: "/matka/live-prediction" },
   ];
 
   return (
@@ -307,7 +309,10 @@ function MatkaAccordionItem({ pathname }: { pathname: string }) {
           {subTabs.map((tab) => {
             const isActive =
               tab.href === "/matka"
-                ? pathname === "/matka" || (pathname.startsWith("/matka/") && !pathname.startsWith("/matka/transactions"))
+                ? pathname === "/matka" ||
+                  (pathname.startsWith("/matka/") &&
+                    !pathname.startsWith("/matka/transactions") &&
+                    !pathname.startsWith("/matka/live-prediction"))
                 : pathname.startsWith(tab.href);
             return (
               <button
@@ -321,8 +326,10 @@ function MatkaAccordionItem({ pathname }: { pathname: string }) {
               >
                 {tab.title === "Shifts" ? (
                   <Clock className="h-3.5 w-3.5 flex-shrink-0" />
-                ) : (
+                ) : tab.title === "Transactions" ? (
                   <Receipt className="h-3.5 w-3.5 flex-shrink-0" />
+                ) : (
+                  <TrendingUp className="h-3.5 w-3.5 flex-shrink-0" />
                 )}
                 <span className="flex-1 text-left">{tab.title}</span>
               </button>

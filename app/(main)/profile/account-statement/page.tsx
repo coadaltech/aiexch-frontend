@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowLeft, Receipt, CalendarDays, Wallet, X } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowLeft, Receipt, CalendarDays, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAccountStatement, useBetDetails } from "@/hooks/useUserQueries";
 
@@ -247,25 +247,6 @@ function isBalanceRow(row: any) {
   return row.voucher_id == null && row.voucher_type == null && row.added_date == null;
 }
 
-// ── Balance row display ───────────────────────────────────────────────────────
-function BalanceRow({ label, amount }: { label: string; amount: any }) {
-  const val = parseFloat(amount ?? 0);
-  return (
-    <div className="grid grid-cols-[76px_1fr_200px_200px] items-center px-3 py-2 bg-indigo-50 border-b border-indigo-100">
-      <div className="text-[12px] font-semibold text-indigo-400">—</div>
-      <div className="px-2">
-        <span className="text-[12px] font-bold text-indigo-700 uppercase tracking-wide">{label}</span>
-      </div>
-      <div className="text-right">
-        <span className={`text-sm font-bold ${val >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
-          {val >= 0 ? "+" : ""}₹{fmt(val)}
-        </span>
-      </div>
-      <div className="text-right text-[12px] text-gray-200">—</div>
-    </div>
-  );
-}
-
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function AccountStatement() {
   const router = useRouter();
@@ -276,14 +257,32 @@ export default function AccountStatement() {
 
   const { data: rows, isLoading, isError } = useAccountStatement({ fromDate, toDate });
 
-  const allRows      = rows ?? [];
-  const openingRow   = allRows.find(isBalanceRow);
-  const closingRow   = [...allRows].reverse().find(isBalanceRow);
-  const transactions = allRows.filter((r: any) => !isBalanceRow(r));
+  const allRows    = rows ?? [];
+  const openingRow = allRows.find(isBalanceRow);
 
-  const currentBalance = closingRow?.credit ?? openingRow?.credit ?? "0";
-  const totalCredit    = transactions.reduce((s: number, r: any) => s + Math.max(0, parseFloat(r.credit ?? 0)), 0);
-  const totalDebit     = transactions.reduce((s: number, r: any) => s + Math.max(0, parseFloat(r.debit  ?? 0)), 0);
+  const openingBalance = parseFloat(openingRow?.credit ?? 0);
+  const { txWithClosing } = useMemo(() => {
+    // Hide Limit vouchers (voucher_type === 2) — they are internal holds.
+    const visible = allRows.filter(
+      (r: any) => !isBalanceRow(r) && Number(r.voucher_type) !== 2,
+    );
+
+    // Force ASC by date so the running closing balance accumulates forward.
+    const sorted = [...visible].sort((a: any, b: any) => {
+      const ta = new Date(a.added_date ?? a.voucher_date ?? 0).getTime();
+      const tb = new Date(b.added_date ?? b.voucher_date ?? 0).getTime();
+      return ta - tb;
+    });
+
+    let running = openingBalance;
+    const out = sorted.map((r: any) => {
+      const credit = parseFloat(r.credit ?? 0);
+      const debit  = parseFloat(r.debit  ?? 0);
+      running = running + credit - debit;
+      return { row: r, closing: running };
+    });
+    return { txWithClosing: out };
+  }, [allRows, openingBalance]);
 
   return (
     <div className="min-h-screen w-full bg-gray-50">
@@ -321,27 +320,6 @@ export default function AccountStatement() {
 
       <div className="p-4 pb-8 space-y-3">
 
-        {/* Summary */}
-        {!isLoading && !isError && (
-          <div className="grid grid-cols-3 gap-2">
-            <div className="bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-sm">
-              <div className="flex items-center gap-1 mb-0.5">
-                <Wallet className="w-3 h-3 text-blue-500 shrink-0" />
-                <p className="text-[12px] text-gray-400 uppercase">Balance</p>
-              </div>
-              <p className="text-base font-bold text-blue-600">₹{fmt(currentBalance)}</p>
-            </div>
-            <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 shadow-sm">
-              <p className="text-[12px] text-emerald-600 font-semibold uppercase mb-0.5">Credit</p>
-              <p className="text-base font-bold text-emerald-700">+₹{fmt(totalCredit)}</p>
-            </div>
-            <div className="bg-rose-50 border border-rose-200 rounded-lg px-3 py-2 shadow-sm">
-              <p className="text-[12px] text-rose-600 font-semibold uppercase mb-0.5">Debit</p>
-              <p className="text-base font-bold text-rose-700">-₹{fmt(totalDebit)}</p>
-            </div>
-          </div>
-        )}
-
         {/* Loading */}
         {isLoading && (
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
@@ -370,104 +348,103 @@ export default function AccountStatement() {
             </div>
           ) : (
             <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-
-              {/* Column header */}
-              <div className="grid grid-cols-[76px_1fr_200px_200px] px-3 py-2 bg-[#142969] text-white text-[12px] font-bold uppercase tracking-wide">
-                <span>Date</span>
-                <span>Description</span>
-                <span className="text-right">Credit</span>
-                <span className="text-right">Debit</span>
-              </div>
-
-              {/* Opening balance row */}
-              {openingRow && <BalanceRow label="Opening Balance" amount={openingRow.credit} />}
-
-              {/* Transaction rows */}
-              <div className="divide-y divide-gray-100">
-                {transactions.map((row: any, idx: number) => {
-                  const credit    = parseFloat(row.credit ?? 0);
-                  const debit     = parseFloat(row.debit  ?? 0);
-                  const typeCfg   = getTypeLabel(row.voucher_type != null ? Number(row.voucher_type) : null);
-
-                  // Clickable only for Settlement rows that have a market_id
-                  const clickable = Number(row.voucher_type) === 6 && !!row.market_id;
-
-                  // Description: for settlement use remarks (event/market names), else description/method/reference
-                  const eventParts = [row.remarks2, row.remarks3].filter(Boolean);
-                  const descLabel  = eventParts.length
-                    ? eventParts.join(" · ")
-                    : row.description || row.remarks1 || row.remarks || row.method || typeCfg.label;
-
-                  const RowEl = clickable ? "button" : "div";
-
-                  return (
-                    <RowEl
-                      key={`${row.voucher_id ?? idx}-${idx}`}
-                      {...(clickable ? { onClick: () => setSelectedRow(row) } : {})}
-                      className={`w-full text-left grid grid-cols-[76px_1fr_200px_200px] items-start px-3 py-2 transition-colors ${
-                        clickable ? "hover:bg-violet-50 active:bg-violet-100 cursor-pointer" : ""
-                      }`}
-                    >
-                      {/* Date */}
-                      <div className="pt-0.5">
-                        <p className="text-[12px] font-semibold text-gray-700 leading-tight">{formatDateShort(row.added_date || row.voucher_date)}</p>
-                        <p className="text-[11px] text-gray-400 leading-tight">{formatTime(row.added_date || row.voucher_date)}</p>
-                      </div>
-
-                      {/* Description */}
-                      <div className="min-w-0 px-2">
-                        <div className="flex items-center gap-1 mb-0.5 flex-wrap">
-                          <span className={`text-[11px] font-bold px-1 py-0.5 rounded shrink-0 ${typeCfg.cls}`}>
-                            {typeCfg.label}
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm border-collapse min-w-[720px]">
+                  <thead>
+                    <tr className="bg-[#142969] text-white text-[12px] font-bold uppercase tracking-wide">
+                      <th className="px-3 py-2 text-left">Date</th>
+                      <th className="px-3 py-2 text-right">Credit</th>
+                      <th className="px-3 py-2 text-right">Debit</th>
+                      <th className="px-3 py-2 text-right">Closing</th>
+                      <th className="px-3 py-2 text-left">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {/* Opening balance row */}
+                    {openingRow && (
+                      <tr className="bg-indigo-50">
+                        <td className="px-3 py-2 text-[12px] text-indigo-400">—</td>
+                        <td className="px-3 py-2 text-right text-gray-200 text-[12px]">—</td>
+                        <td className="px-3 py-2 text-right text-gray-200 text-[12px]">—</td>
+                        <td className="px-3 py-2 text-right">
+                          <span className={`text-sm font-bold ${openingBalance >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                            {openingBalance >= 0 ? "" : "-"}₹{fmt(Math.abs(openingBalance))}
                           </span>
-                          {clickable && (
-                            <span className="text-[11px] text-violet-500 font-medium shrink-0">view bets</span>
-                          )}
-                        </div>
-                        <p className="text-[13px] text-gray-800 leading-tight capitalize line-clamp-2">{descLabel}</p>
-                        {row.reference && (
-                          <p className="text-[11px] text-gray-400 leading-tight mt-0.5">Ref: {row.reference}</p>
-                        )}
-                        {row.status !== null && row.status !== undefined && Number(row.voucher_type) !== 6 && (
-                          <span className={`inline-block mt-0.5 text-[11px] font-semibold px-1 py-0.5 rounded ${
-                            Number(row.status) === 1 ? "bg-emerald-100 text-emerald-700" :
-                            Number(row.status) === 0 ? "bg-amber-100 text-amber-700"    :
-                                                       "bg-rose-100 text-rose-700"
-                          }`}>
-                            {Number(row.status) === 1 ? "Approved" : Number(row.status) === 0 ? "Pending" : "Rejected"}
-                          </span>
-                        )}
-                      </div>
+                        </td>
+                        <td className="px-3 py-2">
+                          <span className="text-[12px] font-bold text-indigo-700 uppercase tracking-wide">Opening Balance</span>
+                        </td>
+                      </tr>
+                    )}
 
-                      {/* Credit */}
-                      <div className="text-right pt-0.5">
-                        {credit > 0
-                          ? <span className="text-sm font-bold text-emerald-600">+₹{fmt(credit)}</span>
-                          : <span className="text-[12px] text-gray-200">—</span>}
-                      </div>
+                    {/* Transaction rows */}
+                    {txWithClosing.map(({ row, closing }, idx: number) => {
+                      const credit  = parseFloat(row.credit ?? 0);
+                      const debit   = parseFloat(row.debit  ?? 0);
+                      const typeCfg = getTypeLabel(row.voucher_type != null ? Number(row.voucher_type) : null);
 
-                      {/* Debit */}
-                      <div className="text-right pt-0.5">
-                        {debit > 0
-                          ? <span className="text-sm font-bold text-rose-600">-₹{fmt(debit)}</span>
-                          : <span className="text-[12px] text-gray-200">—</span>}
-                      </div>
-                    </RowEl>
-                  );
-                })}
-              </div>
+                      // Clickable only for Settlement rows with a market_id
+                      const clickable = Number(row.voucher_type) === 6 && !!row.market_id;
 
-              {/* Closing balance row */}
-              {closingRow && closingRow !== openingRow && (
-                <BalanceRow label="Closing Balance" amount={closingRow.credit} />
-              )}
+                      // Description: for settlement use event/market names, else description/method/ref
+                      const eventParts = [row.remarks2, row.remarks3].filter(Boolean);
+                      const descLabel  = eventParts.length
+                        ? eventParts.join(" · ")
+                        : row.description || row.remarks1 || row.remarks || row.method || typeCfg.label;
 
-              {/* Footer totals */}
-              <div className="grid grid-cols-[76px_1fr_200px_200px] px-3 py-2 bg-gray-50 border-t border-gray-200 text-sm font-bold">
-                <span className="text-gray-400 text-[12px]">{transactions.length} rows</span>
-                <span />
-                <span className="text-right text-emerald-700">+₹{fmt(totalCredit)}</span>
-                <span className="text-right text-rose-700">-₹{fmt(totalDebit)}</span>
+                      return (
+                        <tr
+                          key={`${row.voucher_id ?? idx}-${idx}`}
+                          {...(clickable ? { onClick: () => setSelectedRow(row) } : {})}
+                          className={clickable ? "hover:bg-violet-50 active:bg-violet-100 cursor-pointer" : ""}
+                        >
+                          <td className="px-3 py-2 align-top whitespace-nowrap">
+                            <p className="text-[12px] font-semibold text-gray-700 leading-tight">{formatDateShort(row.added_date || row.voucher_date)}</p>
+                            <p className="text-[11px] text-gray-400 leading-tight">{formatTime(row.added_date || row.voucher_date)}</p>
+                          </td>
+                          <td className="px-3 py-2 text-right align-top whitespace-nowrap">
+                            {credit > 0
+                              ? <span className="text-sm font-bold text-emerald-600">+₹{fmt(credit)}</span>
+                              : <span className="text-[12px] text-gray-200">—</span>}
+                          </td>
+                          <td className="px-3 py-2 text-right align-top whitespace-nowrap">
+                            {debit > 0
+                              ? <span className="text-sm font-bold text-rose-600">-₹{fmt(debit)}</span>
+                              : <span className="text-[12px] text-gray-200">—</span>}
+                          </td>
+                          <td className="px-3 py-2 text-right align-top whitespace-nowrap">
+                            <span className={`text-sm font-bold ${closing >= 0 ? "text-gray-800" : "text-rose-600"}`}>
+                              {closing >= 0 ? "" : "-"}₹{fmt(Math.abs(closing))}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 align-top min-w-[220px]">
+                            <div className="flex items-center gap-1 mb-0.5 flex-wrap">
+                              <span className={`text-[11px] font-bold px-1 py-0.5 rounded shrink-0 ${typeCfg.cls}`}>
+                                {typeCfg.label}
+                              </span>
+                              {clickable && (
+                                <span className="text-[11px] text-violet-500 font-medium shrink-0">view bets</span>
+                              )}
+                            </div>
+                            <p className="text-[13px] text-gray-800 leading-tight capitalize line-clamp-2">{descLabel}</p>
+                            {row.reference && (
+                              <p className="text-[11px] text-gray-400 leading-tight mt-0.5">Ref: {row.reference}</p>
+                            )}
+                            {row.status !== null && row.status !== undefined && Number(row.voucher_type) !== 6 && (
+                              <span className={`inline-block mt-0.5 text-[11px] font-semibold px-1 py-0.5 rounded ${
+                                Number(row.status) === 1 ? "bg-emerald-100 text-emerald-700" :
+                                Number(row.status) === 0 ? "bg-amber-100 text-amber-700"    :
+                                                           "bg-rose-100 text-rose-700"
+                              }`}>
+                                {Number(row.status) === 1 ? "Approved" : Number(row.status) === 0 ? "Pending" : "Rejected"}
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
           )

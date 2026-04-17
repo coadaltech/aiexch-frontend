@@ -281,6 +281,8 @@ export const ownerApi = {
   getLiveMarketsPnl: () => api.get("/owner/live-markets/pnl"),
   getLiveMarketsBets: (matchId: string | number) =>
     api.get(`/owner/live-markets/bets?matchId=${matchId}`),
+  getLiveMarketsBetLog: (transactionId: string) =>
+    api.get(`/owner/live-markets/bets/log?transactionId=${encodeURIComponent(transactionId)}`),
 
   // Notifications
   getNotifications: () => api.get("/owner/notifications"),
@@ -437,6 +439,22 @@ export const ownerApi = {
     api.get(`/owner/matka/shifts/${shiftId}/jantri`),
   reorderMatkaShifts: (orders: { id: string; shiftOrder: number }[]) =>
     api.put("/owner/matka/shifts/reorder", { orders }),
+
+  // Matka Live Prediction
+  getMatkaLivePrediction: (shiftId: string) =>
+    api.get(`/owner/matka/live-prediction/${shiftId}`),
+  getMatkaLivePredictionWhitelabels: (shiftId: string, nums: number) =>
+    api.get(`/owner/matka/live-prediction/${shiftId}/whitelabels?nums=${nums}`),
+  getMatkaLivePredictionJantri: (shiftId: string, whitelabelId: string) =>
+    api.get(
+      `/owner/matka/live-prediction/${shiftId}/jantri?whitelabelId=${encodeURIComponent(
+        whitelabelId
+      )}`
+    ),
+  declareMatkaResult: (shiftId: string, result: number) =>
+    api.post(`/owner/matka/live-prediction/${shiftId}/declare`, { result }),
+  getMatkaDeclaredHistory: (limit = 50) =>
+    api.get(`/owner/matka/live-prediction/declared-history?limit=${limit}`),
 };
 
 export interface BetRecord {
@@ -679,4 +697,8 @@ export const matkaApi = {
     api.put(`/matka/transactions/${id}`, data),
   getJantriConsolidated: (shiftId: string, date: string) =>
     api.get(`/matka/shifts/${shiftId}/jantri?date=${date}`),
+  getUserLivePrediction: (shiftId: string) =>
+    api.get(`/matka/live-prediction/${shiftId}`),
+  getDeclaredHistory: (limit = 50) =>
+    api.get(`/matka/declared-history?limit=${limit}`),
 };

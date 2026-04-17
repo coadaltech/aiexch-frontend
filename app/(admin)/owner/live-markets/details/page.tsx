@@ -539,8 +539,8 @@ function BetsPanel({ matchId }: { matchId: string }) {
                 key={bet.id}
                 onClick={() => setSelectedBet(bet)}
                 className={cn(
-                  "w-full flex items-center gap-2 border-b border-gray-100 last:border-b-0 px-3 py-2 hover:bg-gray-50 transition-colors text-left text-[13px]",
-                  isBack ? "bg-[#eaf4fc]" : "bg-[#fdecf0]"
+                  "w-full flex items-center gap-2 border-b border-gray-100 last:border-b-0 px-3 py-2 transition-colors text-left text-[13px] hover:brightness-95",
+                  isBack ? "bg-blue-300 text-gray-800" : "bg-pink-300 text-gray-800"
                 )}
               >
                 <span className="font-semibold text-gray-900 truncate flex-1 min-w-0" title={bet.user_name}>

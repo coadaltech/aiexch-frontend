@@ -538,9 +538,11 @@ export default function MatkaTransactionsPage() {
       {/* Bottom Footer */}
       <div className="flex items-center gap-2 px-3 py-2 bg-white border-t border-gray-300 shadow-[0_-2px_8px_rgba(0,0,0,0.08)] text-xs flex-wrap">
         <div className="flex-1" />
-        {/* Add */}
+        {/* Add → jump straight to the filtered shift's jantri page */}
         <button
-          onClick={() => router.push("/matka")}
+          onClick={() =>
+            router.push(filterShiftId ? `/matka/${filterShiftId}` : "/matka")
+          }
           className="flex items-center gap-1.5 bg-[#2ecc71] hover:bg-[#27ae60] text-white font-semibold px-4 py-1.5 rounded-lg transition-colors"
         >
           <Plus className="w-3.5 h-3.5" />
