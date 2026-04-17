@@ -1,9 +1,44 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowLeft, Receipt, CalendarDays, X } from "lucide-react";
+import { ArrowLeft, Receipt, CalendarDays, X, Trash2, Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useAccountStatement, useBetDetails } from "@/hooks/useUserQueries";
+import { useAccountStatement, useBetDetails, useLedger } from "@/hooks/useUserQueries";
+
+// ── Bet Log Details Modal ────────────────────────────────────────────────────
+function BetLogModal({ bet, onClose }: { bet: any; onClose: () => void }) {
+  const rows = [
+    { label: "IP Address",      value: bet.ip_address },
+    { label: "Browser",         value: [bet.browser, bet.browser_version].filter(Boolean).join(" ") },
+    { label: "OS",              value: [bet.os, bet.os_version].filter(Boolean).join(" ") },
+    { label: "Device Type",     value: bet.device_type },
+    { label: "Device",          value: [bet.device_brand, bet.device_model].filter(Boolean).join(" ") },
+    { label: "Country",         value: bet.country },
+    { label: "City",            value: bet.city },
+    { label: "User Agent",      value: bet.user_agent },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-md flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-4 py-2 bg-[#142969] rounded-t-lg">
+          <p className="text-white font-semibold text-sm">Transaction Log Details</p>
+          <button onClick={onClose} className="p-1 rounded hover:bg-white/20 text-white">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="p-4 space-y-2 max-h-[60vh] overflow-auto">
+          {rows.map((r) => (
+            <div key={r.label} className="flex items-start gap-2 text-[13px]">
+              <span className="text-gray-500 font-semibold min-w-[100px] shrink-0">{r.label}:</span>
+              <span className="text-gray-800 break-all">{r.value || "—"}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // VoucherType: 0=Credit,1=Debit,2=Limit,3=Deposit,4=Withdraw,5=Bonus,6=Settlement
 function getTypeLabel(type: number | null) {
@@ -54,7 +89,9 @@ function BetDetailsModal({ row, onClose }: { row: any; onClose: () => void }) {
   const marketId  = row.market_id  ? String(row.market_id)  : null;
   const voucherId = row.voucher_id ? String(row.voucher_id) : null;
   const { data, isLoading, isError } = useBetDetails(marketId, voucherId);
-  const [filter, setFilter] = useState<"all" | "back" | "lay">("all");
+  const [filter, setFilter] = useState<"all" | "back" | "lay" | "deleted">("all");
+  const [logBet, setLogBet] = useState<any | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   // Market path (like "Cricket » IPL » RR v MI » Over by Over")
   const marketPath = [row.remarks1, row.remarks2, row.remarks3]
@@ -63,8 +100,7 @@ function BetDetailsModal({ row, onClose }: { row: any; onClose: () => void }) {
     || row.description
     || "Settlement Details";
 
-  const allBets: any[]     = data?.bets      ?? [];
-  const marketPnl: number  = data?.marketPnl ?? 0;
+  const allBets: any[] = data?.bets ?? [];
 
   // Dedupe by transaction_id — the SQL function may return multiple rows per bet
   // due to the market_results join lacking a market_id filter.
@@ -76,25 +112,48 @@ function BetDetailsModal({ row, onClose }: { row: any; onClose: () => void }) {
     }, {}),
   );
 
-  // A bet "won" when the user's selected runner is the declared winner.
-  const betResult = (b: any): "won" | "lost" | "pending" => {
-    if (b.winner_id == null) return "pending";
-    return Number(b.runner_id) === Number(b.winner_id) ? "won" : "lost";
+  // Per-bet P&L using potential_return from the DB (pre-calculated at placement).
+  // For user's selected runner:
+  //   Back: potential_return = +stake*price (profit if runner wins)
+  //   Lay:  potential_return = -(stake*price) (liability if runner wins)
+  // If runner wins → P&L = potential_return
+  // If runner loses → Back loses stake, Lay wins stake
+  const betPnl = (b: any): number | null => {
+    if (b.winner_id == null) return null; // pending
+    const stake = parseFloat(b.stake ?? 0);
+    const potentialReturn = parseFloat(b.potential_return ?? 0);
+    const runnerWon = Number(b.runner_id) === Number(b.winner_id);
+    if (runnerWon) return potentialReturn; // back: +profit, lay: -liability
+    return Number(b.bet_type) === 0 ? -stake : stake; // back loses stake, lay wins stake
   };
 
-  const backCount = uniqueBets.filter((b) => Number(b.bet_type) === 0).length;
-  const layCount  = uniqueBets.filter((b) => Number(b.bet_type) === 1).length;
-  const winCount  = uniqueBets.filter((b) => betResult(b) === "won").length;
+  // Active bets (not deleted)
+  const activeBets = uniqueBets.filter((b) => Number(b.record_status) !== 1);
+  const deletedBets = uniqueBets.filter((b) => Number(b.record_status) === 1);
 
-  const filtered = filter === "all" ? uniqueBets
-    : uniqueBets.filter((b) => (filter === "back" ? Number(b.bet_type) === 0 : Number(b.bet_type) === 1));
+  const filtered =
+    filter === "deleted" ? deletedBets :
+    filter === "all"     ? activeBets  :
+    activeBets.filter((b) => (filter === "back" ? Number(b.bet_type) === 0 : Number(b.bet_type) === 1));
+
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const selectedBets = filtered.filter((b: any) => selected.has(b.transaction_id));
+  const statsBets    = selectedBets.length > 0 ? selectedBets : filtered;
+  const statsPnl     = statsBets.reduce((s: number, b: any) => s + (betPnl(b) ?? 0), 0);
 
   // Game time — prefer declared_at / settled_at
   const gameTime = row.settled_at || uniqueBets[0]?.settled_at || uniqueBets[0]?.declared_at || row.voucher_date;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-2 sm:p-4" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
 
         {/* Header — dark blue bar with "Details" */}
         <div className="flex items-center justify-between px-4 py-2 bg-[#142969] rounded-t-lg shrink-0">
@@ -112,31 +171,43 @@ function BetDetailsModal({ row, onClose }: { row: any; onClose: () => void }) {
           </p>
         </div>
 
-        {/* Stats bar */}
-        <div className="flex items-center gap-4 flex-wrap px-4 py-1.5 bg-gray-50 border-b border-gray-200 shrink-0 text-[13px]">
-          <span><span className="text-gray-500">Total Bets:</span> <span className="font-bold text-gray-800">{uniqueBets.length}</span></span>
-          <span><span className="text-gray-500">Total Back:</span> <span className="font-bold text-sky-700">{backCount}</span></span>
-          <span><span className="text-gray-500">Total Lay:</span> <span className="font-bold text-pink-700">{layCount}</span></span>
-          <span><span className="text-gray-500">Total Win:</span> <span className="font-bold text-emerald-700">{winCount}</span></span>
-        </div>
-
-        {/* Filter tabs */}
-        <div className="flex gap-1.5 px-4 py-2 border-b border-gray-200 bg-white shrink-0">
-          {(["all", "back", "lay"] as const).map((f) => (
+        {/* Stats + Filter row */}
+        <div className="flex items-center justify-between flex-wrap gap-2 px-4 py-2 bg-gray-50 border-b border-gray-200 shrink-0">
+          {/* Filter tabs — All, Back, Lay, Deleted */}
+          <div className="flex items-center gap-1.5">
+            {(["all", "back", "lay"] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`text-[13px] font-bold px-3 py-1 rounded capitalize transition-colors ${
+                  filter === f
+                    ? f === "back" ? "bg-blue-300 text-gray-800"
+                    : f === "lay"  ? "bg-pink-300 text-gray-800"
+                    :                "bg-[#142969] text-white"
+                    : "bg-white text-gray-600 border border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                {f === "all" ? "All" : f === "back" ? "Back" : "Lay"}
+              </button>
+            ))}
             <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`text-[13px] font-bold px-3 py-1 rounded capitalize transition-colors ${
-                filter === f
-                  ? f === "back" ? "bg-sky-600 text-white"
-                  : f === "lay"  ? "bg-pink-600 text-white"
-                  :                "bg-[#142969] text-white"
+              onClick={() => setFilter("deleted")}
+              className={`text-[13px] font-bold px-3 py-1 rounded transition-colors flex items-center gap-1 ${
+                filter === "deleted"
+                  ? "bg-rose-600 text-white"
                   : "bg-white text-gray-600 border border-gray-200 hover:border-gray-300"
               }`}
             >
-              {f === "all" ? "All" : f === "back" ? "Back" : "Lay"}
+              <Trash2 className="w-3.5 h-3.5" />
+              Deleted
             </button>
-          ))}
+          </div>
+
+          {/* Stats — reflect selected checkboxes when any are checked */}
+          <div className="flex items-center gap-4 text-[13px]">
+            <span><span className="text-gray-500">Total Bets:</span> <span className="font-bold text-gray-800">{statsBets.length}</span></span>
+            <span><span className="text-gray-500">P&L:</span> <span className={`font-bold ${statsPnl > 0 ? "text-emerald-700" : statsPnl < 0 ? "text-rose-700" : "text-gray-500"}`}>{statsPnl > 0 ? `+${fmt(statsPnl)}` : statsPnl < 0 ? `-${fmt(Math.abs(statsPnl))}` : "0.00"}</span></span>
+          </div>
         </div>
 
         {/* Body */}
@@ -157,6 +228,15 @@ function BetDetailsModal({ row, onClose }: { row: any; onClose: () => void }) {
             </div>
           )}
 
+          {!isLoading && !isError && uniqueBets.length > 0 && filtered.length === 0 && (
+            <div className="py-12 text-center">
+              <Receipt className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+              <p className="text-gray-500 text-base">
+                {filter === "deleted" ? "No deleted bets found." : `No ${filter} bets found.`}
+              </p>
+            </div>
+          )}
+
           {!isLoading && filtered.length > 0 && (
             <table className="w-full text-sm border-collapse">
               <thead>
@@ -167,75 +247,76 @@ function BetDetailsModal({ row, onClose }: { row: any; onClose: () => void }) {
                   <th className="px-3 py-2 text-right font-semibold">Amount</th>
                   <th className="px-3 py-2 text-right font-semibold">Win</th>
                   <th className="px-3 py-2 text-left font-semibold">Date</th>
+                  <th className="px-3 py-2 text-left font-semibold">IP</th>
+                  <th className="px-3 py-2 text-center font-semibold">Details</th>
+                  <th className="px-3 py-2 text-center font-semibold">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody>
                 {filtered.map((bet: any, idx: number) => {
                   const isBack = Number(bet.bet_type) === 0;
                   const stake  = parseFloat(bet.stake ?? 0);
                   const price  = parseFloat(bet.price ?? 0);
                   const run    = parseFloat(bet.run   ?? 0);
-                  const result = betResult(bet);
 
                   return (
-                    <tr key={bet.transaction_id ?? idx} className={isBack ? "bg-sky-50/40" : "bg-pink-50/40"}>
-                      <td className="px-3 py-2">
-                        <div className="flex flex-col gap-0.5">
-                          <span className={`inline-block text-[11px] font-bold px-1.5 py-0.5 rounded w-fit ${
-                            isBack ? "bg-sky-100 text-sky-700" : "bg-pink-100 text-pink-700"
-                          }`}>
-                            {isBack ? "BACK" : "LAY"}
-                          </span>
-                          <span className="text-[12px] text-gray-700 font-medium truncate max-w-[160px]">
-                            {bet.runner_name || "—"}
-                          </span>
-                        </div>
+                    <tr
+                      key={bet.transaction_id ?? idx}
+                      className={`border-b border-gray-200 ${isBack ? "bg-blue-200" : "bg-pink-200"}`}
+                    >
+                      <td className="px-3 py-2 text-gray-800 font-medium text-[12px]">
+                        {bet.runner_name || "—"}
                       </td>
                       <td className="px-3 py-2 text-right font-semibold text-gray-800">
                         {price.toFixed(2)}
                       </td>
-                      <td className="px-3 py-2 text-right text-gray-600">
+                      <td className="px-3 py-2 text-right text-gray-800">
                         {run || run === 0 ? run.toFixed(0) : "—"}
                       </td>
                       <td className="px-3 py-2 text-right font-semibold text-gray-800">
                         {fmt(stake)}
                       </td>
-                      <td className="px-3 py-2 text-right">
-                        <span className={`inline-block text-[12px] font-bold px-2 py-0.5 rounded ${
-                          result === "won"  ? "bg-emerald-100 text-emerald-700" :
-                          result === "lost" ? "bg-rose-100 text-rose-700"       :
-                                              "bg-gray-100 text-gray-500"
-                        }`}>
-                          {result === "won" ? "WON" : result === "lost" ? "LOST" : "PENDING"}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2 text-gray-500 text-[12px] whitespace-nowrap">
+                      {(() => {
+                        const pnl = betPnl(bet);
+                        return (
+                          <td className={`px-3 py-2 text-right font-semibold ${pnl == null ? "text-gray-500" : pnl > 0 ? "text-emerald-700" : pnl < 0 ? "text-rose-700" : "text-gray-800"}`}>
+                            {pnl == null ? "Pending" : fmt(pnl)}
+                          </td>
+                        );
+                      })()}
+                      <td className="px-3 py-2 text-gray-700 text-[12px] whitespace-nowrap">
                         {formatDate(bet.added_date)}
+                      </td>
+                      <td className="px-3 py-2 text-gray-700 text-[12px] whitespace-nowrap">
+                        {bet.ip_address || "—"}
+                      </td>
+                      <td className="px-3 py-2 text-center">
+                        <button
+                          onClick={() => setLogBet(bet)}
+                          className="p-1 rounded hover:bg-white/50 text-blue-700 transition-colors"
+                          title="View log details"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      </td>
+                      <td className="px-3 py-2 text-center">
+                        <input
+                          type="checkbox"
+                          checked={selected.has(bet.transaction_id)}
+                          onChange={() => toggleSelect(bet.transaction_id)}
+                          className="w-4 h-4 accent-[#142969] cursor-pointer"
+                        />
                       </td>
                     </tr>
                   );
                 })}
               </tbody>
-              {/* Footer — market-level net P&L from voucher_details */}
-              <tfoot>
-                <tr className="bg-gray-50 border-t-2 border-gray-200 font-bold text-sm">
-                  <td className="px-3 py-2 text-gray-600" colSpan={3}>
-                    {filtered.length} bet{filtered.length !== 1 ? "s" : ""}
-                  </td>
-                  <td className="px-3 py-2 text-right text-gray-800">
-                    {fmt(filtered.reduce((s: number, b: any) => s + parseFloat(b.stake ?? 0), 0))}
-                  </td>
-                  <td className={`px-3 py-2 text-right ${
-                    marketPnl > 0 ? "text-emerald-700" : marketPnl < 0 ? "text-rose-700" : "text-gray-500"
-                  }`}>
-                    {marketPnl > 0 ? `+₹${fmt(marketPnl)}` : marketPnl < 0 ? `-₹${fmt(Math.abs(marketPnl))}` : "—"}
-                  </td>
-                  <td />
-                </tr>
-              </tfoot>
             </table>
           )}
         </div>
+
+        {/* Log details sub-modal */}
+        {logBet && <BetLogModal bet={logBet} onClose={() => setLogBet(null)} />}
       </div>
     </div>
   );
@@ -256,6 +337,7 @@ export default function AccountStatement() {
   const [selectedRow, setSelectedRow] = useState<any | null>(null);
 
   const { data: rows, isLoading, isError } = useAccountStatement({ fromDate, toDate });
+  const { data: ledger } = useLedger();
 
   const allRows    = rows ?? [];
   const openingRow = allRows.find(isBalanceRow);
@@ -297,10 +379,10 @@ export default function AccountStatement() {
           <h1 className="text-gray-900 font-bold text-base sm:text-base">Account Statement</h1>
         </div>
 
-        {/* Date range */}
-        <div className="px-4 pb-3 grid grid-cols-2 gap-2">
+        {/* Date range + Limits info */}
+        <div className="px-4 pb-3 flex items-end gap-3 flex-wrap">
           {(["from", "to"] as const).map((key) => (
-            <div key={key}>
+            <div key={key} className="w-[140px]">
               <label className="text-[12px] text-gray-400 font-semibold uppercase tracking-wide block mb-1">
                 {key === "from" ? "From" : "To"}
               </label>
@@ -310,8 +392,24 @@ export default function AccountStatement() {
                   type="date"
                   value={key === "from" ? fromDate : toDate}
                   onChange={(e) => key === "from" ? setFromDate(e.target.value) : setToDate(e.target.value)}
-                  className="w-full pl-8 pr-2 py-1.5 text-base text-gray-900 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400"
+                  className="w-full pl-8 pr-2 py-1.5 text-sm text-gray-900 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400"
                 />
+              </div>
+            </div>
+          ))}
+          {/* Limits & balance */}
+          {([
+            { label: "Final Limit", value: fmt(ledger?.finalLimit), cls: "text-gray-900" },
+            { label: "Fix Limit",   value: fmt(ledger?.fixLimit),   cls: "text-gray-900" },
+            { label: "Consumed",    value: fmt(ledger?.limitConsumed), cls: "text-gray-900" },
+            { label: "Balance",     value: fmt(ledger?.userBalance), cls: parseFloat(ledger?.userBalance ?? "0") >= 0 ? "text-emerald-700" : "text-rose-700" },
+          ] as const).map((item) => (
+            <div key={item.label}>
+              <label className="text-[12px] text-gray-400 font-semibold uppercase tracking-wide block mb-1">
+                {item.label}
+              </label>
+              <div className="px-3 py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-lg min-w-[100px]">
+                <span className={`font-bold ${item.cls}`}>{item.value}</span>
               </div>
             </div>
           ))}
