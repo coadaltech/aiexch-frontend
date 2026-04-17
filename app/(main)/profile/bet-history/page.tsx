@@ -63,11 +63,11 @@ export default function BetHistoryPage() {
   const showMatka = filter === "all";
 
   return (
-    <div className="min-h-screen w-full min-w-0 bg-gray-50 p-4">
+    <div className="min-h-screen w-full min-w-0 bg-gray-50 p-2">
       <div className="pb-8">
 
         {/* Header */}
-        <div className="flex items-center gap-3 py-4 lg:mb-4">
+        <div className="flex items-center gap-3  lg:mb-4">
           <button
             onClick={() => router.back()}
             className="p-1.5 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-200 transition-colors"
@@ -81,7 +81,7 @@ export default function BetHistoryPage() {
         </div>
 
         {/* Filter tabs */}
-        <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
+        <div className="flex gap-2 mb-1 overflow-x-auto pb-1">
           {FILTERS.map((f) => (
             <button
               key={f.key}
@@ -168,60 +168,45 @@ export default function BetHistoryPage() {
 
         {/* Matka transactions — shown only on "All" tab */}
         {showMatka && matkaHistory.length > 0 && (
-          <div className="mt-4">
-            <div className="flex items-center gap-2 mb-2">
+          <div className="mt-1">
+            {/* <div className="flex items-center gap-2 mb-2">
               <span className="text-[11px] font-bold text-orange-700 bg-orange-100 border border-orange-200 px-2 py-0.5 rounded">
                 MATKA
               </span>
               <span className="text-xs text-gray-500">{matkaHistory.length} transaction{matkaHistory.length !== 1 ? "s" : ""}</span>
-            </div>
+            </div> */}
 
-            <div className="space-y-1.5">
-              {matkaHistory
-                .slice()
-                .sort((a: any, b: any) => new Date(b.addedDate).getTime() - new Date(a.addedDate).getTime())
-                .map((txn: any) => (
-                  <div
-                    key={txn.id}
-                    className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm"
-                    style={{ borderLeft: "3px solid #e88030" }}
-                  >
-                    <div className="flex items-center gap-2 px-3 py-2">
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 bg-orange-100 text-orange-700">
-                        MATKA
-                      </span>
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-x-auto">
+              <table className="w-full border-separate border-spacing-0">
+                <thead>
+                  <tr className="bg-[#142969] text-white text-[13px] font-bold uppercase ">
+                    <th className="px-3 py-2.5 text-left whitespace-nowrap">Matka ({matkaHistory.length} records)</th>
+                    <th className="px-3 py-2.5 text-left whitespace-nowrap">Shift Date</th>
+                    <th className="px-3 py-2.5 text-right whitespace-nowrap">Amount</th>
+                    <th className="px-3 py-2.5 text-right whitespace-nowrap">Added Date Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {matkaHistory
+                    .slice()
+                    .sort((a: any, b: any) => new Date(a.addedDate).getTime() - new Date(b.addedDate).getTime())
+                    .map((txn: any) => {
+                      const shiftDt = new Date(txn.shiftDate);
+                      const shiftDateStr = shiftDt.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+                      const txnDt = new Date(txn.addedDate);
+                      const txnTimeStr = txnDt.toLocaleDateString("en-IN", { day: "2-digit", month: "short" }) + " " + txnDt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
 
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 truncate leading-tight">
-                          {txn.shiftName || "—"}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-3 shrink-0 text-right">
-                        <div>
-                          <p className="text-[10px] text-gray-400 leading-none">Amount</p>
-                          <p className="text-sm font-bold text-gray-900">₹{Number(txn.totalAmount).toLocaleString()}</p>
-                        </div>
-                        {Number(txn.totalCommission) > 0 && (
-                          <>
-                            <div className="w-px h-6 bg-gray-200" />
-                            <div>
-                              <p className="text-[10px] text-gray-400 leading-none">Comm.</p>
-                              <p className="text-sm font-bold text-gray-600">₹{Number(txn.totalCommission).toLocaleString()}</p>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between px-3 py-1 bg-gray-50 border-t border-gray-100">
-                      <span className="text-[10px] text-gray-400">{formatDate(txn.addedDate)}</span>
-                      <span className="text-[10px] text-gray-500">
-                        {txn.details?.length ? `${txn.details.length} number${txn.details.length !== 1 ? "s" : ""}` : txn.shiftDate || ""}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                      return (
+                        <tr key={txn.id} className="bg-orange-100 text-gray-800 border-t border-white/40">
+                          <td className="px-3 py-2.5 text-[14px] font-bold whitespace-nowrap ">{txn.shiftName || "—"}</td>
+                          <td className="px-3 py-2.5 text-[13px] font-semibold whitespace-nowrap">{shiftDateStr}</td>
+                          <td className="px-3 py-2.5 text-[14px] font-bold whitespace-nowrap text-right">₹{Number(txn.totalAmount).toLocaleString()}</td>
+                          <td className="px-3 py-2.5 text-[13px] font-semibold whitespace-nowrap text-right">{txnTimeStr}</td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
             </div>
           </div>
         )}

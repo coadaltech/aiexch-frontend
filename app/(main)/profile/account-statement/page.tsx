@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ArrowLeft, Receipt, CalendarDays, X, Trash2, Eye } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft, Receipt, CalendarDays, X, Trash2, Eye, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAccountStatement, useBetDetails, useLedger } from "@/hooks/useUserQueries";
 
@@ -334,10 +334,18 @@ export default function AccountStatement() {
   const def = defaultDates();
   const [fromDate, setFromDate] = useState(def.from);
   const [toDate,   setToDate]   = useState(def.to);
+  const [searchDates, setSearchDates] = useState<{ from: string; to: string } | null>(null);
   const [selectedRow, setSelectedRow] = useState<any | null>(null);
+  const fromRef = useRef<HTMLInputElement>(null);
 
-  const { data: rows, isLoading, isError } = useAccountStatement({ fromDate, toDate });
+  useEffect(() => { fromRef.current?.focus(); }, []);
+
+  const { data: rows, isLoading, isError } = useAccountStatement(
+    searchDates ? { fromDate: searchDates.from, toDate: searchDates.to } : { fromDate: "", toDate: "" },
+  );
   const { data: ledger } = useLedger();
+
+  const searched = searchDates !== null;
 
   const allRows    = rows ?? [];
   const openingRow = allRows.find(isBalanceRow);
@@ -379,36 +387,44 @@ export default function AccountStatement() {
           <h1 className="text-gray-900 font-bold text-base sm:text-base">Account Statement</h1>
         </div>
 
-        {/* Date range + Limits info */}
+        {/* Date range + Search + Limits info */}
         <div className="px-4 pb-3 flex items-end gap-3 flex-wrap">
           {(["from", "to"] as const).map((key) => (
-            <div key={key} className="w-[140px]">
-              <label className="text-[12px] text-gray-400 font-semibold uppercase tracking-wide block mb-1">
+            <div key={key} className="w-[180px]">
+              <label className="text-[13px] text-gray-900 font-semibold uppercase tracking-wide block mb-1">
                 {key === "from" ? "From" : "To"}
               </label>
               <div className="relative">
                 <CalendarDays className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
                 <input
+                  ref={key === "from" ? fromRef : undefined}
                   type="date"
                   value={key === "from" ? fromDate : toDate}
                   onChange={(e) => key === "from" ? setFromDate(e.target.value) : setToDate(e.target.value)}
-                  className="w-full pl-8 pr-2 py-1.5 text-sm text-gray-900 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400"
+                  className="w-full pl-8 pr-2 py-1.5 text-base text-gray-900 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400"
                 />
               </div>
             </div>
           ))}
+          <button
+            onClick={() => setSearchDates({ from: fromDate, to: toDate })}
+            className="px-4 py-1.5 text-sm font-bold text-white bg-[#142969] rounded-lg hover:bg-[#1a3578] transition-colors flex items-center gap-1.5"
+          >
+            <Search className="w-4 h-4" />
+            Search
+          </button>
           {/* Limits & balance */}
           {([
-            { label: "Final Limit", value: fmt(ledger?.finalLimit), cls: "text-gray-900" },
             { label: "Fix Limit",   value: fmt(ledger?.fixLimit),   cls: "text-gray-900" },
-            { label: "Consumed",    value: fmt(ledger?.limitConsumed), cls: "text-gray-900" },
+            { label: "Exposure",    value: fmt(ledger?.limitConsumed), cls: "text-gray-900" },
             { label: "Balance",     value: fmt(ledger?.userBalance), cls: parseFloat(ledger?.userBalance ?? "0") >= 0 ? "text-emerald-700" : "text-rose-700" },
+            { label: "Final Limit", value: fmt(ledger?.finalLimit), cls: "text-gray-900" },
           ] as const).map((item) => (
             <div key={item.label}>
-              <label className="text-[12px] text-gray-400 font-semibold uppercase tracking-wide block mb-1">
+              <label className="text-[13px] text-gray-900 font-semibold uppercase tracking-wide block mb-1">
                 {item.label}
               </label>
-              <div className="px-3 py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-lg min-w-[100px]">
+              <div className="px-3 py-1.5 text-base bg-gray-50 border border-gray-200 rounded-lg min-w-[100px]">
                 <span className={`font-bold ${item.cls}`}>{item.value}</span>
               </div>
             </div>
@@ -416,10 +432,18 @@ export default function AccountStatement() {
         </div>
       </div>
 
-      <div className="p-4 pb-8 space-y-3">
+      <div className="">
+
+        {/* Before search — prompt */}
+        {!searched && (
+          <div className="py-16 text-center">
+            <CalendarDays className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+            <p className="text-gray-700 font-medium">Select date range and click Search</p>
+          </div>
+        )}
 
         {/* Loading */}
-        {isLoading && (
+        {searched && isLoading && (
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
             <div className="h-9 bg-gray-100 animate-pulse border-b border-gray-200" />
             {[...Array(8)].map((_, i) => (
@@ -429,7 +453,7 @@ export default function AccountStatement() {
         )}
 
         {/* Error */}
-        {isError && !isLoading && (
+        {searched && isError && !isLoading && (
           <div className="py-16 text-center">
             <Receipt className="w-10 h-10 text-gray-300 mx-auto mb-3" />
             <p className="text-gray-700 font-medium">Failed to load statement</p>
@@ -437,7 +461,7 @@ export default function AccountStatement() {
         )}
 
         {/* Ledger table */}
-        {!isLoading && !isError && (
+        {searched && !isLoading && !isError && (
           allRows.length === 0 ? (
             <div className="py-16 text-center">
               <Receipt className="w-10 h-10 text-gray-300 mx-auto mb-3" />
@@ -484,31 +508,28 @@ export default function AccountStatement() {
                       // Clickable only for Settlement rows with a market_id
                       const clickable = Number(row.voucher_type) === 6 && !!row.market_id;
 
-                      // Description: for settlement use event/market names, else description/method/ref
-                      const eventParts = [row.remarks2, row.remarks3].filter(Boolean);
+                      // Description: remarks (sport) · remarks2 (event) · remarks3 (market)
+                      const eventParts = [row.remarks, row.remarks2, row.remarks3].filter(Boolean);
                       const descLabel  = eventParts.length
                         ? eventParts.join(" · ")
-                        : row.description || row.remarks1 || row.remarks || row.method || typeCfg.label;
+                        : row.description || row.remarks1 || row.method || typeCfg.label;
 
                       return (
                         <tr
                           key={`${row.voucher_id ?? idx}-${idx}`}
-                          {...(clickable ? { onClick: () => setSelectedRow(row) } : {})}
-                          className={clickable ? "hover:bg-violet-50 active:bg-violet-100 cursor-pointer" : ""}
                         >
                           <td className="px-3 py-2 align-top whitespace-nowrap">
-                            <p className="text-[12px] font-semibold text-gray-700 leading-tight">{formatDateShort(row.added_date || row.voucher_date)}</p>
-                            <p className="text-[11px] text-gray-400 leading-tight">{formatTime(row.added_date || row.voucher_date)}</p>
+                            <span className="text-sm font-bold text-gray-800">{formatDateShort(row.added_date || row.voucher_date)} {formatTime(row.added_date || row.voucher_date)}</span>
                           </td>
                           <td className="px-3 py-2 text-right align-top whitespace-nowrap">
                             {credit > 0
                               ? <span className="text-sm font-bold text-emerald-600">+₹{fmt(credit)}</span>
-                              : <span className="text-[12px] text-gray-200">—</span>}
+                              : <span className="text-sm font-bold text-gray-200">—</span>}
                           </td>
                           <td className="px-3 py-2 text-right align-top whitespace-nowrap">
                             {debit > 0
                               ? <span className="text-sm font-bold text-rose-600">-₹{fmt(debit)}</span>
-                              : <span className="text-[12px] text-gray-200">—</span>}
+                              : <span className="text-sm font-bold text-gray-200">—</span>}
                           </td>
                           <td className="px-3 py-2 text-right align-top whitespace-nowrap">
                             <span className={`text-sm font-bold ${closing >= 0 ? "text-gray-800" : "text-rose-600"}`}>
@@ -516,15 +537,12 @@ export default function AccountStatement() {
                             </span>
                           </td>
                           <td className="px-3 py-2 align-top min-w-[220px]">
-                            <div className="flex items-center gap-1 mb-0.5 flex-wrap">
-                              <span className={`text-[11px] font-bold px-1 py-0.5 rounded shrink-0 ${typeCfg.cls}`}>
-                                {typeCfg.label}
-                              </span>
-                              {clickable && (
-                                <span className="text-[11px] text-violet-500 font-medium shrink-0">view bets</span>
-                              )}
-                            </div>
-                            <p className="text-[13px] text-gray-800 leading-tight capitalize line-clamp-2">{descLabel}</p>
+                            <span
+                              {...(clickable ? { onClick: () => setSelectedRow(row) } : {})}
+                              className={`text-sm font-bold text-gray-800 capitalize line-clamp-2 ${clickable ? "underline cursor-pointer hover:text-violet-700" : ""}`}
+                            >
+                              {descLabel}
+                            </span>
                             {row.reference && (
                               <p className="text-[11px] text-gray-400 leading-tight mt-0.5">Ref: {row.reference}</p>
                             )}
