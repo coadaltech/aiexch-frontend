@@ -152,14 +152,7 @@ function MatchRow({
             {formatToIST(match.openDate)}
           </span>
           <span className="text-gray-300 shrink-0">·</span>
-          {match.inPlay ? (
-            <span className="flex items-center gap-0.5 shrink-0">
-              <span className="w-1.5 h-1.5 bg-[#84c2f1] rounded-full animate-pulse" />
-              <span className="text-[10px] text-[#142969] font-bold">LIVE</span>
-            </span>
-          ) : (
-            <span />
-          )}
+          
           <span className="text-gray-300 shrink-0 hidden sm:inline">·</span>
           <h4 className="text-[16px] mr-2 font-bold text-black truncate min-w-0">
             {match.name}
@@ -167,6 +160,14 @@ function MatchRow({
           <span className="text-[12px] mr-1 bg-[#4090e0]/80 text-white px-1 py-0.5 rounded font-medium shrink-0">
             O
           </span>
+          {match.inPlay ? (
+            <span className="flex items-center gap-0.5 shrink-0">
+              <span className="w-2.5 h-2.5 bg-[#84c2f1] rounded-full animate-pulse" />
+              <span className="text-[18px] text-[#142969] font-bold">LIVE</span>
+            </span>
+          ) : (
+            <span />
+          )}
           {betCount != null && betCount > 0 && (
             <span className="relative ml-56 shrink-0 group">
               <span className="text-[14px] text-black bg-yellow-500 p-1 font-medium whitespace-nowrap cursor-default">
