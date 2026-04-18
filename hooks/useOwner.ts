@@ -1259,6 +1259,10 @@ export const useDeclareMarketResult = () => {
     }) => ownerApi.declareMarketResult(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["undeclared-markets"] });
+      queryClient.invalidateQueries({ queryKey: ["my-bets"] });
+      queryClient.invalidateQueries({ queryKey: ["balance"] });
+      queryClient.invalidateQueries({ queryKey: ["market-exposure"] });
+      queryClient.invalidateQueries({ queryKey: ["market-exposure-fancy"] });
       toast.success("Result declared successfully");
     },
     onError: (err: any) =>

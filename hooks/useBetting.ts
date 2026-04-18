@@ -88,6 +88,7 @@ export const useMyBets = (status = "matched") => {
     },
     enabled: !!user,
     retry: isDemo ? false : 1,
+    refetchInterval: isDemo ? false : 30_000,
   });
 };
 
