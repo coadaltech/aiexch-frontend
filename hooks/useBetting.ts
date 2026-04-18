@@ -38,12 +38,14 @@ export const useBetting = () => {
       return response.data;
     },
     onSuccess: () => {
+      // Invalidate all bet-related queries in one batch.
+      // invalidateQueries already triggers a refetch for active queries,
+      // so no separate refetchQueries call is needed.
       queryClient.invalidateQueries({ queryKey: ["my-bets"] });
       queryClient.invalidateQueries({ queryKey: ["balance"] });
       queryClient.invalidateQueries({ queryKey: ["ledger"] });
       queryClient.invalidateQueries({ queryKey: ["market-exposure"] });
       queryClient.invalidateQueries({ queryKey: ["market-exposure-fancy"] });
-      queryClient.refetchQueries({ queryKey: ["balance"] });
     },
   });
 
@@ -126,9 +128,9 @@ export const useMarketExposure = (enabled = true) => {
       return map;
     },
     enabled: enabled && !!user && !user.isDemo,
-    staleTime: 5000,
+    staleTime: 10000,
     refetchOnWindowFocus: true,
-    refetchInterval: 10000,
+    refetchInterval: 30000, // Refreshed on bet placement via invalidation
   });
 };
 
@@ -173,8 +175,8 @@ export const useFancyMarketExposure = (enabled = true) => {
       return map;
     },
     enabled: enabled && !!user && !user.isDemo,
-    staleTime: 5000,
+    staleTime: 10000,
     refetchOnWindowFocus: true,
-    refetchInterval: 10000,
+    refetchInterval: 30000, // Refreshed on bet placement via invalidation
   });
 };

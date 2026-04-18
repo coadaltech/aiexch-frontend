@@ -312,29 +312,15 @@ export default function MatchPage() {
   const eventTypeId = config?.eventTypeId ?? "4";
   const { data: seriesData = [] } = useSeries(config?.eventTypeId ?? null);
   const { data: customStakes } = useStakeSettings(!!user && !user.isDemo);
-  const { status, isConnected, matchOdds: wsMarkets, bookmakers: wsBookmakers, sessions: wsSessions } = useLiveMatch(matchId, eventTypeId);
+  const { status, isConnected, matchOdds: wsMarkets, bookmakers: wsBookmakers, sessions: wsSessions, lastUpdate: wsLastUpdate } = useLiveMatch(matchId, eventTypeId);
 
   // Try to use cached odds data from the sport listing page for instant display
   const cachedOdds = queryClient.getQueryData<any[]>(["match-odds-list", matchId]);
 
-  // Fast lightweight fetch — just match odds (shows markets quickly)
-  const [fastOdds, setFastOdds] = useState<any[] | null>(null);
-  const fastFetchDone = useRef(false);
-
-  useEffect(() => {
-    if (fastFetchDone.current || cachedOdds) return;
-    fastFetchDone.current = true;
-
-    sportsApi
-      .getMarketsWithOdds(eventTypeId, matchId)
-      .then((res: any) => {
-        const data = res.data?.data ?? res.data ?? [];
-        if (data.length > 0) setFastOdds(data);
-      })
-      .catch(() => {});
-  }, [eventTypeId, matchId, cachedOdds]);
-
-  // Full REST fetch for all data (bookmakers, sessions, etc.)
+  // Single REST fallback for initial data (bookmakers, sessions, score).
+  // WebSocket is the primary data source — this only provides fallback data
+  // until WS connects. Removed the duplicate getMarketsWithOdds fast-fetch
+  // to cut initial page load API calls from 2 to 1.
   const [initialData, setInitialData] = useState<any>(null);
   const [initialLoading, setInitialLoading] = useState(true);
   const initialFetchDone = useRef(false);
@@ -468,9 +454,6 @@ export default function MatchPage() {
       matchOdds = initialData.matchOdds || [];
       bookmakerMarkets = normalizeBookmakers(initialData.bookmakers || []);
       sessionMarkets = normalizeSessions(initialData.sessions || []);
-    } else if (fastOdds && fastOdds.length > 0) {
-      // Fast lightweight endpoint returned before the full fetch
-      matchOdds = fastOdds;
     }
 
     // Deduplicate by marketId
@@ -500,7 +483,7 @@ export default function MatchPage() {
       return result;
     }
     return lastGoodMarkets.current;
-  }, [wsMarkets, wsBookmakers, wsSessions, initialData, fastOdds, normalizeBookmakers, normalizeSessions]);
+  }, [wsMarkets, wsBookmakers, wsSessions, initialData, normalizeBookmakers, normalizeSessions]);
 
   // Keep a ref to latest markets for price-change detection during bet delay
   const marketsRef = useRef(markets);
@@ -508,11 +491,9 @@ export default function MatchPage() {
     marketsRef.current = markets;
   }, [markets]);
 
-  // Track last market data update time for the live clock
-  const [lastMarketUpdate, setLastMarketUpdate] = useState<Date | null>(null);
-  useEffect(() => {
-    if (markets.length > 0) setLastMarketUpdate(new Date());
-  }, [markets]);
+  // Live clock: derived from the WS message timestamp (updates on every tick,
+  // not just when data changes, so the user can see the connection is alive)
+  const lastMarketUpdate = wsLastUpdate ? new Date(wsLastUpdate) : null;
 
   // Cleanup bet delay timer on unmount
   useEffect(() => {

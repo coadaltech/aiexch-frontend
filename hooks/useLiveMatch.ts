@@ -55,6 +55,13 @@ export function useLiveMatch(eventId: string, eventTypeId: string) {
         const data = JSON.parse(event.data);
 
         if (data.type === "live-update" && data.eventId === eventId) {
+          // Always set state directly — this is live data, it should always
+          // reflect the latest server state. React 19 batches all these
+          // setState calls into a single re-render. React's own virtual DOM
+          // diffing handles skipping unchanged DOM nodes efficiently.
+          //
+          // Doing JSON.stringify comparison on deeply nested market data
+          // 3x/second is more expensive than just letting React re-render.
           setMatchOdds(data.matchOdds || []);
           setBookmakers(data.bookmakers || []);
           setSessions(data.sessions || []);

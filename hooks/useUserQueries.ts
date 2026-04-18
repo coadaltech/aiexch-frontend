@@ -103,9 +103,9 @@ export const useBalance = (enabled = true) => {
     queryFn: () => userApi.getBalance(),
     select: (data) => data.data.balance || "0",
     enabled,
-    staleTime: 5000, // 5 seconds
+    staleTime: 10000,
     refetchOnWindowFocus: true,
-    refetchInterval: 10000, // Refetch every 10 seconds
+    refetchInterval: 30000, // Refetch every 30 seconds (also refreshed on bet placement)
   });
 };
 
@@ -122,9 +122,9 @@ export const useLedger = (enabled = true) => {
       finalLimit: string;
     } | null,
     enabled,
-    staleTime: 5000,
+    staleTime: 10000,
     refetchOnWindowFocus: true,
-    refetchInterval: 10000,
+    refetchInterval: 30000, // Refetch every 30 seconds (also refreshed on bet placement)
   });
 };
 
