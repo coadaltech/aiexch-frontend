@@ -26,6 +26,8 @@ import {
   RefreshCw,
   BookOpen,
   Target,
+  CheckCircle,
+  ClipboardList,
 } from "lucide-react";
 
 export type NavItem = {
@@ -40,7 +42,14 @@ export function getNavigation(prefix: string): NavItem[] {
   return [
     { name: "Dashboard", href: prefix, icon: BarChart3 },
     { name: "Account Statement", href: `${prefix}/account-statement`, icon: BookOpen },
-    { name: "Live Prediction", href: `${prefix}/live-prediction`, icon: Target },
+    {
+      name: "Result",
+      icon: CheckCircle,
+      subItems: [
+        { name: "Live Prediction", href: `${prefix}/live-prediction`, icon: Target },
+        { name: "Sports Result", href: `${prefix}/sports-result`, icon: ClipboardList },
+      ],
+    },
     {
       name: "Live Markets",
       icon: Activity,

@@ -426,6 +426,23 @@ export const ownerApi = {
   getBetDetails: (marketId: string) =>
     api.get(`/owner/account-statement/bet-details?marketId=${encodeURIComponent(marketId)}`),
 
+  // Sports Result
+  getUndeclaredMarkets: () => api.get("/owner/sports-result/undeclared"),
+  checkMarketResult: (marketId: string) =>
+    api.post("/owner/sports-result/check-result", { marketId }),
+  declareMarketResult: (data: {
+    marketId: string;
+    winnerId: string | number;
+    marketType: number;
+    eventTypeId: number;
+    competitionId: number | null;
+    matchId: number;
+    eventTypeName: string;
+    competitionName: string;
+    eventName: string;
+    marketName: string | null;
+  }) => api.post("/owner/sports-result/declare", data),
+
   // Matka Shifts
   getMatkaShifts: (date?: string) =>
     api.get(`/owner/matka/shifts${date ? `?date=${date}` : ""}`),

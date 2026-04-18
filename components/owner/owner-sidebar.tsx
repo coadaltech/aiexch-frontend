@@ -103,8 +103,8 @@ function SidebarContent({
             if (item.name === "Manage Currency" && currentUser?.role !== "owner") return false;
             // Marketing is owner-only
             if (item.name === "Marketing" && currentUser?.role !== "owner") return false;
-            // Live Prediction is owner-only
-            if (item.name === "Live Prediction" && currentUser?.role !== "owner") return false;
+            // Result (Live Prediction + Sports Result) is owner-only
+            if (item.name === "Result" && currentUser?.role !== "owner") return false;
             // QR Codes: only for non-owner users on B2C whitelabels
             if (item.name === "QR Codes") {
               if (currentUser?.role === "owner") return false;

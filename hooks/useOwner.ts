@@ -1223,3 +1223,45 @@ export const useLiveMarketsBetLog = (transactionId: string | null) => {
     staleTime: 60_000,
   });
 };
+
+// ── Sports Result ─────────────────────────────────────────────────────────────
+export const useUndeclaredMarkets = () => {
+  return useQuery({
+    queryKey: ["undeclared-markets"],
+    queryFn: () =>
+      ownerApi.getUndeclaredMarkets().then((res) => res.data.data),
+    refetchInterval: 30_000,
+  });
+};
+
+export const useCheckMarketResult = () => {
+  return useMutation({
+    mutationFn: (marketId: string) =>
+      ownerApi.checkMarketResult(marketId).then((res) => res.data.data),
+    onError: () => toast.error("Failed to check result from API"),
+  });
+};
+
+export const useDeclareMarketResult = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: {
+      marketId: string;
+      winnerId: string | number;
+      marketType: number;
+      eventTypeId: number;
+      competitionId: number | null;
+      matchId: number;
+      eventTypeName: string;
+      competitionName: string;
+      eventName: string;
+      marketName: string | null;
+    }) => ownerApi.declareMarketResult(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["undeclared-markets"] });
+      toast.success("Result declared successfully");
+    },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.error ?? "Failed to declare result"),
+  });
+};
