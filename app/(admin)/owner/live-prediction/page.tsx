@@ -8,6 +8,7 @@ import {
   useOwnerMatkaShifts,
   useMatkaLivePrediction,
   useMatkaLivePredictionWhitelabels,
+  useMatkaAgentSale,
   useDeclareMatkaResult,
   useMatkaDeclaredHistory,
   type LivePredictionWhitelabelRow,
@@ -63,6 +64,9 @@ export default function OwnerLivePredictionPage() {
   const { data: whitelabels = [], isLoading: wlLoading } =
     useMatkaLivePredictionWhitelabels(shiftId || null, selectedNum);
 
+  const { data: agentSales = [], isLoading: agentSaleLoading } =
+    useMatkaAgentSale(shiftId || null, selectedNum);
+
   const [resultInput, setResultInput] = useState("");
   const declareMutation = useDeclareMatkaResult();
   const { data: declaredHistory = [] } = useMatkaDeclaredHistory(50);
@@ -92,7 +96,7 @@ export default function OwnerLivePredictionPage() {
     : null;
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3 h-[calc(100vh-80px)]">
       {/* ─── Top bar: title + shift + date + search ─── */}
       <div className="bg-card border border-border rounded-lg px-3 py-2 flex flex-wrap items-center gap-3">
         <h1 className="text-base font-bold text-foreground mr-auto">
@@ -142,12 +146,10 @@ export default function OwnerLivePredictionPage() {
         </Button>
       </div>
 
-      {/* ─── Main: numbers list + party breakdown + declare column ─── */}
-      {/* Always 3 columns; Numbers and Declare have fixed widths so the
-          Party column shrinks first instead of wrapping onto the next row. */}
-      <div className="grid grid-cols-[260px_minmax(0,1fr)_240px] gap-2">
+      {/* ─── Main: numbers list + party breakdown + agent group + declare column ─── */}
+      <div className="grid grid-cols-[260px_minmax(0,1fr)_220px_240px] gap-2 flex-1 min-h-0">
         {/* Numbers list */}
-        <div className="bg-card border border-border rounded-lg overflow-hidden">
+        <div className="bg-card border border-border rounded-lg overflow-hidden flex flex-col">
           {meta && (meta.txCount === 0 || meta.commCount === 0) && (
             <div className="text-[11px] text-amber-700 bg-amber-500/10 border-b border-amber-500/30 px-2 py-1">
               txns: <b>{meta.txCount}</b> · commission rows for this owner:{" "}
@@ -161,7 +163,7 @@ export default function OwnerLivePredictionPage() {
               <Loader2 className="h-5 w-5 animate-spin mr-2" /> Loading…
             </div>
           ) : (
-            <div className="max-h-[calc(100vh-230px)] overflow-y-auto">
+            <div className="overflow-y-auto flex-1">
               <table className="w-full text-xs">
                 <thead className="sticky top-0 bg-emerald-600 text-white z-10">
                   <tr>
@@ -223,11 +225,10 @@ export default function OwnerLivePredictionPage() {
 
         {/* Party breakdown */}
         <div className="bg-card border border-border rounded-lg overflow-hidden flex flex-col">
-          <div className="max-h-[calc(100vh-270px)] overflow-y-auto flex-1">
+          <div className="overflow-y-auto flex-1 min-h-0">
             <table className="w-full text-xs">
               <thead className="sticky top-0 bg-emerald-600 text-white z-10">
                 <tr>
-                  <th className="px-1.5 py-1.5 w-7"></th>
                   <th className="px-2 py-1.5 font-semibold text-left">Party</th>
                   <th className="px-2 py-1.5 font-semibold text-right w-20">
                     Sale
@@ -235,16 +236,13 @@ export default function OwnerLivePredictionPage() {
                   <th className="px-2 py-1.5 font-semibold text-right w-20">
                     P&amp;L
                   </th>
-                  <th className="px-2 py-1.5 font-semibold text-center w-16">
-                    Last Win
-                  </th>
                 </tr>
               </thead>
               <tbody>
                 {selectedNum == null ? (
                   <tr>
                     <td
-                      colSpan={5}
+                      colSpan={3}
                       className="px-3 py-10 text-center text-muted-foreground"
                     >
                       Select a number on the left to see the party breakdown.
@@ -252,7 +250,7 @@ export default function OwnerLivePredictionPage() {
                   </tr>
                 ) : wlLoading ? (
                   <tr>
-                    <td colSpan={5} className="px-3 py-10 text-center">
+                    <td colSpan={3} className="px-3 py-10 text-center">
                       <span className="inline-flex items-center text-muted-foreground">
                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
                         Loading…
@@ -262,7 +260,7 @@ export default function OwnerLivePredictionPage() {
                 ) : whitelabels.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={5}
+                      colSpan={3}
                       className="px-3 py-10 text-center text-muted-foreground"
                     >
                       No bets placed on this number.
@@ -271,28 +269,17 @@ export default function OwnerLivePredictionPage() {
                 ) : (
                   whitelabels.map((wl) => {
                     const profit = Number(wl.profit);
-                    const isSel = selectedWl?.whitelabelId === wl.whitelabelId;
+                    const isSel = selectedWl?.user_id === wl.user_id;
                     return (
                       <tr
-                        key={wl.whitelabelId ?? "null"}
+                        key={wl.user_id}
                         onClick={() => setSelectedWl(wl)}
                         className={`cursor-pointer border-t border-border/60 hover:bg-accent/30 ${
                           isSel ? "bg-primary/10" : ""
                         }`}
                       >
-                        <td className="px-1.5 py-1 text-center">
-                          <input
-                            type="checkbox"
-                            checked={isSel}
-                            onChange={() =>
-                              setSelectedWl(isSel ? null : wl)
-                            }
-                            className="accent-primary"
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                        </td>
                         <td className="px-2 py-1 font-medium text-foreground truncate max-w-0 uppercase">
-                          {wl.whitelabelName}
+                          {wl.name}
                         </td>
                         <td className="px-2 py-1 text-right tabular-nums text-foreground">
                           {fmt(wl.sale)}
@@ -304,18 +291,6 @@ export default function OwnerLivePredictionPage() {
                         >
                           {profit >= 0 ? "" : "-"}
                           {Math.abs(profit).toFixed(0)}
-                        </td>
-                        <td className="px-2 py-1 text-center">
-                          <span
-                            className={`inline-flex items-center justify-center min-w-[36px] px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                              wl.lastWinStatus === "W"
-                                ? "bg-emerald-500/15 text-emerald-700"
-                                : "bg-rose-500/15 text-rose-700"
-                            }`}
-                          >
-                            {wl.lastWinStatus}
-                            {wl.consecutiveCount || 0}
-                          </span>
                         </td>
                       </tr>
                     );
@@ -363,6 +338,68 @@ export default function OwnerLivePredictionPage() {
           </div>
         </div>
 
+        {/* Agent Group */}
+        <div className="bg-card border border-border rounded-lg overflow-hidden flex flex-col">
+          <div className="overflow-y-auto flex-1 min-h-0">
+            <table className="w-full text-xs">
+              <thead className="sticky top-0 bg-emerald-600 text-white z-10">
+                <tr>
+                  <th className="px-2 py-1.5 font-semibold text-left">
+                    Agent Groups
+                  </th>
+                  <th className="px-2 py-1.5 font-semibold text-right w-20">
+                    Sale
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedNum == null ? (
+                  <tr>
+                    <td
+                      colSpan={2}
+                      className="px-3 py-10 text-center text-muted-foreground"
+                    >
+                      Select a number to see agent groups.
+                    </td>
+                  </tr>
+                ) : agentSaleLoading ? (
+                  <tr>
+                    <td colSpan={2} className="px-3 py-10 text-center">
+                      <span className="inline-flex items-center text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Loading…
+                      </span>
+                    </td>
+                  </tr>
+                ) : agentSales.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={2}
+                      className="px-3 py-10 text-center text-muted-foreground"
+                    >
+                      No agent sales for this number.
+                    </td>
+                  </tr>
+                ) : (
+                  agentSales.map((ag) => (
+                    <tr
+                      key={ag.whitelabel_id}
+                      className="border-t border-border/60 hover:bg-accent/30"
+                    >
+                      <td className="px-2 py-1 font-medium text-foreground truncate max-w-0 uppercase">
+                        {ag.name}
+                      </td>
+                      <td className="px-2 py-1 text-right tabular-nums font-semibold text-foreground">
+                        {fmt(ag.amount)}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         {/* Right column: (owner-only) Declare panel, then Previous Declared list */}
         <div className="flex flex-col gap-3">
           {isOwner && (
@@ -402,11 +439,11 @@ export default function OwnerLivePredictionPage() {
             </div>
           )}
 
-          <div className="bg-card border border-border rounded-lg overflow-hidden flex-1">
-            <div className="bg-emerald-600 text-white px-3 py-1.5 text-xs font-semibold">
+          <div className="bg-card border border-border rounded-lg overflow-hidden flex-1 flex flex-col min-h-0">
+            <div className="bg-emerald-600 text-white px-3 py-1.5 text-xs font-semibold shrink-0">
               Previous Declared Numbers
             </div>
-            <div className="max-h-[calc(100vh-360px)] overflow-y-auto">
+            <div className="overflow-y-auto flex-1 min-h-0">
               <table className="w-full text-xs">
                 <thead className="sticky top-0 bg-muted/70 backdrop-blur">
                   <tr className="text-left text-muted-foreground">
@@ -453,8 +490,8 @@ export default function OwnerLivePredictionPage() {
         open={jantriOpen}
         onClose={() => setJantriOpen(false)}
         shiftId={shiftId || null}
-        whitelabelId={selectedWl?.whitelabelId ?? "all"}
-        whitelabelName={selectedWl?.whitelabelName ?? "All"}
+        whitelabelId="all"
+        whitelabelName={selectedWl?.name ?? "All"}
       />
     </div>
   );

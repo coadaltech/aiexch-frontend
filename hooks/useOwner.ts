@@ -1059,12 +1059,16 @@ export interface LivePredictionResponse {
 }
 
 export interface LivePredictionWhitelabelRow {
-  whitelabelId: string | null;
-  whitelabelName: string;
+  user_id: string;
+  name: string;
   sale: string;
   profit: string;
-  lastWinStatus: "W" | "L";
-  consecutiveCount: number;
+}
+
+export interface AgentSaleRow {
+  whitelabel_id: string;
+  name: string;
+  amount: string;
 }
 
 export interface DeclaredHistoryRow {
@@ -1101,6 +1105,21 @@ export const useMatkaLivePredictionWhitelabels = (
         nums!
       );
       return (res.data?.data ?? []) as LivePredictionWhitelabelRow[];
+    },
+    enabled: !!shiftId && !!nums,
+    staleTime: 10 * 1000,
+  });
+};
+
+export const useMatkaAgentSale = (
+  shiftId: string | null,
+  nums: number | null
+) => {
+  return useQuery({
+    queryKey: ["matka-agent-sale", shiftId, nums],
+    queryFn: async () => {
+      const res = await ownerApi.getMatkaAgentSale(shiftId!, nums!);
+      return (res.data?.data ?? []) as AgentSaleRow[];
     },
     enabled: !!shiftId && !!nums,
     staleTime: 10 * 1000,

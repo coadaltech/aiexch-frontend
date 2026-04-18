@@ -451,6 +451,8 @@ export const ownerApi = {
         whitelabelId
       )}`
     ),
+  getMatkaAgentSale: (shiftId: string, nums: number) =>
+    api.get(`/owner/matka/live-prediction/${shiftId}/agent-sale?nums=${nums}`),
   declareMatkaResult: (shiftId: string, result: number) =>
     api.post(`/owner/matka/live-prediction/${shiftId}/declare`, { result }),
   getMatkaDeclaredHistory: (limit = 50) =>
