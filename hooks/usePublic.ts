@@ -6,6 +6,9 @@ export const usePublicBanners = (position?: string) => {
   return useQuery({
     queryKey: ['public-banners', position],
     queryFn: () => publicApi.getBanners(position).then(res => res.data.data),
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    placeholderData: (prev: any) => prev,
   });
 };
 
@@ -13,6 +16,9 @@ export const usePublicPromotions = (type?: string) => {
   return useQuery({
     queryKey: ['public-promotions', type],
     queryFn: () => publicApi.getPromotions(type).then(res => res.data.data),
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    placeholderData: (prev: any) => prev,
   });
 };
 
@@ -20,6 +26,8 @@ export const usePublicPopups = (page?: string) => {
   return useQuery({
     queryKey: ['public-popups', page],
     queryFn: () => publicApi.getPopups(page).then(res => res.data.data),
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 };
 
@@ -44,6 +52,9 @@ export const useHomeSections = () => {
   return useQuery({
     queryKey: ['home-sections'],
     queryFn: () => publicApi.getHomeSections().then(res => res.data.data),
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    placeholderData: (prev: any) => prev,
   });
 };
 
@@ -52,6 +63,9 @@ export const useSectionGames = (sectionId: number, enabled = true) => {
     queryKey: ['section-games', sectionId],
     queryFn: () => publicApi.getSectionGames(sectionId).then(res => res.data.data),
     enabled,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    placeholderData: (prev: any) => prev,
   });
 };
 

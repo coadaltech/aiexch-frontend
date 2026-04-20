@@ -235,7 +235,6 @@ export function CricketMatchesList({
       if (!series.matches) continue;
 
       for (const match of series.matches) {
-        // Only include events that have a defaultMarketId registered in the DB
         const defaultMarketId: string | null =
           match.defaultMarketId ?? match.event?.defaultMarketId ?? null;
         if (!defaultMarketId) continue;
@@ -244,9 +243,6 @@ export function CricketMatchesList({
           match.openDate ?? match.event?.openDate ?? null;
         const inPlay: boolean = match.inPlay ?? false;
 
-        // For non-politics sports: skip any event whose openDate is before
-        // the start of today in IST — no exceptions, even for inPlay events,
-        // because stale DB records can have inPlay=true on old matches.
         if (!isPolitics && openDate) {
           const t = new Date(openDate).getTime();
           if (!isNaN(t) && t < startOfTodayIST) continue;
@@ -265,7 +261,6 @@ export function CricketMatchesList({
       }
     }
 
-    // Sort: live first → upcoming soonest
     return matches.sort((a, b) => {
       if (a.inPlay && !b.inPlay) return -1;
       if (!a.inPlay && b.inPlay) return 1;
@@ -275,19 +270,25 @@ export function CricketMatchesList({
     });
   }, [seriesData, startOfTodayIST, isPolitics]);
 
-  // Fetch odds for ALL date-filtered candidates — never pre-slice by maxMatches.
-  // This ensures home page sections don't miss events with active prices
-  // that happen to sit beyond the first N in the sorted list.
+  // Pre-slice candidates BEFORE firing per-match odds requests so we make at
+  // most a bounded number of parallel calls per section instead of one per
+  // event. We fetch a small buffer over maxMatches so that events without
+  // live prices can be dropped and we still fill the slot.
+  const oddsCandidates = useMemo(() => {
+    const bufferedLimit = maxMatches ? maxMatches * 2 : allMatches.length;
+    return allMatches.slice(0, bufferedLimit);
+  }, [allMatches, maxMatches]);
+
   const oddsInput = useMemo(
     () =>
-      allMatches.map((m) => ({
+      oddsCandidates.map((m) => ({
         id: m.id,
         defaultMarketId: m.defaultMarketId!,
       })),
-    [allMatches]
+    [oddsCandidates]
   );
 
-  const matchIds = useMemo(() => allMatches.map((m) => m.id), [allMatches]);
+  const matchIds = useMemo(() => oddsCandidates.map((m) => m.id), [oddsCandidates]);
 
   const { data: marketMap = {}, isLoading: oddsLoading } = useMatchOdds(
     oddsInput,
@@ -298,17 +299,17 @@ export function CricketMatchesList({
   if (seriesLoading || (oddsLoading && Object.keys(marketMap).length === 0)) {
     return (
       <div className="space-y-1">
-        {[...Array(4)].map((_, i) => (
+        {[...Array(Math.min(maxMatches ?? 4, 4))].map((_, i) => (
           <div key={i} className="h-12 bg-gray-200 animate-pulse rounded-lg" />
         ))}
       </div>
     );
   }
 
-  // Keep only events that have at least one real price, then apply maxMatches.
-  // Filtering first means home page always fills up to maxMatches from the
-  // full pool rather than only checking the first N events.
-  const visibleMatches = allMatches
+  // Keep only events that actually have at least one real price, then cap
+  // to maxMatches. Filtering first ensures the section fills up from the
+  // buffered candidate pool rather than leaving empty slots.
+  const visibleMatches = oddsCandidates
     .filter((m) => {
       const market = marketMap[m.id];
       if (!market) return false;

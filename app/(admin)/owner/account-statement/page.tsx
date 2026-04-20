@@ -67,7 +67,8 @@ export default function OwnerAccountStatement() {
   const allRows    = rows ?? [];
   const openingRow = allRows.find(isBalanceRow);
 
-  const openingBalance = parseFloat(openingRow?.credit ?? 0);
+  const openingBalance =
+    parseFloat(openingRow?.credit ?? 0) - parseFloat(openingRow?.debit ?? 0);
   const { txWithClosing } = useMemo(() => {
     // Hide Limit vouchers (voucher_type === 2) — internal holds.
     const visible = allRows.filter(

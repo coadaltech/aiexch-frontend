@@ -350,7 +350,8 @@ export default function AccountStatement() {
   const allRows    = rows ?? [];
   const openingRow = allRows.find(isBalanceRow);
 
-  const openingBalance = parseFloat(openingRow?.credit ?? 0);
+  const openingBalance =
+    parseFloat(openingRow?.credit ?? 0) - parseFloat(openingRow?.debit ?? 0);
   const { txWithClosing } = useMemo(() => {
     // Hide Limit vouchers (voucher_type === 2) — they are internal holds.
     const visible = allRows.filter(

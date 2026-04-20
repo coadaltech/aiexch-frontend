@@ -63,6 +63,7 @@ function useCountdown(shiftDate: string, endTime: string, nextDayAllow: boolean)
 }
 
 function ShiftCard({ shift }: { shift: MatkaShift }) {
+  const isDeclared = shift.shiftDate === "1970-01-01";
   const hasResult = shift.result !== null && shift.result !== undefined;
   const { timeLeft, isExpired } = useCountdown(
     shift.shiftDate,
@@ -76,12 +77,19 @@ function ShiftCard({ shift }: { shift: MatkaShift }) {
         <h3 className="font-bold text-gray-900 text-sm font-condensed uppercase truncate text-center tracking-wide">
           {shift.name}
         </h3>
-        <div className="flex items-center justify-center gap-2 mt-2 text-xs text-gray-400">
-          <Calendar className="w-3 h-3" />
-          <span>{formatDate(shift.shiftDate)}</span>
-        </div>
+        {!isDeclared && (
+          <div className="flex items-center justify-center gap-2 mt-2 text-xs text-gray-400">
+            <Calendar className="w-3 h-3" />
+            <span>{formatDate(shift.shiftDate)}</span>
+          </div>
+        )}
         <div className="flex items-center justify-center mt-3">
-          {hasResult ? (
+          {isDeclared && hasResult ? (
+            <span className="flex items-center gap-1.5 text-[#f0a050] font-bold text-base">
+              <Trophy className="w-4 h-4" />
+              {shift.result}
+            </span>
+          ) : hasResult ? (
             <span className="flex items-center gap-1.5 text-[#f0a050] font-bold text-base">
               <Trophy className="w-4 h-4" />
               {shift.result}

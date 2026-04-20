@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Trophy, Search } from "lucide-react";
+import { Loader2, Trophy, Search, Clock, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -31,6 +31,61 @@ const fmtDate = (d?: string | null) => {
     year: "numeric",
   });
 };
+
+// Returns ms-to-main-jantri (negative once reached) plus a human-readable
+// countdown. A null shiftDate/mainJantriTime means the shift has no jantri
+// gate — allow declare immediately (`msLeft = 0`, `display = '—'`).
+function useMainJantriCountdown(
+  shiftDate?: string | null,
+  mainJantriTime?: string | null,
+  nextDayAllow?: boolean
+) {
+  const [state, setState] = useState<{ msLeft: number; display: string }>({
+    msLeft: 0,
+    display: "—",
+  });
+
+  useEffect(() => {
+    if (!shiftDate || !mainJantriTime) {
+      setState({ msLeft: 0, display: "—" });
+      return;
+    }
+
+    const target = (() => {
+      const [h, m] = mainJantriTime.split(":").map(Number);
+      const t = new Date(shiftDate);
+      t.setHours(h, m, 0, 0);
+      if (nextDayAllow) t.setDate(t.getDate() + 1);
+      return t;
+    })();
+
+    const tick = () => {
+      const ms = target.getTime() - Date.now();
+      if (ms <= 0) {
+        setState({ msLeft: ms, display: "Ready" });
+        return;
+      }
+      const hrs = Math.floor(ms / 3600000);
+      const mins = Math.floor((ms % 3600000) / 60000);
+      const secs = Math.floor((ms % 60000) / 1000);
+      setState({
+        msLeft: ms,
+        display:
+          hrs > 0
+            ? `${hrs}h ${mins}m ${secs}s`
+            : mins > 0
+            ? `${mins}m ${secs}s`
+            : `${secs}s`,
+      });
+    };
+
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [shiftDate, mainJantriTime, nextDayAllow]);
+
+  return state;
+}
 
 export default function OwnerLivePredictionPage() {
   const { user: currentUser } = useAuth();
@@ -71,10 +126,23 @@ export default function OwnerLivePredictionPage() {
   const declareMutation = useDeclareMatkaResult();
   const { data: declaredHistory = [] } = useMatkaDeclaredHistory(50);
 
+  const jantri = useMainJantriCountdown(
+    selectedShift?.shiftDate,
+    selectedShift?.mainJantriTime,
+    selectedShift?.nextDayAllow
+  );
+  const [earlyDeclareOpen, setEarlyDeclareOpen] = useState(false);
+  const isDeclared = selectedShift?.shiftDate === "1970-01-01";
+
   const handleDeclare = (e: React.FormEvent) => {
     e.preventDefault();
     const n = parseInt(resultInput, 10);
     if (!shiftId || isNaN(n) || n < 0 || n > 100) return;
+    // Guard against declaring before main_jantri_time. Backend also enforces.
+    if (jantri.msLeft > 0) {
+      setEarlyDeclareOpen(true);
+      return;
+    }
     declareMutation.mutate(
       { shiftId, result: n },
       { onSuccess: () => setResultInput("") }
@@ -135,6 +203,28 @@ export default function OwnerLivePredictionPage() {
             value={fmtDate(selectedShift?.shiftDate)}
             className="border border-border bg-muted/40 text-foreground rounded px-2 py-1 text-xs w-[110px] cursor-not-allowed"
           />
+        </div>
+
+        <div
+          className={`flex items-center gap-1 rounded border px-2 py-1 text-xs font-semibold ${
+            isDeclared
+              ? "border-amber-500/40 bg-amber-500/10 text-amber-700"
+              : jantri.msLeft > 0
+              ? "border-amber-500/40 bg-amber-500/10 text-amber-700"
+              : "border-emerald-500/40 bg-emerald-500/10 text-emerald-700"
+          }`}
+          title="Time until main jantri (declare becomes available)"
+        >
+          <Clock className="h-3.5 w-3.5" />
+          {isDeclared ? (
+            <span>Declared</span>
+          ) : !selectedShift?.mainJantriTime ? (
+            <span>No jantri time set</span>
+          ) : jantri.msLeft > 0 ? (
+            <span>Main Jantri in {jantri.display}</span>
+          ) : (
+            <span>Main Jantri {jantri.display}</span>
+          )}
         </div>
 
         <Button
@@ -426,7 +516,10 @@ export default function OwnerLivePredictionPage() {
                 <Button
                   type="submit"
                   disabled={
-                    !shiftId || !resultInput || declareMutation.isPending
+                    !shiftId ||
+                    !resultInput ||
+                    declareMutation.isPending ||
+                    isDeclared
                   }
                   className="h-8 px-3 bg-amber-600 hover:bg-amber-700 text-white"
                 >
@@ -436,6 +529,19 @@ export default function OwnerLivePredictionPage() {
                   Declare
                 </Button>
               </form>
+              {isDeclared && (
+                <p className="mt-2 text-[11px] text-amber-600">
+                  Result already declared for this shift.
+                </p>
+              )}
+              {!isDeclared && jantri.msLeft > 0 && (
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  Declare unlocks in{" "}
+                  <span className="font-semibold text-amber-600">
+                    {jantri.display}
+                  </span>
+                </p>
+              )}
             </div>
           )}
 
@@ -493,6 +599,59 @@ export default function OwnerLivePredictionPage() {
         whitelabelId="all"
         whitelabelName={selectedWl?.name ?? "All"}
       />
+
+      {earlyDeclareOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          onClick={() => setEarlyDeclareOpen(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-lg border border-border bg-card shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between border-b border-border px-4 py-3">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-amber-600" />
+                <h3 className="text-sm font-semibold text-foreground">
+                  Too early to declare
+                </h3>
+              </div>
+              <button
+                onClick={() => setEarlyDeclareOpen(false)}
+                className="text-muted-foreground hover:text-foreground"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="px-4 py-4 text-sm text-foreground">
+              <p className="mb-3">
+                Main jantri time for{" "}
+                <span className="font-semibold">{selectedShift?.name}</span>{" "}
+                hasn&apos;t arrived yet. Please wait:
+              </p>
+              <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-3 text-center">
+                <div className="text-[11px] uppercase tracking-wider text-amber-700/70">
+                  Time remaining
+                </div>
+                <div className="mt-1 text-xl font-bold tabular-nums text-amber-700">
+                  {jantri.display}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 border-t border-border bg-muted/40 px-4 py-3">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setEarlyDeclareOpen(false)}
+                className="h-7 px-3"
+              >
+                OK
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -7,13 +7,54 @@ import Footer from "../../components/layout/footer";
 import { CricketMatchesList } from "@/components/sports/cricket-matches-list";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, Suspense } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import { toast } from "sonner";
 import {
   Bell, ChevronRight, Flame, Trophy, Dices,
   Volleyball, Zap, Target, Star, Users, Tv,
   TrendingUp, Gift, Shield, Flag, Dog, Wind,
 } from "lucide-react";
+
+/* ─── Lazy mount: defers child render + API calls until scrolled near viewport ─── */
+function LazyMount({
+  children,
+  minHeight = 200,
+  rootMargin = "300px",
+}: {
+  children: React.ReactNode;
+  minHeight?: number;
+  rootMargin?: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    if (show) return;
+    const el = ref.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setShow(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setShow(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [show, rootMargin]);
+
+  return (
+    <div ref={ref} style={show ? undefined : { minHeight }}>
+      {show ? children : null}
+    </div>
+  );
+}
 
 /* ─── Error handler ─── */
 const ErrorHandler = () => {
@@ -284,21 +325,23 @@ const Homepage = () => {
       </div>
 
       {/* 5c. Tennis Matches */}
-      <div className="mt-4">
-        <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-4 rounded-xl overflow-hidden border border-[#1e4088]/50">
-          <SectionHeader
-            title="TENNIS"
-            subtitle="Live & upcoming matches"
-            href="/sports/tennis"
-            icon={Target}
-            badge="LIVE"
-            oddsColumns
-          />
-          <div className="px-3 pb-3">
-            <CricketMatchesList sport="tennis" eventTypeId="2" maxMatches={6} emptyText="No matches right now" showHeader={false} />
+      <LazyMount minHeight={320}>
+        <div className="mt-4">
+          <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-4 rounded-xl overflow-hidden border border-[#1e4088]/50">
+            <SectionHeader
+              title="TENNIS"
+              subtitle="Live & upcoming matches"
+              href="/sports/tennis"
+              icon={Target}
+              badge="LIVE"
+              oddsColumns
+            />
+            <div className="px-3 pb-3">
+              <CricketMatchesList sport="tennis" eventTypeId="2" maxMatches={6} emptyText="No matches right now" showHeader={false} />
+            </div>
           </div>
         </div>
-      </div>
+      </LazyMount>
 
       {/* 5d. Horse Racing
       <div className="mt-4">
@@ -333,21 +376,23 @@ const Homepage = () => {
       </div> */}
 
       {/* 5f. Politics */}
-      <div className="mt-4">
-        <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-4 rounded-xl overflow-hidden border border-[#1e4088]/50">
-          <SectionHeader
-            title="POLITICS"
-            subtitle="Live & upcoming markets"
-            href="/sports/politics"
-            icon={Flag}
-            badge="LIVE"
-            oddsColumns
-          />
-          <div className="px-3 pb-3">
-            <CricketMatchesList sport="politics" eventTypeId="500" maxMatches={6} emptyText="No markets right now" showHeader={false} />
+      <LazyMount minHeight={320}>
+        <div className="mt-4">
+          <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-4 rounded-xl overflow-hidden border border-[#1e4088]/50">
+            <SectionHeader
+              title="POLITICS"
+              subtitle="Live & upcoming markets"
+              href="/sports/politics"
+              icon={Flag}
+              badge="LIVE"
+              oddsColumns
+            />
+            <div className="px-3 pb-3">
+              <CricketMatchesList sport="politics" eventTypeId="500" maxMatches={6} emptyText="No markets right now" showHeader={false} />
+            </div>
           </div>
         </div>
-      </div>
+      </LazyMount>
 
       {/* 6. Quick sport pills */}
       <div className="mt-4">
@@ -356,14 +401,18 @@ const Homepage = () => {
       </div>
 
       {/* 7. Promotions */}
-      <div className="mt-4 px-4">
-        <HomePromotionsSection />
-      </div>
+      <LazyMount minHeight={240}>
+        <div className="mt-4 px-4">
+          <HomePromotionsSection />
+        </div>
+      </LazyMount>
 
       {/* 8. Casino & dynamic sections */}
-      <div className="px-4 pb-4">
-        <DynamicHomeSections />
-      </div>
+      <LazyMount minHeight={400}>
+        <div className="px-4 pb-4">
+          <DynamicHomeSections />
+        </div>
+      </LazyMount>
 
       <Footer />
     </div>
