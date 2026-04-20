@@ -213,9 +213,9 @@ function SectionHeader({
               </span>
             )}
           </div>
-          {subtitle && (
+          {/* {subtitle && (
             <p className="text-[10px] text-gray-400 mt-0.5">{subtitle}</p>
-          )}
+          )} */}
         </div>
       </div>
       {oddsColumns ? (

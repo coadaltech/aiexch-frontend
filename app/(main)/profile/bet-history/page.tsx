@@ -129,7 +129,7 @@ export default function BetHistoryPage() {
                     const statusCfg = STATUS_CONFIG[bet.status as keyof typeof STATUS_CONFIG]
                       ?? { label: bet.status, style: "text-gray-700 bg-white/70 border-gray-300" };
                     const isBack = bet.betType === 0 || bet.betType === "back";
-                    const teamLabel = bet.eventName || bet.selectionName || "—";
+                    const teamLabel =  bet.selectionName || bet.eventName || "—";
                     const rowBg = isBack ? "bg-blue-300" : "bg-pink-300";
 
                     return (
