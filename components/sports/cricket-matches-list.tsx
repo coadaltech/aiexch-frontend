@@ -80,8 +80,8 @@ function useBetCounts(matchIds: string[]) {
       return (res.data?.data ?? {}) as Record<string, number>;
     },
     enabled: matchIds.length > 0,
-    staleTime: 30 * 1000,
-    refetchInterval: 30 * 1000,
+    staleTime: 5 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
   });
 }
 
@@ -129,8 +129,9 @@ function useMatchOdds(
       return map;
     },
     enabled: matches.length > 0,
-    staleTime: 30 * 1000,
-    refetchInterval: 30 * 1000,
+    staleTime: 0,
+    refetchInterval: 500,
+    refetchIntervalInBackground: false,
     placeholderData: (prev: Record<string, any> | undefined) => prev,
   });
 }
@@ -238,12 +239,18 @@ export function CricketMatchesList({
   maxMatches,
   emptyText,
   showHeader = true,
+  wrapper,
 }: {
   sport?: string;
   eventTypeId?: string;
   maxMatches?: number;
   emptyText?: string;
   showHeader?: boolean;
+  // When provided, the list renders its visible content inside `wrapper(...)`.
+  // If there are no visible matches the entire section (wrapper + content) is
+  // omitted — used on the homepage so sport sections with zero matches are
+  // hidden completely rather than rendering empty chrome.
+  wrapper?: (content: React.ReactNode) => React.ReactNode;
 }) {
   const { data: seriesData = [], isLoading: seriesLoading } =
     useSeries(eventTypeId);
@@ -387,38 +394,45 @@ export function CricketMatchesList({
     })
     .slice(0, maxMatches ?? undefined);
 
-  // Only show the skeleton on the very first visit (no cache yet) while the
-  // network requests are still outstanding. Once we have anything to render —
-  // live or cached — skip the skeleton entirely so the list feels instant.
   const hasAnythingToShow = visibleMatches.length > 0;
-  const stillFetchingFirstTime =
-    !hydrated || seriesLoading || (oddsLoading && Object.keys(marketMap).length === 0);
 
-  if (!hasAnythingToShow && stillFetchingFirstTime) {
-    return (
-      <div className="space-y-1">
-        {[...Array(Math.min(maxMatches ?? 4, 4))].map((_, i) => (
-          <div key={i} className="h-12 bg-gray-200 animate-pulse rounded-lg" />
-        ))}
-      </div>
-    );
-  }
+  // Homepage mode: caller passes a `wrapper`. Show nothing until there are
+  // matches with live odds — no skeleton, no empty chrome. When data arrives
+  // React re-renders and the section pops in automatically.
+  if (wrapper) {
+    if (!hasAnythingToShow) return null;
+  } else {
+    // Standalone mode (sport listing pages etc.): keep the previous behavior —
+    // skeleton on first fetch, empty state fallback.
+    const stillFetchingFirstTime =
+      !hydrated || seriesLoading || (oddsLoading && Object.keys(marketMap).length === 0);
 
-  if (!hasAnythingToShow) {
-    if (emptyText) {
+    if (!hasAnythingToShow && stillFetchingFirstTime) {
       return (
-        <div className="py-8 text-center">
-          <p className="text-gray-500 text-sm">{emptyText}</p>
-          <p className="text-gray-400 text-xs mt-1">
-            Check back later for live action.
-          </p>
+        <div className="space-y-1">
+          {[...Array(Math.min(maxMatches ?? 4, 4))].map((_, i) => (
+            <div key={i} className="h-12 bg-gray-200 animate-pulse rounded-lg" />
+          ))}
         </div>
       );
     }
-    return null;
+
+    if (!hasAnythingToShow) {
+      if (emptyText) {
+        return (
+          <div className="py-8 text-center">
+            <p className="text-gray-500 text-sm">{emptyText}</p>
+            <p className="text-gray-400 text-xs mt-1">
+              Check back later for live action.
+            </p>
+          </div>
+        );
+      }
+      return null;
+    }
   }
 
-  return (
+  const listBody = (
     <div className="w-full rounded-lg overflow-hidden shadow-sm">
       {showHeader && (
         <div className="flex items-center bg-gradient-to-r from-[#142969] to-[#1a3578] text-white text-[10px] sm:text-xs font-bold font-condensed tracking-wider">
@@ -442,4 +456,6 @@ export function CricketMatchesList({
       </div>
     </div>
   );
+
+  return wrapper ? <>{wrapper(listBody)}</> : listBody;
 }

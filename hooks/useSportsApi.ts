@@ -19,9 +19,9 @@ export const useSeries = (eventTypeId: string | null, enabled = true) => {
       return (res.data?.data ?? []) as any[];
     },
     enabled: enabled && !!eventTypeId,
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
-    refetchInterval: 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
     placeholderData: (prev: any[] | undefined) => prev,
   });
 };

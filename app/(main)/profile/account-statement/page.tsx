@@ -182,11 +182,11 @@ function BetDetailsModal({ row, onClose }: { row: any; onClose: () => void }) {
         <div className="flex items-center justify-between gap-3 px-4 py-2 bg-white border-b border-gray-200 shrink-0">
           <div className="flex flex-col">
             <p className="text-[15px] text-gray-800 font-medium truncate">{marketPath1}</p>
-               <p className="text-[15px] text-gray-800 font-medium truncate">{marketPath2}</p>
+               <p className="text-[15px] text-gray-800 font-medium ">{marketPath2}</p>
           </div>
           <div className="flex flex-col-reverse items-end gap-3 text-[14px] text-gray-500 whitespace-nowrap shrink-0">
             {winnerName && (
-              <p className="truncate max-w-[180px]">
+              <p className="">
                 <span className="font-semibold text-gray-700">Winner:</span>{" "}
                 <span className="font-semibold text-emerald-700">{winnerName}</span>
               </p>

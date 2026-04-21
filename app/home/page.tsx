@@ -291,56 +291,74 @@ const Homepage = () => {
       {/* <StatsBar /> */}
 
       {/* 5. Live Cricket Matches */}
-      <div className="mt-4">
-        <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-4 rounded-xl overflow-hidden border border-[#1e4088]/50">
-          <SectionHeader
-            title="CRICKET"
-            subtitle="Live & upcoming matches"
-            href="/sports/cricket"
-            icon={Trophy}
-            badge="LIVE"
-            oddsColumns
-          />
-          <div className="px-3 pb-3">
-            <CricketMatchesList sport="cricket" eventTypeId="4" maxMatches={6} emptyText="No matches right now" showHeader={false} />
+      <CricketMatchesList
+        sport="cricket"
+        eventTypeId="4"
+        maxMatches={6}
+        showHeader={false}
+        wrapper={(content) => (
+          <div className="mt-4">
+            <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-4 rounded-xl overflow-hidden border border-[#1e4088]/50">
+              <SectionHeader
+                title="CRICKET"
+                subtitle="Live & upcoming matches"
+                href="/sports/cricket"
+                icon={Trophy}
+                badge="LIVE"
+                oddsColumns
+              />
+              <div className="px-3 pb-3">{content}</div>
+            </div>
           </div>
-        </div>
-      </div>
+        )}
+      />
 
       {/* 5b. Football Matches */}
-      <div className="mt-4">
-        <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-4 rounded-xl overflow-hidden border border-[#1e4088]/50">
-          <SectionHeader
-            title="FOOTBALL"
-            subtitle="Live & upcoming matches"
-            href="/sports/soccer"
-            icon={Volleyball}
-            badge="LIVE"
-            oddsColumns
-          />
-          <div className="px-3 pb-3">
-            <CricketMatchesList sport="soccer" eventTypeId="1" maxMatches={6} emptyText="No matches right now" showHeader={false} />
+      <CricketMatchesList
+        sport="soccer"
+        eventTypeId="1"
+        maxMatches={6}
+        showHeader={false}
+        wrapper={(content) => (
+          <div className="mt-4">
+            <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-4 rounded-xl overflow-hidden border border-[#1e4088]/50">
+              <SectionHeader
+                title="FOOTBALL"
+                subtitle="Live & upcoming matches"
+                href="/sports/soccer"
+                icon={Volleyball}
+                badge="LIVE"
+                oddsColumns
+              />
+              <div className="px-3 pb-3">{content}</div>
+            </div>
           </div>
-        </div>
-      </div>
+        )}
+      />
 
       {/* 5c. Tennis Matches */}
       <LazyMount minHeight={320}>
-        <div className="mt-4">
-          <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-4 rounded-xl overflow-hidden border border-[#1e4088]/50">
-            <SectionHeader
-              title="TENNIS"
-              subtitle="Live & upcoming matches"
-              href="/sports/tennis"
-              icon={Target}
-              badge="LIVE"
-              oddsColumns
-            />
-            <div className="px-3 pb-3">
-              <CricketMatchesList sport="tennis" eventTypeId="2" maxMatches={6} emptyText="No matches right now" showHeader={false} />
+        <CricketMatchesList
+          sport="tennis"
+          eventTypeId="2"
+          maxMatches={6}
+          showHeader={false}
+          wrapper={(content) => (
+            <div className="mt-4">
+              <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-4 rounded-xl overflow-hidden border border-[#1e4088]/50">
+                <SectionHeader
+                  title="TENNIS"
+                  subtitle="Live & upcoming matches"
+                  href="/sports/tennis"
+                  icon={Target}
+                  badge="LIVE"
+                  oddsColumns
+                />
+                <div className="px-3 pb-3">{content}</div>
+              </div>
             </div>
-          </div>
-        </div>
+          )}
+        />
       </LazyMount>
 
       {/* 5d. Horse Racing
@@ -377,21 +395,27 @@ const Homepage = () => {
 
       {/* 5f. Politics */}
       <LazyMount minHeight={320}>
-        <div className="mt-4">
-          <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-4 rounded-xl overflow-hidden border border-[#1e4088]/50">
-            <SectionHeader
-              title="POLITICS"
-              subtitle="Live & upcoming markets"
-              href="/sports/politics"
-              icon={Flag}
-              badge="LIVE"
-              oddsColumns
-            />
-            <div className="px-3 pb-3">
-              <CricketMatchesList sport="politics" eventTypeId="500" maxMatches={6} emptyText="No markets right now" showHeader={false} />
+        <CricketMatchesList
+          sport="politics"
+          eventTypeId="500"
+          maxMatches={6}
+          showHeader={false}
+          wrapper={(content) => (
+            <div className="mt-4">
+              <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-4 rounded-xl overflow-hidden border border-[#1e4088]/50">
+                <SectionHeader
+                  title="POLITICS"
+                  subtitle="Live & upcoming markets"
+                  href="/sports/politics"
+                  icon={Flag}
+                  badge="LIVE"
+                  oddsColumns
+                />
+                <div className="px-3 pb-3">{content}</div>
+              </div>
             </div>
-          </div>
-        </div>
+          )}
+        />
       </LazyMount>
 
       {/* 6. Quick sport pills */}
