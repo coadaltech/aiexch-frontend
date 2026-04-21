@@ -21,7 +21,7 @@ export default function MatkaLivePredictionPage() {
     useMatkaDeclaredHistoryPublic(50);
 
   return (
-    <div className="flex flex-col h-full bg-gray-50">
+    <div className="flex flex-col  bg-gray-50">
       {/* Header */}
       <div className="bg-gradient-to-r from-[#142969] via-[#142669] to-[#1a3578] border-b border-[#1e4088]/40 px-4 py-3 flex items-center gap-3">
         <button
@@ -44,7 +44,7 @@ export default function MatkaLivePredictionPage() {
       </div>
 
       {/* Declared history list */}
-      <div className="flex-1 overflow-auto bg-white">
+      <div className="flex-1 overflow-auto bg-white ">
         <div className="sticky top-0 bg-[#e8edf5] text-[#142969] text-[11px] font-bold border-b border-gray-300 flex items-center">
           <History className="w-3 h-3 ml-3 mr-1.5" />
           <span className="flex-1 px-1 py-2">Previous Declared Numbers</span>

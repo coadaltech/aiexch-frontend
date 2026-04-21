@@ -1063,6 +1063,8 @@ export interface LivePredictionWhitelabelRow {
   name: string;
   sale: string;
   profit: string;
+  streak: number;
+  streak_type: number | null;
 }
 
 export interface AgentSaleRow {

@@ -1,12 +1,47 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useSeries } from "@/hooks/useSportsApi";
 import { sportsApi } from "@/lib/api";
 
 const EVENT_TYPE_CRICKET = "4";
+
+// Date window: today + next 2 days (3-day window) in IST.
+const DATE_WINDOW_DAYS = 3;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// localStorage-backed cache so the list paints instantly on repeat visits.
+// Events change slowly (new fixtures), odds change fast — separate TTLs.
+const EVENTS_CACHE_TTL_MS = 10 * 60 * 1000; // 10 min
+const ODDS_CACHE_TTL_MS = 2 * 60 * 1000; // 2 min
+
+type CachedEnvelope<T> = { data: T; savedAt: number };
+
+function readCache<T>(key: string, ttlMs: number): T | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as CachedEnvelope<T>;
+    if (!parsed || typeof parsed.savedAt !== "number") return null;
+    if (Date.now() - parsed.savedAt > ttlMs) return null;
+    return parsed.data;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache<T>(key: string, data: T) {
+  if (typeof window === "undefined") return;
+  try {
+    const envelope: CachedEnvelope<T> = { data, savedAt: Date.now() };
+    window.localStorage.setItem(key, JSON.stringify(envelope));
+  } catch {
+    // quota errors etc. — silently ignore, cache is best-effort
+  }
+}
 
 const formatToIST = (dateString: string | null): string => {
   if (!dateString) return "TBD";
@@ -213,22 +248,42 @@ export function CricketMatchesList({
   const { data: seriesData = [], isLoading: seriesLoading } =
     useSeries(eventTypeId);
 
-  // Start of today in IST (Asia/Kolkata = UTC+5:30).
-  // Events on today's date are included even if their time has already passed.
-  // Recomputed once per mount — fine, changes at most once per day.
-  const startOfTodayIST = useMemo(() => {
-    // "en-CA" gives YYYY-MM-DD format
+  // Cache keys scoped per event type so cricket/football/etc. don't collide.
+  const eventsCacheKey = `cml:events:v1:${eventTypeId}`;
+  const oddsCacheKey = `cml:odds:v1:${eventTypeId}`;
+
+  // Hydrate cached events/odds after mount (avoids SSR hydration mismatch).
+  // First paint may be empty on the very first visit; second paint (same tick
+  // on the client) renders with cached data — effectively instant.
+  const [cachedEvents, setCachedEvents] = useState<FlatMatch[] | null>(null);
+  const [cachedOddsMap, setCachedOddsMap] = useState<Record<string, any>>({});
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    const events = readCache<FlatMatch[]>(eventsCacheKey, EVENTS_CACHE_TTL_MS);
+    const odds = readCache<Record<string, any>>(oddsCacheKey, ODDS_CACHE_TTL_MS);
+    setCachedEvents(events);
+    setCachedOddsMap(odds ?? {});
+    setHydrated(true);
+  }, [eventsCacheKey, oddsCacheKey]);
+
+  // Date window: today 00:00 IST through end of (today + 2 days) IST.
+  // Recomputed once per mount — changes at most once per day.
+  const { startOfTodayIST, endOfWindowIST } = useMemo(() => {
     const todayStr = new Date().toLocaleDateString("en-CA", {
       timeZone: "Asia/Kolkata",
     });
-    // Parse as midnight IST
-    return new Date(`${todayStr}T00:00:00+05:30`).getTime();
+    const start = new Date(`${todayStr}T00:00:00+05:30`).getTime();
+    return {
+      startOfTodayIST: start,
+      endOfWindowIST: start + DATE_WINDOW_DAYS * DAY_MS,
+    };
   }, []);
 
   // Politics events often have old/fixed openDates — show them all.
   const isPolitics = eventTypeId === "500";
 
-  const allMatches: FlatMatch[] = useMemo(() => {
+  const liveMatches: FlatMatch[] = useMemo(() => {
     const matches: FlatMatch[] = [];
 
     for (const series of seriesData) {
@@ -245,7 +300,9 @@ export function CricketMatchesList({
 
         if (!isPolitics && openDate) {
           const t = new Date(openDate).getTime();
-          if (!isNaN(t) && t < startOfTodayIST) continue;
+          if (!isNaN(t) && (t < startOfTodayIST || t >= endOfWindowIST)) {
+            continue;
+          }
         }
 
         matches.push({
@@ -268,7 +325,16 @@ export function CricketMatchesList({
       const dateB = b.openDate ? new Date(b.openDate).getTime() : Infinity;
       return dateA - dateB;
     });
-  }, [seriesData, startOfTodayIST, isPolitics]);
+  }, [seriesData, startOfTodayIST, endOfWindowIST, isPolitics]);
+
+  // Persist live events once they arrive so the next visit paints instantly.
+  useEffect(() => {
+    if (liveMatches.length > 0) writeCache(eventsCacheKey, liveMatches);
+  }, [liveMatches, eventsCacheKey]);
+
+  // Prefer live data; fall back to cache so the list renders with no skeleton.
+  const allMatches: FlatMatch[] =
+    liveMatches.length > 0 ? liveMatches : cachedEvents ?? [];
 
   // Pre-slice candidates BEFORE firing per-match odds requests so we make at
   // most a bounded number of parallel calls per section instead of one per
@@ -290,21 +356,22 @@ export function CricketMatchesList({
 
   const matchIds = useMemo(() => oddsCandidates.map((m) => m.id), [oddsCandidates]);
 
-  const { data: marketMap = {}, isLoading: oddsLoading } = useMatchOdds(
+  const { data: liveMarketMap = {}, isLoading: oddsLoading } = useMatchOdds(
     oddsInput,
     eventTypeId
   );
   const { data: betCountMap = {} } = useBetCounts(matchIds);
 
-  if (seriesLoading || (oddsLoading && Object.keys(marketMap).length === 0)) {
-    return (
-      <div className="space-y-1">
-        {[...Array(Math.min(maxMatches ?? 4, 4))].map((_, i) => (
-          <div key={i} className="h-12 bg-gray-200 animate-pulse rounded-lg" />
-        ))}
-      </div>
-    );
-  }
+  // Persist live odds so repeat visits skip the odds round-trip on first paint.
+  useEffect(() => {
+    if (Object.keys(liveMarketMap).length > 0) {
+      writeCache(oddsCacheKey, liveMarketMap);
+    }
+  }, [liveMarketMap, oddsCacheKey]);
+
+  // Prefer live odds; fall back to cached odds for instant render.
+  const marketMap: Record<string, any> =
+    Object.keys(liveMarketMap).length > 0 ? liveMarketMap : cachedOddsMap;
 
   // Keep only events that actually have at least one real price, then cap
   // to maxMatches. Filtering first ensures the section fills up from the
@@ -320,7 +387,24 @@ export function CricketMatchesList({
     })
     .slice(0, maxMatches ?? undefined);
 
-  if (visibleMatches.length === 0) {
+  // Only show the skeleton on the very first visit (no cache yet) while the
+  // network requests are still outstanding. Once we have anything to render —
+  // live or cached — skip the skeleton entirely so the list feels instant.
+  const hasAnythingToShow = visibleMatches.length > 0;
+  const stillFetchingFirstTime =
+    !hydrated || seriesLoading || (oddsLoading && Object.keys(marketMap).length === 0);
+
+  if (!hasAnythingToShow && stillFetchingFirstTime) {
+    return (
+      <div className="space-y-1">
+        {[...Array(Math.min(maxMatches ?? 4, 4))].map((_, i) => (
+          <div key={i} className="h-12 bg-gray-200 animate-pulse rounded-lg" />
+        ))}
+      </div>
+    );
+  }
+
+  if (!hasAnythingToShow) {
     if (emptyText) {
       return (
         <div className="py-8 text-center">

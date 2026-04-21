@@ -65,6 +65,27 @@ export default function Header() {
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [sports, setSports] = useState<{ label: string; link: string }[]>([]);
   const userDropdownRef = useRef<HTMLDivElement>(null);
+  const userDropdownCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Hover open/close with a grace delay so the user can cross the gap between
+  // the trigger and the menu without it snapping shut.
+  const openUserDropdown = () => {
+    if (userDropdownCloseTimer.current) {
+      clearTimeout(userDropdownCloseTimer.current);
+      userDropdownCloseTimer.current = null;
+    }
+    setIsUserDropdownOpen(true);
+  };
+  const scheduleCloseUserDropdown = () => {
+    if (userDropdownCloseTimer.current) clearTimeout(userDropdownCloseTimer.current);
+    userDropdownCloseTimer.current = setTimeout(() => {
+      setIsUserDropdownOpen(false);
+      userDropdownCloseTimer.current = null;
+    }, 250);
+  };
+  useEffect(() => () => {
+    if (userDropdownCloseTimer.current) clearTimeout(userDropdownCloseTimer.current);
+  }, []);
   const { user, isLoggedIn, logout, isLoading } = useAuth();
   const { data: whitelabelInfo } = useWhitelabelInfo();
   const isB2C = String(whitelabelInfo?.whitelabelType ?? "").toUpperCase() === "B2C";
@@ -257,8 +278,8 @@ export default function Header() {
                     <div
                       ref={userDropdownRef}
                       className="relative"
-                      onMouseEnter={() => setIsUserDropdownOpen(true)}
-                      onMouseLeave={() => setIsUserDropdownOpen(false)}
+                      onMouseEnter={openUserDropdown}
+                      onMouseLeave={scheduleCloseUserDropdown}
                     >
                       <Button
                         size="sm"
@@ -280,7 +301,12 @@ export default function Header() {
 
                       {/* Dropdown Menu */}
                       {isUserDropdownOpen && (
-                        <div className="absolute right-0 top-full mt-1 w-48 sm:w-56 bg-[#142669] border border-[#1e4088] rounded-xl shadow-xl shadow-black/40 py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div
+                          onMouseEnter={openUserDropdown}
+                          onMouseLeave={scheduleCloseUserDropdown}
+                          className="absolute right-0 top-full pt-1 w-48 sm:w-56 z-50"
+                        >
+                          <div className="bg-[#142669] border border-[#1e4088] rounded-xl shadow-xl shadow-black/40 py-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
                           {/* User info header */}
                           <div className="px-3 py-2 border-b border-nav-btn/50">
                             <p className="text-sm font-semibold text-white truncate">
@@ -334,6 +360,7 @@ export default function Header() {
                               <LogOut className="h-4 w-4 flex-shrink-0" />
                               Logout
                             </button>
+                          </div>
                           </div>
                         </div>
                       )}

@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Trophy, Search, Clock, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { ChevronDown, Clock, Loader2, X } from "lucide-react";
 import {
   useOwnerMatkaShifts,
   useMatkaLivePrediction,
@@ -15,26 +13,25 @@ import {
 } from "@/hooks/useOwner";
 import { useAuth } from "@/contexts/AuthContext";
 import { JantriGridModal } from "./jantri-modal";
+import { Button } from "@/components/ui/button";
+
+const TEAL = "#1a6050";
+const TEAL_DARK = "#144840";
 
 const fmt = (v: string | number) => {
   const n = Number(v);
-  if (!Number.isFinite(n)) return "0";
-  return n.toFixed(0);
+  return Number.isFinite(n) ? Math.round(Math.abs(n)).toLocaleString("en-IN") : "0";
 };
 
+const fmtDate = (d?: string | null) =>
+  d
+    ? new Date(d).toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+    : "—";
 
-const fmtDate = (d?: string | null) => {
-  if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-};
-
-// Returns ms-to-main-jantri (negative once reached) plus a human-readable
-// countdown. A null shiftDate/mainJantriTime means the shift has no jantri
-// gate — allow declare immediately (`msLeft = 0`, `display = '—'`).
 function useMainJantriCountdown(
   shiftDate?: string | null,
   mainJantriTime?: string | null,
@@ -88,11 +85,11 @@ function useMainJantriCountdown(
 }
 
 export default function OwnerLivePredictionPage() {
+
   const { user: currentUser } = useAuth();
   const isOwner = String(currentUser?.role ?? "").toLowerCase() === "owner";
 
-  const { data: shifts = [], isLoading: shiftsLoading } =
-    useOwnerMatkaShifts();
+  const { data: shifts = [], isLoading: shiftsLoading } = useOwnerMatkaShifts();
   const [shiftId, setShiftId] = useState<string>("");
 
   useEffect(() => {
@@ -109,19 +106,35 @@ export default function OwnerLivePredictionPage() {
   const numbers = livePrediction?.numbers ?? [];
   const meta = livePrediction?.meta;
 
-  // Sort numbers by P/L descending (biggest profit first, biggest loss last).
+  const [amtDesc, setAmtDesc] = useState(true);
   const sortedNumbers = useMemo(
-    () => [...numbers].sort((a, b) => Number(b.profit) - Number(a.profit)),
-    [numbers]
+    () =>
+      [...numbers].sort((a, b) =>
+        amtDesc
+          ? Number(b.profit) - Number(a.profit)
+          : Number(a.profit) - Number(b.profit)
+      ),
+    [numbers, amtDesc]
   );
 
   const [selectedNum, setSelectedNum] = useState<number | null>(null);
   const { data: whitelabels = [], isLoading: wlLoading } =
     useMatkaLivePredictionWhitelabels(shiftId || null, selectedNum);
-
   const { data: agentSales = [], isLoading: agentSaleLoading } =
     useMatkaAgentSale(shiftId || null, selectedNum);
 
+  const [plAsc, setPlAsc] = useState(true);
+  const sortedWhitelabels = useMemo(
+    () =>
+      [...whitelabels].sort((a, b) =>
+        plAsc
+          ? Number(a.profit) - Number(b.profit)
+          : Number(b.profit) - Number(a.profit)
+      ),
+    [whitelabels, plAsc]
+  );
+
+  const [checked, setChecked] = useState<Set<string>>(new Set());
   const [resultInput, setResultInput] = useState("");
   const declareMutation = useDeclareMatkaResult();
   const { data: declaredHistory = [] } = useMatkaDeclaredHistory(50);
@@ -134,11 +147,15 @@ export default function OwnerLivePredictionPage() {
   const [earlyDeclareOpen, setEarlyDeclareOpen] = useState(false);
   const isDeclared = selectedShift?.shiftDate === "1970-01-01";
 
-  const handleDeclare = (e: React.FormEvent) => {
-    e.preventDefault();
+  const [jantriOpen, setJantriOpen] = useState(false);
+  const [selectedWl, setSelectedWl] =
+    useState<LivePredictionWhitelabelRow | null>(null);
+
+  const selectedRow = numbers.find((n) => n.nums === selectedNum);
+
+  const handleDeclare = () => {
     const n = parseInt(resultInput, 10);
     if (!shiftId || isNaN(n) || n < 0 || n > 100) return;
-    // Guard against declaring before main_jantri_time. Backend also enforces.
     if (jantri.msLeft > 0) {
       setEarlyDeclareOpen(true);
       return;
@@ -149,30 +166,17 @@ export default function OwnerLivePredictionPage() {
     );
   };
 
-  const [jantriOpen, setJantriOpen] = useState(false);
-  const [selectedWl, setSelectedWl] =
-    useState<LivePredictionWhitelabelRow | null>(null);
-
-  const selectedRow = selectedNum
-    ? numbers.find((n) => n.nums === selectedNum)
-    : undefined;
-  const summaryProfit = selectedRow?.profit ?? "0";
-  const summaryLabel = selectedRow
-    ? String(selectedRow.nums)
-    : selectedNum != null
-    ? String(selectedNum)
-    : null;
-
   return (
-    <div className="flex flex-col gap-3 h-[calc(100vh-80px)]">
-      {/* ─── Top bar: title + shift + date + search ─── */}
-      <div className="bg-card border border-border rounded-lg px-3 py-2 flex flex-wrap items-center gap-3">
-        <h1 className="text-base font-bold text-foreground mr-auto">
-          Live Prediction
-        </h1>
+    <div className="fixed top-14 left-0 lg:left-64 right-0 bottom-0 flex flex-col overflow-hidden bg-gray-200">
+      {/* ── Top header ── */}
+      <div
+        style={{ background: TEAL }}
+        className="flex items-center gap-3 px-4 py-2.5 text-white shrink-0 text-sm"
+      >
+        <span className="font-bold">Live Prediction</span>
 
-        <div className="flex items-center gap-1">
-          <label className="text-xs text-muted-foreground">Shift</label>
+        <span className="text-white/80 ml-3">Shift</span>
+        <div className="relative">
           <select
             value={shiftId}
             onChange={(e) => {
@@ -180,306 +184,279 @@ export default function OwnerLivePredictionPage() {
               setSelectedNum(null);
               setSelectedWl(null);
             }}
-            className="border border-border bg-card text-foreground rounded px-2 py-1 text-xs min-w-[140px] focus:outline-none focus:ring-1 focus:ring-primary"
+            className="appearance-none bg-white text-black text-sm rounded px-3 pr-8 py-1.5 min-w-[170px] border-0 outline-none cursor-pointer"
             disabled={shiftsLoading}
           >
-            {shifts.length === 0 ? (
-              <option value="">No shifts</option>
-            ) : (
-              shifts.map((s: any) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))
-            )}
+            {(shifts as any[]).map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
           </select>
+          <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
         </div>
 
-        <div className="flex items-center gap-1">
-          <label className="text-xs text-muted-foreground">Date</label>
-          <input
-            type="text"
-            readOnly
-            value={fmtDate(selectedShift?.shiftDate)}
-            className="border border-border bg-muted/40 text-foreground rounded px-2 py-1 text-xs w-[110px] cursor-not-allowed"
-          />
-        </div>
+        <span className="text-white/80">Date</span>
+        <input
+          readOnly
+          value={fmtDate(selectedShift?.shiftDate)}
+          className="bg-white text-black text-sm rounded px-3 py-1.5 w-32 border-0 outline-none"
+        />
 
         <div
-          className={`flex items-center gap-1 rounded border px-2 py-1 text-xs font-semibold ${
+          className={`flex items-center gap-1.5 ml-2 rounded px-2.5 py-1 text-xs font-semibold ${
             isDeclared
-              ? "border-amber-500/40 bg-amber-500/10 text-amber-700"
+              ? "bg-amber-500/20 text-amber-200"
               : jantri.msLeft > 0
-              ? "border-amber-500/40 bg-amber-500/10 text-amber-700"
-              : "border-emerald-500/40 bg-emerald-500/10 text-emerald-700"
+              ? "bg-amber-500/20 text-amber-200"
+              : "bg-emerald-500/20 text-emerald-200"
           }`}
-          title="Time until main jantri (declare becomes available)"
+          title="Time until main jantri"
         >
           <Clock className="h-3.5 w-3.5" />
           {isDeclared ? (
             <span>Declared</span>
           ) : !selectedShift?.mainJantriTime ? (
-            <span>No jantri time set</span>
+            <span>No jantri time</span>
           ) : jantri.msLeft > 0 ? (
-            <span>Main Jantri in {jantri.display}</span>
+            <span>Jantri in {jantri.display}</span>
           ) : (
-            <span>Main Jantri {jantri.display}</span>
+            <span>Jantri {jantri.display}</span>
           )}
         </div>
 
-        <Button
-          size="sm"
-          className="h-7 px-3 bg-emerald-600 hover:bg-emerald-700 text-white"
-        >
-          <Search className="h-3.5 w-3.5 mr-1" />
+        <button className="ml-auto bg-[#22c55e] hover:bg-[#16a34a] transition-colors text-white text-sm font-bold px-7 py-1.5 rounded">
           Search
-        </Button>
+        </button>
       </div>
 
-      {/* ─── Main: numbers list + party breakdown + agent group + declare column ─── */}
-      <div className="grid grid-cols-[260px_minmax(0,1fr)_220px_240px] gap-2 flex-1 min-h-0">
-        {/* Numbers list */}
-        <div className="bg-card border border-border rounded-lg overflow-hidden flex flex-col">
+      {/* ── Four panels ── */}
+      <div className="flex items-stretch flex-1 gap-0.5 p-1 min-h-0 overflow-x-auto overflow-y-hidden">
+
+        {/* Panel 1 — Numbers / Result 30 Days */}
+        <div
+          className="flex flex-col bg-white border border-gray-300 rounded overflow-hidden text-sm shrink-0"
+          style={{ width: 320 }}
+        >
           {meta && (meta.txCount === 0 || meta.commCount === 0) && (
-            <div className="text-[11px] text-amber-700 bg-amber-500/10 border-b border-amber-500/30 px-2 py-1">
-              txns: <b>{meta.txCount}</b> · commission rows for this owner:{" "}
-              <b>{meta.commCount}</b>
-              {meta.txCount > 0 && meta.commCount === 0 &&
-                " — bets exist but not attributed to this owner."}
+            <div className="text-[10px] text-amber-700 bg-amber-50 border-b border-amber-200 px-2 py-1">
+              txns: <b>{meta.txCount}</b> · comm: <b>{meta.commCount}</b>
             </div>
           )}
-          {gridLoading ? (
-            <div className="flex items-center justify-center py-10 text-muted-foreground">
-              <Loader2 className="h-5 w-5 animate-spin mr-2" /> Loading…
+          {/* Header */}
+          <div
+            className="flex shrink-0 text-white text-xs font-semibold"
+            style={{ background: TEAL }}
+          >
+            <div className="w-10 py-2 text-center border-r border-white/20 shrink-0 leading-tight text-[11px]">
+              Result<br />30 Days
             </div>
-          ) : (
-            <div className="overflow-y-auto flex-1">
-              <table className="w-full text-xs">
-                <thead className="sticky top-0 bg-emerald-600 text-white z-10">
-                  <tr>
-                    <th className="px-2 py-1.5 font-semibold text-left w-14">
-                      Result
-                      <br />
-                      Number
-                    </th>
-                    <th className="px-2 py-1.5 font-semibold text-left w-14">
-                      Number
-                    </th>
-                    <th className="px-2 py-1.5 font-semibold text-right">
-                      Sale
-                    </th>
-                    <th className="px-2 py-1.5 font-semibold text-right">
-                      Amt P/L
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedNumbers.map((row) => {
-                    const profit = Number(row.profit);
-                    const isSelected = row.nums === selectedNum;
-                    return (
-                      <tr
-                        key={row.nums}
-                        onClick={() => setSelectedNum(row.nums)}
-                        className={`cursor-pointer border-t border-border/60 hover:bg-accent/30 ${
-                          isSelected ? "bg-primary/10" : ""
-                        }`}
-                      >
-                        <td className="px-2 py-1 text-center">
-                          <span className="inline-flex items-center justify-center min-w-[26px] h-5 rounded bg-emerald-500/15 text-emerald-700 font-semibold">
-                            {row.declared_count ?? 0}
-                          </span>
-                        </td>
-                        <td className="px-2 py-1 font-semibold text-foreground">
-                          {row.nums}
-                        </td>
-                        <td className="px-2 py-1 text-right tabular-nums text-foreground">
-                          {fmt(row.sale)}
-                        </td>
-                        <td
-                          className={`px-2 py-1 text-right tabular-nums font-semibold ${
-                            profit >= 0 ? "text-emerald-600" : "text-rose-600"
-                          }`}
-                        >
-                          {profit >= 0 ? "" : "-"}
-                          {Math.abs(profit).toFixed(0)}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div className="flex-1 py-2 text-center border-r border-white/20">Number</div>
+            <div className="flex-1 py-2 text-center border-r border-white/20">Sale</div>
+            <div
+              className="flex-1 py-2 text-center cursor-pointer select-none"
+              onClick={() => setAmtDesc((d) => !d)}
+            >
+              Amt {amtDesc ? "↓" : "↑"}
             </div>
-          )}
+          </div>
+          {/* Rows */}
+          <div className="overflow-y-auto flex-1">
+            {gridLoading ? (
+              <div className="flex items-center justify-center py-10 text-gray-400">
+                <Loader2 className="h-4 w-4 animate-spin mr-2" /> Loading…
+              </div>
+            ) : (
+              sortedNumbers.map((row) => (
+                <div
+                  key={row.nums}
+                  onClick={() => setSelectedNum(row.nums)}
+                  className={`flex items-center border-b border-gray-100 cursor-pointer hover:bg-gray-50 ${
+                    row.nums === selectedNum ? "bg-teal-50" : ""
+                  }`}
+                >
+                  <div className="w-10 py-1.5 flex items-center justify-center shrink-0">
+                    {(row.declared_count ?? 0) > 0 && (
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-[#22c55e] text-white font-bold text-[11px]">
+                        {row.declared_count}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex-1 py-1.5 text-center font-semibold text-gray-800">
+                    {row.nums}
+                  </div>
+                  <div className="flex-1 py-1.5 text-center text-gray-600">
+                    {fmt(row.sale)}
+                  </div>
+                  <div className={`flex-1 py-1.5 text-center font-semibold ${Number(row.profit) >= 0 ? "text-[#22c55e]" : "text-red-500"}`}>
+                    {Number(row.profit) < 0 ? "-" : ""}{fmt(row.profit)}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
 
-        {/* Party breakdown */}
-        <div className="bg-card border border-border rounded-lg overflow-hidden flex flex-col">
-          <div className="overflow-y-auto flex-1 min-h-0">
-            <table className="w-full text-xs">
-              <thead className="sticky top-0 bg-emerald-600 text-white z-10">
-                <tr>
-                  <th className="px-2 py-1.5 font-semibold text-left">Party</th>
-                  <th className="px-2 py-1.5 font-semibold text-right w-20">
-                    Sale
-                  </th>
-                  <th className="px-2 py-1.5 font-semibold text-right w-20">
-                    P&amp;L
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {selectedNum == null ? (
-                  <tr>
-                    <td
-                      colSpan={3}
-                      className="px-3 py-10 text-center text-muted-foreground"
-                    >
-                      Select a number on the left to see the party breakdown.
-                    </td>
-                  </tr>
-                ) : wlLoading ? (
-                  <tr>
-                    <td colSpan={3} className="px-3 py-10 text-center">
-                      <span className="inline-flex items-center text-muted-foreground">
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        Loading…
-                      </span>
-                    </td>
-                  </tr>
-                ) : whitelabels.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={3}
-                      className="px-3 py-10 text-center text-muted-foreground"
-                    >
-                      No bets placed on this number.
-                    </td>
-                  </tr>
-                ) : (
-                  whitelabels.map((wl) => {
-                    const profit = Number(wl.profit);
-                    const isSel = selectedWl?.user_id === wl.user_id;
-                    return (
-                      <tr
-                        key={wl.user_id}
-                        onClick={() => setSelectedWl(wl)}
-                        className={`cursor-pointer border-t border-border/60 hover:bg-accent/30 ${
-                          isSel ? "bg-primary/10" : ""
-                        }`}
-                      >
-                        <td className="px-2 py-1 font-medium text-foreground truncate max-w-0 uppercase">
-                          {wl.name}
-                        </td>
-                        <td className="px-2 py-1 text-right tabular-nums text-foreground">
-                          {fmt(wl.sale)}
-                        </td>
-                        <td
-                          className={`px-2 py-1 text-right tabular-nums font-semibold ${
-                            profit >= 0 ? "text-emerald-600" : "text-rose-600"
-                          }`}
-                        >
-                          {profit >= 0 ? "" : "-"}
-                          {Math.abs(profit).toFixed(0)}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+        {/* Panel 2 — Party breakdown */}
+        <div className="flex flex-col bg-white border border-gray-300 rounded overflow-hidden text-sm flex-1 min-w-0">
+          {/* Header */}
+          <div
+            className="flex items-stretch shrink-0 text-white text-xs font-semibold"
+            style={{ background: TEAL }}
+          >
+            <div className="w-8 py-2 text-center border-r border-white/20 shrink-0">Sr</div>
+            <div className="w-8 py-2 flex items-center justify-center border-r border-white/20 shrink-0">
+              <input type="checkbox" className="w-3 h-3 cursor-pointer" />
+            </div>
+            <div className="flex-1 py-2 px-2 text-left border-r border-white/20">Party</div>
+            <div className="w-[84px] py-2 text-center border-r border-white/20 shrink-0">Sale</div>
+            <div
+              className="w-[100px] py-2 text-center border-r border-white/20 cursor-pointer select-none shrink-0"
+              onClick={() => setPlAsc((a) => !a)}
+            >
+              P & L {plAsc ? "↑" : "↓"}
+            </div>
+            <div className="w-[84px] py-2 text-center shrink-0">Last-Win</div>
           </div>
-
-          {/* Bottom bar: selected-number summary + Jantri button */}
-          <div className="flex items-center justify-between gap-3 border-t border-border bg-muted/40 px-3 py-2">
-            <div className="text-xs">
-              {selectedNum != null ? (
-                <>
-                  <span className="text-muted-foreground">Number:</span>{" "}
-                  <span className="font-bold text-foreground">
-                    {summaryLabel}
-                  </span>
-                  <span className="mx-2 text-muted-foreground">|</span>
-                  <span className="text-muted-foreground">Profit:</span>{" "}
-                  <span
-                    className={`font-bold ${
-                      Number(summaryProfit) >= 0
-                        ? "text-emerald-600"
-                        : "text-rose-600"
+          {/* Rows */}
+          <div className="overflow-y-auto flex-1">
+            {selectedNum == null ? (
+              <div className="py-10 text-center text-gray-400 text-[11px]">
+                Select a number to see party breakdown.
+              </div>
+            ) : wlLoading ? (
+              <div className="flex items-center justify-center py-10 text-gray-400">
+                <Loader2 className="h-4 w-4 animate-spin mr-2" /> Loading…
+              </div>
+            ) : sortedWhitelabels.length === 0 ? (
+              <div className="py-10 text-center text-gray-400 text-[11px]">
+                No bets placed on this number.
+              </div>
+            ) : (
+              sortedWhitelabels.map((wl, i) => {
+                const profit = Number(wl.profit);
+                return (
+                  <div
+                    key={wl.user_id}
+                    onClick={() => setSelectedWl(wl)}
+                    className={`flex items-center border-b border-gray-100 cursor-pointer hover:bg-gray-50 ${
+                      selectedWl?.user_id === wl.user_id ? "bg-teal-50" : ""
                     }`}
                   >
-                    {fmt(summaryProfit)}
-                  </span>
-                </>
-              ) : (
-                <span className="text-muted-foreground">
-                  Select a number to see summary
-                </span>
-              )}
-            </div>
-            <Button
-              size="sm"
+                    <div className="w-8 py-2 text-center text-gray-400 shrink-0">
+                      {i + 1}.
+                    </div>
+                    <div className="w-8 py-2 flex items-center justify-center shrink-0">
+                      <input
+                        type="checkbox"
+                        className="w-3 h-3 cursor-pointer"
+                        checked={checked.has(wl.user_id)}
+                        onChange={(e) => {
+                          const s = new Set(checked);
+                          e.target.checked ? s.add(wl.user_id) : s.delete(wl.user_id);
+                          setChecked(s);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                    <div className="flex-1 py-2 px-2 font-medium text-gray-800 uppercase truncate">
+                      {wl.name}
+                    </div>
+                    <div className="w-[84px] py-2 text-center text-gray-600 shrink-0">
+                      {fmt(wl.sale)}
+                    </div>
+                    <div
+                      className={`w-[100px] py-2 text-center font-semibold shrink-0 ${
+                        profit >= 0 ? "text-[#22c55e]" : "text-red-500"
+                      }`}
+                    >
+                      {profit < 0 ? "-" : ""}
+                      {fmt(Math.abs(profit))}
+                    </div>
+                    <div className="w-[84px] py-2 text-center shrink-0">
+                      {wl.streak > 0 && wl.streak_type != null && (
+                        <span
+                          title={
+                            wl.streak_type === 1
+                              ? `Won ${wl.streak} in a row`
+                              : `Lost ${wl.streak} in a row`
+                          }
+                          className={`inline-flex items-center justify-center min-w-5 h-5 px-1 rounded font-bold text-[10px] text-white ${
+                            wl.streak_type === 1
+                              ? "bg-[#22c55e]"
+                              : "bg-red-500"
+                          }`}
+                        >
+                          {wl.streak_type === 1 ? "W" : "L"}
+                          {wl.streak}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+          {/* Footer bar */}
+          <div
+            className="flex items-center justify-between px-4 py-2 shrink-0 text-white font-bold text-sm"
+            style={{ background: TEAL }}
+          >
+            <span>
+              Number: {selectedNum ?? "—"} | Profit:{" "}
+              {selectedRow ? fmt(selectedRow.profit) : "—"}
+            </span>
+            <button
               onClick={() => setJantriOpen(true)}
               disabled={!shiftId}
-              className="h-7 px-3 bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="bg-[#22c55e] hover:bg-[#16a34a] disabled:opacity-50 transition-colors text-white text-xs font-bold px-5 py-1.5 rounded"
             >
               Jantri
-            </Button>
+            </button>
           </div>
         </div>
 
-        {/* Agent Group */}
-        <div className="bg-card border border-border rounded-lg overflow-hidden flex flex-col">
-          <div className="overflow-y-auto flex-1 min-h-0">
+        {/* Panel 3 — Agent Groups */}
+        <div
+          className="flex flex-col bg-white border border-gray-300 rounded overflow-hidden text-sm shrink-0"
+          style={{ width: 240 }}
+        >
+          <div className="overflow-y-auto flex-1">
             <table className="w-full text-xs">
-              <thead className="sticky top-0 bg-emerald-600 text-white z-10">
-                <tr>
-                  <th className="px-2 py-1.5 font-semibold text-left">
-                    Agent Groups
-                  </th>
-                  <th className="px-2 py-1.5 font-semibold text-right w-20">
-                    Sale
-                  </th>
+              <thead className="sticky top-0 z-10" style={{ background: TEAL }}>
+                <tr className="text-white">
+                  <th className="px-2 py-2 font-semibold text-left">Agent Groups</th>
+                  <th className="px-2 py-2 font-semibold text-right w-16">Sale</th>
                 </tr>
               </thead>
               <tbody>
                 {selectedNum == null ? (
                   <tr>
-                    <td
-                      colSpan={2}
-                      className="px-3 py-10 text-center text-muted-foreground"
-                    >
+                    <td colSpan={2} className="px-3 py-10 text-center text-gray-400">
                       Select a number to see agent groups.
                     </td>
                   </tr>
                 ) : agentSaleLoading ? (
                   <tr>
-                    <td colSpan={2} className="px-3 py-10 text-center">
-                      <span className="inline-flex items-center text-muted-foreground">
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        Loading…
+                    <td colSpan={2} className="px-3 py-10 text-center text-gray-400">
+                      <span className="inline-flex items-center">
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" /> Loading…
                       </span>
                     </td>
                   </tr>
                 ) : agentSales.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan={2}
-                      className="px-3 py-10 text-center text-muted-foreground"
-                    >
-                      No agent sales for this number.
+                    <td colSpan={2} className="px-3 py-10 text-center text-gray-400">
+                      No agent sales.
                     </td>
                   </tr>
                 ) : (
                   agentSales.map((ag) => (
-                    <tr
-                      key={ag.whitelabel_id}
-                      className="border-t border-border/60 hover:bg-accent/30"
-                    >
-                      <td className="px-2 py-1 font-medium text-foreground truncate max-w-0 uppercase">
+                    <tr key={ag.whitelabel_id} className="border-t border-gray-100 hover:bg-gray-50">
+                      <td className="px-2 py-1.5 font-medium text-gray-800 uppercase truncate max-w-0">
                         {ag.name}
                       </td>
-                      <td className="px-2 py-1 text-right tabular-nums font-semibold text-foreground">
+                      <td className="px-2 py-1.5 text-right tabular-nums font-semibold text-gray-700">
                         {fmt(ag.amount)}
                       </td>
                     </tr>
@@ -490,104 +467,99 @@ export default function OwnerLivePredictionPage() {
           </div>
         </div>
 
-        {/* Right column: (owner-only) Declare panel, then Previous Declared list */}
-        <div className="flex flex-col gap-3">
-          {isOwner && (
-            <div className="bg-card border border-border rounded-lg p-3">
-              <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
-                <Trophy className="h-4 w-4 text-amber-500" />
-                Declare Result
-              </h3>
-              <form onSubmit={handleDeclare} className="flex items-end gap-2">
-                <div className="flex-1">
-                  <label className="block text-[11px] font-medium text-muted-foreground mb-1">
-                    Winning Number (0–100)
-                  </label>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={100}
-                    value={resultInput}
-                    onChange={(e) => setResultInput(e.target.value)}
-                    placeholder="Enter number"
-                    className="h-8 text-center font-bold"
-                  />
+        {/* Panel 4 — Declare */}
+        <div
+          className="flex flex-col bg-white border border-gray-300 rounded overflow-hidden text-sm shrink-0"
+          style={{ width: 265 }}
+        >
+          {/* Number input + Declare button */}
+          <div
+            className="flex items-center gap-2 px-2 py-2 shrink-0"
+            style={{ background: TEAL }}
+          >
+            <input
+              type="number"
+              min={0}
+              max={100}
+              value={resultInput}
+              onChange={(e) => setResultInput(e.target.value)}
+              placeholder="Number"
+              className="flex-1 min-w-0 bg-white text-black text-sm rounded px-2 py-1 border-0 outline-none"
+              disabled={!isOwner || isDeclared}
+            />
+            <button
+              onClick={handleDeclare}
+              disabled={
+                !isOwner ||
+                !shiftId ||
+                !resultInput ||
+                declareMutation.isPending ||
+                isDeclared
+              }
+              style={{ background: TEAL_DARK }}
+              className="shrink-0 border border-white/40 hover:border-white/70 disabled:opacity-50 text-white text-xs font-bold px-3 py-1.5 rounded transition-colors"
+            >
+              {declareMutation.isPending ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                "Declare"
+              )}
+            </button>
+          </div>
+          {/* Sub-header */}
+          <div
+            className="flex text-white text-xs font-semibold shrink-0"
+            style={{ background: TEAL }}
+          >
+            <div className="flex-1 px-3 py-1.5 border-t border-white/20">Result</div>
+            <div className="w-[88px] py-1.5 text-center border-t border-l border-white/20 shrink-0">
+              Action
+            </div>
+            {/* <div className="w-[88px] py-1.5 text-center border-t border-l border-white/20 shrink-0">
+              Action
+            </div> */}
+          </div>
+          {/* History rows */}
+          <div className="overflow-y-auto flex-1">
+            {declaredHistory.length === 0 ? (
+              <div className="py-10 text-center text-gray-400 text-[11px]">
+                No declarations yet.
+              </div>
+            ) : (
+              declaredHistory.map((h) => (
+                <div key={h.id} className="flex items-center border-b border-gray-100 py-1">
+                  <div className="flex-1 px-3">
+                    <div className="font-bold text-sm text-gray-800">{h.runs}</div>
+                    <div className="text-[10px] text-gray-400">{fmtDate(h.declared_at)}</div>
+                  </div>
+                  <div className="w-[88px] px-1 shrink-0">
+                    <button
+                      disabled={!isOwner}
+                      onClick={() => {
+                        if (!h.shift_id) return;
+                        const n = parseInt(resultInput, 10);
+                        if (isNaN(n)) return;
+                        declareMutation.mutate(
+                          { shiftId: h.shift_id, result: n },
+                          { onSuccess: () => setResultInput("") }
+                        );
+                      }}
+                      className="w-full bg-gray-400 hover:bg-gray-500 disabled:opacity-50 transition-colors text-white text-[10px] font-medium py-1.5 rounded"
+                    >
+                      ReDeclare
+                    </button>
+                  </div>
+                  {/* <div className="w-[88px] px-1 shrink-0">
+                    <button
+                      disabled={!isOwner}
+                      className="w-full bg-[#1e40af] hover:bg-[#1d3ba1] disabled:opacity-50 transition-colors text-white text-[10px] font-medium py-1.5 rounded"
+                    >
+                      UnDeclare
+                    </button>
+                  </div> */}
                 </div>
-                <Button
-                  type="submit"
-                  disabled={
-                    !shiftId ||
-                    !resultInput ||
-                    declareMutation.isPending ||
-                    isDeclared
-                  }
-                  className="h-8 px-3 bg-amber-600 hover:bg-amber-700 text-white"
-                >
-                  {declareMutation.isPending && (
-                    <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
-                  )}
-                  Declare
-                </Button>
-              </form>
-              {isDeclared && (
-                <p className="mt-2 text-[11px] text-amber-600">
-                  Result already declared for this shift.
-                </p>
-              )}
-              {!isDeclared && jantri.msLeft > 0 && (
-                <p className="mt-2 text-[11px] text-muted-foreground">
-                  Declare unlocks in{" "}
-                  <span className="font-semibold text-amber-600">
-                    {jantri.display}
-                  </span>
-                </p>
-              )}
-            </div>
-          )}
-
-          <div className="bg-card border border-border rounded-lg overflow-hidden flex-1 flex flex-col min-h-0">
-            <div className="bg-emerald-600 text-white px-3 py-1.5 text-xs font-semibold shrink-0">
-              Previous Declared Numbers
-            </div>
-            <div className="overflow-y-auto flex-1 min-h-0">
-              <table className="w-full text-xs">
-                <thead className="sticky top-0 bg-muted/70 backdrop-blur">
-                  <tr className="text-left text-muted-foreground">
-                    <th className="px-2 py-1 font-semibold">Date</th>
-                    <th className="px-2 py-1 font-semibold text-right">
-                      Number
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {declaredHistory.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={2}
-                        className="px-2 py-5 text-center text-muted-foreground"
-                      >
-                        No previous declarations.
-                      </td>
-                    </tr>
-                  ) : (
-                    declaredHistory.map((h) => (
-                      <tr key={h.id} className="border-t border-border/60">
-                        <td className="px-2 py-1 text-foreground">
-                          {new Date(h.declared_at).toLocaleDateString("en-IN", {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
-                          })}
-                        </td>
-                        <td className="px-2 py-1 text-right font-semibold text-foreground">
-                          {h.runs}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+              ))
+            )}
           </div>
         </div>
       </div>
@@ -596,7 +568,7 @@ export default function OwnerLivePredictionPage() {
         open={jantriOpen}
         onClose={() => setJantriOpen(false)}
         shiftId={shiftId || null}
-        whitelabelId="all"
+        whitelabelId={selectedWl?.user_id ?? "all"}
         whitelabelName={selectedWl?.name ?? "All"}
       />
 
@@ -619,7 +591,6 @@ export default function OwnerLivePredictionPage() {
               <button
                 onClick={() => setEarlyDeclareOpen(false)}
                 className="text-muted-foreground hover:text-foreground"
-                aria-label="Close"
               >
                 <X className="h-4 w-4" />
               </button>

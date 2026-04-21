@@ -194,9 +194,16 @@ export default function OwnerAccountStatement() {
                       const typeCfg = getTypeLabel(row.voucher_type != null ? Number(row.voucher_type) : null);
 
                       const eventParts = [row.remarks2, row.remarks3].filter(Boolean);
-                      const descLabel  = eventParts.length
+                      const baseDesc = eventParts.length
                         ? eventParts.join(" · ")
                         : row.description || row.remarks1 || row.remarks || row.method || typeCfg.label;
+
+                      // Append settled winner (or bhav for fancy) in square brackets.
+                      const rowIsFancy = Number(row.result_market_type) === 4;
+                      const winnerTag  = rowIsFancy
+                        ? (row.winner_runs != null ? String(row.winner_runs) : null)
+                        : (row.winner_name || null);
+                      const descLabel  = winnerTag ? `${baseDesc} [${winnerTag}]` : baseDesc;
 
                       const partyLabel = isOwner
                         ? (row.whitelabel_name || "—")

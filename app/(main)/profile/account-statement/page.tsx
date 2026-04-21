@@ -22,14 +22,14 @@ function BetLogModal({ bet, onClose }: { bet: any; onClose: () => void }) {
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div className="bg-white rounded-lg shadow-2xl w-full max-w-md flex flex-col" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-2 bg-[#142969] rounded-t-lg">
-          <p className="text-white font-semibold text-sm">Transaction Log Details</p>
+          <p className="text-white font-semibold text-lg">Transaction Log Details</p>
           <button onClick={onClose} className="p-1 rounded hover:bg-white/20 text-white">
             <X className="w-4 h-4" />
           </button>
         </div>
         <div className="p-4 space-y-2 max-h-[60vh] overflow-auto">
           {rows.map((r) => (
-            <div key={r.label} className="flex items-start gap-2 text-[13px]">
+            <div key={r.label} className="flex items-start gap-2 text-[15px]">
               <span className="text-gray-500 font-semibold min-w-[100px] shrink-0">{r.label}:</span>
               <span className="text-gray-800 break-all">{r.value || "—"}</span>
             </div>
@@ -94,7 +94,14 @@ function BetDetailsModal({ row, onClose }: { row: any; onClose: () => void }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   // Market path (like "Cricket » IPL » RR v MI » Over by Over")
-  const marketPath = [row.remarks1, row.remarks2, row.remarks3]
+  const marketPath1 = [row.remarks1, row.remarks2]
+    .filter(Boolean)
+    .join(" » ")
+    || row.description
+    || "Settlement Details";
+
+      // Market path (like "Cricket » IPL » RR v MI » Over by Over")
+  const marketPath2 = [row.remarks3]
     .filter(Boolean)
     .join(" » ")
     || row.description
@@ -151,24 +158,43 @@ function BetDetailsModal({ row, onClose }: { row: any; onClose: () => void }) {
   // Game time — prefer declared_at / settled_at
   const gameTime = row.settled_at || uniqueBets[0]?.settled_at || uniqueBets[0]?.declared_at || row.voucher_date;
 
+  // Winner (from market_results joined inside the SQL function) — same across all bets.
+  // Fancy (market_type = 4) has no runner winner, the declared "runs" (bhav) is the result.
+  const resultBet = uniqueBets.find((b) => b?.winner_name || b?.runs != null) ?? null;
+  const isFancy   = Number(resultBet?.market_type) === 4;
+  const winnerName = isFancy
+    ? (resultBet?.runs != null ? String(resultBet.runs) : null)
+    : (resultBet?.winner_name ?? null);
+
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-2 sm:p-4" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-5xl max-h-[95vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
 
         {/* Header — dark blue bar with "Details" */}
         <div className="flex items-center justify-between px-4 py-2 bg-[#142969] rounded-t-lg shrink-0">
-          <p className="text-white font-semibold text-base">Details</p>
+          <p className="text-white font-semibold text-xl">Details</p>
           <button onClick={onClose} className="p-1 rounded hover:bg-white/20 text-white shrink-0">
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Info bar — market path left, game time right */}
+        {/* Info bar — market path left, winner + game time right */}
         <div className="flex items-center justify-between gap-3 px-4 py-2 bg-white border-b border-gray-200 shrink-0">
-          <p className="text-[13px] text-gray-800 font-medium truncate">{marketPath}</p>
-          <p className="text-[12px] text-gray-500 whitespace-nowrap">
-            <span className="font-semibold text-gray-700">Game Time:</span> {formatDate(gameTime)}
-          </p>
+          <div className="flex flex-col">
+            <p className="text-[15px] text-gray-800 font-medium truncate">{marketPath1}</p>
+               <p className="text-[15px] text-gray-800 font-medium truncate">{marketPath2}</p>
+          </div>
+          <div className="flex flex-col-reverse items-end gap-3 text-[14px] text-gray-500 whitespace-nowrap shrink-0">
+            {winnerName && (
+              <p className="truncate max-w-[180px]">
+                <span className="font-semibold text-gray-700">Winner:</span>{" "}
+                <span className="font-semibold text-emerald-700">{winnerName}</span>
+              </p>
+            )}
+            <p>
+              <span className="font-semibold text-gray-700">Game Time:</span> {formatDate(gameTime)}
+            </p>
+          </div>
         </div>
 
         {/* Stats + Filter row */}
@@ -179,7 +205,7 @@ function BetDetailsModal({ row, onClose }: { row: any; onClose: () => void }) {
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`text-[13px] font-bold px-3 py-1 rounded capitalize transition-colors ${
+                className={`text-[15px] font-bold px-3 py-1.5 rounded capitalize transition-colors ${
                   filter === f
                     ? f === "back" ? "bg-blue-300 text-gray-800"
                     : f === "lay"  ? "bg-pink-300 text-gray-800"
@@ -192,19 +218,19 @@ function BetDetailsModal({ row, onClose }: { row: any; onClose: () => void }) {
             ))}
             <button
               onClick={() => setFilter("deleted")}
-              className={`text-[13px] font-bold px-3 py-1 rounded transition-colors flex items-center gap-1 ${
+              className={`text-[15px] font-bold px-3 py-1.5 rounded transition-colors flex items-center gap-1 ${
                 filter === "deleted"
                   ? "bg-rose-600 text-white"
                   : "bg-white text-gray-600 border border-gray-200 hover:border-gray-300"
               }`}
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash2 className="w-4 h-4" />
               Deleted
             </button>
           </div>
 
           {/* Stats — reflect selected checkboxes when any are checked */}
-          <div className="flex items-center gap-4 text-[13px]">
+          <div className="flex items-center gap-4 text-[15px]">
             <span><span className="text-gray-500">Total Bets:</span> <span className="font-bold text-gray-800">{statsBets.length}</span></span>
             <span><span className="text-gray-500">P&L:</span> <span className={`font-bold ${statsPnl > 0 ? "text-emerald-700" : statsPnl < 0 ? "text-rose-700" : "text-gray-500"}`}>{statsPnl > 0 ? `+${fmt(statsPnl)}` : statsPnl < 0 ? `-${fmt(Math.abs(statsPnl))}` : "0.00"}</span></span>
           </div>
@@ -238,9 +264,9 @@ function BetDetailsModal({ row, onClose }: { row: any; onClose: () => void }) {
           )}
 
           {!isLoading && filtered.length > 0 && (
-            <table className="w-full text-sm border-collapse">
+            <table className="w-full text-[16px] border-collapse">
               <thead>
-                <tr className="bg-gray-100 text-gray-600 text-[12px] uppercase border-b border-gray-200">
+                <tr className="bg-gray-100 text-gray-600 text-[14px] uppercase border-b border-gray-200">
                   <th className="px-3 py-2 text-left font-semibold">Nation</th>
                   <th className="px-3 py-2 text-right font-semibold">Rate</th>
                   <th className="px-3 py-2 text-right font-semibold">Bhav</th>
@@ -264,7 +290,7 @@ function BetDetailsModal({ row, onClose }: { row: any; onClose: () => void }) {
                       key={bet.transaction_id ?? idx}
                       className={`border-b border-gray-200 ${isBack ? "bg-blue-200" : "bg-pink-200"}`}
                     >
-                      <td className="px-3 py-2 text-gray-800 font-medium text-[12px]">
+                      <td className="px-3 py-2 text-gray-800 font-medium text-[14px]">
                         {bet.runner_name || "—"}
                       </td>
                       <td className="px-3 py-2 text-right font-semibold text-gray-800">
@@ -284,10 +310,10 @@ function BetDetailsModal({ row, onClose }: { row: any; onClose: () => void }) {
                           </td>
                         );
                       })()}
-                      <td className="px-3 py-2 text-gray-700 text-[12px] whitespace-nowrap">
+                      <td className="px-3 py-2 text-gray-700 text-[14px] whitespace-nowrap">
                         {formatDate(bet.added_date)}
                       </td>
-                      <td className="px-3 py-2 text-gray-700 text-[12px] whitespace-nowrap">
+                      <td className="px-3 py-2 text-gray-700 text-[14px] whitespace-nowrap">
                         {bet.ip_address || "—"}
                       </td>
                       <td className="px-3 py-2 text-center">
@@ -511,9 +537,16 @@ export default function AccountStatement() {
 
                       // Description: remarks (sport) · remarks2 (event) · remarks3 (market)
                       const eventParts = [row.remarks, row.remarks2, row.remarks3].filter(Boolean);
-                      const descLabel  = eventParts.length
+                      const baseDesc = eventParts.length
                         ? eventParts.join(" · ")
                         : row.description || row.remarks1 || row.method || typeCfg.label;
+
+                      // Append settled winner (or bhav for fancy) in square brackets.
+                      const rowIsFancy = Number(row.result_market_type) === 4;
+                      const winnerTag  = rowIsFancy
+                        ? (row.winner_runs != null ? String(row.winner_runs) : null)
+                        : (row.winner_name || null);
+                      const descLabel  = winnerTag ? `${baseDesc} [${winnerTag}]` : baseDesc;
 
                       return (
                         <tr
