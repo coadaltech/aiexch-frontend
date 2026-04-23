@@ -147,7 +147,7 @@ export default function SeriesMatchesPage({
       <div className="px-4 mt-4 space-y-4">
         {liveMatches.length > 0 && (
           <div className="space-y-3 w-full">
-            <h2 className="text-foreground font-semibold">Live matches</h2>
+            <h2 className="text-black font-semibold">Live matches</h2>
             {liveMatches.map((match: any) => {
               if (new Date(match.openDate).getDate() < new Date().getDate()) {
                 return null;
@@ -163,7 +163,7 @@ export default function SeriesMatchesPage({
 
         {nonLiveMatches.length > 0 && (
           <div className="space-y-3">
-            <h2 className="text-foreground font-semibold">Upcoming matches</h2>
+            <h2 className="text-black font-semibold">Upcoming matches</h2>
             {liveMatches.length > 0 && <div className="border-t my-4"></div>}
             {nonLiveMatches.map((match: any) => (
               <div key={match.id} onClick={() => handleMatchClick(match.id)}>

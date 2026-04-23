@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompetitionEvents, useUpdateEventStatus } from "@/hooks/useOwner";
 import { usePanelPrefix } from "@/hooks/usePanelPrefix";
+import { ownerApi } from "@/lib/api";
 
 interface EventItem {
   id: string;
@@ -13,6 +14,7 @@ interface EventItem {
   name: string;
   openDate: string | null;
   isActive: boolean;
+  isRecommended: boolean;
   whitelabelActive: boolean;
   defaultMarketId: string | null;
   suspended: boolean;
@@ -54,19 +56,30 @@ export default function EventsPage() {
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
   const [initialized, setInitialized] = useState(false);
 
+  // Optimistic overrides for the "Recommended" toggle — keyed by eventId.
+  // The react-query cache is the source of truth; we only stash local
+  // overrides while a toggle is in-flight / before the next refetch picks up
+  // the new value.
+  const [recommendedOverrides, setRecommendedOverrides] = useState<Record<string, boolean>>({});
+  const [togglingRecommendedId, setTogglingRecommendedId] = useState<string | null>(null);
+
   const eventsData: EventItem[] = useMemo(() => {
     if (!response?.success || !Array.isArray(response.data)) return [];
-    return response.data.map((evt: any) => ({
-      id: String(evt.eventId),
-      eventId: evt.eventId,
-      name: evt.name,
-      openDate: evt.openDate,
-      isActive: evt.isActive ?? false,
-      whitelabelActive: evt.whitelabelActive ?? true,
-      defaultMarketId: evt.defaultMarketId || null,
-      suspended: evt.suspended ?? false,
-    }));
-  }, [response]);
+    return response.data.map((evt: any) => {
+      const id = String(evt.eventId);
+      return {
+        id,
+        eventId: evt.eventId,
+        name: evt.name,
+        openDate: evt.openDate,
+        isActive: evt.isActive ?? false,
+        isRecommended: recommendedOverrides[id] ?? evt.isRecommended ?? false,
+        whitelabelActive: evt.whitelabelActive ?? true,
+        defaultMarketId: evt.defaultMarketId || null,
+        suspended: evt.suspended ?? false,
+      };
+    });
+  }, [response, recommendedOverrides]);
 
   // Sort: active first, then by date
   const sortedEvents = useMemo(() => {
@@ -118,6 +131,25 @@ export default function EventsPage() {
       changes: changedEvents.length,
     }),
     [sortedEvents, selectedEvents, changedEvents, isOwner],
+  );
+
+  const handleToggleRecommended = useCallback(
+    async (evt: EventItem) => {
+      if (!isOwner) return;
+      if (togglingRecommendedId !== null) return;
+      const next = !evt.isRecommended;
+      setTogglingRecommendedId(evt.id);
+      setRecommendedOverrides((prev) => ({ ...prev, [evt.id]: next }));
+      try {
+        await ownerApi.toggleRecommendedEvent(evt.eventId, next);
+      } catch (err) {
+        console.error("Failed to toggle recommended event:", err);
+        setRecommendedOverrides((prev) => ({ ...prev, [evt.id]: evt.isRecommended }));
+      } finally {
+        setTogglingRecommendedId(null);
+      }
+    },
+    [isOwner, togglingRecommendedId],
   );
 
   const handleSelectEvent = useCallback((eventId: string) => {
@@ -354,6 +386,32 @@ export default function EventsPage() {
                 </div>
               </div>
               <div className="flex items-center gap-4">
+                {isOwner && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleRecommended(evt);
+                    }}
+                    disabled={togglingRecommendedId === evt.id}
+                    title={
+                      evt.isRecommended
+                        ? "Remove from sidebar 'Recommended'"
+                        : "Show in sidebar 'Recommended'"
+                    }
+                    className={`px-3 py-1 rounded-md text-xs font-semibold border transition-colors disabled:opacity-60 disabled:cursor-wait whitespace-nowrap ${
+                      evt.isRecommended
+                        ? "bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100"
+                        : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    {togglingRecommendedId === evt.id
+                      ? "Saving…"
+                      : evt.isRecommended
+                        ? "★ Recommended"
+                        : "☆ Recommend"}
+                  </button>
+                )}
                 <span
                   className={`px-3 py-1 rounded-full text-sm font-medium ${
                     canEdit

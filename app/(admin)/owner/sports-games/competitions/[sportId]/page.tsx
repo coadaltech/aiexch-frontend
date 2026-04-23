@@ -13,6 +13,8 @@ interface Competition {
   sportId: string;
   totalEvents: number;
   isActive: boolean;
+  /** Owner-only: flagged as a sidebar "Top competition" */
+  isTop: boolean;
   /** Per-whitelabel override: true = visible, false = hidden for this whitelabel, null = no override */
   whitelabelActive: boolean;
   competition_id?: string;
@@ -41,6 +43,7 @@ export default function CompetitionsPage() {
     [],
   );
   const [saving, setSaving] = useState(false);
+  const [togglingTopId, setTogglingTopId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCompetitions = async () => {
@@ -56,6 +59,7 @@ export default function CompetitionsPage() {
             sportId: String(comp.sport_id || comp.sportId),
             totalEvents: comp.totalEvents || comp.metadata?.totalEvents || 0,
             isActive: comp.is_active ?? comp.isActive ?? false,
+            isTop: comp.is_top_competition ?? comp.isTop ?? false,
             whitelabelActive: comp.whitelabelActive ?? true,
           }));
           setSportName(data.sportName || "");
@@ -129,6 +133,35 @@ export default function CompetitionsPage() {
       changes: changedCompetitions.length,
     }),
     [competitions, selectedCompetitions, changedCompetitions, isOwner],
+  );
+
+  // Owner-only toggle for sidebar "Top competition" flag. Independent of the
+  // checkbox grid — toggles in one request with optimistic update + rollback.
+  const handleToggleTop = useCallback(
+    async (competition: Competition) => {
+      if (!isOwner) return;
+      if (togglingTopId !== null) return;
+      const next = !competition.isTop;
+      setTogglingTopId(competition.id);
+      setCompetitions((prev) =>
+        prev.map((c) =>
+          c.id === competition.id ? { ...c, isTop: next } : c,
+        ),
+      );
+      try {
+        await ownerApi.toggleTopCompetition(competition.id, next);
+      } catch (err) {
+        console.error("Failed to toggle top-competition:", err);
+        setCompetitions((prev) =>
+          prev.map((c) =>
+            c.id === competition.id ? { ...c, isTop: competition.isTop } : c,
+          ),
+        );
+      } finally {
+        setTogglingTopId(null);
+      }
+    },
+    [isOwner, togglingTopId],
   );
 
   const handleSelectCompetition = useCallback((competitionId: string) => {
@@ -446,6 +479,32 @@ export default function CompetitionsPage() {
                   </p>
                   <p className="text-xs text-gray-500">Events</p>
                 </div>
+                {isOwner && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleTop(competition);
+                    }}
+                    disabled={togglingTopId === competition.id}
+                    title={
+                      competition.isTop
+                        ? "Remove from sidebar 'Top competitions'"
+                        : "Show in sidebar 'Top competitions'"
+                    }
+                    className={`px-3 py-1 rounded-md text-xs font-semibold border transition-colors disabled:opacity-60 disabled:cursor-wait whitespace-nowrap ${
+                      competition.isTop
+                        ? "bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100"
+                        : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    {togglingTopId === competition.id
+                      ? "Saving…"
+                      : competition.isTop
+                        ? "★ Top"
+                        : "☆ Top"}
+                  </button>
+                )}
                 <span
                   className={`px-3 py-1 rounded-full text-sm font-medium ${
                     canEdit

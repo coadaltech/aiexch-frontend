@@ -14,7 +14,8 @@ import { getSportConfig } from "@/lib/sports-config";
 import { addDemoBets } from "@/lib/demo-bets";
 import type { DemoBet } from "@/lib/demo-bets";
 import { toast } from "sonner";
-import { Timer } from "lucide-react";
+import { Timer, Star } from "lucide-react";
+import { useFavorites } from "@/hooks/useFavorites";
 
 type RunnerSummary = {
   id: string;
@@ -121,20 +122,20 @@ function QuickBetPanel({
   const canPlace = !!stake && stakeNum > 0 && !stakeError && !isLoading && !isDelaying;
 
   return (
-    <div className={`px-2 sm:px-3  border-t-2 ${data.isLay ? "border-lay bg-gradient-to-b from-lay/50 to-lay/10" : "border-back bg-gradient-to-b from-back/50 to-back/10"}`}>
+    <div className={`px-2 sm:px-3 py-2 border-t-2 w-full max-w-full overflow-hidden ${data.isLay ? "border-lay bg-gradient-to-b from-lay/50 to-lay/10" : "border-back bg-gradient-to-b from-back/50 to-back/10"}`}>
       {/* Bet delay countdown banner */}
       {isDelaying && (
-        <div className="mb-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between shadow-sm">
-          <div className="flex items-center gap-2">
-            <span className="w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin inline-block" />
-            <span className="text-xs sm:text-sm font-medium text-amber-700">
+        <div className="mb-2 px-2 sm:px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between gap-2 shadow-sm">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin inline-block shrink-0" />
+            <span className="text-xs sm:text-sm font-medium text-amber-700 truncate">
               Placing in {betDelayRemaining}s...
             </span>
           </div>
           <button
             type="button"
             onClick={onCancelDelay}
-            className="px-2 py-0.5 text-xs bg-amber-100 hover:bg-amber-200 text-amber-700 rounded transition-colors"
+            className="px-2 py-0.5 text-xs bg-amber-100 hover:bg-amber-200 text-amber-700 rounded transition-colors shrink-0"
           >
             Cancel
           </button>
@@ -142,104 +143,106 @@ function QuickBetPanel({
       )}
 
       {/* Top Section: Label, Odds, Stake */}
-      <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-3 justify-end mb-1">
-        <div className="text-gray-800 font-bold text-xs sm:text-sm truncate max-w-full sm:max-w-none text-right sm:text-left">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 sm:justify-end mb-2">
+        <div className="text-gray-800 font-bold text-xs sm:text-sm truncate min-w-0 text-center sm:text-left sm:flex-1">
           {runnerName} - {marketName.toUpperCase()}
         </div>
 
-        <div className="flex items-center">
-          <input
-            type="text"
-            value={displayOdds}
-            readOnly
-            className="w-20 sm:w-24 bg-gray-50 text-gray-900 text-sm sm:text-base font-bold py-1.5 px-2 text-center border border-gray-300 rounded cursor-default"
-          />
-        </div>
-
-        <div className="flex flex-col items-end gap-0.5">
-          <div className="flex items-center">
+        <div className="flex items-start gap-2 sm:gap-3 justify-end flex-wrap">
+          <div className="flex items-center shrink-0">
             <input
-              ref={stakeInputRef}
-              type="number"
-              value={stake}
-              onChange={(e) => handleStake(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "ArrowUp") {
-                  e.preventDefault();
-                  const current = parseFloat(stake) || 0;
-                  setStakeClamped(current === 0 ? 500 : current + 500);
-                } else if (e.key === "ArrowDown") {
-                  e.preventDefault();
-                  setStakeClamped(Math.max(0, (parseFloat(stake) || 0) - 500));
-                }
-              }}
-              placeholder="0"
-              disabled={isDelaying}
-              style={{ width: `${Math.max(7, (stake?.length || 1) + 3)}ch` }}
-              className={`min-w-[5rem] sm:min-w-[6rem] bg-gray-50 text-gray-900 text-sm sm:text-base font-bold py-1.5 px-2 text-center border rounded focus:ring-1 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-[width] duration-150 ${
-                stakeError
-                  ? "border-red-400 focus:ring-red-400"
-                  : "border-gray-300 focus:ring-[#1a3578]"
-              } ${isDelaying ? "opacity-50" : ""}`}
+              type="text"
+              value={displayOdds}
+              readOnly
+              className="w-20 sm:w-24 bg-gray-50 text-gray-900 text-sm sm:text-base font-bold py-1.5 px-2 text-center border border-gray-300 rounded cursor-default"
             />
-            <div className="flex flex-col ml-0.5">
-              <button
-                type="button"
-                disabled={isDelaying}
-                onClick={() => {
-                  const current = parseFloat(stake) || 0;
-                  setStakeClamped(current === 0 ? 500 : current + 500);
+          </div>
+
+          <div className="flex flex-col items-end gap-0.5 min-w-0">
+            <div className="flex items-center min-w-0">
+              <input
+                ref={stakeInputRef}
+                type="number"
+                value={stake}
+                onChange={(e) => handleStake(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    const current = parseFloat(stake) || 0;
+                    setStakeClamped(current === 0 ? 500 : current + 500);
+                  } else if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    setStakeClamped(Math.max(0, (parseFloat(stake) || 0) - 500));
+                  }
                 }}
-                className="bg-gray-100 text-gray-600 px-1 py-0.5 text-[10px] hover:bg-gray-200 border border-gray-300 rounded-t disabled:opacity-50"
-              >
-                ▲
-              </button>
-              <button
-                type="button"
+                placeholder="0"
                 disabled={isDelaying}
-                onClick={() => setStakeClamped(Math.max(0, (parseFloat(stake) || 0) - 500))}
-                className="bg-gray-100 text-gray-600 px-1 py-0.5 text-[10px] hover:bg-gray-200 border border-gray-300 border-t-0 rounded-b disabled:opacity-50"
-              >
-                ▼
-              </button>
+                style={{ width: `${Math.max(7, (stake?.length || 1) + 3)}ch` }}
+                className={`min-w-[5rem] sm:min-w-[6rem] max-w-full bg-gray-50 text-gray-900 text-sm sm:text-base font-bold py-1.5 px-2 text-center border rounded focus:ring-1 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-[width] duration-150 ${
+                  stakeError
+                    ? "border-red-400 focus:ring-red-400"
+                    : "border-gray-300 focus:ring-[#1a3578]"
+                } ${isDelaying ? "opacity-50" : ""}`}
+              />
+              <div className="flex flex-col ml-0.5 shrink-0">
+                <button
+                  type="button"
+                  disabled={isDelaying}
+                  onClick={() => {
+                    const current = parseFloat(stake) || 0;
+                    setStakeClamped(current === 0 ? 500 : current + 500);
+                  }}
+                  className="bg-gray-100 text-gray-600 px-1 py-0.5 text-[10px] hover:bg-gray-200 border border-gray-300 rounded-t disabled:opacity-50"
+                >
+                  ▲
+                </button>
+                <button
+                  type="button"
+                  disabled={isDelaying}
+                  onClick={() => setStakeClamped(Math.max(0, (parseFloat(stake) || 0) - 500))}
+                  className="bg-gray-100 text-gray-600 px-1 py-0.5 text-[10px] hover:bg-gray-200 border border-gray-300 border-t-0 rounded-b disabled:opacity-50"
+                >
+                  ▼
+                </button>
+              </div>
             </div>
-          {stakeError && (
-            <span className="text-danger text-[9px] sm:text-[10px] font-medium ml-2">{stakeError}</span>
-          )}
+            {stakeError && (
+              <span className="text-danger text-[10px] sm:text-[10px] font-medium">{stakeError}</span>
+            )}
           </div>
         </div>
       </div>
 
       {/* Quick stake buttons + actions */}
-      <div className="flex flex-wrap items-center gap-2 justify-end">
-        <div className="flex flex-wrap gap-1.5 sm:gap-2">
+      <div className="flex flex-wrap items-center gap-2 justify-center sm:justify-end">
+        <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center sm:justify-end w-full sm:w-auto">
           {resolvedStakes.map((btn) => (
             <button
               key={btn.value}
               type="button"
               disabled={isDelaying}
               onClick={() => setStakeClamped(btn.value)}
-              className="px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-semibold rounded bg-gradient-to-b from-sports-header to-sports-header/80 hover:from-sports-header/90 hover:to-sports-header/70 text-white shadow-sm transition-all disabled:opacity-50"
+              className="flex-1 sm:flex-none min-w-[3.5rem] px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-semibold rounded bg-gradient-to-b from-sports-header to-sports-header/80 hover:from-sports-header/90 hover:to-sports-header/70 text-white shadow-sm transition-all disabled:opacity-50"
             >
               {btn.label}
             </button>
           ))}
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full sm:w-auto">
           <button
             type="button"
             onClick={() => onPlaceBet(stake, rawOdds)}
             disabled={!canPlace}
-            className="min-w-[84px] sm:min-w-[96px] px-4 sm:px-5 py-1.5 sm:py-2 rounded text-xs sm:text-sm font-semibold bg-[#142669] hover:from-cta-deposit-from-hover hover:to-cta-deposit-to-hover shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-white transition-all flex items-center justify-center gap-1.5"
+            className="flex-1 sm:flex-none min-w-[84px] sm:min-w-[96px] px-3 sm:px-5 py-2 rounded text-xs sm:text-sm font-semibold bg-[#142669] hover:from-cta-deposit-from-hover hover:to-cta-deposit-to-hover shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-white transition-all flex items-center justify-center gap-1.5"
           >
             {isLoading ? (
               <>
                 <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" />
-                Placing...
+                <span className="truncate">Placing...</span>
               </>
             ) : isDelaying ? (
-              `Waiting ${betDelayRemaining}s...`
+              <span className="truncate">Waiting {betDelayRemaining}s...</span>
             ) : (
               "Place Bet"
             )}
@@ -248,7 +251,7 @@ function QuickBetPanel({
             type="button"
             onClick={isDelaying ? onCancelDelay : onClose}
             disabled={isLoading}
-            className="px-4 sm:px-5 py-1.5 sm:py-2 rounded text-xs sm:text-sm font-semibold bg-gradient-to-b from-danger-strong to-danger-strong/80 hover:from-danger-strong/90 hover:to-danger-strong/70 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-white transition-all"
+            className="flex-1 sm:flex-none px-3 sm:px-5 py-2 rounded text-xs sm:text-sm font-semibold bg-gradient-to-b from-danger-strong to-danger-strong/80 hover:from-danger-strong/90 hover:to-danger-strong/70 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-white transition-all"
           >
             Cancel
           </button>
@@ -292,6 +295,8 @@ export default function MatchPage() {
   const seriesId = params.seriesId as string;
   const matchId = params.matchId as string;
   const { addToBetSlip } = useBetSlip();
+  const { isFavorite, toggle: toggleFavorite, isMutating: isFavoriteMutating } = useFavorites();
+  const favorited = isFavorite(matchId);
   const [quickBet, setQuickBet] = useState<QuickBetData | null>(null);
   const [quickBetStake, setQuickBetStake] = useState("");
   const [isPlacing, setIsPlacing] = useState(false);
@@ -312,32 +317,52 @@ export default function MatchPage() {
   const eventTypeId = config?.eventTypeId ?? "4";
   const { data: seriesData = [] } = useSeries(config?.eventTypeId ?? null);
   const { data: customStakes } = useStakeSettings(!!user && !user.isDemo);
-  const { status, isConnected, matchOdds: wsMarkets, bookmakers: wsBookmakers, sessions: wsSessions, lastUpdate: wsLastUpdate } = useLiveMatch(matchId, eventTypeId);
+  const { status, isConnected, matchOdds: wsMarkets, bookmakers: wsBookmakers, sessions: wsSessions, lastUpdate: wsLastUpdate, forceReconnect: forceWsReconnect } = useLiveMatch(matchId, eventTypeId);
 
   // Try to use cached odds data from the sport listing page for instant display
   const cachedOdds = queryClient.getQueryData<any[]>(["match-odds-list", matchId]);
 
-  // Single REST fallback for initial data (bookmakers, sessions, score).
-  // WebSocket is the primary data source — this only provides fallback data
-  // until WS connects. Removed the duplicate getMarketsWithOdds fast-fetch
-  // to cut initial page load API calls from 2 to 1.
+  // REST fallback for initial data. WebSocket is the primary data source —
+  // REST gives us the canonical backend snapshot when the page first loads,
+  // and again whenever we suspect stale data (e.g. tab regained visibility
+  // after laptop sleep) so the WS reconnect has fresh market metadata to
+  // merge against.
+  //
+  // NOTE: do NOT use the REST response to infer "match ended" — the backend
+  // only populates `matchOdds` here (`bookmakers` and `sessions` are always
+  // null) and even `matchOdds` can be transiently empty for live matches.
+  // Treating an empty response as "match over" caused false positives on
+  // every short tab switch. Staleness (no WS update for >30s) is the actual
+  // safety net for this case — it's checked in `isMarketBlocked` and the
+  // bet-placement path.
   const [initialData, setInitialData] = useState<any>(null);
   const [initialLoading, setInitialLoading] = useState(true);
-  const initialFetchDone = useRef(false);
+  const lastRestFetchAt = useRef<number>(0);
+  const initialFetchStarted = useRef(false);
+
+  const refetchMatchDetails = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      try {
+        const res: any = await sportsApi.getMatchDetails(eventTypeId, matchId);
+        const data = res?.data || res;
+        if (data) setInitialData(data);
+        lastRestFetchAt.current = Date.now();
+      } catch {
+        if (!opts?.silent) {
+          // swallow — the WS fallback path will keep the UI alive
+        }
+      } finally {
+        setInitialLoading(false);
+      }
+    },
+    [eventTypeId, matchId]
+  );
 
   useEffect(() => {
-    if (initialFetchDone.current) return;
-    initialFetchDone.current = true;
-
-    sportsApi
-      .getMatchDetails(eventTypeId, matchId)
-      .then((res: any) => {
-        const data = res.data || res;
-        setInitialData(data);
-      })
-      .catch(() => {})
-      .finally(() => setInitialLoading(false));
-  }, [eventTypeId, matchId]);
+    if (initialFetchStarted.current) return;
+    initialFetchStarted.current = true;
+    refetchMatchDetails({ silent: true });
+  }, [refetchMatchDetails]);
 
   // Normalize bookmaker data into the same format as matchOdds
   const normalizeBookmakers = useCallback((bookmakers: any[]): any[] => {
@@ -468,18 +493,11 @@ export default function MatchPage() {
       (m: any) => m.status !== "CLOSED" && m.status !== "INACTIVE"
     );
 
-    // Never go empty if we had data before — keep last good markets until new data arrives
+    // Never go empty if we had data before — keep last good markets until new
+    // data arrives. (Safety: bet placement still checks staleness/matchEnded
+    // so a stale fallback can't be acted on.)
     if (result.length > 0) {
       lastGoodMarkets.current = result;
-      // console.log("[MatchPage] markets updated:", result.map((m: any) => ({
-      //   marketId: m.marketId,
-      //   marketName: m.marketName,
-      //   marketType: m.marketType,
-      //   bettingType: m.bettingType,
-      //   status: m.status,
-      //   runnersCount: m.runners?.length,
-      // })));
-      // console.log("[MatchPage] full markets data:", result);
       return result;
     }
     return lastGoodMarkets.current;
@@ -494,6 +512,59 @@ export default function MatchPage() {
   // Live clock: derived from the WS message timestamp (updates on every tick,
   // not just when data changes, so the user can see the connection is alive)
   const lastMarketUpdate = wsLastUpdate ? new Date(wsLastUpdate) : null;
+
+  // Tick once a second so staleness checks (and the disabled state of bet
+  // buttons) re-evaluate even when no WS messages are arriving. Without this,
+  // a disconnected page would never notice that data has gone stale.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Data is "stale" when the last live update is older than the threshold.
+  // Stale data must not be used to place bets — it may not reflect markets
+  // that have since closed / had results declared on the backend. This is
+  // the single safety net for both "laptop slept" and "match has ended"
+  // (in both cases the backend stops sending WS updates, so staleness fires).
+  //
+  // Don't fire staleness during the initial load (wsLastUpdate is still null)
+  // — the connecting/loading UI handles that case. Only mark stale once we've
+  // had at least one update and then lost the connection.
+  const STALE_THRESHOLD_MS = 30_000;
+  const isStaleData =
+    wsLastUpdate != null && now - wsLastUpdate > STALE_THRESHOLD_MS;
+
+  // When the tab regains visibility (laptop wake, tab switch), pull a fresh
+  // REST snapshot and kick the WS to reconnect. The REST fetch is what tells
+  // us if the match has actually ended on the backend.
+  const refetchMatchDetailsRef = useRef(refetchMatchDetails);
+  useEffect(() => {
+    refetchMatchDetailsRef.current = refetchMatchDetails;
+  }, [refetchMatchDetails]);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onVisibility = () => {
+      if (typeof document === "undefined") return;
+      if (document.visibilityState !== "visible") return;
+      // Avoid hammering the API if the user is just rapidly toggling tabs.
+      if (Date.now() - lastRestFetchAt.current < 5000) return;
+      refetchMatchDetailsRef.current();
+      forceWsReconnect();
+    };
+    const onOnline = () => {
+      refetchMatchDetailsRef.current();
+      forceWsReconnect();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("online", onOnline);
+    window.addEventListener("focus", onVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("online", onOnline);
+      window.removeEventListener("focus", onVisibility);
+    };
+  }, [forceWsReconnect]);
 
   // Cleanup bet delay timer on unmount
   useEffect(() => {
@@ -794,6 +865,15 @@ export default function MatchPage() {
     async (qb: QuickBetData, stakeStr: string, oddsValue: string) => {
       const { market, runner, isLay } = qb;
 
+      // Final pre-placement check: stale data. The page may still be showing
+      // yesterday's snapshot if the laptop slept and the WS never reconnected,
+      // or the match may have ended while the tab was idle — bets against
+      // that snapshot must be refused.
+      if (stalenessRef.current) {
+        toast.error("Bet cancelled — live data is stale, please refresh the page");
+        return;
+      }
+
       // Final pre-placement check: market status
       const liveMarket = marketsRef.current.find((m: any) => m.marketId === market.marketId);
       if (liveMarket) {
@@ -1081,6 +1161,19 @@ export default function MatchPage() {
           remaining--;
           setBetDelayRemaining(remaining);
 
+          // Check if data went stale during the delay
+          if (stalenessRef.current) {
+            if (betDelayTimerRef.current)
+              clearInterval(betDelayTimerRef.current);
+            betDelayTimerRef.current = null;
+            setBetDelayRemaining(0);
+            setIsPlacing(false);
+            betDelayResolveRef.current = null;
+            toast.error("Bet cancelled — live data is stale, please refresh the page");
+            resolve();
+            return;
+          }
+
           // Check if market became suspended or ball running during delay
           const delayMarket = marketsRef.current.find((m: any) => m.marketId === mktId);
           if (delayMarket && (delayMarket.status === "SUSPENDED" || delayMarket.sportingEvent)) {
@@ -1140,8 +1233,22 @@ export default function MatchPage() {
     handleQuickBetClose();
   };
 
-  // Check if a market is currently suspended or ball-running from live WS data
+  // Track staleness in a ref so the bet-placement callback (which is
+  // memoized) sees the latest value without having to be re-created.
+  const stalenessRef = useRef(isStaleData);
+  useEffect(() => {
+    stalenessRef.current = isStaleData;
+  }, [isStaleData]);
+
+  // Check if a market is currently suspended, ball-running, or backed by stale
+  // data. Stale-data block is the safety net for the "laptop slept overnight"
+  // / "match ended while idle" cases: WS died or backend stopped broadcasting,
+  // page is showing yesterday's snapshot — must not let the user place bets
+  // on it.
   const isMarketBlocked = useCallback((marketId: string): { blocked: boolean; reason: string } => {
+    if (stalenessRef.current) {
+      return { blocked: true, reason: "Live data is stale — please refresh the page" };
+    }
     const liveMarket = marketsRef.current.find((m: any) => m.marketId === marketId);
     if (!liveMarket) return { blocked: false, reason: "" };
     if (liveMarket.status === "SUSPENDED") return { blocked: true, reason: "Market is suspended" };
@@ -1201,11 +1308,35 @@ export default function MatchPage() {
                     .join(" - ")}
                 </h1>
               </div>
-              {eventDate && (
-                <span className="text-white/60 text-xs sm:text-sm shrink-0">
-                  {formatDate(eventDate)}
-                </span>
-              )}
+              <div className="flex items-center gap-2 shrink-0">
+                {user && (
+                  <button
+                    type="button"
+                    onClick={() => toggleFavorite(matchId)}
+                    disabled={isFavoriteMutating}
+                    title={favorited ? "Remove from favorites" : "Add to favorites"}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold border transition-colors disabled:opacity-60 disabled:cursor-wait ${
+                      favorited
+                        ? "bg-amber-400/20 border-amber-300/60 text-amber-300 hover:bg-amber-400/30"
+                        : "bg-white/10 border-white/20 text-white hover:bg-white/15"
+                    }`}
+                  >
+                    <Star
+                      className="h-3.5 w-3.5"
+                      fill={favorited ? "currentColor" : "none"}
+                      strokeWidth={favorited ? 0 : 2}
+                    />
+                    <span className="hidden sm:inline">
+                      {favorited ? "Favorited" : "Add to favorites"}
+                    </span>
+                  </button>
+                )}
+                {eventDate && (
+                  <span className="text-white/60 text-xs sm:text-sm">
+                    {formatDate(eventDate)}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -1350,7 +1481,7 @@ export default function MatchPage() {
           </span>
         )}
         {betDelay != null && (
-          <span className=" flex items-center text-[8px] sm:text-[9px] text-black font-medium leading-tight">
+          <span className=" md:flex items-center text-[8px] sm:text-[9px] text-black font-medium leading-tight hidden ">
             <Timer size={20}/>
              <span>
             {betDelay}s
@@ -1389,7 +1520,7 @@ export default function MatchPage() {
   };
 
   return (
-    <div className="px-2 sm:px-3 py-2 w-full max-w-full min-w-0 min-h-full">
+    <div className="px-2 sm:px-3 py-2 w-full max-w-full min-w-0 min-h-full overflow-x-hidden">
       {/* Match header */}
       {(matchInfo || series || matchFromSeries) && (() => {
         const matchOddsMarket = visibleMarkets.find((m: any) => m.marketType === "MATCH_ODDS" || m.marketType === "WINNING_ODDS");
@@ -1414,12 +1545,37 @@ export default function MatchPage() {
                   {matchFromSeries?.name || matchInfo?.eventName || "Match"}
                 </h1>
               </div>
-              <div className="shrink-0 text-right">
+              <div className="shrink-0 text-right flex flex-col items-end gap-1">
+                
                 {openDate && (
-                  <span className="text-white/60 text-xs sm:text-sm block">
+                  <span className="text-white/60 text-xs sm:text-sm flex items-center gap-2 sm:gap-6 flex-wrap justify-end">
                     {formatDate(openDate)}
-                  </span>
+                    {user && (
+                  <button
+                    type="button"
+                    onClick={() => toggleFavorite(matchId)}
+                    disabled={isFavoriteMutating}
+                    title={favorited ? "Remove from favorites" : "Add to favorites"}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold border transition-colors disabled:opacity-60 disabled:cursor-wait ${
+                      favorited
+                        ? "bg-amber-400/20 border-amber-300/60 text-amber-300 hover:bg-amber-400/30"
+                        : "bg-white/10 border-white/20 text-white hover:bg-white/15"
+                    }`}
+                  >
+                    <Star
+                      className="h-3.5 w-3.5"
+                      fill={favorited ? "currentColor" : "none"}
+                      strokeWidth={favorited ? 0 : 2}
+                    />
+                    <span className="hidden sm:inline">
+                      {favorited ? "Favorited" : "Add to favorites"}
+                    </span>
+                  </button>
                 )}
+                  </span>
+                  
+                )}
+                
                 {clockStr && (
                   <span className="text-[#84c2f1] font-mono text-[11px] sm:text-xs block mt-0.5 bg-black/20 px-2 py-0.5 rounded">
                     {clockStr}
@@ -1430,6 +1586,33 @@ export default function MatchPage() {
           </div>
         );
       })()}
+
+      {/* Stale-data banner. Surfaces the same condition that blocks bet
+          placement so the user understands *why* clicking does nothing, and
+          gives them a one-click way to recover. Catches both "laptop slept"
+          (WS dead) and "match ended while idle" (WS connected but backend
+          stopped broadcasting) — in both cases the safe action is to refresh
+          the live feed before letting any new bets through. */}
+      {isStaleData && wsLastUpdate != null && (
+        <div className="mb-2 rounded-lg px-3 py-2 flex items-center justify-between gap-3 border shadow-sm bg-amber-50 border-amber-200 text-amber-800">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin inline-block shrink-0" />
+            <span className="text-xs sm:text-sm font-medium truncate">
+              {`Live feed unresponsive (last update ${Math.round((now - wsLastUpdate) / 1000)}s ago). New bets are disabled until the connection recovers — the match may also have ended.`}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              forceWsReconnect();
+              refetchMatchDetails();
+            }}
+            className="shrink-0 px-3 py-1 text-xs font-semibold rounded transition-colors bg-amber-100 hover:bg-amber-200 text-amber-800"
+          >
+            Reconnect
+          </button>
+        </div>
+      )}
 
       <div className="space-y-1">
         {/* ── Standard markets (match odds, bookmaker, team-binary) ── */}
@@ -1467,19 +1650,34 @@ export default function MatchPage() {
                     <h3 className="font-bold text-white text-sm sm:text-base truncate leading-tight">
                       {market.marketName}
                     </h3>
-                    <p className="text-white/70 text-xs flex items-center sm:text-sm truncate leading-tight">
-                      Min: {market.marketCondition?.["minBet"] ?? "-"} / Max:{" "}
-                      {market.marketCondition?.["maxBet"] ?? "-"}
+                    {/* <div className="text-white/70 text-xs sm:text-sm flex items-center flex-wrap gap-x-1 leading-tight min-w-0">
+                      <span className="truncate">
+                        Min: {market.marketCondition?.["minBet"] ?? "-"} / Max:{" "}
+                        {market.marketCondition?.["maxBet"] ?? "-"}
+                      </span>
                       {market.marketCondition?.betDelay != null && (
-                        <span className="flex items-center ml-1 text-yellow-300">· <Timer size={15}/> <span>{market.marketCondition.betDelay}s </span></span>
+                        <span className="flex items-center text-yellow-300 shrink-0">· <Timer size={15}/> <span>{market.marketCondition.betDelay}s</span></span>
                       )}
-                    </p>
+                    </div> */}
                   </div>
                   <div className="justify-self-end font-bold uppercase bg-back text-black text-xs sm:text-sm py-0.5 px-1.5 rounded">
                     Back
                   </div>
+
+                  <div className="flex justify-between">
+
                   <div className="font-bold uppercase bg-lay text-black text-xs sm:text-sm py-0.5 px-1.5 rounded w-fit">
                     Lay
+                  </div>
+                   <div className="text-white/70 text-xs sm:text-sm hidden md:flex items-center flex-wrap gap-x-1 leading-tight min-w-0">
+                      <span className="truncate">
+                        Min: {market.marketCondition?.["minBet"] ?? "-"} / Max:{" "}
+                        {market.marketCondition?.["maxBet"] ?? "-"}
+                      </span>
+                      {market.marketCondition?.betDelay != null && (
+                        <span className="flex items-center text-yellow-300 shrink-0">· <Timer size={15}/> <span>{market.marketCondition.betDelay}s</span></span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="divide-y divide-gray-100">
@@ -1500,7 +1698,7 @@ export default function MatchPage() {
                             {(() => {
                               if (isRunnerSuspended) {
                                 return Array(3).fill(null).map((_, posIdx) => (
-                                  <button key={`back-suspended-${posIdx}`} className={`${oddsBtnClass} bg-back-disabled w-24`} disabled>
+                                  <button key={`back-suspended-${posIdx}`} className={`${oddsBtnClass} bg-back-disabled w-24 ${posIdx !== 2 ? "hidden sm:flex" : ""}`} disabled>
                                     <span className={oddsPriceClass}>0</span>
                                     <span className={oddsSizeClass}>0</span>
                                   </button>
@@ -1522,13 +1720,13 @@ export default function MatchPage() {
                                       null,
                                       2 - posIdx
                                     )}
-                                    className={`${oddsBtnClass} transition-all w-24 ${posIdx === 2 ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back shadow-sm" : "bg-white hover:bg-back/30 border border-back/50"}`}
+                                    className={`${oddsBtnClass} transition-all w-24 ${posIdx === 2 ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back shadow-sm" : "bg-white hover:bg-back/30 border border-back/50 hidden sm:flex"}`}
                                   >
                                     <span className={oddsPriceClass}>{formatOddsPrice(item.price)}</span>
                                     <span className={oddsSizeClass}>{formatAmount(item.size)}</span>
                                   </button>
                                 ) : (
-                                  <button key={`empty-back-${posIdx}`} className={`${oddsBtnClass} bg-back-disabled w-24`} disabled>
+                                  <button key={`empty-back-${posIdx}`} className={`${oddsBtnClass} bg-back-disabled w-24 ${posIdx !== 2 ? "hidden sm:flex" : ""}`} disabled>
                                     <span className={oddsPriceClass}>-</span>
                                     <span className={oddsSizeClass}>-</span>
                                   </button>
@@ -1541,7 +1739,7 @@ export default function MatchPage() {
                           <div className="gap-1 flex justify-start items-center flex-wrap ">
                             {isRunnerSuspended
                               ? Array(3).fill(null).map((_, idx) => (
-                                  <button key={`lay-suspended-${idx}`} className={`${oddsBtnClass} bg-lay-disabled w-24`} disabled>
+                                  <button key={`lay-suspended-${idx}`} className={`${oddsBtnClass} bg-lay-disabled w-24 ${idx !== 0 ? "hidden sm:flex" : ""}`} disabled>
                                     <span className={oddsPriceClass}>0</span>
                                     <span className={oddsSizeClass}>0</span>
                                   </button>
@@ -1558,19 +1756,23 @@ export default function MatchPage() {
                                           null,
                                           layIdx
                                         )}
-                                        className={`${oddsBtnClass} transition-all w-24 ${layIdx === 0 ? "bg-gradient-to-b from-lay to-lay-deep hover:from-lay-hover hover:to-lay shadow-sm" : "bg-white hover:bg-lay/30 border border-lay/50"}`}
+                                        className={`${oddsBtnClass} transition-all w-24 ${layIdx === 0 ? "bg-gradient-to-b from-lay to-lay-deep hover:from-lay-hover hover:to-lay shadow-sm" : "bg-white hover:bg-lay/30 border border-lay/50 hidden sm:flex"}`}
                                       >
                                         <span className={oddsPriceClass}>{layItem.price ? formatOddsPrice(layItem.price) : "0"}</span>
                                         <span className={oddsSizeClass}>{formatAmount(layItem.size)}</span>
                                       </button>
                                     ))
                                   : null}
-                                {Array.from({ length: Math.max(0, 3 - (runner.lay?.length || 0)) }).map((_, emptyIdx) => (
-                                  <button key={`empty-lay-${emptyIdx}`} className={`${oddsBtnClass} bg-lay-disabled w-24`} disabled>
-                                    <span className={oddsPriceClass}>-</span>
-                                    <span className={oddsSizeClass}>-</span>
-                                  </button>
-                                ))}
+                                {Array.from({ length: Math.max(0, 3 - (runner.lay?.length || 0)) }).map((_, emptyIdx) => {
+                                  const hasLay = (runner.lay?.length || 0) > 0;
+                                  const hideOnMobile = hasLay || emptyIdx > 0;
+                                  return (
+                                    <button key={`empty-lay-${emptyIdx}`} className={`${oddsBtnClass} bg-lay-disabled w-24 ${hideOnMobile ? "hidden sm:flex" : ""}`} disabled>
+                                      <span className={oddsPriceClass}>-</span>
+                                      <span className={oddsSizeClass}>-</span>
+                                    </button>
+                                  );
+                                })}
                               </>
                             }
                           </div>
@@ -1608,10 +1810,14 @@ export default function MatchPage() {
                   <div className="grid grid-cols-3 gap-1 sm:gap-2 px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578] items-center">
                     <div className="min-w-0 flex flex-col gap-0.5">
                       <h3 className="font-bold text-white text-sm sm:text-base truncate leading-tight">{market.marketName}</h3>
-                      <p className="text-white/70 text-xs sm:text-sm truncate leading-tight">Min: {minBet} / Max: {maxBet}</p>
+                      {/* <p className="text-white/70 text-xs sm:text-sm truncate leading-tight">Min: {minBet} / Max: {maxBet}</p> */}
                     </div>
                     <div className="justify-self-end font-bold uppercase bg-back text-black text-xs sm:text-sm py-0.5 px-1.5 rounded">Back</div>
+                   <div className="flex justify-between">
+
                     <div className="font-bold uppercase bg-lay text-black text-xs sm:text-sm py-0.5 px-1.5 rounded w-fit">Lay</div>
+                     <p className="text-white/70 text-xs sm:text-sm truncate leading-tight hidden md:block">Min: {minBet} / Max: {maxBet}</p>
+                   </div>
                   </div>
                   <div className="divide-y divide-gray-100">
                     {market.runners.map((runner: any) => {
@@ -1624,18 +1830,18 @@ export default function MatchPage() {
                               <div className="gap-1 flex justify-end items-center flex-wrap">
                                 {(() => {
                                   if (isRunnerSuspended) return Array(3).fill(null).map((_, i) => (
-                                    <button key={i} className={`${oddsBtnClass} bg-back-disabled w-24`} disabled><span className={oddsPriceClass}>0</span><span className={oddsSizeClass}>0</span></button>
+                                    <button key={i} className={`${oddsBtnClass} bg-back-disabled w-24 ${i !== 2 ? "hidden sm:flex" : ""}`} disabled><span className={oddsPriceClass}>0</span><span className={oddsSizeClass}>0</span></button>
                                   ));
                                   const backItems = runner.back || [];
                                   const positions = Array(3).fill(null);
                                   backItems.forEach((item: any, idx: number) => { if (idx < 3) positions[2 - idx] = item; });
                                   return positions.map((item, posIdx) => item ? (
                                     <button key={posIdx} onClick={() => handleBackClick(market, runner, toDecimalOdds(item.price, market.provider, market.marketType), null, 2 - posIdx)}
-                                      className={`${oddsBtnClass} transition-all w-24 ${posIdx === 2 ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back shadow-sm" : "bg-white hover:bg-back/30 border border-back/50"}`}>
+                                      className={`${oddsBtnClass} transition-all w-24 ${posIdx === 2 ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back shadow-sm" : "bg-white hover:bg-back/30 border border-back/50 hidden sm:flex"}`}>
                                       <span className={oddsPriceClass}>{formatOddsPrice(item.price)}</span><span className={oddsSizeClass}>{formatAmount(item.size)}</span>
                                     </button>
                                   ) : (
-                                    <button key={posIdx} className={`${oddsBtnClass} bg-back-disabled w-24`} disabled><span className={oddsPriceClass}>-</span><span className={oddsSizeClass}>-</span></button>
+                                    <button key={posIdx} className={`${oddsBtnClass} bg-back-disabled w-24 ${posIdx !== 2 ? "hidden sm:flex" : ""}`} disabled><span className={oddsPriceClass}>-</span><span className={oddsSizeClass}>-</span></button>
                                   ));
                                 })()}
                               </div>
@@ -1643,7 +1849,7 @@ export default function MatchPage() {
                             <div className="flex-1 flex flex-col items-start min-w-0">
                               <div className="gap-1 flex justify-start items-center flex-wrap">
                                 {Array(3).fill(null).map((_, i) => (
-                                  <button key={i} className={`${oddsBtnClass} bg-lay-disabled w-24`} disabled><span className={oddsPriceClass}>-</span><span className={oddsSizeClass}>-</span></button>
+                                  <button key={i} className={`${oddsBtnClass} bg-lay-disabled w-24 ${i !== 0 ? "hidden sm:flex" : ""}`} disabled><span className={oddsPriceClass}>-</span><span className={oddsSizeClass}>-</span></button>
                                 ))}
                               </div>
                             </div>
@@ -1697,12 +1903,12 @@ export default function MatchPage() {
               return (
                 <div key={market.marketId} className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
                   {advHeader}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", alignItems: "stretch" }} className="bg-white">
-                    <div className="px-3 flex items-center min-h-[2.75rem]">
+                  <div className="bg-white grid grid-cols-2 sm:grid-cols-4 items-stretch">
+                    <div className="px-3 flex items-center min-h-[2.75rem] min-w-0">
                       {yesRunner && <RunnerNameCell runner={yesRunner} marketId={market.marketId} />}
                     </div>
                     {renderBinaryCell(yesRunner, "back")}
-                    <div className="px-3 flex items-center min-h-[2.75rem]">
+                    <div className="px-3 flex items-center min-h-[2.75rem] min-w-0">
                       {noRunner && <RunnerNameCell runner={noRunner} marketId={market.marketId} />}
                     </div>
                     {renderBinaryCell(noRunner, "lay")}
@@ -1724,10 +1930,7 @@ export default function MatchPage() {
               return (
                 <div key={market.marketId} className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
                   {advHeader}
-                  <div
-                    className="bg-white items-stretch"
-                    style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr" }}
-                  >
+                  <div className="bg-white grid grid-cols-2 sm:grid-cols-4 items-stretch ">
                     {runners.flatMap((runner: any) => {
                       const isRunnerSusp = isMarketSusp || runner.status === "SUSPENDED" || runner.status === "REMOVED";
                       const backItem = runner.back?.[0];
@@ -1795,39 +1998,34 @@ export default function MatchPage() {
             }
 
             // ── MULTI-GRID layout (Man of Match, Wicket Method, Most Fours, etc.) ──
-            // 3 [name | odds] pairs per row, each pair has runner name left and wide odds box right
+            // [name | odds] pairs in a responsive grid: 1 col on mobile, 2 cols sm, up to 3 cols md
             {
               const runners: any[] = market.runners || [];
-              const colsPerRow = Math.min(runners.length, 3);
-              const rows: any[][] = [];
-              for (let i = 0; i < runners.length; i += colsPerRow) rows.push(runners.slice(i, i + colsPerRow));
+              const cols = Math.min(runners.length, 3);
+              const mdColsClass = cols === 1 ? "md:grid-cols-1" : cols === 2 ? "md:grid-cols-2" : "md:grid-cols-3";
               return (
                 <div key={market.marketId} className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
                   {advHeader}
-                  <div className="bg-white divide-y divide-gray-100">
-                    {rows.map((row, rowIdx) => (
-                      <div key={rowIdx} className="grid divide-x divide-gray-100" style={{ gridTemplateColumns: `repeat(${colsPerRow}, 1fr)` }}>
-                        {row.map((runner: any) => {
-                          const isRunnerSusp = isMarketSusp || runner.status === "SUSPENDED" || runner.status === "REMOVED";
-                          const backItem = runner.back?.[0];
-                          const odds = backItem ? toDecimalOdds(parseFloat(String(backItem.price)), market.provider, market.marketType) : null;
-                          return (
-                            <div key={runner.selectionId} className="flex items-stretch">
-                              <div className="flex-1 px-2 py-1.5 min-w-0">
-                                <RunnerNameCell runner={runner} marketId={market.marketId} />
-                              </div>
-                              {isRunnerSusp
-                                ? <SuspendedCell className="w-16 min-h-[2.25rem] shrink-0" />
-                                : <button onClick={() => odds != null && handleBackClick(market, runner, odds, null, 0)}
-                                    className="w-16 min-h-[2.25rem] flex items-center justify-center font-bold text-sm text-gray-900 bg-back hover:bg-back-hover transition-all shrink-0">
-                                    {odds != null ? formatOddsPrice(odds) : "-"}
-                                  </button>
-                              }
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ))}
+                  <div className={`bg-white grid grid-cols-1 sm:grid-cols-2 ${mdColsClass} divide-x divide-y divide-gray-100`}>
+                    {runners.map((runner: any) => {
+                      const isRunnerSusp = isMarketSusp || runner.status === "SUSPENDED" || runner.status === "REMOVED";
+                      const backItem = runner.back?.[0];
+                      const odds = backItem ? toDecimalOdds(parseFloat(String(backItem.price)), market.provider, market.marketType) : null;
+                      return (
+                        <div key={runner.selectionId} className="flex items-stretch min-w-0">
+                          <div className="flex-1 px-2 py-1.5 min-w-0">
+                            <RunnerNameCell runner={runner} marketId={market.marketId} />
+                          </div>
+                          {isRunnerSusp
+                            ? <SuspendedCell className="w-16 min-h-[2.25rem] shrink-0" />
+                            : <button onClick={() => odds != null && handleBackClick(market, runner, odds, null, 0)}
+                                className="w-16 min-h-[2.25rem] flex items-center justify-center font-bold text-sm text-gray-900 bg-back hover:bg-back-hover transition-all shrink-0">
+                                {odds != null ? formatOddsPrice(odds) : "-"}
+                              </button>
+                          }
+                        </div>
+                      );
+                    })}
                   </div>
                   {quickBet && quickBet.marketId === market.marketId && (
                     <QuickBetPanel data={quickBet} stake={quickBetStake} onStakeChange={setQuickBetStake}
@@ -1842,7 +2040,7 @@ export default function MatchPage() {
 
         {visibleMarkets.some((m) => m.bettingType === "LINE") && (
         <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
-          <div className="grid grid-cols-3 gap-1 sm:gap-2 px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578] items-center">
+          <div className="grid grid-cols-3  gap-1 sm:gap-2 px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578] items-center">
             <h3 className="font-bold text-white text-sm sm:text-base truncate leading-tight" style={{gridColumn: "1"}}>
               Fancy
             </h3>
@@ -1986,7 +2184,7 @@ export default function MatchPage() {
                 return (
                   <button
                     onClick={() => rawPrice != null && handleBackClick(market, runner, rawPrice, null, 0, true)}
-                    className={`min-h-[2.75rem] flex flex-col items-center justify-center font-bold text-sm text-gray-900 transition-all ${side === "back" ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back" : "bg-gradient-to-b from-lay to-lay-deep hover:from-lay-hover hover:to-lay"}`}
+                    className={`min-h-[2.75rem] mb-1 flex flex-col items-center justify-center font-bold text-sm text-gray-900 transition-all ${side === "back" ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back" : "bg-gradient-to-b from-lay to-lay-deep hover:from-lay-hover hover:to-lay"}`}
                   >
                     <span className="text-base font-bold">{rawPrice != null ? formatOddsPrice(rawPrice) : "-"}</span>
                     {backItem?.size && <span className="text-[11px]">{formatAmount(parseFloat(String(backItem.size)))}</span>}
@@ -1996,12 +2194,12 @@ export default function MatchPage() {
               return (
                 <div key={market.marketId} className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
                   {advHeader}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", alignItems: "stretch" }} className="bg-white">
-                    <div className="px-3 flex items-center min-h-[2.75rem]">
+                  <div className="bg-white grid grid-cols-2 sm:grid-cols-4 items-stretch">
+                    <div className="px-3 flex items-center min-h-[2.75rem] min-w-0">
                       {yesRunner && <RunnerNameCell runner={yesRunner} marketId={market.marketId} />}
                     </div>
                     {renderBinaryCell(yesRunner, "back")}
-                    <div className="px-3 flex items-center min-h-[2.75rem]">
+                    <div className="px-3 flex items-center min-h-[2.75rem] min-w-0">
                       {noRunner && <RunnerNameCell runner={noRunner} marketId={market.marketId} />}
                     </div>
                     {renderBinaryCell(noRunner, "lay")}
@@ -2021,7 +2219,7 @@ export default function MatchPage() {
               return (
                 <div key={market.marketId} className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
                   {advHeader}
-                  <div className="bg-white items-stretch" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr" }}>
+                  <div className="bg-white grid grid-cols-2 sm:grid-cols-4 items-stretch">
                     {runners.flatMap((runner: any) => {
                       const isRunnerSusp = isMarketSusp || runner.status === "SUSPENDED" || runner.status === "REMOVED";
                       const backItem = runner.back?.[0];
@@ -2034,7 +2232,7 @@ export default function MatchPage() {
                           ? <SuspendedCell key={`susp-${runner.selectionId}`} className="min-h-[2.75rem]" />
                           : <button key={`btn-${runner.selectionId}`}
                               onClick={() => rawPrice != null && handleBackClick(market, runner, rawPrice, null, 0, true)}
-                              className="min-h-[2.75rem] flex items-center justify-center font-bold text-base text-gray-900 bg-back hover:bg-back-hover transition-all">
+                              className="min-h-[2.75rem] mb-1 flex items-center justify-center font-bold text-base text-gray-900 bg-back hover:bg-back-hover transition-all">
                               {rawPrice != null ? formatOddsPrice(rawPrice) : "-"}
                             </button>,
                       ];
@@ -2101,39 +2299,34 @@ export default function MatchPage() {
               );
             }
 
-            // multi-grid (fallthrough)
+            // multi-grid (fallthrough): responsive grid 1/2/3 cols
             {
               const runners: any[] = market.runners || [];
-              const colsPerRow = Math.min(runners.length, 3);
-              const rows: any[][] = [];
-              for (let i = 0; i < runners.length; i += colsPerRow) rows.push(runners.slice(i, i + colsPerRow));
+              const cols = Math.min(runners.length, 3);
+              const mdColsClass = cols === 1 ? "md:grid-cols-1" : cols === 2 ? "md:grid-cols-2" : "md:grid-cols-3";
               return (
                 <div key={market.marketId} className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
                   {advHeader}
-                  <div className="bg-white divide-y divide-gray-100">
-                    {rows.map((row, rowIdx) => (
-                      <div key={rowIdx} className="grid divide-x divide-gray-100" style={{ gridTemplateColumns: `repeat(${colsPerRow}, 1fr)` }}>
-                        {row.map((runner: any) => {
-                          const isRunnerSusp = isMarketSusp || runner.status === "SUSPENDED" || runner.status === "REMOVED";
-                          const backItem = runner.back?.[0];
-                          const rawPrice = backItem ? parseFloat(String(backItem.price)) : null;
-                          return (
-                            <div key={runner.selectionId} className="flex items-stretch">
-                              <div className="flex-1 px-2 py-1.5 min-w-0">
-                                <RunnerNameCell runner={runner} marketId={market.marketId} />
-                              </div>
-                              {isRunnerSusp
-                                ? <SuspendedCell className="w-16 min-h-[2.25rem] shrink-0" />
-                                : <button onClick={() => rawPrice != null && handleBackClick(market, runner, rawPrice, null, 0, true)}
-                                    className="w-16 min-h-[2.25rem] flex items-center justify-center font-bold text-sm text-gray-900 bg-back hover:bg-back-hover transition-all shrink-0">
-                                    {rawPrice != null ? formatOddsPrice(rawPrice) : "-"}
-                                  </button>
-                              }
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ))}
+                  <div className={`bg-white grid grid-cols-1 sm:grid-cols-2 ${mdColsClass} divide-x divide-y divide-gray-100`}>
+                    {runners.map((runner: any) => {
+                      const isRunnerSusp = isMarketSusp || runner.status === "SUSPENDED" || runner.status === "REMOVED";
+                      const backItem = runner.back?.[0];
+                      const rawPrice = backItem ? parseFloat(String(backItem.price)) : null;
+                      return (
+                        <div key={runner.selectionId} className="flex items-stretch min-w-0">
+                          <div className="flex-1 px-2 py-1.5 min-w-0">
+                            <RunnerNameCell runner={runner} marketId={market.marketId} />
+                          </div>
+                          {isRunnerSusp
+                            ? <SuspendedCell className="w-16 min-h-[2.25rem] shrink-0" />
+                            : <button onClick={() => rawPrice != null && handleBackClick(market, runner, rawPrice, null, 0, true)}
+                                className="w-16 min-h-[2.25rem] flex items-center justify-center font-bold text-sm text-gray-900 bg-back hover:bg-back-hover transition-all shrink-0">
+                                {rawPrice != null ? formatOddsPrice(rawPrice) : "-"}
+                              </button>
+                          }
+                        </div>
+                      );
+                    })}
                   </div>
                   {quickBet && quickBet.marketId === market.marketId && (
                     <QuickBetPanel data={quickBet} stake={quickBetStake} onStakeChange={setQuickBetStake}

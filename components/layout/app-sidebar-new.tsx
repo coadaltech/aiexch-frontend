@@ -1,6 +1,11 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { sidebarApi } from "@/lib/api";
+import { useChannelWatcher } from "@/hooks/useChannelWatcher";
+import { useFavorites, FAVORITES_CHANGED_EVENT } from "@/hooks/useFavorites";
+import { Star } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Sidebar,
@@ -408,6 +413,236 @@ function SportItem({
   return <SportAccordionItem sport={sport} pathname={pathname} />;
 }
 
+// ── Sidebar feature tabs: Favorites / Recommended / Top competitions ───────
+//
+// Each tab is an accordion. Favorites is per-user (requires login).
+// Recommended and Top competitions are global and live-updating: the backend
+// broadcasts a "<channel>-changed" message whenever the owner adds/removes
+// items, and the lists refetch without a page refresh.
+
+const resolveSportBasePath = (sportId: unknown): string => {
+  const key = String(sportId ?? "");
+  return SPORT_LINK_MAPPING[key]?.basePath || key;
+};
+
+const buildCompetitionHref = (sportId: unknown, competitionId: unknown) =>
+  `/sports/${resolveSportBasePath(sportId)}/${competitionId}`;
+
+const buildEventHref = (
+  sportId: unknown,
+  competitionId: unknown,
+  eventId: unknown,
+) =>
+  `/sports/${resolveSportBasePath(sportId)}/${competitionId}/${eventId}`;
+
+function FeatureTabAccordion({
+  label,
+  icon: Icon,
+  expanded,
+  onToggle,
+  children,
+}: {
+  label: string;
+  icon: any;
+  expanded: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="mb-1">
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-bold bg-gradient-to-r from-[#142969] via-[#142669] to-[#84c2f1] hover:brightness-110 text-white transition-colors cursor-pointer"
+      >
+        <Icon className="h-4 w-4 flex-shrink-0" />
+        <span className="flex-1 text-left">{label}</span>
+        {expanded ? (
+          <ChevronDown className="h-3.5 w-3.5 opacity-90" />
+        ) : (
+          <ChevronRight className="h-3.5 w-3.5 opacity-90" />
+        )}
+      </button>
+      {expanded && (
+        <div className="mt-1 ml-2 border-l border-gray-200 pl-2 rounded-b-md bg-white">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FeatureTabEmpty({ text }: { text: string }) {
+  return (
+    <div className="px-3 py-2 text-xs text-gray-400">{text}</div>
+  );
+}
+
+function FeatureTabLoading() {
+  return (
+    <div className="flex items-center gap-2 px-3 py-2 text-xs text-gray-500">
+      <Loader2 className="h-3 w-3 animate-spin" />
+      Loading…
+    </div>
+  );
+}
+
+function SidebarFeatureTabs({ pathname }: { pathname: string }) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const { isLoggedIn } = useAuth();
+
+  const [open, setOpen] = useState<"favorites" | "recommended" | "top" | null>(null);
+  const toggle = useCallback(
+    (key: "favorites" | "recommended" | "top") =>
+      setOpen((cur) => (cur === key ? null : key)),
+    [],
+  );
+
+  // ── Top competitions (global, live) ────────────────────────────────────
+  const topCompetitionsQuery = useQuery({
+    queryKey: ["sidebar", "top-competitions"],
+    queryFn: async () => {
+      const { data } = await sidebarApi.topCompetitions();
+      return Array.isArray(data?.data) ? data.data : [];
+    },
+    staleTime: 60_000,
+  });
+  const invalidateTopCompetitions = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["sidebar", "top-competitions"] });
+  }, [queryClient]);
+  useChannelWatcher("top-competitions", invalidateTopCompetitions);
+
+  // ── Recommended events (global, live) ──────────────────────────────────
+  const recommendedQuery = useQuery({
+    queryKey: ["sidebar", "recommended-events"],
+    queryFn: async () => {
+      const { data } = await sidebarApi.recommendedEvents();
+      return Array.isArray(data?.data) ? data.data : [];
+    },
+    staleTime: 60_000,
+  });
+  const invalidateRecommended = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["sidebar", "recommended-events"] });
+  }, [queryClient]);
+  useChannelWatcher("recommended-events", invalidateRecommended);
+
+  // ── Favorites (per-user; fetch on mount, refresh on add/remove) ────────
+  const { favorites, isLoading: favoritesLoading, refetch: refetchFavorites } = useFavorites();
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handler = () => refetchFavorites();
+    window.addEventListener(FAVORITES_CHANGED_EVENT, handler);
+    return () => window.removeEventListener(FAVORITES_CHANGED_EVENT, handler);
+  }, [refetchFavorites]);
+
+  return (
+    <div className="space-y-1 mb-3">
+      {/* ── Favorites ── */}
+      <FeatureTabAccordion
+        label="Favorite matches"
+        icon={Star}
+        expanded={open === "favorites"}
+        onToggle={() => toggle("favorites")}
+      >
+        {!isLoggedIn ? (
+          <FeatureTabEmpty text="Log in to save matches" />
+        ) : favoritesLoading ? (
+          <FeatureTabLoading />
+        ) : favorites.length === 0 ? (
+          <FeatureTabEmpty text="No favorite matches yet" />
+        ) : (
+          favorites.map((f) => {
+            const href = buildEventHref(f.sportId, f.competitionId, f.eventId);
+            const isActive = pathname.endsWith(`/${f.eventId}`);
+            return (
+              <button
+                key={f.favoriteId}
+                onClick={() => router.push(href)}
+                className={`w-full flex items-center gap-2 px-2.5 py-2 text-sm text-left transition-colors cursor-pointer border-b border-gray-100 ${
+                  isActive
+                    ? "bg-[#1a3578]/10 text-[#1a3578] font-bold"
+                    : "text-black font-semibold hover:bg-gray-50"
+                }`}
+              >
+                <Star className="h-3.5 w-3.5 flex-shrink-0 text-amber-500" fill="currentColor" strokeWidth={0} />
+                <span className="flex-1 truncate">
+                  {f.name || `Match #${f.eventId}`}
+                </span>
+              </button>
+            );
+          })
+        )}
+      </FeatureTabAccordion>
+
+      {/* ── Recommended ── */}
+      <FeatureTabAccordion
+        label="Recommended"
+        icon={Home}
+        expanded={open === "recommended"}
+        onToggle={() => toggle("recommended")}
+      >
+        {recommendedQuery.isLoading ? (
+          <FeatureTabLoading />
+        ) : (recommendedQuery.data ?? []).length === 0 ? (
+          <FeatureTabEmpty text="No recommended matches" />
+        ) : (
+          (recommendedQuery.data ?? []).map((evt: any) => {
+            const href = buildEventHref(evt.sportId, evt.competitionId, evt.eventId);
+            const isActive = pathname.endsWith(`/${evt.eventId}`);
+            return (
+              <button
+                key={evt.eventId}
+                onClick={() => router.push(href)}
+                className={`w-full flex items-center gap-2 px-2.5 py-2 text-sm text-left transition-colors cursor-pointer border-b border-gray-100 ${
+                  isActive
+                    ? "bg-[#1a3578]/10 text-[#1a3578] font-bold"
+                    : "text-black font-semibold hover:bg-gray-50"
+                }`}
+              >
+                <TrendingUp className="h-3.5 w-3.5 flex-shrink-0 opacity-70" />
+                <span className="flex-1 truncate">{evt.name}</span>
+              </button>
+            );
+          })
+        )}
+      </FeatureTabAccordion>
+
+      {/* ── Top competitions ── */}
+      <FeatureTabAccordion
+        label="Top competitions"
+        icon={Trophy}
+        expanded={open === "top"}
+        onToggle={() => toggle("top")}
+      >
+        {topCompetitionsQuery.isLoading ? (
+          <FeatureTabLoading />
+        ) : (topCompetitionsQuery.data ?? []).length === 0 ? (
+          <FeatureTabEmpty text="No top competitions" />
+        ) : (
+          (topCompetitionsQuery.data ?? []).map((comp: any) => {
+            const href = buildCompetitionHref(comp.sportId, comp.competitionId);
+            const isActive = pathname.includes(`/${comp.competitionId}`);
+            return (
+              <button
+                key={comp.competitionId}
+                onClick={() => router.push(href)}
+                className={`w-full flex items-center gap-2 px-2.5 py-2 text-sm text-left transition-colors cursor-pointer border-b border-gray-100 ${
+                  isActive
+                    ? "bg-[#1a3578]/10 text-[#1a3578] font-bold"
+                    : "text-black font-semibold hover:bg-gray-50"
+                }`}
+              >
+                <Trophy className="h-3.5 w-3.5 flex-shrink-0 opacity-70" />
+                <span className="flex-1 truncate">{comp.name}</span>
+              </button>
+            );
+          })
+        )}
+      </FeatureTabAccordion>
+    </div>
+  );
+}
+
 export function AppSidebar() {
   const { isLoggedIn, logout } = useAuth();
   const router = useRouter();
@@ -565,26 +800,11 @@ export function AppSidebar() {
             ) : isSportsPage ? (
               /* ── Sports pages ── */
               <div className="px-2">
-                {/* Header buttons */}
-                <div className="space-y-1 mb-3">
-                  {[
-                    { label: "Favorite matches", icon: Gift },
-                    { label: "Recommended", icon: Home },
-                    { label: "Top competitions", icon: Trophy },
-                  ].map(({ label, icon: Icon }) => (
-                    <button
-                      key={label}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-bold bg-gradient-to-r from-[#142969] via-[#142669] to-[#84c2f1] hover:bg-[#0b1545] text-white transition-colors cursor-pointer"
-                    >
-                      <Icon className="h-4 w-4 flex-shrink-0" />
-                      <span className="flex-1 text-left">{label}</span>
-                      <ChevronRight className="h-3.5 w-3.5 opacity-60" />
-                    </button>
-                  ))}
-                </div>
+                {/* Header buttons (live feature tabs) */}
+                <SidebarFeatureTabs pathname={pathname} />
 
                 {/* LIVE / SPORTS toggle */}
-                <div className="flex mb-3 rounded-md overflow-hidden border border-gray-200">
+                {/* <div className="flex mb-3 rounded-md overflow-hidden border border-gray-200">
                   <button
                     onClick={() => setLiveTab("live")}
                     className={`flex-1 py-1.5 text-xs font-bold tracking-wide transition-colors cursor-pointer ${
@@ -601,7 +821,7 @@ export function AppSidebar() {
                   >
                     SPORTS
                   </button>
-                </div>
+                </div> */}
 
                 <div className="mb-1 px-1">
                   <span className="text-[10px] font-bold text-[#1a3578] uppercase tracking-widest">Top</span>

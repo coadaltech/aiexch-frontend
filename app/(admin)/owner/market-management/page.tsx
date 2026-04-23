@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useRef, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { usePanelPrefix } from "@/hooks/usePanelPrefix";
 import { useLiveMatch } from "@/hooks/useLiveMatch";
 import {
   useEventSettings,
@@ -13,9 +12,13 @@ import {
   useUpdateCustomOdds,
   useOddsHistory,
   useSearchEvents,
+  useListCustomMarkets,
 } from "@/hooks/useOwner";
-
-import { toast } from "sonner";
+import {
+  CreateCustomMarketModal,
+  EditCustomMarketModal,
+  ManageMarketPriceModal,
+} from "@/components/owner/custom-market-modals";
 
 // ─── Spinner ───
 function Spinner({ size = 16 }: { size?: number }) {
@@ -444,8 +447,10 @@ function RunnerOddsRow({
           </>
         )}
 
-        {/* Suspended overlay */}
-        {isSuspended && (
+        {/* Suspended overlay — per runner if the runner itself is suspended
+            (custom markets use this to show "Ball Running" on just the
+            affected row); otherwise falls back to the market-level overlay. */}
+        {(isSuspended || runner.status === "SUSPENDED") && (
           <div
             className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[70%] min-w-[4rem] flex items-center justify-center pointer-events-none z-10"
             style={{
@@ -455,7 +460,9 @@ function RunnerOddsRow({
             }}
           >
             <span className="text-red-600 font-bold text-sm drop-shadow-sm">
-              Suspended
+              {isCustom && runner.status === "SUSPENDED" && !isSuspended
+                ? "Ball Running"
+                : "Suspended"}
             </span>
           </div>
         )}
@@ -959,18 +966,40 @@ function OddsHistoryPanel({ eventId }: { eventId: string }) {
 function MarketManagementContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const panelPrefix = usePanelPrefix();
   const preselectedEventId = searchParams.get("eventId");
 
   const [searchQuery, setSearchQuery] = useState("");
   const [activeEventId, setActiveEventId] = useState(preselectedEventId || "");
   const [activeEventTypeId, setActiveEventTypeId] = useState("4");
-  const [activeTab, setActiveTab] = useState<"markets" | "history">("markets");
+  const [activeTab, setActiveTab] = useState<"markets" | "custom" | "history">(
+    "markets"
+  );
   const [filter, setFilter] = useState<"all" | "active" | "disabled">(
     "all"
   );
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingCustomMarket, setEditingCustomMarket] = useState<any>(null);
+  const [managingCustomMarket, setManagingCustomMarket] = useState<any>(null);
   const searchRef = useRef<HTMLDivElement>(null);
+
+  const deleteCustom = useDeleteCustomMarket();
+
+  // All custom markets across the system; filtered to this event below.
+  const { data: allCustomMarkets, isLoading: isLoadingCustom } =
+    useListCustomMarkets(
+      activeEventId ? { status: "all", limit: 200 } : undefined
+    );
+  const customMarketsForEvent = activeEventId
+    ? (allCustomMarkets || []).filter(
+        (m: any) => String(m.eventId) === String(activeEventId)
+      )
+    : [];
+
+  const handleDeleteCustom = (market: any) => {
+    if (!confirm(`Delete custom market "${market.marketName}"?`)) return;
+    deleteCustom.mutate(market.marketId);
+  };
 
   const { data: searchResults, isLoading: isSearching } = useSearchEvents(searchQuery);
 
@@ -1143,6 +1172,16 @@ function MarketManagementContent() {
             Markets {activeEventId ? `(${rawMarkets.length})` : ""}
           </button>
           <button
+            onClick={() => setActiveTab("custom")}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === "custom"
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Custom Market {activeEventId ? `(${customMarketsForEvent.length})` : ""}
+          </button>
+          <button
             onClick={() => setActiveTab("history")}
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
               activeTab === "history"
@@ -1236,10 +1275,133 @@ function MarketManagementContent() {
               </>
             )}
 
+            {activeTab === "custom" && (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-800">
+                      Custom Markets for this Event
+                    </h2>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      Create new custom markets and manage their prices. Changes
+                      are pushed live to users instantly.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowCreateModal(true)}
+                    className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap"
+                  >
+                    + Create Custom Market
+                  </button>
+                </div>
+
+                {isLoadingCustom ? (
+                  <div className="flex justify-center py-12">
+                    <Spinner size={24} />
+                  </div>
+                ) : customMarketsForEvent.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500 text-sm">
+                    No custom markets for this event yet. Click{" "}
+                    <span className="font-medium">+ Create Custom Market</span>{" "}
+                    to add one.
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {customMarketsForEvent.map((market: any) => (
+                      <div
+                        key={market.marketId}
+                        className="border border-gray-200 rounded-lg p-4 hover:border-blue-200 transition-colors"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 className="font-semibold text-gray-800 text-sm">
+                                {market.marketName}
+                              </h3>
+                              <span
+                                className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                                  market.isActive
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-red-100 text-red-700"
+                                }`}
+                              >
+                                {market.isActive ? "ACTIVE" : "INACTIVE"}
+                              </span>
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700">
+                                {market.marketType}
+                              </span>
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-indigo-100 text-indigo-700">
+                                CUSTOM
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1 font-mono">
+                              {market.marketId}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              Runners:{" "}
+                              {(market.runners || [])
+                                .map((r: any) => r.name)
+                                .join(", ") || "-"}
+                              <span className="mx-1.5 text-gray-300">|</span>
+                              Min: {market.minBet || "-"} / Max:{" "}
+                              {market.maxBet || "-"} / Delay:{" "}
+                              {market.betDelay ?? 0}s
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              onClick={() => setEditingCustomMarket(market)}
+                              className="px-3 py-1.5 text-xs bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors font-medium"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => setManagingCustomMarket(market)}
+                              className="px-3 py-1.5 text-xs bg-yellow-50 text-yellow-700 rounded-lg hover:bg-yellow-100 transition-colors font-medium"
+                            >
+                              Manage Prices
+                            </button>
+                            <button
+                              onClick={() => handleDeleteCustom(market)}
+                              disabled={deleteCustom.isPending}
+                              className="px-3 py-1.5 text-xs bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors font-medium disabled:opacity-50"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {activeTab === "history" && (
               <OddsHistoryPanel eventId={activeEventId} />
             )}
           </>
+        )}
+
+        {/* Custom market modals — available from the "Custom Market" tab */}
+        {showCreateModal && activeEventId && (
+          <CreateCustomMarketModal
+            onClose={() => setShowCreateModal(false)}
+            lockedEventId={activeEventId}
+            lockedEventName={searchQuery || `Event ${activeEventId}`}
+          />
+        )}
+        {editingCustomMarket && (
+          <EditCustomMarketModal
+            market={editingCustomMarket}
+            onClose={() => setEditingCustomMarket(null)}
+          />
+        )}
+        {managingCustomMarket && (
+          <ManageMarketPriceModal
+            market={managingCustomMarket}
+            onClose={() => setManagingCustomMarket(null)}
+          />
         )}
 
         {/* Empty state */}

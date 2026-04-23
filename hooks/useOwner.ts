@@ -931,6 +931,19 @@ export const useUpdateCustomOdds = () => {
   });
 };
 
+export const useSetCustomMarketBallRunning = () => {
+  return useMutation({
+    mutationFn: ({
+      marketId,
+      ballRunning,
+    }: {
+      marketId: string;
+      ballRunning: boolean;
+    }) => ownerApi.setCustomMarketBallRunning(marketId, ballRunning),
+    onError: () => toast.error("Failed to toggle ball running"),
+  });
+};
+
 export const useDeleteCustomMarket = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -1269,5 +1282,62 @@ export const useDeclareMarketResult = () => {
     },
     onError: (err: any) =>
       toast.error(err?.response?.data?.error ?? "Failed to declare result"),
+  });
+};
+
+// ── Jambo Shifts (owner) ────────────────────────────────────────────────────
+export const useOwnerJamboShifts = (date?: string) => {
+  return useQuery({
+    queryKey: ["owner-jambo-shifts", date],
+    queryFn: () =>
+      ownerApi.getJamboShifts(date).then((res) => res.data.data),
+  });
+};
+
+export const useCreateJamboShift = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: any) => ownerApi.createJamboShift(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["owner-jambo-shifts"] });
+      toast.success("Shift created successfully");
+    },
+    onError: () => toast.error("Failed to create shift"),
+  });
+};
+
+export const useUpdateJamboShift = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...data }: any) => ownerApi.updateJamboShift(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["owner-jambo-shifts"] });
+      toast.success("Shift updated successfully");
+    },
+    onError: () => toast.error("Failed to update shift"),
+  });
+};
+
+export const useDeleteJamboShift = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => ownerApi.deleteJamboShift(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["owner-jambo-shifts"] });
+      toast.success("Shift deleted successfully");
+    },
+    onError: () => toast.error("Failed to delete shift"),
+  });
+};
+
+export const useReorderJamboShifts = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (orders: { id: string; shiftOrder: number }[]) =>
+      ownerApi.reorderJamboShifts(orders),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["owner-jambo-shifts"] });
+    },
+    onError: () => toast.error("Failed to reorder shifts"),
   });
 };

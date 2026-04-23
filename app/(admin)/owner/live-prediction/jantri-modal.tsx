@@ -85,7 +85,7 @@ export function JantriGridModal({
     return (
       <td
         key={n}
-        className={`border border-gray-300 h-[50px] relative ${
+        className={`border border-gray-300 h-[40px] relative ${
           hasSale ? "bg-amber-400/80" : "bg-white"
         }`}
       >
@@ -110,7 +110,7 @@ export function JantriGridModal({
     return (
       <td
         key={label}
-        className={`border border-gray-300 h-[50px] relative ${
+        className={`border border-gray-300 h-[40px] relative ${
           hasSale ? "bg-amber-400/80" : "bg-white"
         }`}
       >

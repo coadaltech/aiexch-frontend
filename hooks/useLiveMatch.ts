@@ -11,6 +11,11 @@ const getWebSocketUrl = () => {
 
 type ConnectionStatus = "disconnected" | "connecting" | "connected" | "error";
 
+// If the tab was hidden / network was offline and the last live update is older
+// than this when we regain visibility, force a fresh reconnect immediately
+// rather than waiting for the next backoff tick.
+const VISIBILITY_RECONNECT_THRESHOLD_MS = 5_000;
+
 export function useLiveMatch(eventId: string, eventTypeId: string) {
   const [status, setStatus] = useState<ConnectionStatus>("disconnected");
   const [matchOdds, setMatchOdds] = useState<any[]>([]);
@@ -23,6 +28,10 @@ export function useLiveMatch(eventId: string, eventTypeId: string) {
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttempts = useRef(0);
   const isMounted = useRef(true);
+  const lastUpdateRef = useRef<number | null>(null);
+  useEffect(() => {
+    lastUpdateRef.current = lastUpdate;
+  }, [lastUpdate]);
 
   const connect = useCallback(() => {
     if (!eventId || !eventTypeId) return;
@@ -86,16 +95,27 @@ export function useLiveMatch(eventId: string, eventTypeId: string) {
       if (!isMounted.current || wsRef.current !== ws) return;
       setStatus("disconnected");
 
-      // Auto-reconnect with exponential backoff
-      if (reconnectAttempts.current < 10) {
-        const delay = 1000 * Math.pow(2, reconnectAttempts.current);
-        reconnectAttempts.current++;
-        reconnectTimer.current = setTimeout(() => {
-          if (isMounted.current) connect();
-        }, delay);
-      }
+      // Auto-reconnect with exponential backoff, capped at 30s, retrying
+      // indefinitely. Previous code stopped after 10 attempts (~17 min total),
+      // which left tabs that had been backgrounded for a long time stuck on
+      // stale data forever — even after the user came back to the tab.
+      const delay = Math.min(30_000, 1000 * Math.pow(2, reconnectAttempts.current));
+      reconnectAttempts.current++;
+      reconnectTimer.current = setTimeout(() => {
+        if (isMounted.current) connect();
+      }, delay);
     };
   }, [eventId, eventTypeId]);
+
+  // Manually force an immediate reconnect (used by visibility/online handlers).
+  const forceReconnect = useCallback(() => {
+    if (reconnectTimer.current) {
+      clearTimeout(reconnectTimer.current);
+      reconnectTimer.current = null;
+    }
+    reconnectAttempts.current = 0;
+    connect();
+  }, [connect]);
 
   useEffect(() => {
     isMounted.current = true;
@@ -120,6 +140,38 @@ export function useLiveMatch(eventId: string, eventTypeId: string) {
     };
   }, [eventId, eventTypeId, connect]);
 
+  // When the tab regains visibility or the network comes back, force a fresh
+  // reconnect. Browsers commonly close WebSockets when the laptop sleeps or
+  // the tab is backgrounded for a long time; without this the user sees stale
+  // data (and could place bets against markets that have already closed).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!eventId || !eventTypeId) return;
+
+    const wakeIfStale = () => {
+      const last = lastUpdateRef.current;
+      const stale = last == null || Date.now() - last > VISIBILITY_RECONNECT_THRESHOLD_MS;
+      if (stale) forceReconnect();
+    };
+
+    const onVisibility = () => {
+      if (typeof document === "undefined") return;
+      if (document.visibilityState === "visible") wakeIfStale();
+    };
+    const onOnline = () => forceReconnect();
+    const onFocus = () => wakeIfStale();
+
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("online", onOnline);
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("online", onOnline);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [eventId, eventTypeId, forceReconnect]);
+
   return {
     status,
     isConnected: status === "connected",
@@ -128,5 +180,6 @@ export function useLiveMatch(eventId: string, eventTypeId: string) {
     sessions,
     score,
     lastUpdate,
+    forceReconnect,
   };
 }

@@ -5,12 +5,14 @@ import { ownerApi } from "@/lib/api";
 import { usePanelPrefix } from "@/hooks/usePanelPrefix";
 
 const MATKA_SPORT_ID = 1001;
+const JAMBO_SPORT_ID = 1004;
 
 interface Sport {
   id: number;
   name: string;
   totalCompetitions: number;
   isActive: boolean;
+  is_active?: boolean;
   sort_order: number;
 }
 
@@ -21,6 +23,7 @@ export default function SportsPage() {
   const [sports, setSports] = useState<Sport[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [togglingId, setTogglingId] = useState<number | null>(null);
 
   // Drag state
   const dragIndexRef = useRef<number | null>(null);
@@ -38,12 +41,18 @@ export default function SportsPage() {
         clearTimeout(timeoutId);
         const data = await response.json();
 
-        let list: Sport[] = [];
+        let raw: any[] = [];
         if (Array.isArray(data)) {
-          list = data;
+          raw = data;
         } else if (data.data && Array.isArray(data.data)) {
-          list = data.data;
+          raw = data.data;
         }
+        // Backend returns `is_active` (snake_case); normalize so the UI has a
+        // stable `isActive` field to read and toggle.
+        const list: Sport[] = raw.map((s: any) => ({
+          ...s,
+          isActive: s.isActive ?? s.is_active ?? false,
+        }));
         // Already sorted by sort_order from backend; ensure stable display
         setSports(list);
       } catch (error) {
@@ -63,6 +72,8 @@ export default function SportsPage() {
   const handleSportClick = (sport: Sport) => {
     if (sport.id === MATKA_SPORT_ID) {
       router.push(`${panelPrefix}/matka`);
+    } else if (sport.id === JAMBO_SPORT_ID) {
+      router.push(`${panelPrefix}/jambo`);
     } else {
       router.push(`${panelPrefix}/sports-games/competitions/${sport.id}`);
     }
@@ -109,6 +120,37 @@ export default function SportsPage() {
   const handleDragEnd = () => {
     setDragOverIndex(null);
     dragIndexRef.current = null;
+  };
+
+  const handleToggleActive = async (
+    e: React.MouseEvent,
+    sport: Sport,
+  ) => {
+    e.stopPropagation();
+    if (togglingId !== null) return;
+    const nextActive = !sport.isActive;
+    setTogglingId(sport.id);
+    // Optimistic update
+    setSports((prev) =>
+      prev.map((s) =>
+        s.id === sport.id ? { ...s, isActive: nextActive, is_active: nextActive } : s,
+      ),
+    );
+    try {
+      await ownerApi.toggleSportActive(sport.id, nextActive);
+    } catch (err) {
+      console.error("Failed to toggle sport active state:", err);
+      // Revert on failure
+      setSports((prev) =>
+        prev.map((s) =>
+          s.id === sport.id
+            ? { ...s, isActive: sport.isActive, is_active: sport.isActive }
+            : s,
+        ),
+      );
+    } finally {
+      setTogglingId(null);
+    }
   };
 
   const saveOrder = async (ordered: Sport[]) => {
@@ -213,6 +255,27 @@ export default function SportsPage() {
                   >
                     {sport.isActive ? "Active" : "Inactive"}
                   </div>
+                  <button
+                    type="button"
+                    onClick={(e) => handleToggleActive(e, sport)}
+                    disabled={togglingId === sport.id}
+                    title={
+                      sport.isActive
+                        ? "Click to hide this sport across the site"
+                        : "Click to show this sport across the site"
+                    }
+                    className={`px-3 py-1 rounded-md text-sm font-medium border transition-colors disabled:opacity-60 disabled:cursor-wait ${
+                      sport.isActive
+                        ? "bg-white border-red-300 text-red-600 hover:bg-red-50"
+                        : "bg-white border-green-300 text-green-700 hover:bg-green-50"
+                    }`}
+                  >
+                    {togglingId === sport.id
+                      ? "Saving…"
+                      : sport.isActive
+                        ? "Deactivate"
+                        : "Activate"}
+                  </button>
                   <svg
                     className="w-5 h-5 text-gray-400"
                     fill="none"

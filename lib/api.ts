@@ -317,17 +317,27 @@ export const ownerApi = {
   reorderSports: (sportsList: Array<{ sportId: number; sortOrder: number }>) =>
     api.put("/owner/sports-games/reorder", { sports: sportsList }),
 
+  // Toggle a sport's global active state (owner only)
+  toggleSportActive: (sportId: number | string, isActive: boolean) =>
+    api.post(`/owner/sports-games/toggle-active/${sportId}`, { isActive }),
+
   // Competitions (per-sport, role + whitelabel aware)
   getCompetitions: (sportId: string) =>
     api.get(`/owner/sports-games/competitions/${sportId}`),
   updateCompetitionStatus: (sportId: string, data: { competitions: Array<{ id: string; isActive: boolean }> }) =>
     api.post(`/owner/sports-games/competitions/${sportId}/update-status`, data),
+  // Mark/unmark a competition as a sidebar "Top competition" (owner only)
+  toggleTopCompetition: (competitionId: string | number, isTop: boolean) =>
+    api.post(`/owner/sports-games/toggle-top-competition/${competitionId}`, { isTop }),
 
   // Events (per-competition)
   getCompetitionEvents: (competitionId: string) =>
     api.get(`/owner/sports-games/events/${competitionId}`),
   updateEventStatus: (competitionId: string, data: { events: Array<{ id: string; isActive: boolean }> }) =>
     api.post(`/owner/sports-games/events/${competitionId}/update-status`, data),
+  // Mark/unmark an event as a sidebar "Recommended" match (owner only)
+  toggleRecommendedEvent: (eventId: string | number, isRecommended: boolean) =>
+    api.post(`/owner/sports-games/toggle-recommended-event/${eventId}`, { isRecommended }),
 
   // Home Sections
   getHomeSections: () => api.get("/owner/home-sections"),
@@ -406,6 +416,11 @@ export const ownerApi = {
     api.put(`/owner/market-management/custom-markets/${marketId}`, data),
   updateCustomOdds: (marketId: string, data: any) =>
     api.put(`/owner/market-management/custom-markets/${marketId}/odds`, data),
+  setCustomMarketBallRunning: (marketId: string, ballRunning: boolean) =>
+    api.put(
+      `/owner/market-management/custom-markets/${marketId}/ball-running`,
+      { ballRunning },
+    ),
   getCustomMarketDetails: (marketId: string) =>
     api.get(`/owner/market-management/custom-markets/${marketId}`),
   deleteCustomMarket: (marketId: string) =>
@@ -456,6 +471,18 @@ export const ownerApi = {
     api.get(`/owner/matka/shifts/${shiftId}/jantri`),
   reorderMatkaShifts: (orders: { id: string; shiftOrder: number }[]) =>
     api.put("/owner/matka/shifts/reorder", { orders }),
+
+  // Jambo Shifts (same shape as matka, but sport_type=1004)
+  getJamboShifts: (date?: string) =>
+    api.get(`/owner/jambo/shifts${date ? `?date=${date}` : ""}`),
+  createJamboShift: (data: any) => api.post("/owner/jambo/shifts", data),
+  updateJamboShift: (id: string, data: any) =>
+    api.put(`/owner/jambo/shifts/${id}`, data),
+  deleteJamboShift: (id: string) => api.delete(`/owner/jambo/shifts/${id}`),
+  getJamboJantri: (shiftId: string) =>
+    api.get(`/owner/jambo/shifts/${shiftId}/jantri`),
+  reorderJamboShifts: (orders: { id: string; shiftOrder: number }[]) =>
+    api.put("/owner/jambo/shifts/reorder", { orders }),
 
   // Matka Live Prediction
   getMatkaLivePrediction: (shiftId: string) =>
@@ -692,6 +719,28 @@ export const sportsApi = {
     api.get(`/sports/new-result/${eventId}`),
 };
 
+export const jamboApi = {
+  getShifts: (date?: string) =>
+    api.get(`/jambo/shifts${date ? `?date=${date}` : ""}`),
+  getShift: (id: string) => api.get(`/jambo/shifts/${id}`),
+  getJantri: (shiftId: string) => api.get(`/jambo/shifts/${shiftId}/jantri`),
+  placeBet: (data: {
+    shiftId: string;
+    bets: { number: string; numberType: number; amount: number }[];
+    copyReferenceShiftId?: string;
+    whitelabelId?: string;
+  }) => api.post("/jambo/place", data),
+  getMyBets: (params?: { shiftId?: string; status?: "active" | "inactive" }) => {
+    const qs = new URLSearchParams();
+    if (params?.shiftId) qs.set("shiftId", params.shiftId);
+    if (params?.status) qs.set("status", params.status);
+    const query = qs.toString();
+    return api.get(`/jambo/my-bets${query ? `?${query}` : ""}`);
+  },
+  getTransaction: (id: string) => api.get(`/jambo/transactions/${id}`),
+  deleteTransaction: (id: string) => api.delete(`/jambo/transactions/${id}`),
+};
+
 export const matkaApi = {
   getShifts: (date?: string) =>
     api.get(`/matka/shifts${date ? `?date=${date}` : ""}`),
@@ -720,4 +769,17 @@ export const matkaApi = {
     api.get(`/matka/live-prediction/${shiftId}`),
   getDeclaredHistory: (limit = 50) =>
     api.get(`/matka/declared-history?limit=${limit}`),
+};
+
+// ── User favorites (per-user, authenticated) + sidebar feeds ────────────────
+export const favoritesApi = {
+  list: () => api.get("/api/user/favorites"),
+  add: (eventId: string | number) => api.post(`/api/user/favorites/${eventId}`),
+  remove: (eventId: string | number) =>
+    api.delete(`/api/user/favorites/${eventId}`),
+};
+
+export const sidebarApi = {
+  topCompetitions: () => api.get("/api/dashboard/sidebar/top-competitions"),
+  recommendedEvents: () => api.get("/api/dashboard/sidebar/recommended-events"),
 };
