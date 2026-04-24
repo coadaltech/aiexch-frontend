@@ -382,7 +382,11 @@ export function ManageMarketPriceModal({ market, onClose }: { market: any; onClo
   );
   const isLine = bettingTypeStr === "LINE";
 
-  const [selectedRunner, setSelectedRunner] = useState(0);
+  // `selectedRunner === -1` means "all runners active" — every row's price
+  // input is enabled so the owner can tab between them and enter prices for
+  // the whole market in one pass.
+  const [selectedRunner, setSelectedRunner] = useState<number>(0);
+  const allRunnersActive = selectedRunner === -1;
   const [backLayDiff, setBackLayDiff] = useState(1);
   const [addDiffs, setAddDiffs] = useState<number[]>([]);
   const [backPrices, setBackPrices] = useState<string[]>([]);
@@ -435,6 +439,27 @@ export function ManageMarketPriceModal({ market, onClose }: { market: any; onClo
     return parseFloat((back + diff + addDiff / 100).toFixed(2));
   };
 
+  // Focus + select the active runner's Back price input. Used after the
+  // Ball Chalu toggle (both button-click and F1 shortcut) so the owner can
+  // immediately type the next price without reaching for the mouse.
+  // `preferIdx` lets F1 respect whichever row the owner just interacted
+  // with; falls back to the current selection or the first runner.
+  const focusPriceInput = (preferIdx?: number) => {
+    const idx =
+      typeof preferIdx === "number" && preferIdx >= 0
+        ? preferIdx
+        : selectedRunner >= 0
+          ? selectedRunner
+          : 0;
+    requestAnimationFrame(() => {
+      const input = inputRefs.current[idx];
+      if (input && document.body.contains(input) && !input.disabled) {
+        input.focus();
+        input.select();
+      }
+    });
+  };
+
   const handleSubmitPrice = (runnerIdx: number) => {
     const runner = runners[runnerIdx];
     if (!runner) return;
@@ -473,6 +498,9 @@ export function ManageMarketPriceModal({ market, onClose }: { market: any; onClo
 
   // Enter = submit then refocus + select so the next keystroke replaces the
   // value. Keeps the owner's flow tight: type → Enter → type → Enter.
+  // Tab (when "All Runners Active" is on) hops to the next runner's back
+  // input so the owner can price every runner in one pass; Shift+Tab goes
+  // back the other way. Wraps at both ends.
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, runnerIdx: number) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -484,6 +512,17 @@ export function ManageMarketPriceModal({ market, onClose }: { market: any; onClo
           input.select();
         }
       });
+      return;
+    }
+    if (e.key === "Tab" && allRunnersActive && runners.length > 1) {
+      e.preventDefault();
+      const step = e.shiftKey ? -1 : 1;
+      const nextIdx = (runnerIdx + step + runners.length) % runners.length;
+      const nextInput = inputRefs.current[nextIdx];
+      if (nextInput && !nextInput.disabled) {
+        nextInput.focus();
+        nextInput.select();
+      }
     }
   };
 
@@ -494,7 +533,29 @@ export function ManageMarketPriceModal({ market, onClose }: { market: any; onClo
       { marketId: market.marketId, ballRunning: next },
       { onError: () => setIsBallRunning(!next) }
     );
+    // After toggling (either direction) the owner's next action is almost
+    // always to type a new price — snap focus back to the price input.
+    // When flipping OFF (market reopens) the input becomes editable again;
+    // when flipping ON the input is disabled but we still restore focus to
+    // the row so pressing F1 again returns them to the same spot.
+    focusPriceInput();
   };
+
+  // F1 shortcut: toggles ball-chalu from anywhere in the modal. Also pulls
+  // focus back to the active runner's price input so type-Enter-type flow
+  // keeps working after the flip. We listen on the window so this works
+  // even when the price input itself isn't focused (e.g. after clicking a
+  // radio or the diff select).
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== "F1") return;
+      e.preventDefault();
+      toggleBallRunning();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isBallRunning, selectedRunner, runners.length]);
 
   if (isLoading) {
     return (
@@ -522,6 +583,20 @@ export function ManageMarketPriceModal({ market, onClose }: { market: any; onClo
               </span>
             </label>
           ))}
+          {runners.length > 1 && (
+            <label className="flex items-center gap-1.5 cursor-pointer">
+              <input
+                type="radio"
+                name="selectedRunner"
+                checked={allRunnersActive}
+                onChange={() => setSelectedRunner(-1)}
+                className="accent-blue-600"
+              />
+              <span className={`text-sm font-medium ${allRunnersActive ? "text-blue-700" : "text-gray-600"}`}>
+                All Runners Active
+              </span>
+            </label>
+          )}
           <div className="ml-auto flex items-center gap-2">
             <span className="text-sm text-gray-600 font-medium">Back/Lay Diff</span>
             <select value={backLayDiff} onChange={(e) => setBackLayDiff(parseInt(e.target.value))}
@@ -543,7 +618,7 @@ export function ManageMarketPriceModal({ market, onClose }: { market: any; onClo
                   : "bg-green-500 text-white hover:bg-green-600"
               }`}
             >
-              {isBallRunning ? "Ball Running" : "Bowl Chalu"}
+              {isBallRunning ? "Ball Running (F1)" : "Bowl Chalu (F1)"}
             </button>
           </div>
         </div>
@@ -571,7 +646,7 @@ export function ManageMarketPriceModal({ market, onClose }: { market: any; onClo
             const { layInput } = computeLay(backPrices[idx] || "", backLayDiff);
             const finalBack = computeFinalBack(backPrices[idx] || "", addDiffs[idx] || 25);
             const finalLay = computeFinalLay(backPrices[idx] || "", backLayDiff, addDiffs[idx] || 25);
-            const isSelected = selectedRunner === idx;
+            const isSelected = allRunnersActive || selectedRunner === idx;
             const inputsDisabled = !isSelected || isBallRunning;
 
             return (
@@ -619,6 +694,7 @@ export function ManageMarketPriceModal({ market, onClose }: { market: any; onClo
                 <select value={addDiffs[idx] || 25}
                   onChange={(e) => { const u = [...addDiffs]; u[idx] = parseInt(e.target.value); setAddDiffs(u); }}
                   disabled={!isSelected}
+                  tabIndex={-1}
                   className="w-full px-1 py-1 text-sm border border-gray-300 rounded text-center focus:ring-1 focus:ring-blue-500 focus:outline-none disabled:bg-gray-100">
                   {[25, 50, 75].map((v) => <option key={v} value={v}>{v}</option>)}
                 </select>
@@ -637,7 +713,7 @@ export function ManageMarketPriceModal({ market, onClose }: { market: any; onClo
         </div>
 
         <div className="text-xs text-gray-500 mt-3">
-          Type the Back price and press Enter to save — the field stays focused with the value selected, so the next amount you type replaces the old one. Final Back = Back + (Add Diff / 100). Final Lay = Back + Back/Lay Diff + (Add Diff / 100).
+          Type the Back price and press Enter to save — the field stays focused with the value selected, so the next amount you type replaces the old one. Press <kbd className="px-1 py-0.5 bg-gray-200 rounded text-[10px]">F1</kbd> to toggle Ball Running (focus snaps back to the price input). Pick <span className="font-medium">All Runners Active</span> to Tab between runners and price them in one pass. Final Back = Back + (Add Diff / 100). Final Lay = Back + Back/Lay Diff + (Add Diff / 100).
         </div>
         <div className="flex justify-end mt-4">
           <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">Close</button>

@@ -2,9 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
-import { useSeries } from "@/hooks/useSportsApi";
-import { sportsApi } from "@/lib/api";
+import { useMatchesList, type MatchListItem } from "@/hooks/useSportsApi";
+import { useLiveMultimarket } from "@/hooks/useLiveMultimarket";
 
 const EVENT_TYPE_CRICKET = "4";
 
@@ -13,7 +12,8 @@ const DATE_WINDOW_DAYS = 3;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 // localStorage-backed cache so the list paints instantly on repeat visits.
-// Events change slowly (new fixtures), odds change fast — separate TTLs.
+// Events change slowly (new fixtures); odds change fast and stream over WS —
+// we still seed `odds` from cache so rows aren't blank until the first WS tick.
 const EVENTS_CACHE_TTL_MS = 10 * 60 * 1000; // 10 min
 const ODDS_CACHE_TTL_MS = 2 * 60 * 1000; // 2 min
 
@@ -60,82 +60,6 @@ const formatToIST = (dateString: string | null): string => {
   }
 };
 
-interface FlatMatch {
-  id: string;
-  name: string;
-  openDate: string | null;
-  status: string;
-  inPlay: boolean;
-  seriesId: string;
-  seriesName: string;
-  defaultMarketId: string | null;
-}
-
-function useBetCounts(matchIds: string[]) {
-  return useQuery({
-    queryKey: ["bet-counts", matchIds.join(",")],
-    queryFn: async () => {
-      if (matchIds.length === 0) return {} as Record<string, number>;
-      const res = await sportsApi.getBetCounts(matchIds);
-      return (res.data?.data ?? {}) as Record<string, number>;
-    },
-    enabled: matchIds.length > 0,
-    staleTime: 5 * 60 * 1000,
-    refetchInterval: 5 * 60 * 1000,
-  });
-}
-
-/**
- * For each match call getMarketsWithOdds(eventTypeId, eventId) — the same
- * endpoint the match detail page uses, so we know it works.
- * We then pick the market whose marketId matches defaultMarketId (falling back
- * to the first market if no exact match), and store only that market's runners.
- */
-function useMatchOdds(
-  matches: Array<{ id: string; defaultMarketId: string }>,
-  eventTypeId: string
-) {
-  return useQuery({
-    queryKey: [
-      "match-list-odds",
-      eventTypeId,
-      matches.map((m) => m.id).join(","),
-    ],
-    queryFn: async () => {
-      if (matches.length === 0) return {} as Record<string, any>;
-
-      const results = await Promise.allSettled(
-        matches.map(async ({ id, defaultMarketId }) => {
-          const res = await sportsApi.getMarketsWithOdds(eventTypeId, id);
-          const markets: any[] = res.data?.data ?? res.data ?? [];
-
-          // Pick the market whose marketId matches the stored defaultMarketId.
-          // Fall back to the first market in the list if no exact match.
-          const market =
-            markets.find((m: any) => m.marketId === defaultMarketId) ??
-            markets[0] ??
-            null;
-
-          return { id, market };
-        })
-      );
-
-      const map: Record<string, any> = {};
-      for (const result of results) {
-        if (result.status === "fulfilled" && result.value.market) {
-          map[result.value.id] = result.value.market;
-        }
-      }
-      return map;
-    },
-    enabled: matches.length > 0,
-    staleTime: 0,
-    refetchInterval: 500,
-    refetchIntervalInBackground: false,
-    placeholderData: (prev: Record<string, any> | undefined) => prev,
-  });
-}
-
 function OddsCell({ back, lay }: { back: number | null; lay: number | null }) {
   return (
     <div className="flex shrink-0">
@@ -155,12 +79,13 @@ function MatchRow({
   market,
   betCount,
 }: {
-  match: FlatMatch;
+  match: MatchListItem;
   sport: string;
-  market: any | null; // one market object from getMarketsWithOdds
+  market: any | null; // one market object from the WS multimarket stream
   betCount?: number;
 }) {
-  // getMarketsWithOdds runners have back[]/lay[] arrays same as match detail page
+  // Live runners from the WS stream mirror the shape the match-detail page
+  // uses: back[] / lay[] arrays with a `price` on each level.
   const runners: any[] = market?.runners ?? [];
 
   const getRunnerPrice = (index: number) => {
@@ -188,7 +113,7 @@ function MatchRow({
             {formatToIST(match.openDate)}
           </span>
           <span className="text-gray-300 shrink-0">·</span>
-          
+
           <span className="text-gray-300 shrink-0 hidden sm:inline">·</span>
           <h4 className="text-[16px] mr-2 font-bold text-black truncate min-w-0">
             {match.name}
@@ -252,22 +177,23 @@ export function CricketMatchesList({
   // hidden completely rather than rendering empty chrome.
   wrapper?: (content: React.ReactNode) => React.ReactNode;
 }) {
-  const { data: seriesData = [], isLoading: seriesLoading } =
-    useSeries(eventTypeId);
+  // Flat list from the SQL function (structural data only — no odds).
+  const { data: liveMatches = [], isLoading: matchesLoading } =
+    useMatchesList(eventTypeId);
 
   // Cache keys scoped per event type so cricket/football/etc. don't collide.
-  const eventsCacheKey = `cml:events:v1:${eventTypeId}`;
-  const oddsCacheKey = `cml:odds:v1:${eventTypeId}`;
+  const eventsCacheKey = `cml:events:v2:${eventTypeId}`;
+  const oddsCacheKey = `cml:odds:v2:${eventTypeId}`;
 
   // Hydrate cached events/odds after mount (avoids SSR hydration mismatch).
   // First paint may be empty on the very first visit; second paint (same tick
   // on the client) renders with cached data — effectively instant.
-  const [cachedEvents, setCachedEvents] = useState<FlatMatch[] | null>(null);
+  const [cachedEvents, setCachedEvents] = useState<MatchListItem[] | null>(null);
   const [cachedOddsMap, setCachedOddsMap] = useState<Record<string, any>>({});
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    const events = readCache<FlatMatch[]>(eventsCacheKey, EVENTS_CACHE_TTL_MS);
+    const events = readCache<MatchListItem[]>(eventsCacheKey, EVENTS_CACHE_TTL_MS);
     const odds = readCache<Record<string, any>>(oddsCacheKey, ODDS_CACHE_TTL_MS);
     setCachedEvents(events);
     setCachedOddsMap(odds ?? {});
@@ -290,102 +216,73 @@ export function CricketMatchesList({
   // Politics events often have old/fixed openDates — show them all.
   const isPolitics = eventTypeId === "500";
 
-  const liveMatches: FlatMatch[] = useMemo(() => {
-    const matches: FlatMatch[] = [];
-
-    for (const series of seriesData) {
-      if (!series.matches) continue;
-
-      for (const match of series.matches) {
-        const defaultMarketId: string | null =
-          match.defaultMarketId ?? match.event?.defaultMarketId ?? null;
-        if (!defaultMarketId) continue;
-
-        const openDate: string | null =
-          match.openDate ?? match.event?.openDate ?? null;
-        const inPlay: boolean = match.inPlay ?? false;
-
-        if (!isPolitics && openDate) {
-          const t = new Date(openDate).getTime();
-          if (!isNaN(t) && (t < startOfTodayIST || t >= endOfWindowIST)) {
-            continue;
-          }
-        }
-
-        matches.push({
-          id: match.id ?? match.event?.id,
-          name: match.name ?? match.event?.name ?? "Unknown",
-          openDate,
-          status: match.status ?? "UNKNOWN",
-          inPlay,
-          seriesId: series.id,
-          seriesName: series.name,
-          defaultMarketId,
-        });
-      }
+  // Apply the date window filter. SQL already sorted (inPlay desc, openDate
+  // asc), so no re-sort needed — but filtering must happen here because the
+  // window is in IST which the DB doesn't know about.
+  const filteredMatches: MatchListItem[] = useMemo(() => {
+    if (!isPolitics) {
+      return liveMatches.filter((m) => {
+        if (!m.openDate) return true;
+        const t = new Date(m.openDate).getTime();
+        if (isNaN(t)) return true;
+        return t >= startOfTodayIST && t < endOfWindowIST;
+      });
     }
-
-    return matches.sort((a, b) => {
-      if (a.inPlay && !b.inPlay) return -1;
-      if (!a.inPlay && b.inPlay) return 1;
-      const dateA = a.openDate ? new Date(a.openDate).getTime() : Infinity;
-      const dateB = b.openDate ? new Date(b.openDate).getTime() : Infinity;
-      return dateA - dateB;
-    });
-  }, [seriesData, startOfTodayIST, endOfWindowIST, isPolitics]);
+    return liveMatches;
+  }, [liveMatches, startOfTodayIST, endOfWindowIST, isPolitics]);
 
   // Persist live events once they arrive so the next visit paints instantly.
   useEffect(() => {
-    if (liveMatches.length > 0) writeCache(eventsCacheKey, liveMatches);
-  }, [liveMatches, eventsCacheKey]);
+    if (filteredMatches.length > 0) writeCache(eventsCacheKey, filteredMatches);
+  }, [filteredMatches, eventsCacheKey]);
 
   // Prefer live data; fall back to cache so the list renders with no skeleton.
-  const allMatches: FlatMatch[] =
-    liveMatches.length > 0 ? liveMatches : cachedEvents ?? [];
+  const allMatches: MatchListItem[] =
+    filteredMatches.length > 0 ? filteredMatches : cachedEvents ?? [];
 
-  // Pre-slice candidates BEFORE firing per-match odds requests so we make at
-  // most a bounded number of parallel calls per section instead of one per
-  // event. We fetch a small buffer over maxMatches so that events without
-  // live prices can be dropped and we still fill the slot.
+  // Pre-slice candidates BEFORE subscribing to the WS so we open at most a
+  // bounded number of per-event pipes per section. We subscribe to a small
+  // buffer over maxMatches so events without live prices can be dropped and
+  // we still fill the slot.
   const oddsCandidates = useMemo(() => {
     const bufferedLimit = maxMatches ? maxMatches * 2 : allMatches.length;
     return allMatches.slice(0, bufferedLimit);
   }, [allMatches, maxMatches]);
 
-  const oddsInput = useMemo(
+  // Build the {eventId, marketId} list for the WebSocket subscription —
+  // same shape the /multimarket page uses.
+  const liveItems = useMemo(
     () =>
       oddsCandidates.map((m) => ({
-        id: m.id,
-        defaultMarketId: m.defaultMarketId!,
+        eventId: String(m.id),
+        marketId: m.defaultMarketId,
       })),
     [oddsCandidates]
   );
 
-  const matchIds = useMemo(() => oddsCandidates.map((m) => m.id), [oddsCandidates]);
+  // WebSocket stream: keyed by marketId (not matchId) — the backend only sends
+  // updates for the markets we subscribed to.
+  const { oddsByMarketId } = useLiveMultimarket(liveItems, eventTypeId);
 
-  const { data: liveMarketMap = {}, isLoading: oddsLoading } = useMatchOdds(
-    oddsInput,
-    eventTypeId
-  );
-  const { data: betCountMap = {} } = useBetCounts(matchIds);
-
-  // Persist live odds so repeat visits skip the odds round-trip on first paint.
+  // Persist live odds so repeat visits seed rows with last-seen prices before
+  // the first WS tick lands.
   useEffect(() => {
-    if (Object.keys(liveMarketMap).length > 0) {
-      writeCache(oddsCacheKey, liveMarketMap);
+    if (Object.keys(oddsByMarketId).length > 0) {
+      writeCache(oddsCacheKey, oddsByMarketId);
     }
-  }, [liveMarketMap, oddsCacheKey]);
+  }, [oddsByMarketId, oddsCacheKey]);
 
-  // Prefer live odds; fall back to cached odds for instant render.
+  // Prefer live WS odds; fall back to cached odds for instant render.
   const marketMap: Record<string, any> =
-    Object.keys(liveMarketMap).length > 0 ? liveMarketMap : cachedOddsMap;
+    Object.keys(oddsByMarketId).length > 0 ? oddsByMarketId : cachedOddsMap;
 
-  // Keep only events that actually have at least one real price, then cap
-  // to maxMatches. Filtering first ensures the section fills up from the
-  // buffered candidate pool rather than leaving empty slots.
+  // Keep only events that actually have at least one real price on their
+  // default market, then cap to maxMatches. Filtering first ensures the
+  // section fills up from the buffered candidate pool rather than leaving
+  // empty slots.
   const visibleMatches = oddsCandidates
     .filter((m) => {
-      const market = marketMap[m.id];
+      const market = marketMap[m.defaultMarketId];
       if (!market) return false;
       const runners: any[] = market.runners ?? [];
       return runners.some(
@@ -405,7 +302,7 @@ export function CricketMatchesList({
     // Standalone mode (sport listing pages etc.): keep the previous behavior —
     // skeleton on first fetch, empty state fallback.
     const stillFetchingFirstTime =
-      !hydrated || seriesLoading || (oddsLoading && Object.keys(marketMap).length === 0);
+      !hydrated || matchesLoading || Object.keys(marketMap).length === 0;
 
     if (!hasAnythingToShow && stillFetchingFirstTime) {
       return (
@@ -449,8 +346,8 @@ export function CricketMatchesList({
             key={match.id}
             match={match}
             sport={sport}
-            market={marketMap[match.id] ?? null}
-            betCount={betCountMap[match.id]}
+            market={marketMap[match.defaultMarketId] ?? null}
+            betCount={match.betCount}
           />
         ))}
       </div>

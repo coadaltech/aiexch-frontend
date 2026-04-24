@@ -365,7 +365,7 @@ export default function JamboShiftPage() {
         </span>
         <div className="flex-1" />
         <span className="bg-white/15 border border-white/20 rounded-lg px-2 py-0.5 text-xs">
-          Triple: {shift.daraRate} / Akhar: {shift.akharRate}
+          Triple: {shift.tripleRate} / Jodi: {shift.daraRate} / Akhar: {shift.akharRate}
         </span>
         {Number(shift.capping) > 0 && (
           <span className="bg-white/15 border border-white/20 rounded-lg px-2 py-0.5 text-xs">

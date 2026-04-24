@@ -14,280 +14,19 @@ import { getSportConfig } from "@/lib/sports-config";
 import { addDemoBets } from "@/lib/demo-bets";
 import type { DemoBet } from "@/lib/demo-bets";
 import { toast } from "sonner";
-import { Timer, Star } from "lucide-react";
-import { useFavorites } from "@/hooks/useFavorites";
+import { Timer } from "lucide-react";
+import { PinMarketButton, type PinParent } from "@/components/multimarket/PinMarketButton";
+import {
+  QuickBetPanel,
+  formatStakeLabel,
+  toBettingType,
+  toDecimalOdds,
+  toDecimalfancyOdds,
+  type RunnerSummary,
+  type QuickBetData,
+} from "@/components/sports/quick-bet-panel";
 
-type RunnerSummary = {
-  id: string;
-  name: string;
-  price: number;
-};
 
-type QuickBetData = {
-  marketId: string;
-  bettingType: string;
-  market: any;
-  runner: any;
-  allRunners: RunnerSummary[];
-  eventName: string;
-  odds: string;
-  run?: string | null;
-  isLay: boolean;
-  priceIndex: number;
-  isRawOdds?: boolean; // true for ADV markets — odds stored as raw, converted only at placement
-};
-
-function formatStakeLabel(value: number): string {
-  if (value >= 10000000) return `${value / 10000000}Cr`;
-  if (value >= 100000) return `${value / 100000}L`;
-  if (value >= 1000) return `${value / 1000}K`;
-  return String(value);
-}
-
-function QuickBetPanel({
-  data,
-  stake,
-  onStakeChange,
-  onClose,
-  onPlaceBet,
-  isLoading,
-  betDelayRemaining,
-  onCancelDelay,
-  stakeButtons,
-  currentOdds,
-}: {
-  data: QuickBetData;
-  stake: string;
-  onStakeChange: (val: string) => void;
-  onClose: () => void;
-  onPlaceBet: (stake: string, odds: string) => void;
-  isLoading?: boolean;
-  betDelayRemaining?: number;
-  onCancelDelay?: () => void;
-  stakeButtons?: { label: string; value: number }[];
-  currentOdds?: string;
-}) {
-  const { market, runner, odds } = data;
-  const rawOdds = currentOdds ?? odds;
-  const numOdds = parseFloat(rawOdds);
-  const isBetfair = data.market?.provider?.toUpperCase() === "BETFAIR";
-  const displayOdds =
-    data.bettingType === "LINE" && data.run != null
-      ? `${data.run} (${Math.round(isBetfair ? numOdds : numOdds * 100)})`
-      : isNaN(numOdds)
-      ? rawOdds
-      : (() => {
-          const str = String(numOdds);
-          const decimals = str.includes(".") ? str.split(".")[1].length : 0;
-          return decimals > 4 ? numOdds.toFixed(4) : str;
-        })();
-  const marketName = market?.marketName || "";
-  const runnerName = runner?.name || "";
-
-  const minBet = parseFloat(market?.marketCondition?.minBet) || 0;
-  const maxBet = parseFloat(market?.marketCondition?.maxBet) || 0;
-  const stakeNum = parseFloat(stake) || 0;
-
-  const belowMin = stakeNum > 0 && minBet > 0 && stakeNum < minBet;
-  const aboveMax = stakeNum > 0 && maxBet >= 0 && stakeNum > maxBet;
-  const stakeError = belowMin
-    ? `Min bet is ${minBet}`
-    : aboveMax
-    ? `Max bet is ${maxBet}`
-    : null;
-
-  const resolvedStakes = (stakeButtons && stakeButtons.length > 0 ? stakeButtons : DEFAULT_STAKES).map(
-    (btn) => ({ ...btn, label: formatStakeLabel(btn.value) })
-  );
-  const isDelaying = betDelayRemaining != null && betDelayRemaining > 0;
-  const stakeInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const t = setTimeout(() => stakeInputRef.current?.focus(), 50);
-    return () => clearTimeout(t);
-  }, [data.marketId, data.runner?.selectionId]);
-
-  const handleStake = (val: string) => {
-    if (val === "" || /^\d*$/.test(val)) {
-      onStakeChange(val);
-    }
-  };
-
-  const setStakeClamped = (n: number) => {
-    // Set the value as-is so the inline stakeError ("Max bet is X") triggers when n > maxBet.
-    // Never silently clamp — user must see the error and decide.
-    onStakeChange(n > 0 ? String(n) : "");
-  };
-
-  const canPlace = !!stake && stakeNum > 0 && !stakeError && !isLoading && !isDelaying;
-
-  return (
-    <div className={`px-2 sm:px-3 py-2 border-t-2 w-full max-w-full overflow-hidden ${data.isLay ? "border-lay bg-gradient-to-b from-lay/50 to-lay/10" : "border-back bg-gradient-to-b from-back/50 to-back/10"}`}>
-      {/* Bet delay countdown banner */}
-      {isDelaying && (
-        <div className="mb-2 px-2 sm:px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between gap-2 shadow-sm">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin inline-block shrink-0" />
-            <span className="text-xs sm:text-sm font-medium text-amber-700 truncate">
-              Placing in {betDelayRemaining}s...
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={onCancelDelay}
-            className="px-2 py-0.5 text-xs bg-amber-100 hover:bg-amber-200 text-amber-700 rounded transition-colors shrink-0"
-          >
-            Cancel
-          </button>
-        </div>
-      )}
-
-      {/* Top Section: Label, Odds, Stake */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 sm:justify-end mb-2">
-        <div className="text-gray-800 font-bold text-xs sm:text-sm truncate min-w-0 text-center sm:text-left sm:flex-1">
-          {runnerName} - {marketName.toUpperCase()}
-        </div>
-
-        <div className="flex items-start gap-2 sm:gap-3 justify-end flex-wrap">
-          <div className="flex items-center shrink-0">
-            <input
-              type="text"
-              value={displayOdds}
-              readOnly
-              className="w-20 sm:w-24 bg-gray-50 text-gray-900 text-sm sm:text-base font-bold py-1.5 px-2 text-center border border-gray-300 rounded cursor-default"
-            />
-          </div>
-
-          <div className="flex flex-col items-end gap-0.5 min-w-0">
-            <div className="flex items-center min-w-0">
-              <input
-                ref={stakeInputRef}
-                type="number"
-                value={stake}
-                onChange={(e) => handleStake(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "ArrowUp") {
-                    e.preventDefault();
-                    const current = parseFloat(stake) || 0;
-                    setStakeClamped(current === 0 ? 500 : current + 500);
-                  } else if (e.key === "ArrowDown") {
-                    e.preventDefault();
-                    setStakeClamped(Math.max(0, (parseFloat(stake) || 0) - 500));
-                  }
-                }}
-                placeholder="0"
-                disabled={isDelaying}
-                style={{ width: `${Math.max(7, (stake?.length || 1) + 3)}ch` }}
-                className={`min-w-[5rem] sm:min-w-[6rem] max-w-full bg-gray-50 text-gray-900 text-sm sm:text-base font-bold py-1.5 px-2 text-center border rounded focus:ring-1 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-[width] duration-150 ${
-                  stakeError
-                    ? "border-red-400 focus:ring-red-400"
-                    : "border-gray-300 focus:ring-[#1a3578]"
-                } ${isDelaying ? "opacity-50" : ""}`}
-              />
-              <div className="flex flex-col ml-0.5 shrink-0">
-                <button
-                  type="button"
-                  disabled={isDelaying}
-                  onClick={() => {
-                    const current = parseFloat(stake) || 0;
-                    setStakeClamped(current === 0 ? 500 : current + 500);
-                  }}
-                  className="bg-gray-100 text-gray-600 px-1 py-0.5 text-[10px] hover:bg-gray-200 border border-gray-300 rounded-t disabled:opacity-50"
-                >
-                  ▲
-                </button>
-                <button
-                  type="button"
-                  disabled={isDelaying}
-                  onClick={() => setStakeClamped(Math.max(0, (parseFloat(stake) || 0) - 500))}
-                  className="bg-gray-100 text-gray-600 px-1 py-0.5 text-[10px] hover:bg-gray-200 border border-gray-300 border-t-0 rounded-b disabled:opacity-50"
-                >
-                  ▼
-                </button>
-              </div>
-            </div>
-            {stakeError && (
-              <span className="text-danger text-[10px] sm:text-[10px] font-medium">{stakeError}</span>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Quick stake buttons + actions */}
-      <div className="flex flex-wrap items-center gap-2 justify-center sm:justify-end">
-        <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center sm:justify-end w-full sm:w-auto">
-          {resolvedStakes.map((btn) => (
-            <button
-              key={btn.value}
-              type="button"
-              disabled={isDelaying}
-              onClick={() => setStakeClamped(btn.value)}
-              className="flex-1 sm:flex-none min-w-[3.5rem] px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-semibold rounded bg-gradient-to-b from-sports-header to-sports-header/80 hover:from-sports-header/90 hover:to-sports-header/70 text-white shadow-sm transition-all disabled:opacity-50"
-            >
-              {btn.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex gap-2 w-full sm:w-auto">
-          <button
-            type="button"
-            onClick={() => onPlaceBet(stake, rawOdds)}
-            disabled={!canPlace}
-            className="flex-1 sm:flex-none min-w-[84px] sm:min-w-[96px] px-3 sm:px-5 py-2 rounded text-xs sm:text-sm font-semibold bg-[#142669] hover:from-cta-deposit-from-hover hover:to-cta-deposit-to-hover shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-white transition-all flex items-center justify-center gap-1.5"
-          >
-            {isLoading ? (
-              <>
-                <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" />
-                <span className="truncate">Placing...</span>
-              </>
-            ) : isDelaying ? (
-              <span className="truncate">Waiting {betDelayRemaining}s...</span>
-            ) : (
-              "Place Bet"
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={isDelaying ? onCancelDelay : onClose}
-            disabled={isLoading}
-            className="flex-1 sm:flex-none px-3 sm:px-5 py-2 rounded text-xs sm:text-sm font-semibold bg-gradient-to-b from-danger-strong to-danger-strong/80 hover:from-danger-strong/90 hover:to-danger-strong/70 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-white transition-all"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Map bettingType to marketType expected by backend
-function toBettingType(bettingType: string): string {
-  switch (bettingType?.toUpperCase()) {
-    case "BOOKMAKER": return "bookmaker";
-    case "LINE": return "fancy";
-    default: return "odds";
-  }
-}
-
-// Convert price to international decimal odds.
-// Values 10–99 are Indian format (e.g. 24, 24.5) → divide by 100 and add 1.
-// Values >= 100 are Indian format (e.g. 150) → divide by 100 only.
-// Values < 10 are already decimal odds (e.g. 1.50, 2.40) → pass through as-is.
-// BETFAIR prices are already in decimal — skip conversion entirely.
-// WINNING_ODDS are also already in decimal (Betfair-style) — skip conversion and use price-1 for profit.
-function toDecimalOdds(price: number, provider?: string, marketType?: string): number {
-  if (provider?.toUpperCase() === "BETFAIR") return price;
-  if (marketType?.toUpperCase() === "WINNING_ODDS") return price;
-  if (price < 100) return price / 100 ;
-  if (price >= 100) return price / 100;
-  return price;
-}
-
-function toDecimalfancyOdds(price: number, provider?: string): number {
-  if ((provider?.toUpperCase() === "BETFAIR") && (price < 10 )) return price;
-  return price /100 ;
-}
 
 export default function MatchPage() {
   const params = useParams();
@@ -295,8 +34,6 @@ export default function MatchPage() {
   const seriesId = params.seriesId as string;
   const matchId = params.matchId as string;
   const { addToBetSlip } = useBetSlip();
-  const { isFavorite, toggle: toggleFavorite, isMutating: isFavoriteMutating } = useFavorites();
-  const favorited = isFavorite(matchId);
   const [quickBet, setQuickBet] = useState<QuickBetData | null>(null);
   const [quickBetStake, setQuickBetStake] = useState("");
   const [isPlacing, setIsPlacing] = useState(false);
@@ -687,6 +424,21 @@ export default function MatchPage() {
   const matchFromSeries = useMemo(
     () => series?.matches?.find((m: { id: string }) => String(m.id) === String(matchId)),
     [series, matchId]
+  );
+
+  const pinParent = useMemo<PinParent>(
+    () => ({
+      sportId: eventTypeId,
+      sportName: config?.basePath
+        ? config.basePath.charAt(0).toUpperCase() + config.basePath.slice(1)
+        : String(sport || "").charAt(0).toUpperCase() + String(sport || "").slice(1),
+      competitionId: seriesId,
+      competitionName: series?.name || "",
+      eventId: matchId,
+      eventName: matchFromSeries?.name || matchInfo?.eventName || "",
+      openDate: matchFromSeries?.openDate || matchInfo?.startTime || null,
+    }),
+    [eventTypeId, config, sport, seriesId, series, matchId, matchFromSeries, matchInfo],
   );
 
   const hasEverHadMarkets = useRef(!!(cachedOdds && cachedOdds.length > 0));
@@ -1309,28 +1061,6 @@ export default function MatchPage() {
                 </h1>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                {user && (
-                  <button
-                    type="button"
-                    onClick={() => toggleFavorite(matchId)}
-                    disabled={isFavoriteMutating}
-                    title={favorited ? "Remove from favorites" : "Add to favorites"}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold border transition-colors disabled:opacity-60 disabled:cursor-wait ${
-                      favorited
-                        ? "bg-amber-400/20 border-amber-300/60 text-amber-300 hover:bg-amber-400/30"
-                        : "bg-white/10 border-white/20 text-white hover:bg-white/15"
-                    }`}
-                  >
-                    <Star
-                      className="h-3.5 w-3.5"
-                      fill={favorited ? "currentColor" : "none"}
-                      strokeWidth={favorited ? 0 : 2}
-                    />
-                    <span className="hidden sm:inline">
-                      {favorited ? "Favorited" : "Add to favorites"}
-                    </span>
-                  </button>
-                )}
                 {eventDate && (
                   <span className="text-white/60 text-xs sm:text-sm">
                     {formatDate(eventDate)}
@@ -1550,30 +1280,7 @@ export default function MatchPage() {
                 {openDate && (
                   <span className="text-white/60 text-xs sm:text-sm flex items-center gap-2 sm:gap-6 flex-wrap justify-end">
                     {formatDate(openDate)}
-                    {user && (
-                  <button
-                    type="button"
-                    onClick={() => toggleFavorite(matchId)}
-                    disabled={isFavoriteMutating}
-                    title={favorited ? "Remove from favorites" : "Add to favorites"}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold border transition-colors disabled:opacity-60 disabled:cursor-wait ${
-                      favorited
-                        ? "bg-amber-400/20 border-amber-300/60 text-amber-300 hover:bg-amber-400/30"
-                        : "bg-white/10 border-white/20 text-white hover:bg-white/15"
-                    }`}
-                  >
-                    <Star
-                      className="h-3.5 w-3.5"
-                      fill={favorited ? "currentColor" : "none"}
-                      strokeWidth={favorited ? 0 : 2}
-                    />
-                    <span className="hidden sm:inline">
-                      {favorited ? "Favorited" : "Add to favorites"}
-                    </span>
-                  </button>
-                )}
                   </span>
-                  
                 )}
                 
                 {clockStr && (
@@ -1647,18 +1354,10 @@ export default function MatchPage() {
               >
                 <div className="grid grid-cols-3 gap-1 sm:gap-2 px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578] items-center">
                   <div className="min-w-0 flex flex-col gap-0.5">
-                    <h3 className="font-bold text-white text-sm sm:text-base truncate leading-tight">
-                      {market.marketName}
+                    <h3 className="font-bold text-white text-sm sm:text-base truncate leading-tight flex items-center gap-1.5">
+                      <PinMarketButton parent={pinParent} market={market} />
+                      <span className="truncate">{market.marketName}</span>
                     </h3>
-                    {/* <div className="text-white/70 text-xs sm:text-sm flex items-center flex-wrap gap-x-1 leading-tight min-w-0">
-                      <span className="truncate">
-                        Min: {market.marketCondition?.["minBet"] ?? "-"} / Max:{" "}
-                        {market.marketCondition?.["maxBet"] ?? "-"}
-                      </span>
-                      {market.marketCondition?.betDelay != null && (
-                        <span className="flex items-center text-yellow-300 shrink-0">· <Timer size={15}/> <span>{market.marketCondition.betDelay}s</span></span>
-                      )}
-                    </div> */}
                   </div>
                   <div className="justify-self-end font-bold uppercase bg-back text-black text-xs sm:text-sm py-0.5 px-1.5 rounded">
                     Back
@@ -1809,8 +1508,10 @@ export default function MatchPage() {
                 <div key={market.marketId} className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
                   <div className="grid grid-cols-3 gap-1 sm:gap-2 px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578] items-center">
                     <div className="min-w-0 flex flex-col gap-0.5">
-                      <h3 className="font-bold text-white text-sm sm:text-base truncate leading-tight">{market.marketName}</h3>
-                      {/* <p className="text-white/70 text-xs sm:text-sm truncate leading-tight">Min: {minBet} / Max: {maxBet}</p> */}
+                      <h3 className="font-bold text-white text-sm sm:text-base truncate leading-tight flex items-center gap-1.5">
+                        <PinMarketButton parent={pinParent} market={market} />
+                        <span className="truncate">{market.marketName}</span>
+                      </h3>
                     </div>
                     <div className="justify-self-end font-bold uppercase bg-back text-black text-xs sm:text-sm py-0.5 px-1.5 rounded">Back</div>
                    <div className="flex justify-between">
@@ -1872,7 +1573,10 @@ export default function MatchPage() {
             // Shared ADV market header
             const advHeader = (
               <div className="px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578] flex items-center justify-between gap-2">
-                <span className="font-bold text-white text-sm sm:text-base truncate">{market.marketName}</span>
+                <span className="font-bold text-white text-sm sm:text-base truncate flex items-center gap-1.5">
+                  <PinMarketButton parent={pinParent} market={market} />
+                  <span className="truncate">{market.marketName}</span>
+                </span>
                 <span className="text-white/70 text-xs sm:text-sm whitespace-nowrap shrink-0">
                   Min: {minBet} | Max: {maxBet}
                 </span>
@@ -2067,13 +1771,18 @@ export default function MatchPage() {
                       return (
                         <div key={runner.selectionId} className={`px-2 sm:px-3 grid grid-cols-3 gap-1 sm:gap-2 items-center min-h-0 bg-white${market.runners.length > 1 ? " py-0.5" : ""}`}>
                           {showLabel ? (
-                            <RunnerNameCell
-                              runner={runner}
-                              marketId={market.marketId}
-                              displayName={market.marketName}
-                              isFancy
-                              betDelay={market.marketCondition?.betDelay}
-                            />
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <PinMarketButton parent={pinParent} market={market} />
+                              <div className="min-w-0 flex-1">
+                                <RunnerNameCell
+                                  runner={runner}
+                                  marketId={market.marketId}
+                                  displayName={market.marketName}
+                                  isFancy
+                                  betDelay={market.marketCondition?.betDelay}
+                                />
+                              </div>
+                            </div>
                           ) : (
                             <div />
                           )}
@@ -2164,7 +1873,10 @@ export default function MatchPage() {
 
             const advHeader = (
               <div className="px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578] flex items-center justify-between gap-2">
-                <span className="font-bold text-white text-sm sm:text-base truncate">{market.marketName}</span>
+                <span className="font-bold text-white text-sm sm:text-base truncate flex items-center gap-1.5">
+                  <PinMarketButton parent={pinParent} market={market} />
+                  <span className="truncate">{market.marketName}</span>
+                </span>
                 <span className="text-white/70 text-xs sm:text-sm whitespace-nowrap shrink-0">
                   Min: {minBet} | Max: {maxBet}
                 </span>

@@ -9,6 +9,9 @@ export interface JamboShift {
   shiftDate: string;
   endTime: string;
   shiftOrder: number;
+  // tripleRate → number_type 0. daraRate → 1,2 (jodi). akharRate → 3-5.
+  tripleRate: string;
+  tripleCommission: string;
   daraRate: string;
   daraCommission: string;
   akharRate: string;

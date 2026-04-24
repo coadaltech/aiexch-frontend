@@ -695,14 +695,14 @@ export const sportsApi = {
   getScore: (eventTypeId: string, matchId: string) =>
     api.get(`/sports/score/${eventTypeId}/${matchId}`),
   getSeries: (eventTypeId: string) => api.get(`/api/sports/getAllSeries/${eventTypeId}`),
+  getMatchesList: (eventTypeId: string) =>
+    api.get(`/api/sports/matches-list/${eventTypeId}`),
   getMatches: (eventTypeId: string, competitionId: string) =>
     api.get(`/sports/matches/${eventTypeId}/${competitionId}`),
   getMarkets: (eventTypeId: string, eventId: string) =>
     api.get(`/sports/markets/${eventTypeId}/${eventId}`),
   getMarketsWithOdds: (eventTypeId: string, eventId: string) =>
     api.get(`/sports/markets-with-odds/${eventTypeId}/${eventId}`),
-  getBetCounts: (matchIds: string[]) =>
-    api.get(`/sports/bet-counts?matchIds=${matchIds.join(",")}`),
   getBookmakersList: (eventTypeId: string, eventId: string) =>
     api.get(`/sports/bookmakers-list/${eventTypeId}/${eventId}`),
   getOddsResults: (eventTypeId: string, marketIds: string[]) =>
@@ -771,12 +771,27 @@ export const matkaApi = {
     api.get(`/matka/declared-history?limit=${limit}`),
 };
 
-// ── User favorites (per-user, authenticated) + sidebar feeds ────────────────
-export const favoritesApi = {
-  list: () => api.get("/api/user/favorites"),
-  add: (eventId: string | number) => api.post(`/api/user/favorites/${eventId}`),
-  remove: (eventId: string | number) =>
-    api.delete(`/api/user/favorites/${eventId}`),
+// ── User pinned markets (multimarket) + sidebar feeds ──────────────────────
+// A multimarket row caches event/competition/sport/market identity so the
+// /multimarket page can render without joining the live catalog every time.
+export interface PinMarketPayload {
+  sportId: number | string;
+  sportName: string;
+  competitionId: number | string;
+  competitionName: string;
+  eventId: number | string;
+  eventName: string;
+  openDate?: string | null;
+  marketId: string;
+  marketName: string;
+  marketType: string;
+}
+
+export const multimarketsApi = {
+  list: () => api.get("/api/user/multimarkets"),
+  add: (payload: PinMarketPayload) => api.post("/api/user/multimarkets", payload),
+  remove: (marketId: string) =>
+    api.delete(`/api/user/multimarkets/${encodeURIComponent(marketId)}`),
 };
 
 export const sidebarApi = {

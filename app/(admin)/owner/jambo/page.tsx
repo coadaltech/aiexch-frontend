@@ -234,6 +234,11 @@ export default function OwnerJamboPage() {
                     <div className="flex items-center gap-4">
                       <div>
                         <span className="text-muted-foreground">Triple</span>
+                        <span className="ml-1.5 text-foreground font-medium">{shift.tripleRate}</span>
+                        <span className="text-muted-foreground ml-0.5">({shift.tripleCommission}%)</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Jodi</span>
                         <span className="ml-1.5 text-foreground font-medium">{shift.daraRate}</span>
                         <span className="text-muted-foreground ml-0.5">({shift.daraCommission}%)</span>
                       </div>

@@ -4,8 +4,7 @@ import { useCallback, useEffect, useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { sidebarApi } from "@/lib/api";
 import { useChannelWatcher } from "@/hooks/useChannelWatcher";
-import { useFavorites, FAVORITES_CHANGED_EVENT } from "@/hooks/useFavorites";
-import { Star } from "lucide-react";
+import { Pin } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Sidebar,
@@ -491,9 +490,9 @@ function SidebarFeatureTabs({ pathname }: { pathname: string }) {
   const queryClient = useQueryClient();
   const { isLoggedIn } = useAuth();
 
-  const [open, setOpen] = useState<"favorites" | "recommended" | "top" | null>(null);
+  const [open, setOpen] = useState<"recommended" | "top" | null>(null);
   const toggle = useCallback(
-    (key: "favorites" | "recommended" | "top") =>
+    (key: "recommended" | "top") =>
       setOpen((cur) => (cur === key ? null : key)),
     [],
   );
@@ -526,53 +525,22 @@ function SidebarFeatureTabs({ pathname }: { pathname: string }) {
   }, [queryClient]);
   useChannelWatcher("recommended-events", invalidateRecommended);
 
-  // ── Favorites (per-user; fetch on mount, refresh on add/remove) ────────
-  const { favorites, isLoading: favoritesLoading, refetch: refetchFavorites } = useFavorites();
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const handler = () => refetchFavorites();
-    window.addEventListener(FAVORITES_CHANGED_EVENT, handler);
-    return () => window.removeEventListener(FAVORITES_CHANGED_EVENT, handler);
-  }, [refetchFavorites]);
-
   return (
     <div className="space-y-1 mb-3">
-      {/* ── Favorites ── */}
-      <FeatureTabAccordion
-        label="Favorite matches"
-        icon={Star}
-        expanded={open === "favorites"}
-        onToggle={() => toggle("favorites")}
-      >
-        {!isLoggedIn ? (
-          <FeatureTabEmpty text="Log in to save matches" />
-        ) : favoritesLoading ? (
-          <FeatureTabLoading />
-        ) : favorites.length === 0 ? (
-          <FeatureTabEmpty text="No favorite matches yet" />
-        ) : (
-          favorites.map((f) => {
-            const href = buildEventHref(f.sportId, f.competitionId, f.eventId);
-            const isActive = pathname.endsWith(`/${f.eventId}`);
-            return (
-              <button
-                key={f.favoriteId}
-                onClick={() => router.push(href)}
-                className={`w-full flex items-center gap-2 px-2.5 py-2 text-sm text-left transition-colors cursor-pointer border-b border-gray-100 ${
-                  isActive
-                    ? "bg-[#1a3578]/10 text-[#1a3578] font-bold"
-                    : "text-black font-semibold hover:bg-gray-50"
-                }`}
-              >
-                <Star className="h-3.5 w-3.5 flex-shrink-0 text-amber-500" fill="currentColor" strokeWidth={0} />
-                <span className="flex-1 truncate">
-                  {f.name || `Match #${f.eventId}`}
-                </span>
-              </button>
-            );
-          })
-        )}
-      </FeatureTabAccordion>
+      {/* ── Multimarket (per-user pinned markets) ── */}
+      {isLoggedIn && (
+        <div className="mb-1">
+          <button
+            onClick={() => router.push("/multimarket")}
+            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-bold bg-gradient-to-r from-[#142969] via-[#142669] to-[#84c2f1] hover:brightness-110 text-white transition-colors cursor-pointer ${
+              pathname === "/multimarket" ? "brightness-110 ring-1 ring-white/30" : ""
+            }`}
+          >
+            <Pin className="h-4 w-4 flex-shrink-0" />
+            <span className="flex-1 text-left">Multimarket</span>
+          </button>
+        </div>
+      )}
 
       {/* ── Recommended ── */}
       <FeatureTabAccordion
@@ -836,23 +804,8 @@ export function AppSidebar() {
             ) : (
               /* ── Non-sport pages ── */
               <div className="px-2">
-                {/* Header buttons */}
-                <div className="space-y-1 mb-4">
-                  {[
-                    { label: "Favorite matches", icon: Gift },
-                    { label: "Recommended", icon: Home },
-                    { label: "Top competitions", icon: Trophy },
-                  ].map(({ label, icon: Icon }) => (
-                    <button
-                      key={label}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-bold bg-gradient-to-r from-[#142969] via-[#142669] to-[#84c2f1] hover:bg-[#0b1545] text-white transition-colors cursor-pointer"
-                    >
-                      <Icon className="h-4 w-4 flex-shrink-0" />
-                      <span className="flex-1 text-left">{label}</span>
-                      <ChevronRight className="h-3.5 w-3.5 opacity-60" />
-                    </button>
-                  ))}
-                </div>
+                {/* Header buttons (live feature tabs — same as sports pages) */}
+                <SidebarFeatureTabs pathname={pathname} />
 
                 {/* Nav items */}
                 <div className="space-y-1 mb-4">
