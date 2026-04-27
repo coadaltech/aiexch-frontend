@@ -27,6 +27,7 @@ export interface PlaceBetParams {
   type: BetType;
   runners: BetRunner[];
   provider?: string;
+  priceIndex?: number;
 }
 
 export const useBetting = () => {

@@ -11,6 +11,7 @@ import { useSeries } from "@/hooks/useSportsApi";
 import { useStakeSettings, useLedger, DEFAULT_STAKES } from "@/hooks/useUserQueries";
 import { sportsApi } from "@/lib/api";
 import { getSportConfig } from "@/lib/sports-config";
+import { formatLocalDateTime, formatLocalTime } from "@/lib/date-utils";
 import { addDemoBets } from "@/lib/demo-bets";
 import type { DemoBet } from "@/lib/demo-bets";
 import { toast } from "sonner";
@@ -492,15 +493,13 @@ export default function MatchPage() {
     setQuickBetStake("");
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleString("en-US", {
+  const formatDate = (dateString: string) =>
+    formatLocalDateTime(dateString, {
       month: "short",
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     });
-  };
 
   const formatAmount = (amount: number) => {
     if (!amount) return "0";
@@ -729,6 +728,7 @@ export default function MatchPage() {
             type: isLay ? "lay" : "back",
             runners: allRunners,
             provider: market.provider,
+            priceIndex: qb.priceIndex,
           });
           toast.success("Bet placed.");
         } catch (err: unknown) {
@@ -1257,7 +1257,7 @@ export default function MatchPage() {
         const runnerNames = matchOddsMarket?.runners?.map((r: any) => r.name).filter(Boolean) ?? [];
         const openDate = matchFromSeries?.openDate || matchInfo?.startTime;
         const clockStr = lastMarketUpdate
-          ? lastMarketUpdate.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) +
+          ? formatLocalTime(lastMarketUpdate, { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }) +
             "." +
             String(lastMarketUpdate.getMilliseconds()).padStart(3, "0")
           : null;

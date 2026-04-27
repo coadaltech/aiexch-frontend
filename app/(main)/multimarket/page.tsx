@@ -420,6 +420,7 @@ export default function MultimarketPage() {
             type: isLay ? "lay" : "back",
             runners: allRunners,
             provider: market.provider,
+            priceIndex: qb.priceIndex,
           });
           toast.success("Bet placed.");
         } catch (err: unknown) {
