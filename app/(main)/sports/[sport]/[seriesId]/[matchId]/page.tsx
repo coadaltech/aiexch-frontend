@@ -1352,23 +1352,39 @@ export default function MatchPage() {
                 key={market.marketId}
                 className="rounded-lg overflow-hidden border border-gray-200 shadow-sm"
               >
-                <div className="grid grid-cols-3 gap-1 sm:gap-2 px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578] items-center">
-                  <div className="min-w-0 flex flex-col gap-0.5">
-                    <h3 className="font-bold text-white text-sm sm:text-base truncate leading-tight flex items-center gap-1.5">
+                {/* Mobile header */}
+                <div className="grid grid-cols-[1fr_auto] gap-1 px-2 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578] items-center sm:hidden">
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-white text-sm truncate leading-tight flex items-center gap-1.5">
                       <PinMarketButton parent={pinParent} market={market} />
                       <span className="truncate">{market.marketName}</span>
                     </h3>
                   </div>
-                  <div className="justify-self-end font-bold uppercase bg-back text-black text-xs sm:text-sm py-0.5 px-1.5 rounded">
+                  <div className="flex items-center gap-1">
+                    <div className="w-24 flex justify-center">
+                      <span className="font-bold uppercase bg-back text-black text-xs py-0.5 px-1.5 rounded">Back</span>
+                    </div>
+                    <div className="w-24 flex justify-center">
+                      <span className="font-bold uppercase bg-lay text-black text-xs py-0.5 px-1.5 rounded">Lay</span>
+                    </div>
+                  </div>
+                </div>
+                {/* Desktop header */}
+                <div className="hidden sm:grid grid-cols-3 gap-2 px-3 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578] items-center">
+                  <div className="min-w-0 flex flex-col gap-0.5">
+                    <h3 className="font-bold text-white text-base truncate leading-tight flex items-center gap-1.5">
+                      <PinMarketButton parent={pinParent} market={market} />
+                      <span className="truncate">{market.marketName}</span>
+                    </h3>
+                  </div>
+                  <div className="justify-self-end font-bold uppercase bg-back text-black text-sm py-0.5 px-1.5 rounded">
                     Back
                   </div>
-
                   <div className="flex justify-between">
-
-                  <div className="font-bold uppercase bg-lay text-black text-xs sm:text-sm py-0.5 px-1.5 rounded w-fit">
-                    Lay
-                  </div>
-                   <div className="text-white/70 text-xs sm:text-sm hidden md:flex items-center flex-wrap gap-x-1 leading-tight min-w-0">
+                    <div className="font-bold uppercase bg-lay text-black text-sm py-0.5 px-1.5 rounded w-fit">
+                      Lay
+                    </div>
+                    <div className="text-white/70 text-sm hidden md:flex items-center flex-wrap gap-x-1 leading-tight min-w-0">
                       <span className="truncate">
                         Min: {market.marketCondition?.["minBet"] ?? "-"} / Max:{" "}
                         {market.marketCondition?.["maxBet"] ?? "-"}
@@ -1385,14 +1401,14 @@ export default function MatchPage() {
                     return (
                     <div
                       key={runner.selectionId}
-                      className="px-2 sm:px-3 grid grid-cols-3 gap-1 sm:gap-2 items-center min-h-0 bg-white hover:bg-gray-50/80 transition-colors"
+                      className="px-2 sm:px-3 grid grid-cols-[1fr_auto] sm:grid-cols-3 gap-1 sm:gap-2 items-center min-h-0 bg-white hover:bg-gray-50/80 transition-colors"
                     >
                       <RunnerNameCell
                         runner={runner}
                         marketId={market.marketId}
                       />
-                      <div className="col-span-2 gap-2 relative flex min-h-[2.25rem]">
-                        <div className="flex-1 flex flex-col items-end min-w-0">
+                      <div className="col-span-1 sm:col-span-2 gap-1 sm:gap-2 relative flex justify-end min-h-[2.25rem]">
+                        <div className="sm:flex-1 flex flex-col items-end min-w-0">
                           <div className="gap-1 flex justify-end items-center flex-wrap">
                             {(() => {
                               if (isRunnerSuspended) {
@@ -1434,7 +1450,7 @@ export default function MatchPage() {
                             })()}
                           </div>
                         </div>
-                        <div className="flex-1 flex flex-col items-start min-w-0 ">
+                        <div className="sm:flex-1 flex flex-col items-start min-w-0 ">
                           <div className="gap-1 flex justify-start items-center flex-wrap ">
                             {isRunnerSuspended
                               ? Array(3).fill(null).map((_, idx) => (
@@ -1506,28 +1522,45 @@ export default function MatchPage() {
             if (layout === "team-binary") {
               return (
                 <div key={market.marketId} className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
-                  <div className="grid grid-cols-3 gap-1 sm:gap-2 px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578] items-center">
-                    <div className="min-w-0 flex flex-col gap-0.5">
-                      <h3 className="font-bold text-white text-sm sm:text-base truncate leading-tight flex items-center gap-1.5">
+                  {/* Mobile header */}
+                  <div className="grid grid-cols-[1fr_auto] gap-1 px-2 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578] items-center sm:hidden">
+                    <div className="min-w-0">
+                      <h3 className="font-bold text-white text-sm truncate leading-tight flex items-center gap-1.5">
                         <PinMarketButton parent={pinParent} market={market} />
                         <span className="truncate">{market.marketName}</span>
                       </h3>
                     </div>
-                    <div className="justify-self-end font-bold uppercase bg-back text-black text-xs sm:text-sm py-0.5 px-1.5 rounded">Back</div>
-                   <div className="flex justify-between">
-
-                    <div className="font-bold uppercase bg-lay text-black text-xs sm:text-sm py-0.5 px-1.5 rounded w-fit">Lay</div>
-                     <p className="text-white/70 text-xs sm:text-sm truncate leading-tight hidden md:block">Min: {minBet} / Max: {maxBet}</p>
-                   </div>
+                    <div className="flex items-center gap-1">
+                      <div className="w-24 flex justify-center">
+                        <span className="font-bold uppercase bg-back text-black text-xs py-0.5 px-1.5 rounded">Back</span>
+                      </div>
+                      <div className="w-24 flex justify-center">
+                        <span className="font-bold uppercase bg-lay text-black text-xs py-0.5 px-1.5 rounded">Lay</span>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Desktop header */}
+                  <div className="hidden sm:grid grid-cols-3 gap-2 px-3 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578] items-center">
+                    <div className="min-w-0 flex flex-col gap-0.5">
+                      <h3 className="font-bold text-white text-base truncate leading-tight flex items-center gap-1.5">
+                        <PinMarketButton parent={pinParent} market={market} />
+                        <span className="truncate">{market.marketName}</span>
+                      </h3>
+                    </div>
+                    <div className="justify-self-end font-bold uppercase bg-back text-black text-sm py-0.5 px-1.5 rounded">Back</div>
+                    <div className="flex justify-between">
+                      <div className="font-bold uppercase bg-lay text-black text-sm py-0.5 px-1.5 rounded w-fit">Lay</div>
+                      <p className="text-white/70 text-sm truncate leading-tight hidden md:block">Min: {minBet} / Max: {maxBet}</p>
+                    </div>
                   </div>
                   <div className="divide-y divide-gray-100">
                     {market.runners.map((runner: any) => {
                       const isRunnerSuspended = runner.status === "SUSPENDED" || runner.status === "REMOVED" || isMarketSusp;
                       return (
-                        <div key={runner.selectionId} className="px-2 sm:px-3 grid grid-cols-3 gap-1 sm:gap-2 items-center min-h-0 bg-white hover:bg-gray-50/80 transition-colors">
+                        <div key={runner.selectionId} className="px-2 sm:px-3 grid grid-cols-[1fr_auto] sm:grid-cols-3 gap-1 sm:gap-2 items-center min-h-0 bg-white hover:bg-gray-50/80 transition-colors">
                           <RunnerNameCell runner={runner} marketId={market.marketId} />
-                          <div className="col-span-2 gap-2 relative flex min-h-[2.25rem]">
-                            <div className="flex-1 flex flex-col items-end min-w-0">
+                          <div className="col-span-1 sm:col-span-2 gap-1 sm:gap-2 relative flex justify-end min-h-[2.25rem]">
+                            <div className="sm:flex-1 flex flex-col items-end min-w-0">
                               <div className="gap-1 flex justify-end items-center flex-wrap">
                                 {(() => {
                                   if (isRunnerSuspended) return Array(3).fill(null).map((_, i) => (
@@ -1547,7 +1580,7 @@ export default function MatchPage() {
                                 })()}
                               </div>
                             </div>
-                            <div className="flex-1 flex flex-col items-start min-w-0">
+                            <div className="sm:flex-1 flex flex-col items-start min-w-0">
                               <div className="gap-1 flex justify-start items-center flex-wrap">
                                 {Array(3).fill(null).map((_, i) => (
                                   <button key={i} className={`${oddsBtnClass} bg-lay-disabled w-24 ${i !== 0 ? "hidden sm:flex" : ""}`} disabled><span className={oddsPriceClass}>-</span><span className={oddsSizeClass}>-</span></button>
@@ -1744,14 +1777,27 @@ export default function MatchPage() {
 
         {visibleMarkets.some((m) => m.bettingType === "LINE") && (
         <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
-          <div className="grid grid-cols-3  gap-1 sm:gap-2 px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578] items-center">
-            <h3 className="font-bold text-white text-sm sm:text-base truncate leading-tight" style={{gridColumn: "1"}}>
+          {/* Mobile header */}
+          <div className="grid grid-cols-[1fr_auto] gap-1 px-2 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578] items-center sm:hidden">
+            <h3 className="font-bold text-white text-sm truncate leading-tight">Fancy</h3>
+            <div className="flex items-center gap-1">
+              <div className="w-24 flex justify-center">
+                <span className="font-bold uppercase bg-lay text-black text-xs py-0.5 px-1.5 rounded">NO</span>
+              </div>
+              <div className="w-24 flex justify-center">
+                <span className="font-bold uppercase bg-back text-black text-xs py-0.5 px-1.5 rounded">YES</span>
+              </div>
+            </div>
+          </div>
+          {/* Desktop header */}
+          <div className="hidden sm:grid grid-cols-3 gap-2 px-3 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578] items-center">
+            <h3 className="font-bold text-white text-base truncate leading-tight" style={{gridColumn: "1"}}>
               Fancy
             </h3>
-            <div className="justify-self-end font-bold uppercase bg-lay text-black text-xs sm:text-sm py-0.5 px-1.5 rounded w-fit">
+            <div className="justify-self-end font-bold uppercase bg-lay text-black text-sm py-0.5 px-1.5 rounded w-fit">
               NO
             </div>
-            <div className="w-fit font-bold uppercase bg-back text-black text-xs sm:text-sm py-0.5 px-1.5 rounded">
+            <div className="w-fit font-bold uppercase bg-back text-black text-sm py-0.5 px-1.5 rounded">
               YES
             </div>
           </div>
@@ -1769,7 +1815,7 @@ export default function MatchPage() {
                       const isRunnerSuspended = isMarketSuspended;
                       const showLabel = runnerIdx === midIdx;
                       return (
-                        <div key={runner.selectionId} className={`px-2 sm:px-3 grid grid-cols-3 gap-1 sm:gap-2 items-center min-h-0 bg-white${market.runners.length > 1 ? " py-0.5" : ""}`}>
+                        <div key={runner.selectionId} className={`px-2 sm:px-3 grid grid-cols-[1fr_auto] sm:grid-cols-3 gap-1 sm:gap-2 items-center min-h-0 bg-white${market.runners.length > 1 ? " py-0.5" : ""}`}>
                           {showLabel ? (
                             <div className="flex items-center gap-1.5 min-w-0">
                               <PinMarketButton parent={pinParent} market={market} />
@@ -1786,8 +1832,8 @@ export default function MatchPage() {
                           ) : (
                             <div />
                           )}
-                          <div className="col-span-2 gap-2 relative flex min-h-[2.25rem]">
-                            <div className="flex-1 flex flex-col items-end min-w-0">
+                          <div className="col-span-1 sm:col-span-2 gap-1 sm:gap-2 relative flex justify-end min-h-[2.25rem]">
+                            <div className="sm:flex-1 flex flex-col items-end min-w-0">
                               <div className="gap-1 flex justify-end items-center flex-wrap">
                                 {isRunnerSuspended ? (
                                   <button className={`${oddsBtnClass} bg-back-disabled w-24`} disabled><span className={oddsPriceClass}>0</span><span className={oddsSizeClass}>0</span></button>

@@ -70,10 +70,10 @@ const formatMatchTime = (dateString: string | null): { day: string; time: string
 function OddsCell({ back, lay }: { back: number | null; lay: number | null }) {
   return (
     <div className="flex shrink-0">
-      <div className="w-9 sm:w-20 md:w-24 bg-gradient-to-b from-back to-back-deep text-center py-1.5 text-[11px] sm:text-sm md:text-base font-bold text-gray-900 border-l border-white/30 leading-tight">
+      <div className="w-8 sm:w-20 md:w-24 bg-gradient-to-b from-back to-back-deep flex items-center justify-center text-[12px] sm:text-sm md:text-base font-bold text-gray-900 border-l border-white/30 leading-tight">
         {back ?? "-"}
       </div>
-      <div className="w-9 sm:w-20 md:w-24 bg-gradient-to-b from-lay to-lay-deep text-center py-1.5 text-[11px] sm:text-sm md:text-base font-bold text-gray-900 border-l border-white/30 leading-tight">
+      <div className="w-8 sm:w-20 md:w-24 bg-gradient-to-b from-lay to-lay-deep flex items-center justify-center text-[12px] sm:text-sm md:text-base font-bold text-gray-900 border-l border-white/30 leading-tight">
         {lay ?? "-"}
       </div>
     </div>
@@ -114,32 +114,34 @@ function MatchRow({
       href={`/sports/${sport}/${match.seriesId}/${match.id}`}
       className="block bg-white hover:bg-gray-50 transition-colors"
     >
-      <div className="flex items-center">
-        <div className="flex-1 min-w-0 py-1.5 px-2 sm:px-3 flex items-center gap-2">
-          {(() => {
-            const t = formatMatchTime(match.openDate);
-            return (
-              <span className="hidden sm:flex flex-col leading-tight text-xs font-bold text-gray-600 whitespace-nowrap shrink-0 w-16 text-left">
-                <span>{t.day}</span>
-                {t.time && <span className="text-gray-500">{t.time}</span>}
-              </span>
-            );
-          })()}
-          <h4 className="text-xs sm:text-sm md:text-base font-bold text-black truncate min-w-0">
+      <div className="flex items-stretch">
+        {/* Status / time badge — In-Play for live, stacked day+time otherwise */}
+        {(() => {
+          const t = formatMatchTime(match.openDate);
+          return (
+            <div className="w-16 sm:w-32 md:w-36 shrink-0 flex flex-col items-center justify-center px-1 sm:px-2 py-1.5 text-center">
+              {match.inPlay ? (
+                <span className="bg-[#1f7a47] text-white px-1.5 py-1 rounded text-[10px] sm:text-xs font-bold leading-none">
+                  In-Play
+                </span>
+              ) : (
+                <div className="flex flex-col sm:flex-row sm:gap-1 leading-tight text-[10px] sm:text-xs md:text-sm font-bold text-black whitespace-nowrap">
+                  <span>{t.day}</span>
+                  {t.time && <span className="text-black mt-0.5 sm:mt-0">{t.time}</span>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* Event name — wraps cleanly on small screens */}
+        <div className="flex-1 min-w-0 flex items-center gap-1.5 px-2 py-1.5">
+          <h4 className="text-xs sm:text-sm md:text-base font-bold text-[#142969] break-words min-w-0 leading-snug">
             {match.name}
           </h4>
-          <span className="text-[10px] sm:text-[12px] bg-[#4090e0]/80 text-white px-1 py-0.5 rounded font-medium shrink-0">
-            O
-          </span>
-          {match.inPlay && (
-            <span className="flex items-center gap-0.5 shrink-0">
-              <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-[#84c2f1] rounded-full animate-pulse" />
-              <span className="text-xs sm:text-base md:text-[18px] text-[#142969] font-bold">LIVE</span>
-            </span>
-          )}
           {betCount != null && betCount > 0 && (
-            <span className="relative ml-auto shrink-0 group">
-              <span className="text-[11px] sm:text-[14px] text-black bg-yellow-500 px-1 py-0.5 sm:p-1 font-medium whitespace-nowrap cursor-default">
+            <span className="relative shrink-0 group ml-auto">
+              <span className="text-[10px] sm:text-xs text-black bg-yellow-400 px-1.5 py-0.5 rounded font-bold whitespace-nowrap cursor-default">
                 {betCount}
               </span>
               <span className="pointer-events-none absolute bottom-full right-0 mb-1.5 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-[11px] text-white opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">
@@ -152,10 +154,10 @@ function MatchRow({
         <OddsCell back={team1.back} lay={team1.lay} />
 
         <div className="flex shrink-0">
-          <div className="w-9 sm:w-20 md:w-24 bg-gradient-to-b from-back to-back-deep text-center py-1.5 text-[11px] sm:text-sm md:text-base font-bold text-gray-900 border-l border-white/30 leading-tight">
+          <div className="w-8 sm:w-20 md:w-24 bg-gradient-to-b from-back to-back-deep text-center flex items-center justify-center text-[12px] sm:text-sm md:text-base font-bold text-gray-900 border-l border-white/30 leading-tight">
             {draw.back ?? "-"}
           </div>
-          <div className="w-9 sm:w-20 md:w-24 bg-gradient-to-b from-lay to-lay-deep text-center py-1.5 text-[11px] sm:text-sm md:text-base font-bold text-gray-900 border-l border-white/30 leading-tight">
+          <div className="w-8 sm:w-20 md:w-24 bg-gradient-to-b from-lay to-lay-deep text-center flex items-center justify-center text-[12px] sm:text-sm md:text-base font-bold text-gray-900 border-l border-white/30 leading-tight">
             {draw.lay ?? "-"}
           </div>
         </div>
@@ -341,9 +343,9 @@ export function CricketMatchesList({
       {showHeader && (
         <div className="flex items-center bg-gradient-to-r from-[#142969] to-[#1a3578] text-white text-[10px] sm:text-xs font-bold font-condensed tracking-wider">
           <div className="flex-1 py-2.5 px-3" />
-          <div className="w-[72px] sm:w-40 md:w-48 text-center py-2.5">1</div>
-          <div className="w-[72px] sm:w-40 md:w-48 text-center py-2.5">X</div>
-          <div className="w-[72px] sm:w-40 md:w-48 text-center py-2.5">2</div>
+          <div className="w-16 sm:w-40 md:w-48 text-center py-2.5">1</div>
+          <div className="w-16 sm:w-40 md:w-48 text-center py-2.5">X</div>
+          <div className="w-16 sm:w-40 md:w-48 text-center py-2.5">2</div>
         </div>
       )}
 

@@ -22,6 +22,7 @@ import { Game, HomeSection } from "@/types";
 import { GameCard } from "../cards/game-card";
 import { AuthModal } from "../modals/auth-modal";
 import TransactionModal from "../modals/transaction-modal";
+import { ExposureUsageModal } from "../modals/exposure-usage-modal";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWhitelabelInfo } from "@/hooks/useAuth";
@@ -62,6 +63,7 @@ export default function Header() {
   const [isSearchActive, setIsSearchActive] = React.useState(false);
   const [authModal, setAuthModal] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+  const [isExposureModalOpen, setIsExposureModalOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [sports, setSports] = useState<{ label: string; link: string }[]>([]);
   const userDropdownRef = useRef<HTMLDivElement>(null);
@@ -256,7 +258,7 @@ export default function Header() {
                     </Button>
                     <Button
                       size="sm"
-                      onClick={() => router.push("/profile/exposure")}
+                      onClick={() => setIsExposureModalOpen(true)}
                       className="h-auto py-0.5 bg-[#1e4088] hover:bg-[#2a4590] text-white font-medium px-2 sm:px-3 rounded-lg text-xs sm:text-sm touch-manipulation min-w-0 font-condensed"
                     >
                       {/* <Wallet className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5 flex-shrink-0" /> */}
@@ -439,7 +441,7 @@ export default function Header() {
                 )}
 
               {/* Search Button - Mobile only */}
-              <Button
+              {/* <Button
                 variant="ghost"
                 size="icon"
                 className="md:hidden h-8 w-8 text-nav-text hover:text-white hover:bg-nav-btn/50 rounded-lg touch-manipulation"
@@ -447,7 +449,7 @@ export default function Header() {
                 aria-label="Search"
               >
                 <Search className="h-4 w-4" />
-              </Button>
+              </Button> */}
             </div>
           </div>
         </div>
@@ -469,6 +471,10 @@ export default function Header() {
         type="deposit"
       />
       <AuthModal isOpen={authModal} onClose={() => setAuthModal(false)} />
+      <ExposureUsageModal
+        open={isExposureModalOpen}
+        onClose={() => setIsExposureModalOpen(false)}
+      />
     </>
   );
 }

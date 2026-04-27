@@ -198,7 +198,7 @@ function SectionHeader({
   oddsColumns?: boolean;
 }) {
   return (
-    <div className="flex items-center  justify-between px-4 py-2">
+    <div className={`flex items-center justify-between py-2 ${oddsColumns ? "pl-3 pr-0 sm:px-4" : "px-4"}`}>
       <div className="flex items-center gap-2.5">
         <div className="w-1 h-6 bg-[#84c2f1] rounded-full" />
         {Icon && <Icon className="h-4 w-4" />}
@@ -220,9 +220,9 @@ function SectionHeader({
       </div>
       {oddsColumns ? (
         <div className="flex items-center text-white text-[10px] sm:text-xs font-bold font-condensed tracking-wider">
-          <div className="w-[72px] sm:w-40 md:w-48 text-center">1</div>
-          <div className="w-[72px] sm:w-40 md:w-48 text-center">X</div>
-          <div className="w-[72px] sm:w-40 md:w-48 text-center">2</div>
+          <div className="w-16 sm:w-40 md:w-48 text-center">1</div>
+          <div className="w-16 sm:w-40 md:w-48 text-center">X</div>
+          <div className="w-16 sm:w-40 md:w-48 text-center">2</div>
         </div>
       ) : href ? (
         <Link
@@ -304,7 +304,7 @@ const Homepage = () => {
         showHeader={false}
         wrapper={(content) => (
           <div className="mt-4">
-            <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-4 rounded-xl overflow-hidden border border-[#1e4088]/50">
+            <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-0 sm:mx-4 rounded-none sm:rounded-xl overflow-hidden border-y sm:border border-[#1e4088]/50">
               <SectionHeader
                 title="CRICKET"
                 subtitle="Live & upcoming matches"
@@ -313,7 +313,7 @@ const Homepage = () => {
                 badge="LIVE"
                 oddsColumns
               />
-              <div className="px-4 pb-3">{content}</div>
+              <div className="px-1 sm:px-2 pb-3">{content}</div>
             </div>
           </div>
         )}
@@ -327,7 +327,7 @@ const Homepage = () => {
         showHeader={false}
         wrapper={(content) => (
           <div className="mt-4">
-            <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-4 rounded-xl overflow-hidden border border-[#1e4088]/50">
+            <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-0 sm:mx-4 rounded-none sm:rounded-xl overflow-hidden border-y sm:border border-[#1e4088]/50">
               <SectionHeader
                 title="FOOTBALL"
                 subtitle="Live & upcoming matches"
@@ -336,7 +336,7 @@ const Homepage = () => {
                 badge="LIVE"
                 oddsColumns
               />
-              <div className="px-4 pb-3">{content}</div>
+              <div className="px-1 sm:px-2 pb-3">{content}</div>
             </div>
           </div>
         )}
@@ -351,7 +351,7 @@ const Homepage = () => {
           showHeader={false}
           wrapper={(content) => (
             <div className="mt-4">
-              <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-4 rounded-xl overflow-hidden border border-[#1e4088]/50">
+              <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-0 sm:mx-4 rounded-none sm:rounded-xl overflow-hidden border-y sm:border border-[#1e4088]/50">
                 <SectionHeader
                   title="TENNIS"
                   subtitle="Live & upcoming matches"
@@ -360,7 +360,7 @@ const Homepage = () => {
                   badge="LIVE"
                   oddsColumns
                 />
-                <div className="px-4 pb-3">{content}</div>
+                <div className="px-1 sm:px-2 pb-3">{content}</div>
               </div>
             </div>
           )}
@@ -408,7 +408,7 @@ const Homepage = () => {
           showHeader={false}
           wrapper={(content) => (
             <div className="mt-4">
-              <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-4 rounded-xl overflow-hidden border border-[#1e4088]/50">
+              <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-0 sm:mx-4 rounded-none sm:rounded-xl overflow-hidden border-y sm:border border-[#1e4088]/50">
                 <SectionHeader
                   title="POLITICS"
                   subtitle="Live & upcoming markets"
@@ -417,7 +417,7 @@ const Homepage = () => {
                   badge="LIVE"
                   oddsColumns
                 />
-                <div className="px-4 pb-3">{content}</div>
+                <div className="px-1 sm:px-2 pb-3">{content}</div>
               </div>
             </div>
           )}
