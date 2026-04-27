@@ -677,8 +677,8 @@ export function AppSidebar() {
 
   const isLoading = !mounted || loadingGames;
 
-  const sidebarClassName = "rounded-xl bg-white overflow-hidden border border-gray-200";
-  const contentClassName = "p-0 h-full bg-white pb-6";
+  const sidebarClassName = "rounded-xl bg-[#efefef] overflow-hidden border border-gray-200";
+  const contentClassName = "p-0 h-full bg-[#efefef] pb-6";
 
   // ── All icon-only items for collapsed state ────────────────────────────
   const allIconItems = [

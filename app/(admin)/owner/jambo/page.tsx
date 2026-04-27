@@ -11,6 +11,7 @@ import {
   Loader2,
   GripVertical,
 } from "lucide-react";
+import { formatLocalDate } from "@/lib/date-utils";
 import {
   useOwnerJamboShifts,
   useDeleteJamboShift,
@@ -95,7 +96,7 @@ export default function OwnerJamboPage() {
   };
 
   const formatDate = (d: string) =>
-    new Date(d).toLocaleDateString("en-IN", {
+    formatLocalDate(d, {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",

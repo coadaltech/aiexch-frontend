@@ -128,6 +128,29 @@ export const useLedger = (enabled = true) => {
   });
 };
 
+export interface ExposureUsageRow {
+  marketId: string | number | null;
+  shiftId: string | null;
+  intFlag: number;
+  limitUse: string;
+  sportName: string | null;
+  competitionName: string | null;
+  eventName: string | null;
+  shiftName: string | null;
+  marketName: string | null;
+}
+
+export const useExposureUsage = (enabled = true) => {
+  return useQuery({
+    queryKey: ["exposure-usage"],
+    queryFn: () => userApi.getExposureUsage(),
+    select: (res) => (res.data?.data as ExposureUsageRow[]) ?? [],
+    enabled,
+    staleTime: 10000,
+    refetchOnWindowFocus: true,
+  });
+};
+
 export const usePublicPopups = (path?: string) => {
   const page = path === "/" ? "home" : path?.replace("/", "") || "";
   return useQuery({

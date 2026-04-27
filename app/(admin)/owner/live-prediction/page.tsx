@@ -14,6 +14,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { JantriGridModal } from "./jantri-modal";
 import { Button } from "@/components/ui/button";
+import { formatLocalDate } from "@/lib/date-utils";
 
 const TEAL = "#1a6050";
 const TEAL_DARK = "#144840";
@@ -25,7 +26,7 @@ const fmt = (v: string | number) => {
 
 const fmtDate = (d?: string | null) =>
   d
-    ? new Date(d).toLocaleDateString("en-IN", {
+    ? formatLocalDate(d, {
         day: "2-digit",
         month: "2-digit",
         year: "numeric",

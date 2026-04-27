@@ -9,6 +9,7 @@ import {
   usePlaceJambo,
 } from "@/hooks/useJamboApi";
 import { useAuth } from "@/contexts/AuthContext";
+import { formatLocalDate } from "@/lib/date-utils";
 import {
   ArrowLeft,
   AlertCircle,
@@ -30,14 +31,25 @@ import { toast } from "sonner";
  *   — unlike matka there is no grid view, just a quick-entry panel.
  */
 
-const NUMBER_TYPES: { value: number; label: string; shortLabel: string; min: number; max: number }[] = [
-  { value: 0, label: "Triple (000-1000)",      shortLabel: "Triple",  min: 1,  max: 1000 },
-  { value: 1, label: "Bhar Ki Jodi (00-99)",   shortLabel: "B.Jodi",  min: 0,  max: 99 },
-  { value: 2, label: "Andar Ki Jodi (00-99)",  shortLabel: "A.Jodi",  min: 0,  max: 99 },
-  { value: 3, label: "Akhar Bahar (0-9)",      shortLabel: "A.Bahar", min: 0,  max: 9 },
-  { value: 4, label: "Akhar Andar (0-9)",      shortLabel: "A.Andar", min: 0,  max: 9 },
-  { value: 5, label: "Middle Akhar (0-9)",     shortLabel: "M.Akhar", min: 0,  max: 9 },
+const NUMBER_TYPES: { value: number; label: string; shortLabel: string; min: number; max: number; maxLength: number }[] = [
+  { value: 0, label: "Triple (1-1000)",        shortLabel: "Triple",  min: 1,  max: 1000, maxLength: 4 },
+  { value: 1, label: "Bhar Ki Jodi (00-99)",   shortLabel: "B.Jodi",  min: 0,  max: 99,   maxLength: 2 },
+  { value: 2, label: "Andar Ki Jodi (00-99)",  shortLabel: "A.Jodi",  min: 0,  max: 99,   maxLength: 2 },
+  { value: 3, label: "Akhar Bahar (0-9)",      shortLabel: "A.Bahar", min: 0,  max: 9,    maxLength: 1 },
+  { value: 4, label: "Akhar Andar (0-9)",      shortLabel: "A.Andar", min: 0,  max: 9,    maxLength: 1 },
+  { value: 5, label: "Middle Akhar (0-9)",     shortLabel: "M.Akhar", min: 0,  max: 9,    maxLength: 1 },
 ];
+
+function filterDraftNumber(numberType: number, raw: string): string {
+  const t = NUMBER_TYPES.find((x) => x.value === numberType);
+  if (!t) return "";
+  let s = raw.replace(/[^0-9]/g, "");
+  if (s.length > t.maxLength) s = s.slice(0, t.maxLength);
+  while (s !== "" && parseInt(s, 10) > t.max) {
+    s = s.slice(0, -1);
+  }
+  return s;
+}
 
 function validateInput(numberType: number, raw: string): { ok: boolean; normalized?: string; error?: string } {
   const t = NUMBER_TYPES.find((x) => x.value === numberType);
@@ -139,6 +151,7 @@ export default function JamboShiftPage() {
   const nextId = useRef(1);
   const numberInputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
+  const typeSelectRef = useRef<HTMLSelectElement>(null);
   const [draftNumberType, setDraftNumberType] = useState<number>(0);
   const [draftNumber, setDraftNumber] = useState("");
   const [draftAmount, setDraftAmount] = useState("");
@@ -251,7 +264,7 @@ export default function JamboShiftPage() {
     ]);
     setDraftNumber("");
     setDraftAmount("");
-    numberInputRef.current?.focus();
+    typeSelectRef.current?.focus();
   }, [draftNumberType, draftNumber, draftAmount]);
 
   const removeQuickEntry = useCallback((id: number) => {
@@ -332,7 +345,7 @@ export default function JamboShiftPage() {
   }
 
   const fmtDate = (d: string) =>
-    new Date(d).toLocaleDateString("en-IN", {
+    formatLocalDate(d, {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -441,39 +454,42 @@ export default function JamboShiftPage() {
         <div className="flex-1 overflow-auto p-1 sm:p-2 bg-gray-100">
           <div className="flex flex-col sm:flex-row gap-3 h-full">
             {/* Quick entry form */}
-            <div className="w-full sm:w-[320px] flex-shrink-0 flex flex-col gap-2">
-              {/* Bet type chips */}
-              <div className="bg-white rounded-lg border border-gray-300 shadow-sm p-2">
-                <div className="text-[10px] font-bold text-[#142969] uppercase tracking-wider mb-1.5">
-                  Bet Type
-                </div>
-                <div className="grid grid-cols-3 gap-1">
-                  {NUMBER_TYPES.map((t) => (
-                    <button
-                      key={t.value}
-                      type="button"
-                      onClick={() => {
-                        setDraftNumberType(t.value);
-                        setDraftNumber("");
-                        numberInputRef.current?.focus();
-                      }}
-                      className={`text-[11px] font-semibold rounded-md px-2 py-1.5 transition-colors border ${
-                        draftNumberType === t.value
-                          ? "bg-[#142969] text-white border-[#142969]"
-                          : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
-                      }`}
-                    >
-                      {t.shortLabel}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-[10px] text-gray-500 mt-1.5">{currentType.label}</p>
-              </div>
-
-              {/* Number + Amount input */}
+            <div className="w-full sm:w-[350px] flex-shrink-0 flex flex-col ">
+              {/* Type dropdown + Number + Amount input */}
               <div className="bg-white rounded-lg border border-gray-300 shadow-sm overflow-hidden">
-                <div className="flex">
-                  <div className="flex-1 border-r border-gray-300">
+                {/* <div className="bg-gradient-to-r from-[#142969] to-[#1a3578] text-white text-[10px] font-bold text-center py-1 tracking-wider uppercase">
+                  Bet Type: {currentType.label}
+                </div> */}
+                <div className="grid grid-cols-[112px_1fr_1fr_auto] items-stretch">
+                  <div className="flex flex-col border-r border-gray-300">
+                    <div className="bg-[#142969] text-white text-[10px] font-bold text-center py-1 tracking-wider">
+                      TYPE
+                    </div>
+                    <select
+                      ref={typeSelectRef}
+                      value={draftNumberType}
+                      onChange={(e) => {
+                        const newType = parseInt(e.target.value, 10);
+                        setDraftNumberType(newType);
+                        setDraftNumber("");
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          numberInputRef.current?.focus();
+                        }
+                      }}
+                      disabled={!isJantriOpen}
+                      className="w-full bg-transparent text-gray-900 text-xs font-semibold py-2.5 px-2 focus:outline-none focus:bg-[#eef6ff] disabled:opacity-40 cursor-pointer"
+                    >
+                      {NUMBER_TYPES.map((t) => (
+                        <option key={t.value} value={t.value}>
+                          {t.shortLabel}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex flex-col border-r border-gray-300">
                     <div className="bg-[#e6900a] text-white text-[10px] font-bold text-center py-1 tracking-wider">
                       NUMBER
                     </div>
@@ -483,7 +499,7 @@ export default function JamboShiftPage() {
                       inputMode="numeric"
                       value={draftNumber}
                       onChange={(e) =>
-                        setDraftNumber(e.target.value.replace(/[^0-9]/g, ""))
+                        setDraftNumber(filterDraftNumber(draftNumberType, e.target.value))
                       }
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
@@ -497,7 +513,7 @@ export default function JamboShiftPage() {
                       className="w-full bg-transparent text-gray-900 text-center text-sm py-2.5 px-2 focus:outline-none focus:bg-[#eef6ff] disabled:opacity-40 placeholder:text-gray-300"
                     />
                   </div>
-                  <div className="flex-1">
+                  <div className="flex flex-col">
                     <div className="bg-[#142969] text-white text-[10px] font-bold text-center py-1 tracking-wider">
                       AMOUNT
                     </div>
@@ -521,7 +537,7 @@ export default function JamboShiftPage() {
                   <button
                     onClick={addFromDraft}
                     disabled={!isJantriOpen}
-                    className="bg-[#84c2f1] hover:bg-[#5aaee8] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold px-4 text-xl transition-colors self-stretch flex items-center"
+                    className="bg-[#84c2f1] hover:bg-[#5aaee8] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold px-4 text-xl transition-colors flex items-center"
                   >
                     +
                   </button>

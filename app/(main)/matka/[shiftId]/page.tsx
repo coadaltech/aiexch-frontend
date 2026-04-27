@@ -13,6 +13,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { ArrowLeft, AlertCircle, ChevronDown, ChevronUp, Clock, X } from "lucide-react";
 import { toast } from "sonner";
+import { formatLocalDate } from "@/lib/date-utils";
 
 function useShiftCountdown(
   shiftDate?: string,
@@ -641,7 +642,7 @@ export default function JantriPage() {
   }
 
   const fmtDate = (d: string) =>
-    new Date(d).toLocaleDateString("en-IN", {
+    formatLocalDate(d, {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",

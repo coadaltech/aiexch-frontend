@@ -6,6 +6,7 @@ import { ownerApi } from "@/lib/api";
 import { ArrowLeft, Receipt, CalendarDays } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { formatLocalDate, formatLocalTime } from "@/lib/date-utils";
 
 // VoucherType: 0=Credit,1=Debit,2=Limit,3=Deposit,4=Withdraw,5=Bonus,6=Settlement
 function getTypeLabel(type: number | null) {
@@ -21,12 +22,12 @@ function getTypeLabel(type: number | null) {
 
 function formatDateShort(d: string | null | undefined) {
   if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "2-digit" });
+  return formatLocalDate(d, { day: "2-digit", month: "short", year: "2-digit" });
 }
 
 function formatTime(d: string | null | undefined) {
   if (!d) return "";
-  return new Date(d).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+  return formatLocalTime(d, { hour: "2-digit", minute: "2-digit", hour12: true });
 }
 
 function fmt(n: any) {

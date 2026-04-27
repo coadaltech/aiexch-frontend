@@ -182,7 +182,7 @@ export default function Header() {
   if (isPanelPath(pathname)) return null;
   return (
     <>
-      <header className="fixed w-full pb-0 top-0 z-50 shadow-lg bg-[#ffffff]">
+      <header className="fixed w-full pb-0 top-0 z-50 shadow-lg bg-[#efefef]">
         {/* Top Header Bar - Modern Dark Theme */}
         <div className="">
           <div className="flex items-center justify-between h-11 sm:h-12 px-2 sm:px-4 lg:px-6">
@@ -256,7 +256,7 @@ export default function Header() {
                     </Button>
                     <Button
                       size="sm"
-                      onClick={() => router.push("/profile")}
+                      onClick={() => router.push("/profile/exposure")}
                       className="h-auto py-0.5 bg-[#1e4088] hover:bg-[#2a4590] text-white font-medium px-2 sm:px-3 rounded-lg text-xs sm:text-sm touch-manipulation min-w-0 font-condensed"
                     >
                       {/* <Wallet className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5 flex-shrink-0" /> */}

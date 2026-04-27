@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCompetitionEvents, useUpdateEventStatus } from "@/hooks/useOwner";
 import { usePanelPrefix } from "@/hooks/usePanelPrefix";
 import { ownerApi } from "@/lib/api";
+import { formatLocal } from "@/lib/date-utils";
 
 interface EventItem {
   id: string;
@@ -23,15 +24,7 @@ interface EventItem {
 function formatDate(dateString: string | null): string {
   if (!dateString) return "TBD";
   try {
-    return new Date(dateString).toLocaleString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-      timeZone: "Asia/Kolkata",
-    });
+    return formatLocal(dateString, "dd MMM yyyy, HH:mm");
   } catch {
     return "";
   }

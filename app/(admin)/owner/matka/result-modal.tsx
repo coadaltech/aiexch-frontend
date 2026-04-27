@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, X, Trophy } from "lucide-react";
 import { useSetMatkaResult } from "@/hooks/useOwner";
+import { formatLocalDate } from "@/lib/date-utils";
 
 interface Props {
   open: boolean;
@@ -58,7 +59,7 @@ export function MatkaResultModal({ open, onClose, shift }: Props) {
               {shift.name}
             </p>
             <p className="text-muted-foreground text-sm">
-              {new Date(shift.shiftDate).toLocaleDateString("en-IN", {
+              {formatLocalDate(shift.shiftDate, {
                 day: "2-digit",
                 month: "2-digit",
                 year: "numeric",

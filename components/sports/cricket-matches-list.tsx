@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { fromZonedTime } from "date-fns-tz";
 import { useMatchesList, type MatchListItem } from "@/hooks/useSportsApi";
 import { useLiveMultimarket } from "@/hooks/useLiveMultimarket";
+import { formatLocal, getUserTimezone } from "@/lib/date-utils";
 
 const EVENT_TYPE_CRICKET = "4";
 
-// Date window: today + next 2 days (3-day window) in IST.
+// Date window: today + next 2 days (3-day window) in the user's local timezone.
 const DATE_WINDOW_DAYS = 3;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -43,30 +45,35 @@ function writeCache<T>(key: string, data: T) {
   }
 }
 
-const formatToIST = (dateString: string | null): string => {
-  if (!dateString) return "TBD";
+const formatMatchTime = (dateString: string | null): { day: string; time: string } => {
+  if (!dateString) return { day: "TBD", time: "" };
   try {
-    const date = new Date(dateString);
-    return date.toLocaleString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-      timeZone: "Asia/Kolkata",
-    });
+    const tz = getUserTimezone();
+    const eventDay = formatLocal(dateString, "yyyy-MM-dd");
+    const today = formatLocal(new Date(), "yyyy-MM-dd");
+    const todayMs = fromZonedTime(`${today}T00:00:00`, tz).getTime();
+    const eventMs = fromZonedTime(`${eventDay}T00:00:00`, tz).getTime();
+    const diffDays = Math.round((eventMs - todayMs) / DAY_MS);
+
+    let day: string;
+    if (diffDays === 0) day = "Today";
+    else if (diffDays === 1) day = "Tomorrow";
+    else if (diffDays > 1 && diffDays < 7) day = formatLocal(dateString, "EEEE");
+    else day = formatLocal(dateString, "dd MMM");
+
+    return { day, time: formatLocal(dateString, "HH:mm") };
   } catch {
-    return "";
+    return { day: "", time: "" };
   }
 };
 
 function OddsCell({ back, lay }: { back: number | null; lay: number | null }) {
   return (
     <div className="flex shrink-0">
-      <div className="w-24 bg-gradient-to-b from-back to-back-deep text-center py-1.5 text-sm sm:text-base font-bold text-gray-900 border-l border-white/30 leading-tight">
+      <div className="w-9 sm:w-20 md:w-24 bg-gradient-to-b from-back to-back-deep text-center py-1.5 text-[11px] sm:text-sm md:text-base font-bold text-gray-900 border-l border-white/30 leading-tight">
         {back ?? "-"}
       </div>
-      <div className="w-24 bg-gradient-to-b from-lay to-lay-deep text-center py-1.5 text-sm sm:text-base font-bold text-gray-900 border-l border-white/30 leading-tight">
+      <div className="w-9 sm:w-20 md:w-24 bg-gradient-to-b from-lay to-lay-deep text-center py-1.5 text-[11px] sm:text-sm md:text-base font-bold text-gray-900 border-l border-white/30 leading-tight">
         {lay ?? "-"}
       </div>
     </div>
@@ -108,33 +115,34 @@ function MatchRow({
       className="block bg-white hover:bg-gray-50 transition-colors"
     >
       <div className="flex items-center">
-        <div className="flex-1 min-w-0 py-1.5 px-3 flex items-center">
-          <span className="text-[16px] font-bold text-black whitespace-nowrap shrink-0">
-            {formatToIST(match.openDate)}
-          </span>
-          <span className="text-gray-300 shrink-0">·</span>
-
-          <span className="text-gray-300 shrink-0 hidden sm:inline">·</span>
-          <h4 className="text-[16px] mr-2 font-bold text-black truncate min-w-0">
+        <div className="flex-1 min-w-0 py-1.5 px-2 sm:px-3 flex items-center gap-2">
+          {(() => {
+            const t = formatMatchTime(match.openDate);
+            return (
+              <span className="hidden sm:flex flex-col leading-tight text-xs font-bold text-gray-600 whitespace-nowrap shrink-0 w-16 text-left">
+                <span>{t.day}</span>
+                {t.time && <span className="text-gray-500">{t.time}</span>}
+              </span>
+            );
+          })()}
+          <h4 className="text-xs sm:text-sm md:text-base font-bold text-black truncate min-w-0">
             {match.name}
           </h4>
-          <span className="text-[12px] mr-1 bg-[#4090e0]/80 text-white px-1 py-0.5 rounded font-medium shrink-0">
+          <span className="text-[10px] sm:text-[12px] bg-[#4090e0]/80 text-white px-1 py-0.5 rounded font-medium shrink-0">
             O
           </span>
-          {match.inPlay ? (
+          {match.inPlay && (
             <span className="flex items-center gap-0.5 shrink-0">
-              <span className="w-2.5 h-2.5 bg-[#84c2f1] rounded-full animate-pulse" />
-              <span className="text-[18px] text-[#142969] font-bold">LIVE</span>
+              <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-[#84c2f1] rounded-full animate-pulse" />
+              <span className="text-xs sm:text-base md:text-[18px] text-[#142969] font-bold">LIVE</span>
             </span>
-          ) : (
-            <span />
           )}
           {betCount != null && betCount > 0 && (
-            <span className="relative ml-56 shrink-0 group">
-              <span className="text-[14px] text-black bg-yellow-500 p-1 font-medium whitespace-nowrap cursor-default">
+            <span className="relative ml-auto shrink-0 group">
+              <span className="text-[11px] sm:text-[14px] text-black bg-yellow-500 px-1 py-0.5 sm:p-1 font-medium whitespace-nowrap cursor-default">
                 {betCount}
               </span>
-              <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-[11px] text-white opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">
+              <span className="pointer-events-none absolute bottom-full right-0 mb-1.5 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-[11px] text-white opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">
                 {betCount} matched bets
               </span>
             </span>
@@ -143,11 +151,11 @@ function MatchRow({
 
         <OddsCell back={team1.back} lay={team1.lay} />
 
-        <div className="hidden sm:flex shrink-0">
-          <div className="w-24 bg-gradient-to-b from-back to-back-deep text-center py-1.5 text-sm sm:text-base font-bold text-gray-900 border-l border-white/30 leading-tight">
+        <div className="flex shrink-0">
+          <div className="w-9 sm:w-20 md:w-24 bg-gradient-to-b from-back to-back-deep text-center py-1.5 text-[11px] sm:text-sm md:text-base font-bold text-gray-900 border-l border-white/30 leading-tight">
             {draw.back ?? "-"}
           </div>
-          <div className="w-24 bg-gradient-to-b from-lay to-lay-deep text-center py-1.5 text-sm sm:text-base font-bold text-gray-900 border-l border-white/30 leading-tight">
+          <div className="w-9 sm:w-20 md:w-24 bg-gradient-to-b from-lay to-lay-deep text-center py-1.5 text-[11px] sm:text-sm md:text-base font-bold text-gray-900 border-l border-white/30 leading-tight">
             {draw.lay ?? "-"}
           </div>
         </div>
@@ -200,13 +208,12 @@ export function CricketMatchesList({
     setHydrated(true);
   }, [eventsCacheKey, oddsCacheKey]);
 
-  // Date window: today 00:00 IST through end of (today + 2 days) IST.
-  // Recomputed once per mount — changes at most once per day.
+  // Date window: today 00:00 → end of (today + 2 days) in the user's local
+  // timezone. Recomputed once per mount — changes at most once per day.
   const { startOfTodayIST, endOfWindowIST } = useMemo(() => {
-    const todayStr = new Date().toLocaleDateString("en-CA", {
-      timeZone: "Asia/Kolkata",
-    });
-    const start = new Date(`${todayStr}T00:00:00+05:30`).getTime();
+    const tz = getUserTimezone();
+    const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: tz });
+    const start = fromZonedTime(`${todayStr}T00:00:00`, tz).getTime();
     return {
       startOfTodayIST: start,
       endOfWindowIST: start + DATE_WINDOW_DAYS * DAY_MS,
@@ -334,9 +341,9 @@ export function CricketMatchesList({
       {showHeader && (
         <div className="flex items-center bg-gradient-to-r from-[#142969] to-[#1a3578] text-white text-[10px] sm:text-xs font-bold font-condensed tracking-wider">
           <div className="flex-1 py-2.5 px-3" />
-          <div className="w-48 text-center py-2.5">1</div>
-          <div className="w-48 text-center py-2.5 hidden sm:block">X</div>
-          <div className="w-48 text-center py-2.5">2</div>
+          <div className="w-[72px] sm:w-40 md:w-48 text-center py-2.5">1</div>
+          <div className="w-[72px] sm:w-40 md:w-48 text-center py-2.5">X</div>
+          <div className="w-[72px] sm:w-40 md:w-48 text-center py-2.5">2</div>
         </div>
       )}
 

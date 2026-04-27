@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import { useState, useMemo } from "react";
 import { useTransactions } from "@/hooks/useUserQueries";
 import { TransactionHistorySkeleton } from "@/components/skeletons/profile-skeletons";
+import { formatLocalDate, formatLocalDateTime } from "@/lib/date-utils";
 
 const TYPE_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string; bg: string }> = {
   deposit:   { label: "Deposit",    icon: ArrowDownLeft, color: "text-emerald-600", bg: "bg-emerald-50 text-emerald-600" },
@@ -41,7 +42,7 @@ function isIncoming(tx: any): boolean {
 }
 
 function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleDateString("en-IN", {
+  return formatLocalDateTime(dateString, {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -260,7 +261,7 @@ export default function TransactionHistory() {
                     {tx.approvedDate && (
                       <div>
                         <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Approved</span>
-                        <p className="text-xs font-medium text-foreground">{new Date(tx.approvedDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p>
+                        <p className="text-xs font-medium text-foreground">{formatLocalDate(tx.approvedDate, { day: "2-digit", month: "short", year: "numeric" })}</p>
                       </div>
                     )}
                     {tx.remarks && (

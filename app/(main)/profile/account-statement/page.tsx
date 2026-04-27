@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Receipt, CalendarDays, X, Trash2, Eye, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAccountStatement, useBetDetails, useLedger } from "@/hooks/useUserQueries";
+import { formatLocalDate, formatLocalDateTime, formatLocalTime } from "@/lib/date-utils";
 
 // ── Bet Log Details Modal ────────────────────────────────────────────────────
 function BetLogModal({ bet, onClose }: { bet: any; onClose: () => void }) {
@@ -54,7 +55,7 @@ function getTypeLabel(type: number | null) {
 
 function formatDate(d: string | null | undefined) {
   if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-IN", {
+  return formatLocalDateTime(d, {
     day: "2-digit", month: "short", year: "numeric",
     hour: "2-digit", minute: "2-digit", hour12: true,
   });
@@ -62,13 +63,12 @@ function formatDate(d: string | null | undefined) {
 
 function formatDateShort(d: string | null | undefined) {
   if (!d) return "—";
-  const dt = new Date(d);
-  return dt.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "2-digit" });
+  return formatLocalDate(d, { day: "2-digit", month: "short", year: "2-digit" });
 }
 
 function formatTime(d: string | null | undefined) {
   if (!d) return "";
-  return new Date(d).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+  return formatLocalTime(d, { hour: "2-digit", minute: "2-digit", hour12: true });
 }
 
 function fmt(n: any) {

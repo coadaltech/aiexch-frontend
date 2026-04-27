@@ -5,9 +5,9 @@ import { Card } from "@/components/ui/card";
 import { X } from "lucide-react";
 import { useMyBets } from "@/hooks/useBetting";
 
-export function BetSlip({ matchId }: { matchId: string }) {
+export function BetSlip({ matchId, allBetsOnly = false }: { matchId: string; allBetsOnly?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"match" | "all">("match");
+  const [activeTab, setActiveTab] = useState<"match" | "all">(allBetsOnly ? "all" : "match");
   const { data: currentBetsData } = useMyBets("all");
 
   const allBets = (currentBetsData?.data || []).filter(
@@ -20,33 +20,44 @@ export function BetSlip({ matchId }: { matchId: string }) {
 
   const displayedBets = activeTab === "match" ? matchBets : allBets;
 
-  const TabBar = () => (
-    <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5 mb-2 flex-shrink-0">
-      <button
-        onClick={() => setActiveTab("match")}
-        className={`flex-1 text-sm font-bold py-2 rounded-md transition-all cursor-pointer ${
-          activeTab === "match"
-            ? "bg-gradient-to-r from-[#142969] to-[#1a3578] text-white shadow-sm"
-            : "text-gray-500 hover:text-gray-800"
-        }`}
-      >
-        This Match ({matchBets.length})
-      </button>
-      <button
-        onClick={() => setActiveTab("all")}
-        className={`flex-1 text-sm font-bold py-2 rounded-md transition-all cursor-pointer ${
-          activeTab === "all"
-            ? "bg-gradient-to-r from-[#142969] to-[#1a3578] text-white shadow-sm"
-            : "text-gray-500 hover:text-gray-800"
-        }`}
-      >
-        All Bets ({allBets.length})
-      </button>
-    </div>
-  );
+  const TabBar = () => {
+    if (allBetsOnly) {
+      return (
+        <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5 mb-2 flex-shrink-0">
+          <div className="flex-1 text-sm font-bold py-2 rounded-md bg-gradient-to-r from-[#142969] to-[#1a3578] text-white shadow-sm text-center">
+            All Bets ({allBets.length})
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5 mb-2 flex-shrink-0">
+        <button
+          onClick={() => setActiveTab("match")}
+          className={`flex-1 text-sm font-bold py-2 rounded-md transition-all cursor-pointer ${
+            activeTab === "match"
+              ? "bg-gradient-to-r from-[#142969] to-[#1a3578] text-white shadow-sm"
+              : "text-gray-500 hover:text-gray-800"
+          }`}
+        >
+          This Match ({matchBets.length})
+        </button>
+        <button
+          onClick={() => setActiveTab("all")}
+          className={`flex-1 text-sm font-bold py-2 rounded-md transition-all cursor-pointer ${
+            activeTab === "all"
+              ? "bg-gradient-to-r from-[#142969] to-[#1a3578] text-white shadow-sm"
+              : "text-gray-500 hover:text-gray-800"
+          }`}
+        >
+          All Bets ({allBets.length})
+        </button>
+      </div>
+    );
+  };
 
   const EmptyState = ({ message }: { message: string }) => (
-    <div className="flex-1 min-h-0 flex flex-col items-center justify-center p-8 rounded-xl border border-gray-200 bg-gray-50 text-center shadow-inner">
+    <div className="flex-1 min-h-0 flex flex-col items-center justify-center p-8 rounded-xl border border-gray-200 bg-[#efefef] text-center shadow-inner">
       <div className="text-4xl mb-3 animate-bounce text-matka-ring">🎯</div>
       <p className="text-base font-medium text-gray-600 mb-1">{message}</p>
       <span className="text-xs text-gray-400">
@@ -124,10 +135,10 @@ export function BetSlip({ matchId }: { matchId: string }) {
       </div>
 
       {/* Desktop: Right Panel */}
-      <div className="hidden lg:block h-full w-full z-40 p-2">
+      <div className="hidden bg-[#efefef] lg:block h-full w-full z-40 p-2">
         <div className="h-full flex flex-col">
           <TabBar />
-          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          <div className="flex-1 z flex flex-col min-h-0 overflow-hidden">
             <BetsTable />
           </div>
         </div>

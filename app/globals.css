@@ -74,8 +74,9 @@ th {
   color: #ffffff;
 }
 
-/* ===== White sections — dark text ===== */
+/* ===== White sections — dark text, off-white background ===== */
 .bg-white {
+  background-color: #f8f8f8 !important;
   color: #1a1a2e;
 }
 .bg-gray-50 {
@@ -175,7 +176,7 @@ th {
 
   /* ===== Content Area (match pages, cards, tables) ===== */
   --content-bg: #101e50;
-  --content-bg-light: #ffffff;
+  --content-bg-light: #f8f8f8;
   --content-bg-hover: #162d6a;
   --content-bg-inset: #091240;
   --content-border: #1e4088;

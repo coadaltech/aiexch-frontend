@@ -2,6 +2,7 @@
 
 import { api, clearTokens, proactiveRefresh, getAuthCookie } from "@/lib/api";
 import { clearDemoBets } from "@/lib/demo-bets";
+import { setUserCountry, setUserTimezone } from "@/lib/date-utils";
 import { normalizeRole, normalizeMembership } from "@/types/enums";
 import { useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
@@ -20,7 +21,15 @@ export interface User {
   downline?: string;
   groupId?: number | null;
   currencyId?: string | null;
+  country?: string | null;
+  timezone?: string | null;
 }
+
+const applyUserTimezone = (u: { country?: string | null; timezone?: string | null } | null | undefined) => {
+  if (!u) return;
+  if (u.timezone) setUserTimezone(u.timezone);
+  else if (u.country) setUserCountry(u.country);
+};
 
 /** Creates a new demo user (cached per session). Each call gets a unique id/email. */
 export function createDemoUser(): User {
@@ -87,6 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const parsed = JSON.parse(cachedUser) as User;
         setUser(parsed);
         setIsLoggedIn(true);
+        applyUserTimezone(parsed);
       } catch {
         sessionStorage.removeItem("user");
       }
@@ -122,6 +132,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           };
           setUser(u);
           setIsLoggedIn(true);
+          applyUserTimezone(u);
           sessionStorage.setItem("user", JSON.stringify(u));
           startRefreshTimer();
         } else {
@@ -173,6 +184,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               membership: normalizeMembership(data.user.membership),
             };
             setUser(u);
+            applyUserTimezone(u);
             sessionStorage.setItem("user", JSON.stringify(u));
           } else {
             clearTokens();
@@ -225,6 +237,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     sessionStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);
     setIsLoggedIn(true);
+    applyUserTimezone(userData);
     if (!userData.isDemo) {
       startRefreshTimer();
       // Write a unique key so other browser tabs detect this login and log out.
@@ -267,6 +280,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
         setUser(u);
         setIsLoggedIn(true);
+        applyUserTimezone(u);
         sessionStorage.setItem("user", JSON.stringify(u));
       } else {
         logout();

@@ -198,13 +198,13 @@ function SectionHeader({
   oddsColumns?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between px-4 py-2">
+    <div className="flex items-center  justify-between px-4 py-2">
       <div className="flex items-center gap-2.5">
         <div className="w-1 h-6 bg-[#84c2f1] rounded-full" />
-        {Icon && <Icon className="h-4 w-4 text-[#f5f5f6]" />}
+        {Icon && <Icon className="h-4 w-4" />}
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-sm sm:text-base font-bold text-white font-condensed tracking-wide">
+            <h2 className="text-sm sm:text-base font-bold  font-condensed tracking-wide">
               {title}
             </h2>
             {badge && (
@@ -220,9 +220,9 @@ function SectionHeader({
       </div>
       {oddsColumns ? (
         <div className="flex items-center text-white text-[10px] sm:text-xs font-bold font-condensed tracking-wider">
-          <div className="w-48 text-center">1</div>
-          <div className="w-48 text-center hidden sm:block">X</div>
-          <div className="w-48 text-center">2</div>
+          <div className="w-[72px] sm:w-40 md:w-48 text-center">1</div>
+          <div className="w-[72px] sm:w-40 md:w-48 text-center">X</div>
+          <div className="w-[72px] sm:w-40 md:w-48 text-center">2</div>
         </div>
       ) : href ? (
         <Link
@@ -271,7 +271,7 @@ function QuickSportsRow() {
 /* ─── Main homepage ─── */
 const Homepage = () => {
   return (
-    <div className="w-full min-w-0 bg-[#ffffff] min-h-full">
+    <div className="w-full min-w-0 bg-[#efefef] min-h-full">
       <Suspense fallback={null}>
         <ErrorHandler />
       </Suspense>
@@ -282,6 +282,12 @@ const Homepage = () => {
       {/* 2. Hero banner */}
       <div className="">
         <HomeBanner />
+      </div>
+
+        {/* 6. Quick sport pills */}
+      <div className="mt-4">
+        {/* <SectionHeader title="SPORTS" icon={Volleyball} href="/sports" /> */}
+        <QuickSportsRow />
       </div>
 
       {/* 3. Sport category pill tabs */}
@@ -307,7 +313,7 @@ const Homepage = () => {
                 badge="LIVE"
                 oddsColumns
               />
-              <div className="px-3 pb-3">{content}</div>
+              <div className="px-4 pb-3">{content}</div>
             </div>
           </div>
         )}
@@ -330,7 +336,7 @@ const Homepage = () => {
                 badge="LIVE"
                 oddsColumns
               />
-              <div className="px-3 pb-3">{content}</div>
+              <div className="px-4 pb-3">{content}</div>
             </div>
           </div>
         )}
@@ -354,7 +360,7 @@ const Homepage = () => {
                   badge="LIVE"
                   oddsColumns
                 />
-                <div className="px-3 pb-3">{content}</div>
+                <div className="px-4 pb-3">{content}</div>
               </div>
             </div>
           )}
@@ -411,18 +417,14 @@ const Homepage = () => {
                   badge="LIVE"
                   oddsColumns
                 />
-                <div className="px-3 pb-3">{content}</div>
+                <div className="px-4 pb-3">{content}</div>
               </div>
             </div>
           )}
         />
       </LazyMount>
 
-      {/* 6. Quick sport pills */}
-      <div className="mt-4">
-        <SectionHeader title="SPORTS" icon={Volleyball} href="/sports" />
-        <QuickSportsRow />
-      </div>
+    
 
       {/* 7. Promotions */}
       <LazyMount minHeight={240}>

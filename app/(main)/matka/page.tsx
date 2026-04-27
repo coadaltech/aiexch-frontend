@@ -4,10 +4,10 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useMatkaShifts, type MatkaShift } from "@/hooks/useMatkaApi";
 import { Calendar, Clock, Trophy } from "lucide-react";
+import { formatLocalDate } from "@/lib/date-utils";
 
 function formatDate(dateStr: string) {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("en-IN", {
+  return formatLocalDate(dateStr, {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",

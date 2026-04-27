@@ -26,10 +26,10 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { TransactionViewModal } from "./TransactionViewModal";
+import { formatLocalDate, formatLocalTime } from "@/lib/date-utils";
 
 function formatDate(dateStr: string) {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("en-IN", {
+  return formatLocalDate(dateStr, {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -37,8 +37,7 @@ function formatDate(dateStr: string) {
 }
 
 function formatTime(dateStr: string) {
-  const d = new Date(dateStr);
-  return d.toLocaleTimeString("en-IN", {
+  return formatLocalTime(dateStr, {
     hour: "2-digit",
     minute: "2-digit",
     hour12: true,

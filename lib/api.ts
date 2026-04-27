@@ -565,6 +565,7 @@ export const userApi = {
   }) => api.post("/profile/withdraw", data),
   getBalance: () => api.get("/profile/balance"),
   getLedgerInfo: () => api.get("/betting/ledger-info"),
+  getExposureUsage: () => api.get("/betting/exposure-usage"),
 
   // Account ledger statement
   getAccountStatement: (params: { fromDate: string; toDate: string }) =>

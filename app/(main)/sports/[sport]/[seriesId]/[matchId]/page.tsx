@@ -1250,7 +1250,7 @@ export default function MatchPage() {
   };
 
   return (
-    <div className="px-2 sm:px-3 py-2 w-full max-w-full min-w-0 min-h-full overflow-x-hidden">
+    <div className="px-2 bg-[#efefef] sm:px-3 py-2 w-full max-w-full min-w-0 min-h-full overflow-x-hidden">
       {/* Match header */}
       {(matchInfo || series || matchFromSeries) && (() => {
         const matchOddsMarket = visibleMarkets.find((m: any) => m.marketType === "MATCH_ODDS" || m.marketType === "WINNING_ODDS");

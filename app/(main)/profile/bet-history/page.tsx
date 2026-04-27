@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useMyBets } from "@/hooks/useBetting";
 import { useMatkaMyBets } from "@/hooks/useMatkaApi";
 import { BetHistorySkeleton } from "@/components/skeletons/profile-skeletons";
+import { formatLocalDate, formatLocalDateTime, formatLocalTime } from "@/lib/date-utils";
 
 const STATUS_CONFIG = {
   won:     { label: "Won",     style: "text-emerald-700 bg-emerald-100 border-emerald-300" },
@@ -16,7 +17,7 @@ const STATUS_CONFIG = {
 };
 
 function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleDateString("en-IN", {
+  return formatLocalDateTime(dateString, {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -191,10 +192,8 @@ export default function BetHistoryPage() {
                     .slice()
                     .sort((a: any, b: any) => new Date(a.addedDate).getTime() - new Date(b.addedDate).getTime())
                     .map((txn: any) => {
-                      const shiftDt = new Date(txn.shiftDate);
-                      const shiftDateStr = shiftDt.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
-                      const txnDt = new Date(txn.addedDate);
-                      const txnTimeStr = txnDt.toLocaleDateString("en-IN", { day: "2-digit", month: "short" }) + " " + txnDt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+                      const shiftDateStr = formatLocalDate(txn.shiftDate, { day: "2-digit", month: "short", year: "numeric" });
+                      const txnTimeStr = formatLocalDate(txn.addedDate, { day: "2-digit", month: "short" }) + " " + formatLocalTime(txn.addedDate, { hour: "2-digit", minute: "2-digit", hour12: true });
 
                       return (
                         <tr key={txn.id} className="bg-orange-100 text-gray-800 border-t border-white/40">

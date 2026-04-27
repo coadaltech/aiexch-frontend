@@ -3,10 +3,10 @@
 import { useRouter } from "next/navigation";
 import { ArrowLeft, History } from "lucide-react";
 import { useMatkaDeclaredHistoryPublic } from "@/hooks/useMatkaApi";
+import { formatLocalDateTime } from "@/lib/date-utils";
 
 function formatDateTime(dateStr: string) {
-  const d = new Date(dateStr);
-  return d.toLocaleString("en-IN", {
+  return formatLocalDateTime(dateStr, {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",

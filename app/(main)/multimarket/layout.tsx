@@ -18,7 +18,7 @@ export default function MultimarketLayout({
             tab reads as 0; users work from the "All Bets" tab since pins
             span multiple events. */}
         <div className="hidden lg:flex shrink-0 h-full w-[320px] xl:w-[380px] bg-white rounded-xl overflow-hidden">
-          <BetSlip matchId="" />
+          <BetSlip matchId="" allBetsOnly />
         </div>
       </div>
 

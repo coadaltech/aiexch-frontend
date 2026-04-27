@@ -89,7 +89,7 @@ const NOTICES = [
 
           {/* Main Content - scrollable area; pb for mobile so content clears fixed bottom tab */}
           <main
-            className="min-h-0 flex-1 w-full overflow-y-auto overflow-x-hidden transition-all duration-300 pb-20 lg:pb-0 bg-white rounded-xl"
+            className="min-h-0 flex-1 w-full overflow-y-auto overflow-x-hidden transition-all duration-300 pb-20 lg:pb-0 bg-[#efefef] rounded-xl"
             id="main-content"
           >
             {children}
