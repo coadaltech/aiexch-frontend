@@ -113,7 +113,7 @@ export default function MultimarketPage() {
     const timer = setTimeout(() => {
       setQuickBet(null);
       setQuickBetStake("");
-    }, 10000);
+    }, 4000);
     return () => clearTimeout(timer);
   }, [quickBet, quickBetStake, isPlacing]);
 
@@ -173,6 +173,25 @@ export default function MultimarketPage() {
     return String(
       convertOdds(parseFloat(String(rawPrice)), quickBet.market?.provider, quickBet.market?.marketType),
     );
+  }, [oddsByMarketId, quickBet]);
+
+  // Live "run" (line value) for fancy/LINE markets so the quick-bet panel's
+  // displayed line updates in real-time alongside the price.
+  const liveQuickBetRun = useMemo(() => {
+    if (!quickBet || quickBet.bettingType !== "LINE") return undefined;
+    const liveMarket = oddsByMarketId[quickBet.marketId];
+    if (!liveMarket) return undefined;
+    const liveRunner = liveMarket.runners?.find(
+      (r: any) => r.selectionId?.toString() === quickBet.runner.selectionId?.toString(),
+    );
+    if (!liveRunner) return undefined;
+    const prices = quickBet.isLay ? liveRunner.lay : liveRunner.back;
+    if (!prices?.length) return undefined;
+    const item = prices[quickBet.priceIndex];
+    if (!item) return undefined;
+    const lineVal = item?.line ?? item?.price ?? null;
+    if (lineVal == null) return undefined;
+    return String(lineVal);
   }, [oddsByMarketId, quickBet]);
 
   const getLivePrice = useCallback(
@@ -701,6 +720,7 @@ export default function MultimarketPage() {
                 handleQuickBetClose={handleQuickBetClose}
                 handleQuickBetPlace={handleQuickBetPlace}
                 liveQuickBetOdds={liveQuickBetOdds}
+                liveQuickBetRun={liveQuickBetRun}
                 customStakes={customStakes}
                 marketExposureMap={marketExposureMap}
                 fancyExposureMap={fancyExposureMap}

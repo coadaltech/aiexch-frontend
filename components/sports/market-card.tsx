@@ -265,6 +265,7 @@ export interface MarketCardProps {
   handleQuickBetClose: () => void;
   handleQuickBetPlace: (stake: string, odds: string) => void;
   liveQuickBetOdds: string | undefined;
+  liveQuickBetRun?: string | undefined;
   customStakes: { label: string; value: number }[] | undefined;
   // exposure
   marketExposureMap: Map<string, Map<string, number>> | undefined;
@@ -291,6 +292,7 @@ export function MarketCard(props: MarketCardProps) {
     handleQuickBetClose,
     handleQuickBetPlace,
     liveQuickBetOdds,
+    liveQuickBetRun,
     customStakes,
     marketExposureMap,
     fancyExposureMap,
@@ -345,6 +347,7 @@ export function MarketCard(props: MarketCardProps) {
         onCancelDelay={cancelBetDelay}
         stakeButtons={customStakes}
         currentOdds={liveQuickBetOdds}
+        currentRun={liveQuickBetRun}
       />
     ) : null;
 

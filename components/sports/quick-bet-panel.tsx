@@ -80,6 +80,7 @@ export function QuickBetPanel({
   onCancelDelay,
   stakeButtons,
   currentOdds,
+  currentRun,
 }: {
   data: QuickBetData;
   stake: string;
@@ -91,14 +92,16 @@ export function QuickBetPanel({
   onCancelDelay?: () => void;
   stakeButtons?: { label: string; value: number }[];
   currentOdds?: string;
+  currentRun?: string;
 }) {
   const { market, runner, odds } = data;
   const rawOdds = currentOdds ?? odds;
   const numOdds = parseFloat(rawOdds);
   const isBetfair = data.market?.provider?.toUpperCase() === "BETFAIR";
+  const liveRun = currentRun ?? data.run;
   const displayOdds =
-    data.bettingType === "LINE" && data.run != null
-      ? `${data.run} (${Math.round(isBetfair ? numOdds : numOdds * 100)})`
+    data.bettingType === "LINE" && liveRun != null
+      ? `${liveRun} (${Math.round(isBetfair ? numOdds : numOdds * 100)})`
       : isNaN(numOdds)
         ? rawOdds
         : (() => {

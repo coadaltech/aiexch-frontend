@@ -334,13 +334,13 @@ export default function MatchPage() {
     }
   }, [markets, quickBet, cancelBetDelay]);
 
-  // Auto-close QuickBetPanel after 10s of no stake interaction
+  // Auto-close QuickBetPanel after 4s of no stake interaction
   useEffect(() => {
     if (!quickBet || isPlacing) return;
     const timer = setTimeout(() => {
       setQuickBet(null);
       setQuickBetStake("");
-    }, 10000);
+    }, 4000);
     return () => clearTimeout(timer);
   }, [quickBet, quickBetStake, isPlacing]);
 
@@ -362,6 +362,25 @@ export default function MatchPage() {
     if (quickBet.isRawOdds) return String(parseFloat(String(rawPrice)));
     const convertOdds = quickBet.bettingType === "LINE" ? toDecimalfancyOdds : toDecimalOdds;
     return String(convertOdds(parseFloat(String(rawPrice)), quickBet.market?.provider, quickBet.market?.marketType));
+  }, [markets, quickBet]);
+
+  // Live "run" (line value) for fancy/LINE markets so the quick-bet panel's
+  // displayed line updates in real-time alongside the price.
+  const liveQuickBetRun = useMemo(() => {
+    if (!quickBet || quickBet.bettingType !== "LINE") return undefined;
+    const liveMarket = markets.find((m: any) => m.marketId === quickBet.marketId);
+    if (!liveMarket) return undefined;
+    const liveRunner = liveMarket.runners?.find(
+      (r: any) => r.selectionId?.toString() === quickBet.runner.selectionId?.toString()
+    );
+    if (!liveRunner) return undefined;
+    const prices = quickBet.isLay ? liveRunner.lay : liveRunner.back;
+    if (!prices?.length) return undefined;
+    const item = prices[quickBet.priceIndex];
+    if (!item) return undefined;
+    const lineVal = item?.line ?? item?.price ?? null;
+    if (lineVal == null) return undefined;
+    return String(lineVal);
   }, [markets, quickBet]);
 
   // Preview exposure: calculate what exposure would look like if the current quick bet were placed
@@ -1887,6 +1906,7 @@ export default function MatchPage() {
                       onCancelDelay={cancelBetDelay}
                       stakeButtons={customStakes}
                       currentOdds={liveQuickBetOdds}
+                      currentRun={liveQuickBetRun}
                     />
                   )}
                 </div>
