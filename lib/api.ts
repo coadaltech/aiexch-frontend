@@ -321,18 +321,40 @@ export const ownerApi = {
   toggleSportActive: (sportId: number | string, isActive: boolean) =>
     api.post(`/owner/sports-games/toggle-active/${sportId}`, { isActive }),
 
-  // Competitions (per-sport, role + whitelabel aware)
-  getCompetitions: (sportId: string) =>
-    api.get(`/owner/sports-games/competitions/${sportId}`),
+  // Competitions (per-sport, role + whitelabel aware) — server-paginated
+  getCompetitions: (
+    sportId: string,
+    params?: { limit?: number; offset?: number; search?: string },
+  ) => {
+    const query = new URLSearchParams();
+    if (params?.limit != null) query.append("limit", String(params.limit));
+    if (params?.offset != null) query.append("offset", String(params.offset));
+    if (params?.search) query.append("search", params.search);
+    const qs = query.toString();
+    return api.get(
+      `/owner/sports-games/competitions/${sportId}${qs ? `?${qs}` : ""}`,
+    );
+  },
   updateCompetitionStatus: (sportId: string, data: { competitions: Array<{ id: string; isActive: boolean }> }) =>
     api.post(`/owner/sports-games/competitions/${sportId}/update-status`, data),
   // Mark/unmark a competition as a sidebar "Top competition" (owner only)
   toggleTopCompetition: (competitionId: string | number, isTop: boolean) =>
     api.post(`/owner/sports-games/toggle-top-competition/${competitionId}`, { isTop }),
 
-  // Events (per-competition)
-  getCompetitionEvents: (competitionId: string) =>
-    api.get(`/owner/sports-games/events/${competitionId}`),
+  // Events (per-competition) — server-paginated
+  getCompetitionEvents: (
+    competitionId: string,
+    params?: { limit?: number; offset?: number; search?: string },
+  ) => {
+    const query = new URLSearchParams();
+    if (params?.limit != null) query.append("limit", String(params.limit));
+    if (params?.offset != null) query.append("offset", String(params.offset));
+    if (params?.search) query.append("search", params.search);
+    const qs = query.toString();
+    return api.get(
+      `/owner/sports-games/events/${competitionId}${qs ? `?${qs}` : ""}`,
+    );
+  },
   updateEventStatus: (competitionId: string, data: { events: Array<{ id: string; isActive: boolean }> }) =>
     api.post(`/owner/sports-games/events/${competitionId}/update-status`, data),
   // Mark/unmark an event as a sidebar "Recommended" match (owner only)

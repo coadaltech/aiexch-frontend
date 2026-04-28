@@ -779,11 +779,22 @@ export const useCurrencyHistory = (currencyId: string | null) => {
 //  Competition Events Management
 // ═══════════════════════════════════════════════════════════
 
-export const useCompetitionEvents = (competitionId: string | null) => {
+export const useCompetitionEvents = (
+  competitionId: string | null,
+  params?: { limit?: number; offset?: number; search?: string },
+) => {
   return useQuery({
-    queryKey: ["competition-events", competitionId],
+    queryKey: [
+      "competition-events",
+      competitionId,
+      params?.limit ?? null,
+      params?.offset ?? null,
+      params?.search ?? "",
+    ],
     queryFn: () =>
-      ownerApi.getCompetitionEvents(competitionId!).then((res) => res.data),
+      ownerApi
+        .getCompetitionEvents(competitionId!, params)
+        .then((res) => res.data),
     enabled: !!competitionId,
   });
 };

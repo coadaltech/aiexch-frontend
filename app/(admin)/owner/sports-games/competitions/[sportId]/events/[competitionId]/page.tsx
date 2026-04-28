@@ -1,7 +1,7 @@
 // app/owner/sports-games/competitions/[sportId]/events/[competitionId]/page.tsx
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompetitionEvents, useUpdateEventStatus } from "@/hooks/useOwner";
@@ -20,6 +20,8 @@ interface EventItem {
   defaultMarketId: string | null;
   suspended: boolean;
 }
+
+const PAGE_SIZE = 50;
 
 function formatDate(dateString: string | null): string {
   if (!dateString) return "TBD";
@@ -42,17 +44,30 @@ export default function EventsPage() {
   const isAdmin = currentUser?.role === "admin";
   const canEdit = isOwner || isAdmin;
 
-  const { data: response, isLoading: loading } = useCompetitionEvents(competitionId);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [page, setPage] = useState(0);
+
+  // Debounce search; reset to first page when search changes.
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      setDebouncedSearch(search.trim());
+      setPage(0);
+    }, 300);
+    return () => clearTimeout(handle);
+  }, [search]);
+
+  const { data: response, isLoading: loading } = useCompetitionEvents(
+    competitionId,
+    { limit: PAGE_SIZE, offset: page * PAGE_SIZE, search: debouncedSearch },
+  );
   const updateStatus = useUpdateEventStatus();
 
-  const [search, setSearch] = useState("");
-  const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
-  const [initialized, setInitialized] = useState(false);
+  // Pending changes persist across page/search navigations so admins can
+  // edit events on multiple pages before clicking Save.
+  const [pendingChanges, setPendingChanges] = useState<Record<string, boolean>>({});
 
   // Optimistic overrides for the "Recommended" toggle — keyed by eventId.
-  // The react-query cache is the source of truth; we only stash local
-  // overrides while a toggle is in-flight / before the next refetch picks up
-  // the new value.
   const [recommendedOverrides, setRecommendedOverrides] = useState<Record<string, boolean>>({});
   const [togglingRecommendedId, setTogglingRecommendedId] = useState<string | null>(null);
 
@@ -74,57 +89,30 @@ export default function EventsPage() {
     });
   }, [response, recommendedOverrides]);
 
-  // Sort: active first, then by date
-  const sortedEvents = useMemo(() => {
-    return [...eventsData].sort((a, b) => {
-      const aActive = isOwner ? a.isActive : a.whitelabelActive;
-      const bActive = isOwner ? b.isActive : b.whitelabelActive;
-      if (aActive && !bActive) return -1;
-      if (!aActive && bActive) return 1;
-      const dateA = a.openDate ? new Date(a.openDate).getTime() : 0;
-      const dateB = b.openDate ? new Date(b.openDate).getTime() : 0;
-      return dateA - dateB;
-    });
-  }, [eventsData, isOwner]);
+  const totalCount = Number(response?.totalCount ?? eventsData.length);
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const fromIndex = totalCount === 0 ? 0 : page * PAGE_SIZE + 1;
+  const toIndex = Math.min(totalCount, page * PAGE_SIZE + eventsData.length);
 
-  // Initialize selection from current active state
-  if (!initialized && sortedEvents.length > 0) {
-    const activeIds = sortedEvents
-      .filter((e) => (isOwner ? e.isActive : e.whitelabelActive))
-      .map((e) => e.id);
-    setSelectedEvents(activeIds);
-    setInitialized(true);
-  }
-
-  const filteredEvents = useMemo(() => {
-    return sortedEvents.filter((e) =>
-      e.name.toLowerCase().includes(search.toLowerCase()),
-    );
-  }, [sortedEvents, search]);
-
-  const changedEvents = useMemo(() => {
-    const changes: Array<{ id: string; isActive: boolean }> = [];
-    sortedEvents.forEach((evt) => {
-      const isNowActive = selectedEvents.includes(evt.id);
-      const wasActive = isOwner ? evt.isActive : evt.whitelabelActive;
-      if (wasActive !== isNowActive) {
-        changes.push({ id: evt.id, isActive: isNowActive });
-      }
-    });
-    return changes;
-  }, [sortedEvents, selectedEvents, isOwner]);
-
-  const stats = useMemo(
-    () => ({
-      total: sortedEvents.length,
-      active: sortedEvents.filter((e) =>
-        isOwner ? e.isActive : e.whitelabelActive,
-      ).length,
-      selected: selectedEvents.length,
-      changes: changedEvents.length,
-    }),
-    [sortedEvents, selectedEvents, changedEvents, isOwner],
+  const originalActiveOf = useCallback(
+    (e: EventItem) => (isOwner ? e.isActive : e.whitelabelActive),
+    [isOwner],
   );
+
+  const effectiveActiveOf = useCallback(
+    (e: EventItem) => pendingChanges[e.id] ?? originalActiveOf(e),
+    [pendingChanges, originalActiveOf],
+  );
+
+  const stats = useMemo(() => {
+    const activeOnPage = eventsData.filter(originalActiveOf).length;
+    return {
+      totalAll: totalCount,
+      totalOnPage: eventsData.length,
+      activeOnPage,
+      pendingChanges: Object.keys(pendingChanges).length,
+    };
+  }, [eventsData, totalCount, pendingChanges, originalActiveOf]);
 
   const handleToggleRecommended = useCallback(
     async (evt: EventItem) => {
@@ -145,53 +133,65 @@ export default function EventsPage() {
     [isOwner, togglingRecommendedId],
   );
 
-  const handleSelectEvent = useCallback((eventId: string) => {
-    setSelectedEvents((prev) =>
-      prev.includes(eventId)
-        ? prev.filter((id) => id !== eventId)
-        : [...prev, eventId],
-    );
-  }, []);
+  const handleToggleActive = useCallback(
+    (evt: EventItem) => {
+      const original = originalActiveOf(evt);
+      const current = pendingChanges[evt.id] ?? original;
+      const next = !current;
+      setPendingChanges((prev) => {
+        const updated = { ...prev };
+        if (next === original) delete updated[evt.id];
+        else updated[evt.id] = next;
+        return updated;
+      });
+    },
+    [pendingChanges, originalActiveOf],
+  );
 
   const handleSelectAll = useCallback(() => {
-    if (selectedEvents.length === filteredEvents.length) {
-      setSelectedEvents([]);
-    } else {
-      setSelectedEvents(filteredEvents.map((e) => e.id));
-    }
-  }, [selectedEvents.length, filteredEvents]);
+    const allActive = eventsData.every(effectiveActiveOf);
+    const targetActive = !allActive;
+    setPendingChanges((prev) => {
+      const updated = { ...prev };
+      for (const e of eventsData) {
+        const original = originalActiveOf(e);
+        if (targetActive === original) delete updated[e.id];
+        else updated[e.id] = targetActive;
+      }
+      return updated;
+    });
+  }, [eventsData, effectiveActiveOf, originalActiveOf]);
 
   const handleSaveChanges = async () => {
-    if (changedEvents.length === 0) return;
+    const updates = Object.entries(pendingChanges).map(([id, isActive]) => ({
+      id,
+      isActive,
+    }));
+    if (updates.length === 0) return;
     updateStatus.mutate(
-      { competitionId, events: changedEvents },
+      { competitionId, events: updates },
       {
-        onSuccess: () => {
-          setInitialized(false); // Re-initialize from fresh data
-        },
+        onSuccess: () => setPendingChanges({}),
       },
     );
   };
 
   const handleDiscardChanges = useCallback(() => {
-    const activeIds = sortedEvents
-      .filter((e) => (isOwner ? e.isActive : e.whitelabelActive))
-      .map((e) => e.id);
-    setSelectedEvents(activeIds);
-  }, [sortedEvents, isOwner]);
+    setPendingChanges({});
+  }, []);
 
   const handleEventClick = (eventId: string) => {
     router.push(`${panelPrefix}/market-management?eventId=${eventId}`);
   };
 
   const handleBackClick = () => {
-    if (changedEvents.length > 0) {
+    if (Object.keys(pendingChanges).length > 0) {
       if (!confirm("You have unsaved changes. Are you sure you want to leave?")) return;
     }
     router.push(`${panelPrefix}/sports-games/competitions/${sportId}`);
   };
 
-  if (loading) {
+  if (loading && eventsData.length === 0) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
@@ -241,7 +241,7 @@ export default function EventsPage() {
               )}
             </div>
           </div>
-          {canEdit && stats.changes > 0 && (
+          {canEdit && stats.pendingChanges > 0 && (
             <div className="flex gap-3">
               <button
                 onClick={handleDiscardChanges}
@@ -263,7 +263,7 @@ export default function EventsPage() {
                   <>
                     Save Changes
                     <span className="bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
-                      {stats.changes}
+                      {stats.pendingChanges}
                     </span>
                   </>
                 )}
@@ -277,23 +277,23 @@ export default function EventsPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
           <p className="text-sm text-gray-600">Total Events</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{stats.totalAll}</p>
         </div>
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-          <p className="text-sm text-gray-600">Currently Active</p>
-          <p className="text-2xl font-bold text-green-600 mt-1">{stats.active}</p>
+          <p className="text-sm text-gray-600">Active (this page)</p>
+          <p className="text-2xl font-bold text-green-600 mt-1">{stats.activeOnPage}</p>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+          <p className="text-sm text-gray-600">Showing</p>
+          <p className="text-2xl font-bold text-blue-600 mt-1">
+            {fromIndex}–{toIndex}
+          </p>
         </div>
         {canEdit && (
-          <>
-            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-              <p className="text-sm text-gray-600">Selected</p>
-              <p className="text-2xl font-bold text-blue-600 mt-1">{stats.selected}</p>
-            </div>
-            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-              <p className="text-sm text-gray-600">Pending Changes</p>
-              <p className="text-2xl font-bold text-orange-600 mt-1">{stats.changes}</p>
-            </div>
-          </>
+          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+            <p className="text-sm text-gray-600">Pending Changes</p>
+            <p className="text-2xl font-bold text-orange-600 mt-1">{stats.pendingChanges}</p>
+          </div>
         )}
       </div>
 
@@ -312,13 +312,13 @@ export default function EventsPage() {
               className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
             />
           </div>
-          {canEdit && (
+          {canEdit && eventsData.length > 0 && (
             <button
               onClick={handleSelectAll}
               className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap"
             >
-              {selectedEvents.length === filteredEvents.length ? "Deselect All" : "Select All"}{" "}
-              ({filteredEvents.length})
+              {eventsData.every(effectiveActiveOf) ? "Deselect All" : "Select All"}{" "}
+              ({eventsData.length})
             </button>
           )}
         </div>
@@ -326,10 +326,10 @@ export default function EventsPage() {
 
       {/* Events List */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        {filteredEvents.map((evt) => {
-          const currentActive = isOwner ? evt.isActive : evt.whitelabelActive;
-          const isSelected = selectedEvents.includes(evt.id);
-          const isChanged = canEdit && currentActive !== isSelected;
+        {eventsData.map((evt) => {
+          const original = originalActiveOf(evt);
+          const isSelected = effectiveActiveOf(evt);
+          const isChanged = canEdit && original !== isSelected;
 
           return (
             <div
@@ -341,13 +341,13 @@ export default function EventsPage() {
                   <input
                     type="checkbox"
                     checked={isSelected}
-                    onChange={() => handleSelectEvent(evt.id)}
+                    onChange={() => handleToggleActive(evt)}
                     onClick={(e) => e.stopPropagation()}
                     className="h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-2 focus:ring-blue-500 cursor-pointer"
                   />
                 ) : (
                   <div
-                    className={`h-3 w-3 rounded-full ${currentActive ? "bg-green-500" : "bg-gray-300"}`}
+                    className={`h-3 w-3 rounded-full ${original ? "bg-green-500" : "bg-gray-300"}`}
                   />
                 )}
                 <div
@@ -407,38 +407,62 @@ export default function EventsPage() {
                 )}
                 <span
                   className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    canEdit
-                      ? isSelected
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-600"
-                      : currentActive
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-600"
+                    isSelected
+                      ? "bg-green-100 text-green-700"
+                      : "bg-gray-100 text-gray-600"
                   }`}
                 >
-                  {canEdit
-                    ? isSelected ? "Active" : "Inactive"
-                    : currentActive ? "Active" : "Inactive"}
+                  {isSelected ? "Active" : "Inactive"}
                 </span>
               </div>
             </div>
           );
         })}
 
-        {filteredEvents.length === 0 && (
+        {eventsData.length === 0 && !loading && (
           <div className="text-center py-12">
             <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
             </svg>
             <h3 className="mt-2 text-sm font-medium text-gray-900">No events found</h3>
             <p className="mt-1 text-sm text-gray-500">
-              {search
+              {debouncedSearch
                 ? "Try adjusting your search terms"
                 : "No events available for this competition. Events will appear after the competition is activated."}
             </p>
           </div>
         )}
       </div>
+
+      {/* Pagination */}
+      {totalCount > PAGE_SIZE && (
+        <div className="flex items-center justify-between mt-6 bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-3">
+          <p className="text-sm text-gray-600">
+            {loading
+              ? "Loading…"
+              : `Showing ${fromIndex}–${toIndex} of ${totalCount}`}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              disabled={page === 0 || loading}
+              className="px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <span className="text-sm text-gray-600">
+              Page {page + 1} of {totalPages}
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+              disabled={page >= totalPages - 1 || loading}
+              className="px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -11,17 +11,15 @@ interface Competition {
   id: string;
   name: string;
   sportId: string;
-  totalEvents: number;
+  eventCount: number;
   isActive: boolean;
   /** Owner-only: flagged as a sidebar "Top competition" */
   isTop: boolean;
   /** Per-whitelabel override: true = visible, false = hidden for this whitelabel, null = no override */
   whitelabelActive: boolean;
-  competition_id?: string;
-  sport_id?: string;
-  is_active?: boolean;
-  metadata?: any;
 }
+
+const PAGE_SIZE = 50;
 
 export default function CompetitionsPage() {
   const params = useParams();
@@ -36,20 +34,37 @@ export default function CompetitionsPage() {
   const canEdit = isOwner || isAdmin;
 
   const [competitions, setCompetitions] = useState<Competition[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [page, setPage] = useState(0);
   const [sportName, setSportName] = useState("");
-  const [selectedCompetitions, setSelectedCompetitions] = useState<string[]>(
-    [],
-  );
+  // pendingChanges holds per-id desired state when it differs from the
+  // server's current value. Persists across page/search changes so admins
+  // can edit competitions on multiple pages before clicking Save.
+  const [pendingChanges, setPendingChanges] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState(false);
   const [togglingTopId, setTogglingTopId] = useState<string | null>(null);
+
+  // Debounce the search input; reset to page 0 when search changes.
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      setDebouncedSearch(search.trim());
+      setPage(0);
+    }, 300);
+    return () => clearTimeout(handle);
+  }, [search]);
 
   useEffect(() => {
     const fetchCompetitions = async () => {
       try {
         setLoading(true);
-        const { data } = await ownerApi.getCompetitions(sportId);
+        const { data } = await ownerApi.getCompetitions(sportId, {
+          limit: PAGE_SIZE,
+          offset: page * PAGE_SIZE,
+          search: debouncedSearch,
+        });
 
         let competitionsData: Competition[] = [];
         if (data.success && Array.isArray(data.data)) {
@@ -57,34 +72,16 @@ export default function CompetitionsPage() {
             id: String(comp.competition_id || comp.id),
             name: comp.name,
             sportId: String(comp.sport_id || comp.sportId),
-            totalEvents: comp.totalEvents || comp.metadata?.totalEvents || 0,
+            eventCount: Number(comp.eventCount ?? 0),
             isActive: comp.is_active ?? comp.isActive ?? false,
             isTop: comp.is_top_competition ?? comp.isTop ?? false,
             whitelabelActive: comp.whitelabelActive ?? true,
           }));
           setSportName(data.sportName || "");
+          setTotalCount(Number(data.totalCount ?? competitionsData.length));
         }
 
-        // Sort: active first, then by name
-        const sorted = [...competitionsData].sort((a, b) => {
-          // For owner: sort by global isActive
-          // For admin: sort by whitelabelActive (since they only see globally active ones)
-          const aActive = isOwner ? a.isActive : a.whitelabelActive;
-          const bActive = isOwner ? b.isActive : b.whitelabelActive;
-          if (aActive && !bActive) return -1;
-          if (!aActive && bActive) return 1;
-          return a.name.localeCompare(b.name);
-        });
-
-        setCompetitions(sorted);
-
-        // Auto-select currently active competitions
-        const activeIds = competitionsData
-          .filter((comp) =>
-            isOwner ? comp.isActive : comp.whitelabelActive,
-          )
-          .map((comp) => comp.id);
-        setSelectedCompetitions(activeIds);
+        setCompetitions(competitionsData);
       } catch (error) {
         console.error("Error fetching competitions:", error);
       } finally {
@@ -95,45 +92,31 @@ export default function CompetitionsPage() {
     if (sportId) {
       fetchCompetitions();
     }
-  }, [sportId, isOwner]);
+  }, [sportId, page, debouncedSearch]);
 
-  const filteredCompetitions = useMemo(() => {
-    return competitions.filter((competition) =>
-      competition.name.toLowerCase().includes(search.toLowerCase()),
-    );
-  }, [competitions, search]);
-
-  // Calculate changes based on role:
-  // Owner: compares against global isActive
-  // Admin: compares against whitelabelActive
-  const changedCompetitions = useMemo(() => {
-    const changes: Array<{ id: string; isActive: boolean }> = [];
-    competitions.forEach((competition) => {
-      const isNowActive = selectedCompetitions.includes(competition.id);
-      const wasActive = isOwner
-        ? competition.isActive
-        : competition.whitelabelActive;
-      if (wasActive !== isNowActive) {
-        changes.push({
-          id: competition.id,
-          isActive: isNowActive,
-        });
-      }
-    });
-    return changes;
-  }, [competitions, selectedCompetitions, isOwner]);
-
-  const stats = useMemo(
-    () => ({
-      total: competitions.length,
-      active: competitions.filter((c) =>
-        isOwner ? c.isActive : c.whitelabelActive,
-      ).length,
-      selected: selectedCompetitions.length,
-      changes: changedCompetitions.length,
-    }),
-    [competitions, selectedCompetitions, changedCompetitions, isOwner],
+  const originalActiveOf = useCallback(
+    (c: Competition) => (isOwner ? c.isActive : c.whitelabelActive),
+    [isOwner],
   );
+
+  const effectiveActiveOf = useCallback(
+    (c: Competition) => pendingChanges[c.id] ?? originalActiveOf(c),
+    [pendingChanges, originalActiveOf],
+  );
+
+  const stats = useMemo(() => {
+    const activeOnPage = competitions.filter(originalActiveOf).length;
+    return {
+      totalAll: totalCount,
+      totalOnPage: competitions.length,
+      activeOnPage,
+      pendingChanges: Object.keys(pendingChanges).length,
+    };
+  }, [competitions, totalCount, pendingChanges, originalActiveOf]);
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const fromIndex = totalCount === 0 ? 0 : page * PAGE_SIZE + 1;
+  const toIndex = Math.min(totalCount, page * PAGE_SIZE + competitions.length);
 
   // Owner-only toggle for sidebar "Top competition" flag. Independent of the
   // checkbox grid — toggles in one request with optimistic update + rollback.
@@ -164,67 +147,75 @@ export default function CompetitionsPage() {
     [isOwner, togglingTopId],
   );
 
-  const handleSelectCompetition = useCallback((competitionId: string) => {
-    setSelectedCompetitions((prev) => {
-      if (prev.includes(competitionId)) {
-        return prev.filter((id) => id !== competitionId);
-      } else {
-        return [...prev, competitionId];
-      }
-    });
-  }, []);
+  const handleToggleActive = useCallback(
+    (competition: Competition) => {
+      const original = originalActiveOf(competition);
+      const current = pendingChanges[competition.id] ?? original;
+      const next = !current;
+      setPendingChanges((prev) => {
+        const updated = { ...prev };
+        if (next === original) {
+          delete updated[competition.id];
+        } else {
+          updated[competition.id] = next;
+        }
+        return updated;
+      });
+    },
+    [pendingChanges, originalActiveOf],
+  );
 
   const handleSelectAll = useCallback(() => {
-    if (selectedCompetitions.length === filteredCompetitions.length) {
-      setSelectedCompetitions([]);
-    } else {
-      const allIds = filteredCompetitions.map((comp) => comp.id);
-      setSelectedCompetitions(allIds);
-    }
-  }, [selectedCompetitions.length, filteredCompetitions]);
+    // Determine if all visible items are effectively active; if so, deselect
+    // all, otherwise select all. Only affects the current page.
+    const allActive = competitions.every(effectiveActiveOf);
+    const targetActive = !allActive;
+    setPendingChanges((prev) => {
+      const updated = { ...prev };
+      for (const c of competitions) {
+        const original = originalActiveOf(c);
+        if (targetActive === original) {
+          delete updated[c.id];
+        } else {
+          updated[c.id] = targetActive;
+        }
+      }
+      return updated;
+    });
+  }, [competitions, effectiveActiveOf, originalActiveOf]);
 
   const handleSaveChanges = async () => {
     try {
       setSaving(true);
 
-      if (changedCompetitions.length === 0) {
+      const updates = Object.entries(pendingChanges).map(([id, isActive]) => ({
+        id,
+        isActive,
+      }));
+
+      if (updates.length === 0) {
         alert("No changes to save!");
         setSaving(false);
         return;
       }
 
       const { data: result } = await ownerApi.updateCompetitionStatus(sportId, {
-        competitions: changedCompetitions,
+        competitions: updates,
       });
 
       if (result.success) {
-        // Update local state
-        const updatedCompetitions = competitions.map((competition) => {
-          const change = changedCompetitions.find(
-            (c) => c.id === competition.id,
-          );
-          if (change) {
-            if (isOwner) {
-              return { ...competition, isActive: change.isActive };
-            } else {
-              return { ...competition, whitelabelActive: change.isActive };
-            }
-          }
-          return competition;
-        });
-
-        const sorted = [...updatedCompetitions].sort((a, b) => {
-          const aActive = isOwner ? a.isActive : a.whitelabelActive;
-          const bActive = isOwner ? b.isActive : b.whitelabelActive;
-          if (aActive && !bActive) return -1;
-          if (!aActive && bActive) return 1;
-          return a.name.localeCompare(b.name);
-        });
-
-        setCompetitions(sorted);
-        alert(
-          `Updated ${changedCompetitions.length} competition(s) successfully!`,
+        // Apply pending changes to currently-loaded competitions so the UI
+        // reflects the new server state without a refetch.
+        setCompetitions((prev) =>
+          prev.map((competition) => {
+            const change = pendingChanges[competition.id];
+            if (change === undefined) return competition;
+            if (isOwner) return { ...competition, isActive: change };
+            return { ...competition, whitelabelActive: change };
+          }),
         );
+        setPendingChanges({});
+        alert(`Updated ${updates.length} competition(s) successfully!`);
       } else {
         alert(`Failed: ${result.message || "Unknown error"}`);
       }
@@ -237,16 +228,11 @@ export default function CompetitionsPage() {
   };
 
   const handleDiscardChanges = useCallback(() => {
-    const activeIds = competitions
-      .filter((comp) =>
-        isOwner ? comp.isActive : comp.whitelabelActive,
-      )
-      .map((comp) => comp.id);
-    setSelectedCompetitions(activeIds);
-  }, [competitions, isOwner]);
+    setPendingChanges({});
+  }, []);
 
   const handleBackClick = () => {
-    if (changedCompetitions.length > 0) {
+    if (Object.keys(pendingChanges).length > 0) {
       if (
         confirm("You have unsaved changes. Are you sure you want to leave?")
       ) {
@@ -257,7 +243,7 @@ export default function CompetitionsPage() {
     }
   };
 
-  if (loading) {
+  if (loading && competitions.length === 0) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
@@ -315,7 +301,7 @@ export default function CompetitionsPage() {
               )}
             </div>
           </div>
-          {canEdit && stats.changes > 0 && (
+          {canEdit && stats.pendingChanges > 0 && (
             <div className="flex gap-3">
               <button
                 onClick={handleDiscardChanges}
@@ -337,7 +323,7 @@ export default function CompetitionsPage() {
                   <>
                     Save Changes
                     <span className="bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
-                      {stats.changes}
+                      {stats.pendingChanges}
                     </span>
                   </>
                 )}
@@ -351,29 +337,29 @@ export default function CompetitionsPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
           <p className="text-sm text-gray-600">Total Competitions</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">
+            {stats.totalAll}
+          </p>
         </div>
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-          <p className="text-sm text-gray-600">Currently Active</p>
+          <p className="text-sm text-gray-600">Active (this page)</p>
           <p className="text-2xl font-bold text-green-600 mt-1">
-            {stats.active}
+            {stats.activeOnPage}
+          </p>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+          <p className="text-sm text-gray-600">Showing</p>
+          <p className="text-2xl font-bold text-blue-600 mt-1">
+            {fromIndex}–{toIndex}
           </p>
         </div>
         {canEdit && (
-          <>
-            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-              <p className="text-sm text-gray-600">Selected</p>
-              <p className="text-2xl font-bold text-blue-600 mt-1">
-                {stats.selected}
-              </p>
-            </div>
-            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-              <p className="text-sm text-gray-600">Pending Changes</p>
-              <p className="text-2xl font-bold text-orange-600 mt-1">
-                {stats.changes}
-              </p>
-            </div>
-          </>
+          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+            <p className="text-sm text-gray-600">Pending Changes</p>
+            <p className="text-2xl font-bold text-orange-600 mt-1">
+              {stats.pendingChanges}
+            </p>
+          </div>
         )}
       </div>
 
@@ -402,15 +388,15 @@ export default function CompetitionsPage() {
               className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
             />
           </div>
-          {canEdit && (
+          {canEdit && competitions.length > 0 && (
             <button
               onClick={handleSelectAll}
               className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap"
             >
-              {selectedCompetitions.length === filteredCompetitions.length
+              {competitions.every(effectiveActiveOf)
                 ? "Deselect All"
                 : "Select All"}{" "}
-              ({filteredCompetitions.length})
+              ({competitions.length})
             </button>
           )}
         </div>
@@ -418,12 +404,10 @@ export default function CompetitionsPage() {
 
       {/* Competitions List */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        {filteredCompetitions.map((competition) => {
-          const currentActive = isOwner
-            ? competition.isActive
-            : competition.whitelabelActive;
-          const isSelected = selectedCompetitions.includes(competition.id);
-          const isChanged = canEdit && currentActive !== isSelected;
+        {competitions.map((competition) => {
+          const original = originalActiveOf(competition);
+          const isSelected = effectiveActiveOf(competition);
+          const isChanged = canEdit && original !== isSelected;
 
           return (
             <div
@@ -435,14 +419,14 @@ export default function CompetitionsPage() {
                   <input
                     type="checkbox"
                     checked={isSelected}
-                    onChange={() => handleSelectCompetition(competition.id)}
+                    onChange={() => handleToggleActive(competition)}
                     onClick={(e) => e.stopPropagation()}
                     className="h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-2 focus:ring-blue-500 cursor-pointer"
                   />
                 ) : (
                   <div
                     className={`h-3 w-3 rounded-full ${
-                      currentActive ? "bg-green-500" : "bg-gray-300"
+                      original ? "bg-green-500" : "bg-gray-300"
                     }`}
                   />
                 )}
@@ -475,7 +459,7 @@ export default function CompetitionsPage() {
               <div className="flex items-center gap-4">
                 <div className="text-center">
                   <p className="text-lg font-semibold text-gray-900">
-                    {competition.totalEvents}
+                    {competition.eventCount}
                   </p>
                   <p className="text-xs text-gray-500">Events</p>
                 </div>
@@ -507,29 +491,19 @@ export default function CompetitionsPage() {
                 )}
                 <span
                   className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    canEdit
-                      ? isSelected
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-600"
-                      : currentActive
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-600"
+                    isSelected
+                      ? "bg-green-100 text-green-700"
+                      : "bg-gray-100 text-gray-600"
                   }`}
                 >
-                  {canEdit
-                    ? isSelected
-                      ? "Active"
-                      : "Inactive"
-                    : currentActive
-                      ? "Active"
-                      : "Inactive"}
+                  {isSelected ? "Active" : "Inactive"}
                 </span>
               </div>
             </div>
           );
         })}
 
-        {filteredCompetitions.length === 0 && (
+        {competitions.length === 0 && !loading && (
           <div className="text-center py-12">
             <svg
               className="mx-auto h-12 w-12 text-gray-400"
@@ -548,13 +522,45 @@ export default function CompetitionsPage() {
               No competitions found
             </h3>
             <p className="mt-1 text-sm text-gray-500">
-              {search
+              {debouncedSearch
                 ? "Try adjusting your search terms"
                 : "No competitions available for this sport"}
             </p>
           </div>
         )}
       </div>
+
+      {/* Pagination */}
+      {totalCount > PAGE_SIZE && (
+        <div className="flex items-center justify-between mt-6 bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-3">
+          <p className="text-sm text-gray-600">
+            {loading
+              ? "Loading…"
+              : `Showing ${fromIndex}–${toIndex} of ${totalCount}`}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              disabled={page === 0 || loading}
+              className="px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <span className="text-sm text-gray-600">
+              Page {page + 1} of {totalPages}
+            </span>
+            <button
+              onClick={() =>
+                setPage((p) => Math.min(totalPages - 1, p + 1))
+              }
+              disabled={page >= totalPages - 1 || loading}
+              className="px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
