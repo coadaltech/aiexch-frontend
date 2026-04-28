@@ -95,13 +95,18 @@ export function QuickBetPanel({
   currentRun?: string;
 }) {
   const { market, runner, odds } = data;
-  const rawOdds = currentOdds ?? odds;
+  // Fancy/LINE markets: keep the displayed odds frozen at click time. The
+  // parent closes the panel when the live line changes, so showing updated
+  // values here would be both flickery and pointless. Other markets continue
+  // to update in real-time via currentOdds.
+  const isLineMarket = data.bettingType === "LINE";
+  const rawOdds = isLineMarket ? odds : (currentOdds ?? odds);
+  void currentRun;
   const numOdds = parseFloat(rawOdds);
   const isBetfair = data.market?.provider?.toUpperCase() === "BETFAIR";
-  const liveRun = currentRun ?? data.run;
   const displayOdds =
-    data.bettingType === "LINE" && liveRun != null
-      ? `${liveRun} (${Math.round(isBetfair ? numOdds : numOdds * 100)})`
+    isLineMarket && data.run != null
+      ? `${data.run} (${Math.round(isBetfair ? numOdds : numOdds * 100)})`
       : isNaN(numOdds)
         ? rawOdds
         : (() => {

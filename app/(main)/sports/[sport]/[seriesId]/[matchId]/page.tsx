@@ -41,6 +41,10 @@ export default function MatchPage() {
   const [betDelayRemaining, setBetDelayRemaining] = useState(0);
   const betDelayTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const betDelayResolveRef = useRef<(() => void) | null>(null);
+  // Synchronous re-entry guard: setIsPlacing only flips after a render, so a
+  // second click that lands in the same tick can sneak past the disabled
+  // button. This ref blocks it on the very next line.
+  const placeInFlightRef = useRef(false);
   const queryClient = useQueryClient();
   const { user, updateDemoBalance } = useAuth();
   const { placeBetAsync } = useBetting();
@@ -331,6 +335,31 @@ export default function MatchPage() {
       setQuickBet(null);
       setQuickBetStake("");
       toast.error(`Bet panel closed — ${reason}`);
+    }
+  }, [markets, quickBet, cancelBetDelay]);
+
+  // Fancy/LINE markets only: close the panel as soon as the live line at the
+  // clicked slot drifts away from the value the user clicked on. Fancy odds
+  // tick rapidly, and a stake input that re-renders under the user's finger
+  // is worse than just asking them to click again.
+  useEffect(() => {
+    if (!quickBet || quickBet.bettingType !== "LINE") return;
+    const liveMarket = markets.find((m: any) => m.marketId === quickBet.marketId);
+    if (!liveMarket) return;
+    const liveRunner = liveMarket.runners?.find(
+      (r: any) => r.selectionId?.toString() === quickBet.runner.selectionId?.toString()
+    );
+    if (!liveRunner) return;
+    const slot = (quickBet.isLay ? liveRunner.lay : liveRunner.back)?.[quickBet.priceIndex];
+    if (!slot) return;
+    const liveLine = String(slot.line ?? slot.price ?? "");
+    const originalRun = quickBet.run != null ? String(quickBet.run) : "";
+    if (!liveLine || !originalRun) return;
+    if (liveLine !== originalRun) {
+      cancelBetDelay();
+      setQuickBet(null);
+      setQuickBetStake("");
+      toast.error("Bet panel closed — fancy odds changed");
     }
   }, [markets, quickBet, cancelBetDelay]);
 
@@ -665,17 +694,6 @@ export default function MatchPage() {
         return;
       }
 
-      // Read the live "line" value for fancy/LINE markets so the backend
-      // receives the line currently displayed in the panel, not the stale
-      // click-time value. (qb.run is frozen at click time.)
-      const liveRunValue = (() => {
-        if (market.bettingType !== "LINE") return qb.run;
-        const lr = liveMarket?.runners?.find((r: any) => r.selectionId?.toString() === selId);
-        const slot = (isLay ? lr?.lay : lr?.back)?.[qb.priceIndex];
-        const lv = slot?.line ?? slot?.price ?? null;
-        return lv != null ? String(lv) : qb.run;
-      })();
-
       const marketName = market?.marketName || "";
       const runnerName = runner?.name || "";
       const stakeNum = parseFloat(stakeStr);
@@ -754,7 +772,7 @@ export default function MatchPage() {
             marketName,
             odds: dbOddsNum,
             stake: stakeNum,
-            run: liveRunValue != null ? parseFloat(liveRunValue) : null,
+            run: qb.run != null ? parseFloat(qb.run) : null,
             type: isLay ? "lay" : "back",
             runners: allRunners,
             provider: market.provider,
@@ -818,6 +836,10 @@ export default function MatchPage() {
 
   const handleQuickBetPlace = async (stake: string, odds: string) => {
     if (!quickBet || !stake || parseFloat(stake) <= 0) return;
+    if (placeInFlightRef.current) return;
+    placeInFlightRef.current = true;
+    let placementHandedOff = false;
+    try {
     const { market, runner, isLay } = quickBet;
     const oddsValue = odds || quickBet.odds;
     const stakeNum = parseFloat(stake);
@@ -996,10 +1018,12 @@ export default function MatchPage() {
             setBetDelayRemaining(0);
             betDelayResolveRef.current = null;
 
+            placementHandedOff = true;
             executeBetPlacement(qbSnapshot, stakeSnapshot, oddsSnapshot)
               .finally(() => {
                 setIsPlacing(false);
                 handleQuickBetClose();
+                placeInFlightRef.current = false;
               });
             resolve();
           }
@@ -1013,6 +1037,11 @@ export default function MatchPage() {
     await executeBetPlacement(quickBet, stake, oddsValue);
     setIsPlacing(false);
     handleQuickBetClose();
+    } finally {
+      // For the delay path we hand the lock off to the deferred placement's
+      // .finally() — otherwise reset it here so future clicks can proceed.
+      if (!placementHandedOff) placeInFlightRef.current = false;
+    }
   };
 
   // Track staleness in a ref so the bet-placement callback (which is
