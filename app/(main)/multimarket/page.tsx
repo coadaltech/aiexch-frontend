@@ -350,6 +350,17 @@ export default function MultimarketPage() {
         return;
       }
 
+      // Read the live "line" value for fancy/LINE markets so the backend
+      // receives the line currently displayed in the panel, not the stale
+      // click-time value. (qb.run is frozen at click time.)
+      const liveRunValue = (() => {
+        if (market.bettingType !== "LINE") return qb.run;
+        const lr = liveMarket?.runners?.find((r: any) => r.selectionId?.toString() === selId);
+        const slot = (isLay ? lr?.lay : lr?.back)?.[qb.priceIndex];
+        const lv = slot?.line ?? slot?.price ?? null;
+        return lv != null ? String(lv) : qb.run;
+      })();
+
       const marketName = market?.marketName || "";
       const runnerName = runner?.name || "";
       const stakeNum = parseFloat(stakeStr);
@@ -435,7 +446,7 @@ export default function MultimarketPage() {
             marketName,
             odds: dbOddsNum,
             stake: stakeNum,
-            run: qb.run != null ? parseFloat(qb.run) : null,
+            run: liveRunValue != null ? parseFloat(liveRunValue) : null,
             type: isLay ? "lay" : "back",
             runners: allRunners,
             provider: market.provider,
