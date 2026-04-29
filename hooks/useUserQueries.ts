@@ -151,6 +151,97 @@ export const useExposureUsage = (enabled = true) => {
   });
 };
 
+// ── Exposure drill-down: sports market ──────────────────────────────────────
+export interface ExposureMarketBet {
+  transactionId: string;
+  status: string;
+  selectionName: string | null;
+  betType: number;          // 0=back, 1=lay
+  odds: string;
+  stake: string;
+  addedDate: string;
+  matchedAt: string | null;
+  runnerId: number;
+  runnerName: string | null;
+  isUserSelection: boolean;
+  price: string;
+  run: number | null;
+  potentialReturn: string;
+  log: {
+    ipAddress: string | null;
+    userAgent: string | null;
+    browser: string | null;
+    browserVersion: string | null;
+    os: string | null;
+    osVersion: string | null;
+    deviceType: string | null;
+    deviceBrand: string | null;
+    deviceModel: string | null;
+    country: string | null;
+    city: string | null;
+  };
+}
+
+export interface ExposureMarketDetail {
+  market: {
+    marketId: string | number;
+    marketName: string | null;
+    marketType: string;
+    sportName: string | null;
+    competitionName: string | null;
+    eventName: string | null;
+  } | null;
+  bets: ExposureMarketBet[];
+  summary: { totalBets: number; totalStake: string };
+}
+
+export const useExposureMarketDetail = (marketId: string | number | null) => {
+  return useQuery({
+    queryKey: ["exposure-usage", "market", marketId],
+    queryFn: () => userApi.getExposureMarketDetail(marketId!),
+    select: (res) => (res.data?.data as ExposureMarketDetail | null) ?? null,
+    enabled: !!marketId,
+    staleTime: 10000,
+  });
+};
+
+// ── Exposure drill-down: matka/jambo shift consolidated jantri ──────────────
+export interface ExposureShiftJantriRow {
+  numberType: number;       // matka: 1=main(1-100), 2=B (akhar), 3=A (akhar). jambo: 0=triple
+  number: string;
+  totalAmount: string;
+}
+
+export interface ExposureShiftDetail {
+  shift: {
+    shiftId: string;
+    shiftName: string;
+    shiftDate: string;
+    sportType: number;      // 1001=matka, 1004=jambo
+    endTime: string;
+    daraRate: string;
+    akharRate: string;
+    tripleRate: string;
+  } | null;
+  totals: ExposureShiftJantriRow[];
+  summary: {
+    transactionCount: number;
+    totalAmount: string;
+    totalCommission: string;
+    finalAmount: string;
+  };
+}
+
+export const useExposureShiftDetail = (shiftId: string | null) => {
+  return useQuery({
+    queryKey: ["exposure-usage", "shift", shiftId],
+    queryFn: () => userApi.getExposureShiftDetail(shiftId!),
+    select: (res) => (res.data?.data as ExposureShiftDetail | null) ?? null,
+    enabled: !!shiftId,
+    staleTime: 10000,
+  });
+};
+
 export const usePublicPopups = (path?: string) => {
   const page = path === "/" ? "home" : path?.replace("/", "") || "";
   return useQuery({

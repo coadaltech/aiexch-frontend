@@ -588,6 +588,10 @@ export const userApi = {
   getBalance: () => api.get("/profile/balance"),
   getLedgerInfo: () => api.get("/betting/ledger-info"),
   getExposureUsage: () => api.get("/betting/exposure-usage"),
+  getExposureMarketDetail: (marketId: string | number) =>
+    api.get(`/betting/exposure-usage/market?marketId=${encodeURIComponent(String(marketId))}`),
+  getExposureShiftDetail: (shiftId: string) =>
+    api.get(`/betting/exposure-usage/shift?shiftId=${encodeURIComponent(shiftId)}`),
 
   // Account ledger statement
   getAccountStatement: (params: { fromDate: string; toDate: string }) =>
