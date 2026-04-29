@@ -165,7 +165,7 @@ function SportAccordionItem({
       <button
         onClick={() => setExpanded(!expanded)}
         className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors cursor-pointer ${
-          isSportActive ? "bg-[#1a3578] text-white" : "text-gray-700 hover:bg-gray-50"
+          isSportActive ? "bg-[var(--header-primary)] hover:bg-[var(--header-secondary)] text-[var(--header-text)]" : "text-gray-700 hover:bg-gray-50"
         }`}
       >
         <Trophy className="h-4 w-4 flex-shrink-0" />
@@ -367,7 +367,7 @@ function SimpleSportButton({
       }${
         isActive
           ? rounded
-            ? "bg-[#1a3578] text-white shadow-md"
+            ? "bg-[var(--header-primary)] hover:bg-[var(--header-secondary)] text-[var(--header-text)] shadow-md"
             : "bg-[#1a3578] text-white"
           : rounded
             ? "text-black hover:bg-gray-100"
@@ -451,7 +451,7 @@ function FeatureTabAccordion({
     <div className="mb-1">
       <button
         onClick={onToggle}
-        className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-bold bg-gradient-to-r from-[#142969] via-[#142669] to-[#84c2f1] hover:brightness-110 text-white transition-colors cursor-pointer"
+        className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-bold bg-gradient-to-r from-[var(--header-primary)] via-[var(--header-primary)] to-[var(--header-secondary)] hover:brightness-110 text-[var(--header-text)] transition-colors cursor-pointer"
       >
         <Icon className="h-4 w-4 flex-shrink-0" />
         <span className="flex-1 text-left">{label}</span>
@@ -532,7 +532,7 @@ function SidebarFeatureTabs({ pathname }: { pathname: string }) {
         <div className="mb-1">
           <button
             onClick={() => router.push("/multimarket")}
-            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-bold bg-gradient-to-r from-[#142969] via-[#142669] to-[#84c2f1] hover:brightness-110 text-white transition-colors cursor-pointer ${
+            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-bold bg-gradient-to-r from-[var(--header-primary)] via-[var(--header-primary)] to-[var(--header-secondary)] hover:brightness-110 text-[var(--header-text)] transition-colors cursor-pointer ${
               pathname === "/multimarket" ? "brightness-110 ring-1 ring-white/30" : ""
             }`}
           >
@@ -817,7 +817,7 @@ export function AppSidebar() {
                           <SidebarMenuButton
                             className={`group relative w-full h-full justify-start px-3 py-2.5 rounded-lg transition-all duration-200 cursor-pointer ${
                               isActive
-                                ? "bg-gradient-to-r from-[#142969] to-[#84c2f1]  text-white shadow-md"
+                                ? "bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-secondary)]  text-[var(--header-text)] shadow-md"
                                 : "bg-transparent text-gray-700 hover:bg-gray-100 border border-transparent"
                             }`}
                             onClick={() => handleItemClick(item)}

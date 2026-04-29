@@ -113,8 +113,8 @@ export default function SportsPage() {
   return (
     <div className="bg-gray-50 min-h-full">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#142969] via-[#142669] to-[#1a3578] border-b border-[#1e4088]/40 px-4 py-3.5 flex items-center gap-2.5 shadow-md">
-        <div className="w-1 h-5 bg-[#84c2f1] rounded-full" />
+      <div className="bg-gradient-to-r from-[var(--header-primary)] via-[var(--header-primary)] to-[var(--header-secondary)] border-b border-[#1e4088]/40 px-4 py-3.5 flex items-center gap-2.5 shadow-md">
+        <div className="w-1 h-5 bg-[var(--header-secondary)] rounded-full" />
         <h1 className="text-white font-bold text-sm font-condensed tracking-wider">ALL SPORTS</h1>
       </div>
 
@@ -130,10 +130,10 @@ export default function SportsPage() {
             <Link
               key={index}
               href={sportLink}
-              className="flex items-center gap-3 bg-white hover:bg-gray-50 border border-gray-200 hover:border-[#142969]/30 rounded-xl px-4 py-3 transition-all duration-200 group shadow-sm hover:shadow-md"
+              className="flex items-center gap-3 bg-white hover:bg-gray-50 border border-gray-200 hover:border-[var(--header-primary)]/30 rounded-xl px-4 py-3 transition-all duration-200 group shadow-sm hover:shadow-md"
             >
               {/* Icon */}
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#1a3578] to-[#142969] flex items-center justify-center shrink-0 border border-[#1e4088]/60 group-hover:border-[#84c2f1]/40 transition-colors">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#1a3578] to-[var(--header-primary)] flex items-center justify-center shrink-0 border border-[#1e4088]/60 group-hover:border-[var(--header-secondary)]/40 transition-colors">
                 <Image
                   src={`/sports-icons/${icon}`}
                   height={24}
@@ -148,17 +148,17 @@ export default function SportsPage() {
                 <span className="text-gray-900 font-semibold text-sm">{sportName}</span>
                 {live && (
                   <div className="flex items-center gap-1 mt-0.5">
-                    <span className="w-1.5 h-1.5 bg-[#84c2f1] rounded-full animate-pulse" />
-                    <span className="text-[10px] text-[#142969] font-bold">LIVE</span>
+                    <span className="w-1.5 h-1.5 bg-[var(--header-secondary)] rounded-full animate-pulse" />
+                    <span className="text-[10px] text-[var(--header-primary)] font-bold">LIVE</span>
                   </div>
                 )}
               </div>
 
               {/* Live events badge */}
               {live && (
-                <div className="flex items-center gap-1 shrink-0 bg-[#84c2f1]/10 border border-[#84c2f1]/30 rounded-lg px-2 py-0.5">
-                  <Zap className="w-3 h-3 text-[#142969]" />
-                  <span className="text-[10px] text-[#142969] font-bold">LIVE</span>
+                <div className="flex items-center gap-1 shrink-0 bg-[var(--header-secondary)]/10 border border-[var(--header-secondary)]/30 rounded-lg px-2 py-0.5">
+                  <Zap className="w-3 h-3 text-[var(--header-primary)]" />
+                  <span className="text-[10px] text-[var(--header-primary)] font-bold">LIVE</span>
                 </div>
               )}
 

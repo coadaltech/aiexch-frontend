@@ -56,7 +56,7 @@ const NOTICES = [
   function NoticeTickerBar() {
   const text = NOTICES.join("   •••   ");
   return (
-    <div className="flex items-center bg-gradient-to-r from-[#142969] to-[#1a3578] border-b border-[#1e4088]/60 h-8 overflow-hidden">
+    <div className="flex items-center bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-secondary)] border-b border-[#1e4088]/60 h-8 overflow-hidden">
       {/* Label */}
       <div className="flex items-center gap-1.5 text-black bg-[#ede105] px-3 h-full shrink-0 z-10">
         <Bell className="h-3 w-3 text-black" />

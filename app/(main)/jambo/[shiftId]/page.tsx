@@ -332,7 +332,7 @@ export default function JamboShiftPage() {
   if (shiftLoading) {
     return (
       <div className="flex items-center justify-center py-20 bg-gray-50 min-h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#84c2f1]" />
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--header-secondary)]" />
       </div>
     );
   }
@@ -356,7 +356,7 @@ export default function JamboShiftPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Top Header */}
-      <div className="flex items-center gap-2 sm:gap-3 bg-gradient-to-r from-[#142969] via-[#142669] to-[#1a3578] text-white px-2 sm:px-4 py-2 text-sm flex-wrap border-b border-[#1e4088]/60">
+      <div className="flex items-center gap-2 sm:gap-3 bg-gradient-to-r from-[var(--header-primary)] via-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)] px-2 sm:px-4 py-2 text-sm flex-wrap border-b border-[#1e4088]/60">
         <button
           onClick={() => router.push("/jambo")}
           className="hover:bg-white/20 rounded-lg p-1 transition-colors"
@@ -370,7 +370,7 @@ export default function JamboShiftPage() {
           className={`flex items-center gap-1 rounded-lg px-2 py-0.5 text-xs font-medium ${
             shiftEnded
               ? "bg-red-600"
-              : "bg-[#84c2f1]/20 border border-[#84c2f1]/40 text-[#84c2f1]"
+              : "bg-[var(--header-secondary)]/20 border border-[var(--header-secondary)]/40 text-[var(--header-secondary)]"
           }`}
         >
           <Clock className="w-3 h-3" />
@@ -409,7 +409,7 @@ export default function JamboShiftPage() {
       {/* Mobile sidebar */}
       {sidebarOpen && (
         <div className="lg:hidden border-b border-gray-300 bg-gray-50 max-h-48 overflow-auto">
-          <div className="bg-gradient-to-r from-[#142969] to-[#1a3578] text-white text-center text-sm font-bold py-1.5 uppercase font-condensed">
+          <div className="bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)] text-center text-sm font-bold py-1.5 uppercase font-condensed">
             {shift.name} {isJantriOpen ? "[LIVE]" : ""}
           </div>
           <label className="flex items-center gap-2 px-3 py-1.5 border-b border-gray-100 cursor-pointer hover:bg-gray-50">
@@ -457,12 +457,12 @@ export default function JamboShiftPage() {
             <div className="w-full sm:w-[350px] flex-shrink-0 flex flex-col ">
               {/* Type dropdown + Number + Amount input */}
               <div className="bg-white rounded-lg border border-gray-300 shadow-sm overflow-hidden">
-                {/* <div className="bg-gradient-to-r from-[#142969] to-[#1a3578] text-white text-[10px] font-bold text-center py-1 tracking-wider uppercase">
+                {/* <div className="bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)] text-[10px] font-bold text-center py-1 tracking-wider uppercase">
                   Bet Type: {currentType.label}
                 </div> */}
                 <div className="grid grid-cols-[112px_1fr_1fr_auto] items-stretch">
                   <div className="flex flex-col border-r border-gray-300">
-                    <div className="bg-[#142969] text-white text-[10px] font-bold text-center py-1 tracking-wider">
+                    <div className="bg-[var(--header-primary)] text-[var(--header-text)] text-[10px] font-bold text-center py-1 tracking-wider">
                       TYPE
                     </div>
                     <select
@@ -514,7 +514,7 @@ export default function JamboShiftPage() {
                     />
                   </div>
                   <div className="flex flex-col">
-                    <div className="bg-[#142969] text-white text-[10px] font-bold text-center py-1 tracking-wider">
+                    <div className="bg-[var(--header-primary)] text-[var(--header-text)] text-[10px] font-bold text-center py-1 tracking-wider">
                       AMOUNT
                     </div>
                     <input
@@ -537,7 +537,7 @@ export default function JamboShiftPage() {
                   <button
                     onClick={addFromDraft}
                     disabled={!isJantriOpen}
-                    className="bg-[#84c2f1] hover:bg-[#5aaee8] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold px-4 text-xl transition-colors flex items-center"
+                    className="bg-[var(--header-secondary)] hover:bg-[#5aaee8] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold px-4 text-xl transition-colors flex items-center"
                   >
                     +
                   </button>
@@ -546,7 +546,7 @@ export default function JamboShiftPage() {
 
               {/* Entry list */}
               <div className="flex-1 overflow-hidden flex flex-col rounded-lg border border-gray-300 shadow-sm bg-white min-h-[240px]">
-                <div className="bg-[#142969] text-white text-[10px] font-bold text-center py-1 flex">
+                <div className="bg-[var(--header-primary)] text-[var(--header-text)] text-[10px] font-bold text-center py-1 flex">
                   <span className="flex-1">TYPE</span>
                   <span className="flex-1">NUMBER</span>
                   <span className="flex-1">AMOUNT</span>
@@ -579,7 +579,7 @@ export default function JamboShiftPage() {
                               <td className="py-1.5 px-2 text-gray-900 font-bold text-center">
                                 {entry.numberInput}
                               </td>
-                              <td className="py-1.5 px-2 text-[#142969] font-bold text-right">
+                              <td className="py-1.5 px-2 text-[var(--header-primary)] font-bold text-right">
                                 {entry.amount}
                               </td>
                               <td className="py-1 px-1 w-8 text-center">
@@ -599,14 +599,14 @@ export default function JamboShiftPage() {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-r from-[#142969] to-[#1a3578] text-white text-center text-sm font-semibold py-1.5 rounded-lg shadow-sm">
+              <div className="bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)] text-center text-sm font-semibold py-1.5 rounded-lg shadow-sm">
                 Total Count : {entryCount}
               </div>
             </div>
 
             {/* Instructions panel */}
             <div className="hidden sm:flex flex-1 flex-col rounded-lg border border-gray-300 shadow-sm overflow-hidden bg-white">
-              <div className="bg-gradient-to-r from-[#142969] to-[#1a3578] text-white text-xs font-bold px-3 py-2 tracking-wide">
+              <div className="bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)] text-xs font-bold px-3 py-2 tracking-wide">
                 JAMBO — BET TYPES
               </div>
               <div className="p-4 space-y-2 text-gray-700 text-xs overflow-auto">
@@ -615,27 +615,27 @@ export default function JamboShiftPage() {
                 </p>
                 <div className="border-t border-gray-100 pt-2 space-y-1.5">
                   <p className="flex gap-2">
-                    <span className="text-[#142969] font-bold w-4">0.</span>
+                    <span className="text-[var(--header-primary)] font-bold w-4">0.</span>
                     Triple — full 3-digit number, 1-1000 (786 wins on 786)
                   </p>
                   <p className="flex gap-2">
-                    <span className="text-[#142969] font-bold w-4">1.</span>
+                    <span className="text-[var(--header-primary)] font-bold w-4">1.</span>
                     Bhar Ki Jodi — last 2 digits, 00-99 (86 wins from 786)
                   </p>
                   <p className="flex gap-2">
-                    <span className="text-[#142969] font-bold w-4">2.</span>
+                    <span className="text-[var(--header-primary)] font-bold w-4">2.</span>
                     Andar Ki Jodi — first 2 digits, 00-99 (78 wins from 786)
                   </p>
                   <p className="flex gap-2">
-                    <span className="text-[#142969] font-bold w-4">3.</span>
+                    <span className="text-[var(--header-primary)] font-bold w-4">3.</span>
                     Akhar Bahar — last single digit, 0-9 (6 wins from 786)
                   </p>
                   <p className="flex gap-2">
-                    <span className="text-[#142969] font-bold w-4">4.</span>
+                    <span className="text-[var(--header-primary)] font-bold w-4">4.</span>
                     Akhar Andar — first single digit, 0-9 (7 wins from 786)
                   </p>
                   <p className="flex gap-2">
-                    <span className="text-[#142969] font-bold w-4">5.</span>
+                    <span className="text-[var(--header-primary)] font-bold w-4">5.</span>
                     Middle Akhar — middle single digit, 0-9 (8 wins from 786)
                   </p>
                 </div>
@@ -649,7 +649,7 @@ export default function JamboShiftPage() {
 
         {/* Desktop sidebar */}
         <div className="hidden lg:flex w-[220px] flex-shrink-0 border-l border-gray-300 bg-gray-50 flex-col overflow-hidden">
-          <div className="bg-gradient-to-r from-[#142969] to-[#1a3578] text-white text-center text-sm font-bold py-2 uppercase font-condensed tracking-wide">
+          <div className="bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)] text-center text-sm font-bold py-2 uppercase font-condensed tracking-wide">
             {shift.name} {isJantriOpen ? "[LIVE]" : ""}
           </div>
           <label className="flex items-center gap-2 px-3 py-2 border-b border-gray-100 cursor-pointer hover:bg-gray-50">
@@ -681,7 +681,7 @@ export default function JamboShiftPage() {
                     type="checkbox"
                     checked={selectedShifts.has(s.id)}
                     onChange={() => toggleShift(s.id)}
-                    className="h-4 w-4 rounded border-[#1e4088] accent-[#142969]"
+                    className="h-4 w-4 rounded border-[#1e4088] accent-[var(--header-primary)]"
                   />
                   <span className="text-sm text-gray-700 font-medium">
                     {s.name}

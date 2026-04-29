@@ -262,7 +262,7 @@ export function QuickBetPanel({
             type="button"
             onClick={() => onPlaceBet(stake, rawOdds)}
             disabled={!canPlace}
-            className="flex-1 sm:flex-none min-w-[84px] sm:min-w-[96px] px-3 sm:px-5 py-2 rounded text-xs sm:text-sm font-semibold bg-[#142669] hover:from-cta-deposit-from-hover hover:to-cta-deposit-to-hover shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-white transition-all flex items-center justify-center gap-1.5"
+            className="flex-1 sm:flex-none min-w-[84px] sm:min-w-[96px] px-3 sm:px-5 py-2 rounded text-xs sm:text-sm font-semibold bg-[var(--header-primary)] hover:from-cta-deposit-from-hover hover:to-cta-deposit-to-hover shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-[var(--header-text)] transition-all flex items-center justify-center gap-1.5"
           >
             {isLoading ? (
               <>

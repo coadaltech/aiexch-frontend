@@ -258,8 +258,13 @@ export const useUpdateWhitelabel = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, ...data }: any) => ownerApi.updateWhitelabel(id, data),
-    onSuccess: () => {
+    onSuccess: (_data, variables: any) => {
       queryClient.invalidateQueries({ queryKey: ["whitelabels"] });
+      if (variables?.id) {
+        queryClient.invalidateQueries({
+          queryKey: ["whitelabel", String(variables.id)],
+        });
+      }
       toast.success("Whitelabel updated successfully");
     },
     onError: () => toast.error("Failed to update whitelabel"),

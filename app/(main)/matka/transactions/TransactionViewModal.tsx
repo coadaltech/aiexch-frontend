@@ -111,7 +111,7 @@ export function TransactionViewModal({ open, onClose, transactionId }: Props) {
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 p-2 sm:p-4 overflow-auto">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl flex flex-col max-h-[95vh]">
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#142969] via-[#142669] to-[#1a3578] rounded-t-2xl px-4 py-3 flex items-start justify-between gap-3 flex-shrink-0">
+        <div className="bg-gradient-to-r from-[var(--header-primary)] via-[var(--header-primary)] to-[var(--header-secondary)] rounded-t-2xl px-4 py-3 flex items-start justify-between gap-3 flex-shrink-0">
           <div>
             <div className="text-white font-bold text-sm font-condensed tracking-wide">
               {transaction?.shiftName ?? "Loading..."}{" "}
@@ -193,7 +193,7 @@ export function TransactionViewModal({ open, onClose, transactionId }: Props) {
         <div className="overflow-auto flex-1 p-2">
           {isLoading ? (
             <div className="flex items-center justify-center py-20">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#84c2f1]" />
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[var(--header-secondary)]" />
             </div>
           ) : !transaction ? (
             <div className="text-center py-20 text-gray-400">
@@ -207,12 +207,12 @@ export function TransactionViewModal({ open, onClose, transactionId }: Props) {
                     {Array.from({ length: COLS }, (_, i) => (
                       <th
                         key={i}
-                        className="bg-gradient-to-b from-[#142969] to-[#1a3578] text-white text-center py-1.5 px-1 font-bold border border-[#1e4088]"
+                        className="bg-gradient-to-b from-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)] text-center py-1.5 px-1 font-bold border border-[#1e4088]"
                       >
                         {i + 1}
                       </th>
                     ))}
-                    <th className="bg-gradient-to-b from-[#142969] to-[#1a3578] text-white text-center py-1.5 px-1 font-bold border border-[#1e4088]">
+                    <th className="bg-gradient-to-b from-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)] text-center py-1.5 px-1 font-bold border border-[#1e4088]">
                       Total
                     </th>
                   </tr>
@@ -245,7 +245,7 @@ export function TransactionViewModal({ open, onClose, transactionId }: Props) {
                           </td>
                         );
                       })}
-                      <td className="border border-gray-300 bg-[#e8edf5] text-[#142969] text-center text-xs font-bold px-1 py-1.5">
+                      <td className="border border-gray-300 bg-[#e8edf5] text-[var(--header-primary)] text-center text-xs font-bold px-1 py-1.5">
                         {rowTotals[rowIdx] || 0}
                       </td>
                     </tr>
@@ -256,12 +256,12 @@ export function TransactionViewModal({ open, onClose, transactionId }: Props) {
                     {colTotals.map((t, i) => (
                       <td
                         key={i}
-                        className="border border-gray-300 bg-[#e8edf5] text-[#142969] text-center font-bold py-1 text-xs"
+                        className="border border-gray-300 bg-[#e8edf5] text-[var(--header-primary)] text-center font-bold py-1 text-xs"
                       >
                         {t}
                       </td>
                     ))}
-                    <td className="border border-gray-300 bg-[#142969] text-white text-center font-bold py-1 text-xs">
+                    <td className="border border-gray-300 bg-[var(--header-primary)] text-[var(--header-text)] text-center font-bold py-1 text-xs">
                       {grandTotal}
                     </td>
                   </tr>
@@ -296,7 +296,7 @@ export function TransactionViewModal({ open, onClose, transactionId }: Props) {
                         </td>
                       );
                     })}
-                    <td className="border border-gray-300 bg-[#e8edf5] text-[#142969] text-center text-xs font-bold px-1 py-1.5">
+                    <td className="border border-gray-300 bg-[#e8edf5] text-[var(--header-primary)] text-center text-xs font-bold px-1 py-1.5">
                       {B_LABELS.reduce((s, d) => {
                         const n = bLabelToNum(d);
                         return s + (n ? displayMap[`2:${n}`] ?? 0 : 0);
@@ -334,7 +334,7 @@ export function TransactionViewModal({ open, onClose, transactionId }: Props) {
                         </td>
                       );
                     })}
-                    <td className="border border-gray-300 bg-[#e8edf5] text-[#142969] text-center text-xs font-bold px-1 py-1.5">
+                    <td className="border border-gray-300 bg-[#e8edf5] text-[var(--header-primary)] text-center text-xs font-bold px-1 py-1.5">
                       {A_LABELS.reduce((s, d) => {
                         const n = aLabelToNum(d);
                         return s + (n ? displayMap[`3:${n}`] ?? 0 : 0);

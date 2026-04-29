@@ -75,11 +75,16 @@ export function useLiveMatch(eventId: string, eventTypeId: string) {
           setBookmakers(data.bookmakers || []);
           setSessions(data.sessions || []);
           setScore(data.score || null);
-          setLastUpdate(data.timestamp || Date.now());
+          // Use local receive time, not data.timestamp. Staleness is checked
+          // against Date.now() in the page; comparing two clocks (server-time
+          // timestamp vs local now()) means any clock skew between server and
+          // client causes false-positive "stale" banners even while messages
+          // keep flowing.
+          setLastUpdate(Date.now());
         }
         else if (data.type === "market-update" && data.eventId === eventId) {
           setMatchOdds(data.markets || []);
-          setLastUpdate(data.timestamp || Date.now());
+          setLastUpdate(Date.now());
         }
       } catch (err) {
         console.error("[WS] Parse error:", err);

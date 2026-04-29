@@ -24,6 +24,20 @@ export function ThemeTab({
   applyTemplate,
   applyThemeForTesting,
 }: ThemeTabProps) {
+  const headerFields = [
+    {
+      key: "headerPrimary",
+      label: "Header Primary Color",
+      placeholder: "#142669",
+    },
+    {
+      key: "headerSecondary",
+      label: "Header Secondary Color",
+      placeholder: "#84c2f1",
+    },
+    { key: "headerText", label: "Header Text Color", placeholder: "#ffffff" },
+  ];
+
   const themeFields = [
     { key: "background", label: "Background", placeholder: "#120a1c" },
     { key: "foreground", label: "Foreground", placeholder: "#fff8ec" },
@@ -119,6 +133,59 @@ export function ThemeTab({
               <span className="text-xs">{template.name}</span>
             </Button>
           ))}
+        </div>
+      </div>
+
+      <div className="rounded-lg border bg-card/40 p-4 space-y-3">
+        <div>
+          <Label className="text-foreground font-semibold text-base block">
+            Header Colors
+          </Label>
+          <p className="text-xs text-muted-foreground mt-1">
+            Used for the top header gradient, sidebar tabs, market headers, and
+            other primary surfaces across the site. Gradients use Primary →
+            Secondary; text on these surfaces uses Header Text.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {headerFields.map(({ key, label, placeholder }) => (
+            <div key={key}>
+              <Label className="text-muted-foreground">{label}</Label>
+              <div className="flex gap-2">
+                <Input
+                  type="color"
+                  value={
+                    formData.theme[key as keyof WhitelabelTheme] || placeholder
+                  }
+                  onChange={(e) =>
+                    updateTheme(key as keyof WhitelabelTheme, e.target.value)
+                  }
+                  className="w-16 h-10 p-1 bg-input border"
+                />
+                <Input
+                  value={formData.theme[key as keyof WhitelabelTheme] || ""}
+                  onChange={(e) =>
+                    updateTheme(key as keyof WhitelabelTheme, e.target.value)
+                  }
+                  className="bg-input border text-foreground"
+                  placeholder={placeholder}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div
+          className="rounded-md p-3 mt-2 text-sm font-medium"
+          style={{
+            background: `linear-gradient(to right, ${
+              formData.theme.headerPrimary || "#142669"
+            }, ${formData.theme.headerPrimary || "#142669"}, ${
+              formData.theme.headerSecondary || "#84c2f1"
+            })`,
+            color: formData.theme.headerText || "#ffffff",
+          }}
+        >
+          Header preview — this is how text will look on the header gradient.
         </div>
       </div>
 

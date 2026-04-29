@@ -22,7 +22,7 @@ export default function SportPage({
           <p className="text-gray-500 text-sm mt-1">
             The sport &quot;{sport}&quot; is not available.
           </p>
-          <Link href="/sports" className="mt-4 inline-flex items-center gap-1 text-[#142969] text-sm hover:text-[#84c2f1] transition-colors">
+          <Link href="/sports" className="mt-4 inline-flex items-center gap-1 text-[var(--header-primary)] text-sm hover:text-[var(--header-secondary)] transition-colors">
             <ChevronLeft className="w-4 h-4" /> Back to Sports
           </Link>
         </div>
@@ -58,8 +58,8 @@ export default function SportPage({
       {/* Matches section */}
       <div className="px-3 py-3">
         <div className="bg-white rounded-xl overflow-hidden border border-gray-200 shadow-md">
-          <div className="flex items-center gap-2.5 px-4 py-3 border-b border-[#1e4088]/30 bg-gradient-to-r from-[#142969] to-[#142669]/80">
-            <div className="w-1 h-5 bg-[#84c2f1] rounded-full" />
+          <div className="flex items-center gap-2.5 px-4 py-3 border-b border-[#1e4088]/30 bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-primary)]/80">
+            <div className="w-1 h-5 bg-[var(--header-secondary)] rounded-full" />
             <h2 className="text-white font-bold text-sm font-condensed tracking-wider">MATCHES</h2>
           </div>
           <div className="px-3 pb-3 pt-2">

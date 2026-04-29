@@ -75,7 +75,7 @@ export function ThemeLoader() {
         <div className="flex flex-col items-center gap-4">
           <div
             className="h-12 w-12 animate-spin rounded-full border-4"
-            style={{ borderColor: "#84c2f1", borderTopColor: "transparent" }}
+            style={{ borderColor: "var(--header-secondary)", borderTopColor: "transparent" }}
           />
           <p className="text-sm" style={{ color: "#8ab4d8" }}>
             Loading...

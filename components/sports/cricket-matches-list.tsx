@@ -136,7 +136,7 @@ function MatchRow({
 
         {/* Event name — wraps cleanly on small screens */}
         <div className="flex-1 min-w-0 flex items-center gap-1.5 px-2 py-1.5">
-          <h4 className="text-xs sm:text-sm md:text-base font-bold text-[#142969] break-words min-w-0 leading-snug">
+          <h4 className="text-xs sm:text-sm md:text-base font-bold text-[var(--header-primary)] break-words min-w-0 leading-snug">
             {match.name}
           </h4>
           {betCount != null && betCount > 0 && (
@@ -341,7 +341,7 @@ export function CricketMatchesList({
   const listBody = (
     <div className="w-full rounded-lg overflow-hidden shadow-sm">
       {showHeader && (
-        <div className="flex items-center bg-gradient-to-r from-[#142969] to-[#1a3578] text-white text-[10px] sm:text-xs font-bold font-condensed tracking-wider">
+        <div className="flex items-center bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)] text-[10px] sm:text-xs font-bold font-condensed tracking-wider">
           <div className="flex-1 py-2.5 px-3" />
           <div className="w-16 sm:w-40 md:w-48 text-center py-2.5">1</div>
           <div className="w-16 sm:w-40 md:w-48 text-center py-2.5">X</div>

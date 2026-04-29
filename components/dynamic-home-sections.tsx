@@ -41,7 +41,7 @@ function CarouselSection({
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mt-4">
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
         <div className="flex items-center gap-2.5">
-          <div className="w-1 h-5 bg-[#84c2f1] rounded-full" />
+          <div className="w-1 h-5 bg-[var(--header-secondary)] rounded-full" />
           <div>
             <h2 className="text-sm font-bold text-gray-900 font-condensed tracking-wide">
               {title.toUpperCase()}
@@ -53,7 +53,7 @@ function CarouselSection({
         </div>
         <div className="flex items-center gap-2">
           {link && (
-            <a href={link} className="text-[#142969] text-xs font-medium hover:text-[#84c2f1] transition-colors mr-1">
+            <a href={link} className="text-[var(--header-primary)] text-xs font-medium hover:text-[var(--header-secondary)] transition-colors mr-1">
               View All
             </a>
           )}
@@ -94,7 +94,7 @@ function CasinoDbCarousel({ section }: { section: (typeof CASINO_DB_SECTIONS)[nu
     return (
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mt-4">
         <div className="flex items-center gap-2.5 px-4 py-3 border-b border-gray-100">
-          <div className="w-1 h-5 bg-[#84c2f1] rounded-full" />
+          <div className="w-1 h-5 bg-[var(--header-secondary)] rounded-full" />
           <Skeleton className="h-4 w-40 bg-gray-200" />
         </div>
         <div className="flex gap-3 px-4 py-3 overflow-hidden">

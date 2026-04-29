@@ -22,7 +22,7 @@ function BetLogModal({ bet, onClose }: { bet: any; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div className="bg-white rounded-lg shadow-2xl w-full max-w-md flex flex-col" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-4 py-2 bg-[#142969] rounded-t-lg">
+        <div className="flex items-center justify-between px-4 py-2 bg-[var(--header-primary)] rounded-t-lg">
           <p className="text-white font-semibold text-lg">Transaction Log Details</p>
           <button onClick={onClose} className="p-1 rounded hover:bg-white/20 text-white">
             <X className="w-4 h-4" />
@@ -171,7 +171,7 @@ function BetDetailsModal({ row, onClose }: { row: any; onClose: () => void }) {
       <div className="bg-white rounded-lg shadow-2xl w-full max-w-5xl max-h-[95vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
 
         {/* Header — dark blue bar with "Details" */}
-        <div className="flex items-center justify-between px-4 py-2 bg-[#142969] rounded-t-lg shrink-0">
+        <div className="flex items-center justify-between px-4 py-2 bg-[var(--header-primary)] rounded-t-lg shrink-0">
           <p className="text-white font-semibold text-xl">Details</p>
           <button onClick={onClose} className="p-1 rounded hover:bg-white/20 text-white shrink-0">
             <X className="w-4 h-4" />
@@ -209,7 +209,7 @@ function BetDetailsModal({ row, onClose }: { row: any; onClose: () => void }) {
                   filter === f
                     ? f === "back" ? "bg-blue-300 text-gray-800"
                     : f === "lay"  ? "bg-pink-300 text-gray-800"
-                    :                "bg-[#142969] text-white"
+                    :                "bg-[var(--header-primary)] text-[var(--header-text)]"
                     : "bg-white text-gray-600 border border-gray-200 hover:border-gray-300"
                 }`}
               >
@@ -330,7 +330,7 @@ function BetDetailsModal({ row, onClose }: { row: any; onClose: () => void }) {
                           type="checkbox"
                           checked={selected.has(bet.transaction_id)}
                           onChange={() => toggleSelect(bet.transaction_id)}
-                          className="w-4 h-4 accent-[#142969] cursor-pointer"
+                          className="w-4 h-4 accent-[var(--header-primary)] cursor-pointer"
                         />
                       </td>
                     </tr>
@@ -435,7 +435,7 @@ export default function AccountStatement() {
           ))}
           <button
             onClick={() => setSearchDates({ from: fromDate, to: toDate })}
-            className="px-4 py-1.5 text-sm font-bold text-white bg-[#142969] rounded-lg hover:bg-[#1a3578] transition-colors flex items-center gap-1.5"
+            className="px-4 py-1.5 text-sm font-bold text-[var(--header-text)] bg-[var(--header-primary)] rounded-lg hover:bg-[#1a3578] transition-colors flex items-center gap-1.5"
           >
             <Search className="w-4 h-4" />
             Search
@@ -500,7 +500,7 @@ export default function AccountStatement() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm border-collapse min-w-[720px]">
                   <thead>
-                    <tr className="bg-[#142969] text-white text-[12px] font-bold uppercase tracking-wide">
+                    <tr className="bg-[var(--header-primary)] text-[var(--header-text)] text-[12px] font-bold uppercase tracking-wide">
                       <th className="px-3 py-2 text-left">Date</th>
                       <th className="px-3 py-2 text-right">Credit</th>
                       <th className="px-3 py-2 text-right">Debit</th>

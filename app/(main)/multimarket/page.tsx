@@ -711,8 +711,8 @@ export default function MultimarketPage() {
   if (!isLoggedIn || !user) {
     return (
       <div className="p-4">
-        <h1 className="text-xl font-bold text-white mb-2">Multimarket</h1>
-        <div className="rounded-xl bg-gradient-to-b from-[#101e50] to-[#0b1545] border border-[#1e4088]/40 py-10 text-center text-white/70">
+        <h1 className="text-xl font-bold text-[var(--header-text)] mb-2">Multimarket</h1>
+        <div className="rounded-xl bg-gradient-to-b from-[var(--header-primary)] to-[var(--header-primary)] border border-[#1e4088]/40 py-10 text-center text-[var(--header-text)]/80">
           Log in to pin and view markets here.
         </div>
       </div>
@@ -722,14 +722,14 @@ export default function MultimarketPage() {
   return (
     <div className="p-2 sm:p-3 w-full">
       {isLoading ? (
-        <div className="rounded-xl bg-gradient-to-b from-[#101e50] to-[#0b1545] border border-[#1e4088]/40 py-12 text-center text-white/60 text-sm">
+        <div className="rounded-xl bg-gradient-to-b from-[var(--header-primary)] to-[var(--header-primary)] border border-[#1e4088]/40 py-12 text-center text-[var(--header-text)]/70 text-sm">
           Loading…
         </div>
       ) : pins.length === 0 ? (
-        <div className="rounded-xl bg-gradient-to-b from-[#101e50] to-[#0b1545] border border-[#1e4088]/40 py-12 text-center">
-          <Pin className="h-8 w-8 mx-auto text-white/30 mb-2" />
-          <p className="text-white/70 text-sm font-semibold">No pinned markets yet</p>
-          <p className="text-white/40 text-xs mt-1">
+        <div className="rounded-xl bg-gradient-to-b from-[var(--header-primary)] to-[var(--header-primary)] border border-[#1e4088]/40 py-12 text-center">
+          <Pin className="h-8 w-8 mx-auto text-[var(--header-text)]/50 mb-2" />
+          <p className="text-[var(--header-text)]/80 text-sm font-semibold">No pinned markets yet</p>
+          <p className="text-[var(--header-text)]/60 text-xs mt-1">
             Open any match and tap the pin icon next to a market to add it here.
           </p>
         </div>

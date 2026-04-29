@@ -62,6 +62,9 @@ const getDefaultTheme = (): WhitelabelTheme => {
       sidebarAccentForeground: "#1c1400",
       sidebarBorder: "#3f2a60",
       sidebarRing: "#ffd85c",
+      headerPrimary: "#142669",
+      headerSecondary: "#84c2f1",
+      headerText: "#ffffff",
       radius: "0.5rem",
       fontFamily: "Inter, sans-serif",
     };
@@ -108,6 +111,10 @@ const getDefaultTheme = (): WhitelabelTheme => {
     sidebarBorder:
       root.getPropertyValue("--sidebar-border").trim() || "#3f2a60",
     sidebarRing: root.getPropertyValue("--sidebar-ring").trim() || "#ffd85c",
+    headerPrimary: root.getPropertyValue("--header-primary").trim() || "#142669",
+    headerSecondary:
+      root.getPropertyValue("--header-secondary").trim() || "#84c2f1",
+    headerText: root.getPropertyValue("--header-text").trim() || "#ffffff",
     radius: root.getPropertyValue("--radius").trim() || "0.5rem",
     fontFamily:
       root.getPropertyValue("--font-inter").trim() || "Inter, sans-serif",
@@ -159,7 +166,14 @@ export function WhitelabelPage({
 
   useEffect(() => {
     if (whitelabel) {
-      setFormData(whitelabel);
+      const defaults = getDefaultTheme();
+      setFormData({
+        ...whitelabel,
+        theme: {
+          ...defaults,
+          ...(whitelabel.theme || {}),
+        },
+      });
       setCompletedTabs([
         "general",
         "theme",

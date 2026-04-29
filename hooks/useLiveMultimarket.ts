@@ -86,7 +86,10 @@ export function useLiveMultimarket(items: MultimarketItem[], eventTypeId = "4") 
           }
           return next;
         });
-        setLastUpdate(data.timestamp || Date.now());
+        // Local receive time, not data.timestamp — server/client clock skew
+        // would otherwise produce false-positive staleness even with messages
+        // flowing in. See useLiveMatch.ts for the same fix.
+        setLastUpdate(Date.now());
       } catch (err) {
         console.error("[WS multimarket] Parse error:", err);
       }

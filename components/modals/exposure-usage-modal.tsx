@@ -188,7 +188,7 @@ function ExposureList({
       <div className="hidden sm:block bg-white rounded-lg border border-gray-200 shadow-sm overflow-x-auto m-2">
         <table className="w-full border-separate border-spacing-0">
           <thead>
-            <tr className="bg-[#142969] text-white text-[13px] font-bold uppercase tracking-wide">
+            <tr className="bg-[var(--header-primary)] text-[var(--header-text)] text-[13px] font-bold uppercase tracking-wide">
               <th className="px-3 py-2.5 text-left whitespace-nowrap">Event</th>
               <th className="px-3 py-2.5 text-left whitespace-nowrap">Market</th>
               <th className="px-3 py-2.5 text-right whitespace-nowrap">Exposure</th>
@@ -428,7 +428,7 @@ function ShiftJantri({ selection }: { selection: Extract<Selection, { kind: "shi
   return (
     <div className="p-2 sm:p-3 space-y-3">
       {/* Header strip */}
-      <div className="bg-gradient-to-r from-[#142969] via-[#142669] to-[#1a3578] rounded-lg px-3 py-2 text-white">
+      <div className="bg-gradient-to-r from-[var(--header-primary)] via-[var(--header-primary)] to-[var(--header-secondary)] rounded-lg px-3 py-2 text-[var(--header-text)]">
         <div className="flex items-baseline gap-2 flex-wrap">
           <span className="font-bold text-sm tracking-wide">{shift?.shiftName ?? "Shift"}</span>
           <span className="text-white/60 text-xs">{shift?.shiftDate}</span>
@@ -500,7 +500,7 @@ function JamboBetList({ totals }: { totals: { numberType: number; number: string
     <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto">
       <table className="w-full text-[13px] border-collapse">
         <thead>
-          <tr className="bg-[#142969] text-white text-[11px] uppercase">
+          <tr className="bg-[var(--header-primary)] text-[var(--header-text)] text-[11px] uppercase">
             <th className="px-3 py-2 text-left font-semibold">Number</th>
             <th className="px-3 py-2 text-right font-semibold">Amount</th>
           </tr>
@@ -543,12 +543,12 @@ function MatkaJantriGrid({
               {Array.from({ length: COLS }, (_, i) => (
                 <th
                   key={i}
-                  className="bg-gradient-to-b from-[#142969] to-[#1a3578] text-white text-center py-1.5 px-1 font-bold border border-[#1e4088]"
+                  className="bg-gradient-to-b from-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)] text-center py-1.5 px-1 font-bold border border-[#1e4088]"
                 >
                   {i + 1}
                 </th>
               ))}
-              <th className="bg-gradient-to-b from-[#142969] to-[#1a3578] text-white text-center py-1.5 px-1 font-bold border border-[#1e4088]">
+              <th className="bg-gradient-to-b from-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)] text-center py-1.5 px-1 font-bold border border-[#1e4088]">
                 Total
               </th>
             </tr>
@@ -574,7 +574,7 @@ function MatkaJantriGrid({
                     </td>
                   );
                 })}
-                <td className="border border-gray-300 bg-[#e8edf5] text-[#142969] text-center text-xs font-bold px-1 py-1.5">
+                <td className="border border-gray-300 bg-[#e8edf5] text-[var(--header-primary)] text-center text-xs font-bold px-1 py-1.5">
                   {rowTotals[rowIdx] || 0}
                 </td>
               </tr>
@@ -584,12 +584,12 @@ function MatkaJantriGrid({
               {colTotals.map((t, i) => (
                 <td
                   key={i}
-                  className="border border-gray-300 bg-[#e8edf5] text-[#142969] text-center font-bold py-1 text-xs"
+                  className="border border-gray-300 bg-[#e8edf5] text-[var(--header-primary)] text-center font-bold py-1 text-xs"
                 >
                   {t}
                 </td>
               ))}
-              <td className="border border-gray-300 bg-[#142969] text-white text-center font-bold py-1 text-xs">
+              <td className="border border-gray-300 bg-[var(--header-primary)] text-[var(--header-text)] text-center font-bold py-1 text-xs">
                 {grandTotal}
               </td>
             </tr>
@@ -619,7 +619,7 @@ function MatkaJantriGrid({
                   </td>
                 );
               })}
-              <td className="border border-gray-300 bg-[#e8edf5] text-[#142969] text-center text-xs font-bold px-1 py-1.5">
+              <td className="border border-gray-300 bg-[#e8edf5] text-[var(--header-primary)] text-center text-xs font-bold px-1 py-1.5">
                 {B_LABELS.reduce((s, d) => {
                   const n = bLabelToNum(d);
                   return s + (n ? displayMap[`2:${n}`] ?? 0 : 0);
@@ -652,7 +652,7 @@ function MatkaJantriGrid({
                   </td>
                 );
               })}
-              <td className="border border-gray-300 bg-[#e8edf5] text-[#142969] text-center text-xs font-bold px-1 py-1.5">
+              <td className="border border-gray-300 bg-[#e8edf5] text-[var(--header-primary)] text-center text-xs font-bold px-1 py-1.5">
                 {A_LABELS.reduce((s, d) => {
                   const n = aLabelToNum(d);
                   return s + (n ? displayMap[`3:${n}`] ?? 0 : 0);

@@ -227,7 +227,7 @@ export default function Header() {
                         <Button
                           onClick={() => setIsTransactionModalOpen(true)}
                           size="sm"
-                          className="xs:flex h-7 sm:h-8 bg-[#142669] hover:bg-[#1a3080] text-white font-semibold px-2 sm:px-3 md:px-4 rounded-lg text-xs sm:text-sm font-condensed transition-colors"
+                          className="xs:flex h-7 sm:h-8 bg-[var(--header-primary)] hover:bg-[var(--header-secondary)] text-[var(--header-text)] font-semibold px-2 sm:px-3 md:px-4 rounded-lg text-xs sm:text-sm font-condensed transition-colors"
                         >
                           <Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5" />
                           <span className="hidden sm:inline">Add Funds</span>
@@ -240,7 +240,7 @@ export default function Header() {
                     <Button
                       size="sm"
                       onClick={() => router.push("/profile")}
-                      className="h-auto py-0.5 bg-[#1e4088] hover:bg-[#2a4590] text-white font-medium px-2 sm:px-3 rounded-lg text-xs sm:text-sm touch-manipulation min-w-0 font-condensed"
+                      className="h-auto py-0.5 bg-[var(--header-primary)] hover:bg-[var(--header-secondary)] text-[var(--header-text)] font-medium px-2 sm:px-3 rounded-lg text-xs sm:text-sm touch-manipulation min-w-0 font-condensed"
                     >
                       <Wallet className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5 flex-shrink-0" />
                       {isLoading || ledgerLoading ? (
@@ -259,7 +259,7 @@ export default function Header() {
                     <Button
                       size="sm"
                       onClick={() => setIsExposureModalOpen(true)}
-                      className="h-auto py-0.5 bg-[#1e4088] hover:bg-[#2a4590] text-white font-medium px-2 sm:px-3 rounded-lg text-xs sm:text-sm touch-manipulation min-w-0 font-condensed"
+                      className="h-auto py-0.5 bg-[var(--header-primary)] hover:bg-[var(--header-secondary)] text-[var(--header-text)] font-medium px-2 sm:px-3 rounded-lg text-xs sm:text-sm touch-manipulation min-w-0 font-condensed"
                     >
                       {/* <Wallet className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5 flex-shrink-0" /> */}
                       {isLoading || ledgerLoading ? (
@@ -287,10 +287,10 @@ export default function Header() {
                         size="sm"
                         variant="ghost"
                         onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-                        className="flex h-7 sm:h-8 text-black/80 hover:text-white hover:bg-red-600 rounded-lg px-2 sm:px-3 text-xs sm:text-sm touch-manipulation items-center gap-1"
+                        className="flex h-7 sm:h-8 text-black/80 hover:text-white  hover:bg-red-600 rounded-lg px-2 sm:px-3 text-xs sm:text-sm touch-manipulation items-center gap-1"
                       >
                         <User className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                        <span className="hidden sm:inline truncate max-w-[80px] lg:max-w-none">
+                        <span className="hidden sm:inline truncate max-w-[80px] lg:max-w-none ">
                           {user?.username}
                           {user?.isDemo && (
                             <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded bg-warning-bg/20 text-warning-text font-medium">
@@ -308,7 +308,7 @@ export default function Header() {
                           onMouseLeave={scheduleCloseUserDropdown}
                           className="absolute right-0 top-full pt-1 w-48 sm:w-56 z-50"
                         >
-                          <div className="bg-[#142669] border border-[#1e4088] rounded-xl shadow-xl shadow-black/40 py-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
+                          <div className="bg-[var(--header-primary)] border border-[#1e4088] rounded-xl shadow-xl shadow-black/40 py-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
                           {/* User info header */}
                           <div className="px-3 py-2 border-b border-nav-btn/50">
                             <p className="text-sm font-semibold text-white truncate">
@@ -325,28 +325,28 @@ export default function Header() {
                           <div className="py-1">
                             <button
                               onClick={() => { router.push("/profile"); setIsUserDropdownOpen(false); }}
-                              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white/75 hover:text-white hover:bg-[#1a3578] transition-colors cursor-pointer"
+                              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white/75 hover:text-white hover:bg-[var(--header-secondary)] transition-colors cursor-pointer"
                             >
                               <User className="h-4 w-4 flex-shrink-0" />
                               Profile
                             </button>
                             <button
                               onClick={() => { router.push("/profile/bet-history"); setIsUserDropdownOpen(false); }}
-                              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white/75 hover:text-white hover:bg-[#1a3578] transition-colors cursor-pointer"
+                              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white/75 hover:text-white hover:bg-[var(--header-secondary)] transition-colors cursor-pointer"
                             >
                               <History className="h-4 w-4 flex-shrink-0" />
                               Bet History
                             </button>
                             <button
                               onClick={() => { router.push("/profile/account-statement"); setIsUserDropdownOpen(false); }}
-                              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white/75 hover:text-white hover:bg-[#1a3578] transition-colors cursor-pointer"
+                              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white/75 hover:text-white hover:bg-[var(--header-secondary)] transition-colors cursor-pointer"
                             >
                               <FileText className="h-4 w-4 flex-shrink-0" />
                               Account Statement
                             </button>
                             <button
                               onClick={() => { router.push("/settings"); setIsUserDropdownOpen(false); }}
-                              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white/75 hover:text-white hover:bg-[#1a3578] transition-colors cursor-pointer"
+                              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white/75 hover:text-white hover:bg-[var(--header-secondary)] transition-colors cursor-pointer"
                             >
                               <Settings className="h-4 w-4 flex-shrink-0" />
                               Settings
@@ -401,7 +401,7 @@ export default function Header() {
                       onClick={() => {
                         setAuthModal(true);
                       }}
-                      className="h-7 sm:h-8 bg-[#1e4088] border border-[#84c2f1]/40 hover:bg-[#2a4590] text-white font-semibold px-3 sm:px-4 md:px-5 rounded-lg text-xs sm:text-sm touch-manipulation font-condensed tracking-wide"
+                      className="h-7 sm:h-8 bg-[#1e4088] border border-[var(--header-secondary)]/40 hover:bg-[#2a4590] text-white font-semibold px-3 sm:px-4 md:px-5 rounded-lg text-xs sm:text-sm touch-manipulation font-condensed tracking-wide"
                     >
                       <LogIn className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5" />
                       <span className="hidden sm:inline">Log In</span>

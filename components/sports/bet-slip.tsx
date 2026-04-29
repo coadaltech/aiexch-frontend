@@ -24,7 +24,7 @@ export function BetSlip({ matchId, allBetsOnly = false }: { matchId: string; all
     if (allBetsOnly) {
       return (
         <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5 mb-2 flex-shrink-0">
-          <div className="flex-1 text-sm font-bold py-2 rounded-md bg-gradient-to-r from-[#142969] to-[#1a3578] text-white shadow-sm text-center">
+          <div className="flex-1 text-sm font-bold py-2 rounded-md bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)] shadow-sm text-center">
             All Bets ({allBets.length})
           </div>
         </div>
@@ -36,7 +36,7 @@ export function BetSlip({ matchId, allBetsOnly = false }: { matchId: string; all
           onClick={() => setActiveTab("match")}
           className={`flex-1 text-sm font-bold py-2 rounded-md transition-all cursor-pointer ${
             activeTab === "match"
-              ? "bg-gradient-to-r from-[#142969] to-[#1a3578] text-white shadow-sm"
+              ? "bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)] shadow-sm"
               : "text-gray-500 hover:text-gray-800"
           }`}
         >
@@ -46,7 +46,7 @@ export function BetSlip({ matchId, allBetsOnly = false }: { matchId: string; all
           onClick={() => setActiveTab("all")}
           className={`flex-1 text-sm font-bold py-2 rounded-md transition-all cursor-pointer ${
             activeTab === "all"
-              ? "bg-gradient-to-r from-[#142969] to-[#1a3578] text-white shadow-sm"
+              ? "bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)] shadow-sm"
               : "text-gray-500 hover:text-gray-800"
           }`}
         >
@@ -75,7 +75,7 @@ export function BetSlip({ matchId, allBetsOnly = false }: { matchId: string; all
       <div className="flex-1 min-h-0 overflow-y-auto rounded-xl border border-gray-200 scrollbar-hide">
         <table className="w-full text-base border-collapse table-fixed">
           <thead className="sticky top-0 z-10">
-            <tr className="bg-gradient-to-r from-[#142969] to-[#1a3578] text-white font-bold">
+            <tr className="bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)] font-bold">
               <th className="text-left py-2.5 px-3 w-auto text-sm">Matched Bet</th>
               <th className="text-center py-2.5 px-1 w-16 text-sm">Odds</th>
               <th className="text-right py-2.5 px-3 w-20 text-sm">Stake</th>

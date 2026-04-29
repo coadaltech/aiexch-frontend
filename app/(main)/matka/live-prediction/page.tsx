@@ -23,7 +23,7 @@ export default function MatkaLivePredictionPage() {
   return (
     <div className="flex flex-col  bg-gray-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#142969] via-[#142669] to-[#1a3578] border-b border-[#1e4088]/40 px-4 py-3 flex items-center gap-3">
+      <div className="bg-gradient-to-r from-[var(--header-primary)] via-[var(--header-primary)] to-[var(--header-secondary)] border-b border-[#1e4088]/40 px-4 py-3 flex items-center gap-3">
         <button
           onClick={() => router.push("/matka")}
           className="text-white/60 hover:text-white transition-colors"
@@ -31,7 +31,7 @@ export default function MatkaLivePredictionPage() {
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex items-center gap-2.5 flex-1">
-          <div className="w-1 h-5 bg-[#84c2f1] rounded-full" />
+          <div className="w-1 h-5 bg-[var(--header-secondary)] rounded-full" />
           <div>
             <h1 className="text-white font-bold text-sm font-condensed tracking-wide">
               DECLARED RESULTS
@@ -45,7 +45,7 @@ export default function MatkaLivePredictionPage() {
 
       {/* Declared history list */}
       <div className="flex-1 overflow-auto bg-white ">
-        <div className="sticky top-0 bg-[#e8edf5] text-[#142969] text-[11px] font-bold border-b border-gray-300 flex items-center">
+        <div className="sticky top-0 bg-[#e8edf5] text-[var(--header-primary)] text-[11px] font-bold border-b border-gray-300 flex items-center">
           <History className="w-3 h-3 ml-3 mr-1.5" />
           <span className="flex-1 px-1 py-2">Previous Declared Numbers</span>
         </div>
@@ -77,7 +77,7 @@ export default function MatkaLivePredictionPage() {
                   {formatDateTime(h.declared_at)}
                 </p>
               </div>
-              <span className="ml-2 inline-flex items-center justify-center min-w-[34px] h-7 rounded bg-[#142969] text-white text-xs font-bold">
+              <span className="ml-2 inline-flex items-center justify-center min-w-[34px] h-7 rounded bg-[var(--header-primary)] text-[var(--header-text)] text-xs font-bold">
                 {h.runs}
               </span>
             </div>

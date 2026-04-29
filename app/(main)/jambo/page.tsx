@@ -73,7 +73,7 @@ function ShiftCard({ shift }: { shift: JamboShift }) {
 
   return (
     <Link href={`/jambo/${shift.id}`} className="block group">
-      <div className="bg-white border border-gray-200 hover:border-[#142969]/40 rounded-xl px-4 py-4 transition-all duration-200 hover:shadow-md shadow-sm">
+      <div className="bg-white border border-gray-200 hover:border-[var(--header-primary)]/40 rounded-xl px-4 py-4 transition-all duration-200 hover:shadow-md shadow-sm">
         <h3 className="font-bold text-gray-900 text-sm font-condensed uppercase truncate text-center tracking-wide">
           {shift.name}
         </h3>
@@ -94,7 +94,7 @@ function ShiftCard({ shift }: { shift: JamboShift }) {
               className={`flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-lg ${
                 isExpired
                   ? "bg-red-500/15 text-red-400 border border-red-500/20"
-                  : "bg-[#142969]/10 text-[#142969] border border-[#142969]/20"
+                  : "bg-[var(--header-primary)]/10 text-[var(--header-primary)] border border-[var(--header-primary)]/20"
               }`}
             >
               <Clock className="w-3 h-3" />
@@ -115,9 +115,9 @@ export default function JamboPage() {
   return (
     <div className="bg-gray-100 min-h-full">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#142969] via-[#142669] to-[#1a3578] px-4 py-3 flex items-center justify-between shadow-md">
+      <div className="bg-gradient-to-r from-[var(--header-primary)] via-[var(--header-primary)] to-[var(--header-secondary)] px-4 py-3 flex items-center justify-between shadow-md">
         <div className="flex items-center gap-2.5">
-          <div className="w-1 h-5 bg-[#84c2f1] rounded-full" />
+          <div className="w-1 h-5 bg-[var(--header-secondary)] rounded-full" />
           <div>
             <h1 className="text-white font-bold text-sm font-condensed tracking-wide">JAMBO</h1>
             <p className="text-white/50 text-[10px] mt-0.5">Select a shift to place bets (001-1000)</p>
@@ -127,7 +127,7 @@ export default function JamboPage() {
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          className="bg-white/20 border border-white/30 text-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-[#84c2f1] transition-colors"
+          className="bg-white/20 border border-white/30 text-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-[var(--header-secondary)] transition-colors"
         />
       </div>
 

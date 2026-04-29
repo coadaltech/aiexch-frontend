@@ -13,8 +13,8 @@ export default function HomePromotionsSection() {
     return (
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="flex items-center gap-2.5 px-4 py-3 border-b border-gray-100">
-          <div className="w-1 h-5 bg-[#84c2f1] rounded-full" />
-          <Gift className="h-4 w-4 text-[#142969]" />
+          <div className="w-1 h-5 bg-[var(--header-secondary)] rounded-full" />
+          <Gift className="h-4 w-4 text-[var(--header-primary)]" />
           <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
         </div>
         <div className="flex gap-3 px-4 py-3 overflow-hidden">
@@ -33,8 +33,8 @@ export default function HomePromotionsSection() {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
         <div className="flex items-center gap-2.5">
-          <div className="w-1 h-5 bg-[#84c2f1] rounded-full" />
-          <Gift className="h-4 w-4 text-[#142969]" />
+          <div className="w-1 h-5 bg-[var(--header-secondary)] rounded-full" />
+          <Gift className="h-4 w-4 text-[var(--header-primary)]" />
           <h2 className="text-sm font-bold text-gray-900 font-condensed tracking-wide">
             EXCLUSIVE OFFERS
           </h2>
@@ -44,7 +44,7 @@ export default function HomePromotionsSection() {
         </div>
         <Link
           href="/promotions"
-          className="flex items-center gap-1 text-[#142969] text-xs font-medium hover:text-[#84c2f1] transition-colors"
+          className="flex items-center gap-1 text-[var(--header-primary)] text-xs font-medium hover:text-[var(--header-secondary)] transition-colors"
         >
           View All <ChevronRight className="h-3.5 w-3.5" />
         </Link>

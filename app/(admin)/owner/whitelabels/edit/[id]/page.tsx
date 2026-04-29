@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, useParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { useWhitelabel, useUpdateWhitelabel } from "@/hooks/useOwner";
 import { WhitelabelPage } from "@/components/owner/whitelabel-page";
 import { Whitelabel } from "@/components/owner/types";
@@ -11,6 +12,7 @@ export default function EditWhitelabelPage() {
   const panelPrefix = usePanelPrefix();
   const params = useParams();
   const id = params.id as string;
+  const queryClient = useQueryClient();
 
   const { data: whitelabel, isLoading } = useWhitelabel(id);
   const updateMutation = useUpdateWhitelabel();
@@ -50,6 +52,8 @@ export default function EditWhitelabelPage() {
       });
       const data = await response.json();
       if (data.success) {
+        queryClient.invalidateQueries({ queryKey: ["whitelabels"] });
+        queryClient.invalidateQueries({ queryKey: ["whitelabel", id] });
         router.push(`${panelPrefix}/whitelabels`);
       }
     } catch (error) {

@@ -27,6 +27,12 @@ function formatDate(dateString: string) {
   });
 }
 
+function capDecimals(num: number) {
+  const str = String(num);
+  const decimals = str.includes(".") ? str.split(".")[1].length : 0;
+  return decimals > 4 ? num.toFixed(4) : str;
+}
+
 export default function BetHistoryPage() {
   const router = useRouter();
   const [filter, setFilter] = useState<"all" | "win" | "loss" | "pending">("all");
@@ -89,7 +95,7 @@ export default function BetHistoryPage() {
               onClick={() => setFilter(f.key)}
               className={`shrink-0 flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg border transition-colors ${
                 filter === f.key
-                  ? "bg-[#142969] text-white border-[#142969]"
+                  ? "bg-[var(--header-primary)] text-[var(--header-text)] border-[var(--header-primary)]"
                   : "bg-white text-gray-700 border-gray-200 hover:border-gray-300"
               }`}
             >
@@ -115,7 +121,7 @@ export default function BetHistoryPage() {
             <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-x-auto">
               <table className="w-full border-separate border-spacing-0">
                 <thead>
-                  <tr className="bg-[#142969] text-white text-[13px] font-bold uppercase tracking-wide">
+                  <tr className="bg-[var(--header-primary)] text-[var(--header-text)] text-[13px] font-bold uppercase tracking-wide">
                     <th className="px-3 py-2.5 text-left whitespace-nowrap">Date</th>
                     <th className="px-3 py-2.5 text-left whitespace-nowrap">Sport</th>
                     <th className="px-3 py-2.5 text-left whitespace-nowrap">Team</th>
@@ -132,6 +138,16 @@ export default function BetHistoryPage() {
                     const isBack = bet.betType === 0 || bet.betType === "back";
                     const teamLabel =  bet.selectionName || bet.eventName || "—";
                     const rowBg = isBack ? "bg-blue-300" : "bg-pink-300";
+                    const isFancy = bet.marketType === "fancy";
+                    const userDetail = isFancy
+                      ? (bet.details || []).find((d: any) => d.isUserSelection) || (bet.details || [])[0]
+                      : null;
+                    const marketLabel = isFancy
+                      ? `${bet.marketName || "—"} / ${capDecimals(Number(bet.odds) * 100)}`
+                      : (bet.marketName || "—");
+                    const oddsLabel = isFancy
+                      ? (userDetail?.run != null ? capDecimals(Number(userDetail.run)) : "-")
+                      : `@ ${Number(bet.odds)}`;
 
                     return (
                       <tr key={bet.id} className={`${rowBg} text-gray-800 border-t border-white/40`}>
@@ -145,10 +161,10 @@ export default function BetHistoryPage() {
                           {teamLabel}
                         </td>
                         <td className="px-3 py-2.5 text-[14px] font-medium whitespace-nowrap">
-                          {bet.marketName || "—"}
+                          {marketLabel}
                         </td>
                         <td className="px-3 py-2.5 text-[14px] font-bold whitespace-nowrap text-right">
-                          @ {Number(bet.odds)}
+                          {oddsLabel}
                         </td>
                         <td className="px-3 py-2.5 text-[14px] font-bold whitespace-nowrap text-right">
                           ₹{Number(bet.stake).toLocaleString()}
@@ -180,7 +196,7 @@ export default function BetHistoryPage() {
             <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-x-auto">
               <table className="w-full border-separate border-spacing-0">
                 <thead>
-                  <tr className="bg-[#142969] text-white text-[13px] font-bold uppercase ">
+                  <tr className="bg-[var(--header-primary)] text-[var(--header-text)] text-[13px] font-bold uppercase ">
                     <th className="px-3 py-2.5 text-left whitespace-nowrap">Matka ({matkaHistory.length} records)</th>
                     <th className="px-3 py-2.5 text-left whitespace-nowrap">Shift Date</th>
                     <th className="px-3 py-2.5 text-right whitespace-nowrap">Amount</th>

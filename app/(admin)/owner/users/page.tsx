@@ -332,7 +332,7 @@ export default function UsersPage() {
                     <td className="px-3 py-2">
                       <button
                         onClick={() => userModal.open({ ...u, username: u.username || u.name })}
-                        className="font-semibold text-[#142969] hover:underline text-left"
+                        className="font-semibold text-[var(--header-primary)] hover:underline text-left"
                         title="Edit user"
                       >
                         {u.username}

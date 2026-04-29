@@ -70,8 +70,9 @@ th {
 .bg-\[\#0b1545\], .bg-\[\#142969\], .bg-\[\#1a3578\],
 .bg-\[\#101e50\], .bg-\[\#162d6a\],
 .bg-\[\#0c314d\], .bg-\[\#174b73\], .bg-\[\#1b5785\],
-.bg-\[\#0a2a42\], .bg-\[\#0f3d5e\] {
-  color: #ffffff;
+.bg-\[\#0a2a42\], .bg-\[\#0f3d5e\],
+.bg-\[var\(--header-primary\)\] {
+  color: var(--header-text);
 }
 
 /* ===== White sections — dark text, off-white background ===== */
@@ -131,11 +132,16 @@ th {
   --sidebar-border: #1e4088;
   --sidebar-ring: #84c2f1;
 
+  /* ===== Header Colors (whitelabel-configurable) ===== */
+  --header-primary: #142669;
+  --header-secondary: #84c2f1;
+  --header-text: #ffffff;
+
   --header-bg: linear-gradient(
     90deg,
-    #142969 0%,
-    #142669 50%,
-    #84c2f1 100%
+    var(--header-primary) 0%,
+    var(--header-primary) 50%,
+    var(--header-secondary) 100%
   );
 
   /* ===== Sports / Betting ===== */
@@ -285,7 +291,7 @@ th {
   --error-light-border: #f8d0d8;
 
   /* ===== Theme Gradient (for buttons & headings) ===== */
-  --theme-gradient: linear-gradient(to right, #142969, #142669, #84c2f1);
+  --theme-gradient: linear-gradient(to right, var(--header-primary), var(--header-primary), var(--header-secondary));
   --theme-gradient-hover: linear-gradient(to right, #1a3578, #1a3078, #9dd0f5);
 }
 
@@ -547,14 +553,14 @@ th {
 
   /* ===== Theme Gradient for Buttons & Headings ===== */
   .theme-gradient {
-    background: linear-gradient(to right, #142969, #142669, #84c2f1);
-    color: #ffffff;
+    background: linear-gradient(to right, var(--header-primary), var(--header-primary), var(--header-secondary));
+    color: var(--header-text);
   }
   .theme-gradient:hover {
     background: linear-gradient(to right, #1a3578, #1a3078, #9dd0f5);
   }
   .theme-gradient-text {
-    background: linear-gradient(to right, #142969, #142669, #84c2f1);
+    background: linear-gradient(to right, var(--header-primary), var(--header-primary), var(--header-secondary));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -606,20 +612,20 @@ th {
   .sidebar-scrollbar::-webkit-scrollbar-thumb {
     background: linear-gradient(
       to bottom,
-      #142969,
-      rgba(132, 194, 241, 0.8)
+      var(--header-primary),
+      var(--header-secondary)
     );
     border-radius: 10px;
-    border: 1px solid rgba(132, 194, 241, 0.3);
+    border: 1px solid color-mix(in srgb, var(--header-secondary) 30%, transparent);
   }
 
   .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(
       to bottom,
-      #142969,
-      rgba(132, 194, 241, 1)
+      var(--header-primary),
+      var(--header-secondary)
     );
-    box-shadow: 0 0 8px rgba(132, 194, 241, 0.5);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--header-secondary) 50%, transparent);
   }
 
   .hide-scrollbar {

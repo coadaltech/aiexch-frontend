@@ -171,6 +171,9 @@ export interface WhitelabelTheme {
   sidebarAccentForeground: string;
   sidebarBorder: string;
   sidebarRing: string;
+  headerPrimary: string;
+  headerSecondary: string;
+  headerText: string;
   radius: string;
   fontFamily: string;
 }

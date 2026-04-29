@@ -74,7 +74,7 @@ function BetSlipPanel({
   return (
     <div className="w-[240px] flex-shrink-0 border-l border-gray-300 bg-white flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#142969] to-[#1a3578] text-white px-3 py-2 flex items-center justify-between">
+      <div className="bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)] px-3 py-2 flex items-center justify-between">
         <div>
           <p className="font-bold text-xs uppercase tracking-wide truncate max-w-[160px]">
             {txn?.shiftName ?? "Bet Slip"}
@@ -89,7 +89,7 @@ function BetSlipPanel({
       </div>
 
       {/* Column headers */}
-      <div className="flex bg-[#e8edf5] text-[#142969] text-[10px] font-bold border-b border-gray-300">
+      <div className="flex bg-[#e8edf5] text-[var(--header-primary)] text-[10px] font-bold border-b border-gray-300">
         <span className="flex-1 px-2 py-1 text-center">NUMBER</span>
         <span className="w-20 px-2 py-1 text-right">AMOUNT</span>
       </div>
@@ -111,7 +111,7 @@ function BetSlipPanel({
                   className={`border-b border-gray-100 ${idx % 2 === 0 ? "bg-white" : "bg-gray-50"}`}
                 >
                   <td className="px-2 py-1.5 font-bold text-gray-900 text-center">{d.number}</td>
-                  <td className="px-2 py-1.5 text-[#142969] font-semibold text-right">
+                  <td className="px-2 py-1.5 text-[var(--header-primary)] font-semibold text-right">
                     ₹{Number(d.amount).toFixed(0)}
                   </td>
                 </tr>
@@ -213,7 +213,7 @@ function CopyToShiftsModal({
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#142969] to-[#1a3578] text-white px-4 py-3 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)] px-4 py-3 flex items-center justify-between">
           <div>
             <p className="font-bold text-sm">Copy to Shifts</p>
             <p className="text-white/60 text-[11px]">From: {txn.shiftName}</p>
@@ -249,7 +249,7 @@ function CopyToShiftsModal({
                       setSelected(new Set(shiftsForCopy.map((s) => s.id)));
                     }
                   }}
-                  className="h-4 w-4 rounded accent-[#142969]"
+                  className="h-4 w-4 rounded accent-[var(--header-primary)]"
                 />
                 <span className="text-xs font-semibold text-gray-700">Select All</span>
               </label>
@@ -262,7 +262,7 @@ function CopyToShiftsModal({
                     type="checkbox"
                     checked={selected.has(s.id)}
                     onChange={() => toggleShift(s.id)}
-                    className="h-4 w-4 rounded accent-[#142969]"
+                    className="h-4 w-4 rounded accent-[var(--header-primary)]"
                   />
                   <span className="text-sm text-gray-800">{s.name}</span>
                 </label>
@@ -285,7 +285,7 @@ function CopyToShiftsModal({
           <button
             onClick={handleConfirm}
             disabled={placing || selected.size === 0}
-            className="px-4 py-1.5 rounded-lg text-sm font-semibold bg-[#142969] hover:bg-[#1a3578] text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-1.5 rounded-lg text-sm font-semibold bg-[var(--header-primary)] hover:bg-[#1a3578] text-[var(--header-text)] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {placing ? "Copying..." : "Copy"}
           </button>
@@ -333,7 +333,7 @@ export default function MatkaTransactionsPage() {
   return (
     <div className="flex flex-col h-full bg-gray-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#142969] via-[#142669] to-[#1a3578] border-b border-[#1e4088]/40 px-4 py-3 flex items-center gap-3">
+      <div className="bg-gradient-to-r from-[var(--header-primary)] via-[var(--header-primary)] to-[var(--header-secondary)] border-b border-[#1e4088]/40 px-4 py-3 flex items-center gap-3">
         <button
           onClick={() => router.push("/matka")}
           className="text-white/60 hover:text-white transition-colors"
@@ -341,7 +341,7 @@ export default function MatkaTransactionsPage() {
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex items-center gap-2.5 flex-1">
-          <div className="w-1 h-5 bg-[#84c2f1] rounded-full" />
+          <div className="w-1 h-5 bg-[var(--header-secondary)] rounded-full" />
           <div>
             <h1 className="text-white font-bold text-sm font-condensed tracking-wide">
               MATKA TRANSACTIONS
@@ -358,7 +358,7 @@ export default function MatkaTransactionsPage() {
           <select
             value={filterShiftId}
             onChange={(e) => setFilterShiftId(e.target.value)}
-            className="appearance-none bg-gray-50 border border-gray-300 text-gray-700 text-xs font-medium rounded-lg pl-3 pr-7 py-1.5 focus:outline-none focus:border-[#142969] cursor-pointer min-w-[140px]"
+            className="appearance-none bg-gray-50 border border-gray-300 text-gray-700 text-xs font-medium rounded-lg pl-3 pr-7 py-1.5 focus:outline-none focus:border-[var(--header-primary)] cursor-pointer min-w-[140px]"
           >
             <option value="">-- ALL SHIFTS --</option>
             {allShifts.map((s) => (
@@ -376,7 +376,7 @@ export default function MatkaTransactionsPage() {
             onClick={() => { setStatus("active"); setFilterShiftId(""); }}
             className={`px-3 py-1.5 transition-colors ${
               status === "active"
-                ? "bg-[#142969] text-white"
+                ? "bg-[var(--header-primary)] text-[var(--header-text)]"
                 : "bg-white text-gray-600 hover:bg-gray-50"
             }`}
           >
@@ -386,7 +386,7 @@ export default function MatkaTransactionsPage() {
             onClick={() => { setStatus("inactive"); setFilterShiftId(""); }}
             className={`px-3 py-1.5 border-l border-gray-300 transition-colors ${
               status === "inactive"
-                ? "bg-[#142969] text-white"
+                ? "bg-[var(--header-primary)] text-[var(--header-text)]"
                 : "bg-white text-gray-600 hover:bg-gray-50"
             }`}
           >
@@ -422,7 +422,7 @@ export default function MatkaTransactionsPage() {
                   <div
                     key={txn.id}
                     className={`bg-white rounded-lg border shadow-sm px-3 py-2 flex flex-col gap-1 ${
-                      isViewing ? "border-[#142969] ring-1 ring-[#142969]/20" : "border-gray-200"
+                      isViewing ? "border-[var(--header-primary)] ring-1 ring-[var(--header-primary)]/20" : "border-gray-200"
                     }`}
                   >
                     <div className="flex items-center gap-3">

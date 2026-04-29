@@ -86,7 +86,7 @@ const NOTICES = [
 function NoticeTickerBar() {
   const text = NOTICES.join("   •••   ");
   return (
-    <div className="flex items-center bg-gradient-to-r from-[#142969] to-[#1a3578] border-b border-[#1e4088]/60 h-8 overflow-hidden">
+    <div className="flex items-center bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-secondary)] border-b border-[#1e4088]/60 h-8 overflow-hidden">
       {/* Label */}
       <div className="flex items-center gap-1.5 text-black bg-[#ede105] px-3 h-full shrink-0 z-10">
         <Bell className="h-3 w-3 text-black" />
@@ -108,10 +108,10 @@ function NoticeTickerBar() {
 
 /* ─── Sport category tabs ─── */
 const SPORT_TABS = [
-  { label: "Live", icon: Zap, href: "/sports/all", color: "#84c2f1", live: true },
-  { label: "Cricket", icon: Trophy, href: "/sports/cricket", color: "#84c2f1" },
-  { label: "Football", icon: Volleyball, href: "/sports/soccer", color: "#84c2f1" },
-  { label: "Tennis", icon: Target, href: "/sports/tennis", color: "#84c2f1" },
+  { label: "Live", icon: Zap, href: "/sports/all", color: "var(--header-secondary)", live: true },
+  { label: "Cricket", icon: Trophy, href: "/sports/cricket", color: "var(--header-secondary)" },
+  { label: "Football", icon: Volleyball, href: "/sports/soccer", color: "var(--header-secondary)" },
+  { label: "Tennis", icon: Target, href: "/sports/tennis", color: "var(--header-secondary)" },
   { label: "Casino", icon: Dices, href: "/casino", color: "#f5a0b4" },
   { label: "Matka", icon: Star, href: "/matka", color: "#f0a050" },
   { label: "Promotions", icon: Gift, href: "/promotions", color: "#9dd0f5" },
@@ -135,7 +135,7 @@ function SportCategoryTabs() {
               style={{ background: `${tab.color}18`, border: `1.5px solid ${tab.color}40` }}
             >
               {tab.live && (
-                <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-[#84c2f1] rounded-full animate-pulse" />
+                <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-[var(--header-secondary)] rounded-full animate-pulse" />
               )}
               <Icon className="h-5 w-5 sm:h-6 sm:w-6" style={{ color: tab.color }} />
             </div>
@@ -151,15 +151,15 @@ function SportCategoryTabs() {
 
 /* ─── Stats bar ─── */
 const STATS = [
-  { label: "Live Events", value: "240+", icon: Tv, color: "#84c2f1" },
-  { label: "Active Users", value: "12K+", icon: Users, color: "#84c2f1" },
+  { label: "Live Events", value: "240+", icon: Tv, color: "var(--header-secondary)" },
+  { label: "Active Users", value: "12K+", icon: Users, color: "var(--header-secondary)" },
   { label: "Markets", value: "1800+", icon: TrendingUp, color: "#f0a050" },
   { label: "Paid Today", value: "₹2.4Cr", icon: Flame, color: "#f06888" },
 ];
 
 function StatsBar() {
   return (
-    <div className="grid grid-cols-4 gap-px bg-gradient-to-r from-[#142969] to-[#142669] rounded-xl overflow-hidden mx-4">
+    <div className="grid grid-cols-4 gap-px bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-primary)] rounded-xl overflow-hidden mx-4">
       {STATS.map((s) => {
         const Icon = s.icon;
         return (
@@ -200,7 +200,7 @@ function SectionHeader({
   return (
     <div className={`flex items-center justify-between py-2 ${oddsColumns ? "pl-3 pr-0 sm:px-4" : "px-4"}`}>
       <div className="flex items-center gap-2.5">
-        <div className="w-1 h-6 bg-[#84c2f1] rounded-full" />
+        <div className="w-1 h-6 bg-[var(--header-secondary)] rounded-full" />
         {Icon && <Icon className="h-4 w-4" />}
         <div>
           <div className="flex items-center gap-2">
@@ -208,7 +208,7 @@ function SectionHeader({
               {title}
             </h2>
             {badge && (
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#142969] text-white animate-pulse">
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[var(--header-primary)] text-[var(--header-text)] animate-pulse">
                 {badge}
               </span>
             )}
@@ -227,7 +227,7 @@ function SectionHeader({
       ) : href ? (
         <Link
           href={href}
-          className="flex items-center gap-1 text-[#142969] text-xs font-medium hover:text-[#84c2f1] transition-colors"
+          className="flex items-center gap-1 text-[var(--header-primary)] text-xs font-medium hover:text-[var(--header-secondary)] transition-colors"
         >
           View All <ChevronRight className="h-3.5 w-3.5" />
         </Link>
@@ -253,12 +253,12 @@ function QuickSportsRow() {
         <Link
           key={s.label}
           href={s.href}
-          className="flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-lg bg-white hover:bg-gray-50 border border-gray-200 hover:border-[#142969]/40 transition-all text-gray-700 text-xs font-medium"
+          className="flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-lg bg-white hover:bg-gray-50 border border-gray-200 hover:border-[var(--header-primary)]/40 transition-all text-gray-700 text-xs font-medium"
         >
           <span>{s.emoji}</span>
           <span>{s.label}</span>
           {s.count && (
-            <span className="text-[9px] bg-[#84c2f1] text-white px-1 rounded font-bold">
+            <span className="text-[9px] bg-[var(--header-secondary)] text-white px-1 rounded font-bold">
               {s.count}
             </span>
           )}
@@ -304,7 +304,7 @@ const Homepage = () => {
         showHeader={false}
         wrapper={(content) => (
           <div className="mt-4">
-            <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-0 sm:mx-4 rounded-none sm:rounded-xl overflow-hidden border-y sm:border border-[#1e4088]/50">
+            <div className="bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-primary)] text-[var(--header-text)] mx-0 sm:mx-4 rounded-none sm:rounded-xl overflow-hidden border-y sm:border border-[#1e4088]/50">
               <SectionHeader
                 title="CRICKET"
                 subtitle="Live & upcoming matches"
@@ -327,7 +327,7 @@ const Homepage = () => {
         showHeader={false}
         wrapper={(content) => (
           <div className="mt-4">
-            <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-0 sm:mx-4 rounded-none sm:rounded-xl overflow-hidden border-y sm:border border-[#1e4088]/50">
+            <div className="bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-primary)] text-[var(--header-text)] mx-0 sm:mx-4 rounded-none sm:rounded-xl overflow-hidden border-y sm:border border-[#1e4088]/50">
               <SectionHeader
                 title="FOOTBALL"
                 subtitle="Live & upcoming matches"
@@ -351,7 +351,7 @@ const Homepage = () => {
           showHeader={false}
           wrapper={(content) => (
             <div className="mt-4">
-              <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-0 sm:mx-4 rounded-none sm:rounded-xl overflow-hidden border-y sm:border border-[#1e4088]/50">
+              <div className="bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-primary)] text-[var(--header-text)] mx-0 sm:mx-4 rounded-none sm:rounded-xl overflow-hidden border-y sm:border border-[#1e4088]/50">
                 <SectionHeader
                   title="TENNIS"
                   subtitle="Live & upcoming matches"
@@ -369,7 +369,7 @@ const Homepage = () => {
 
       {/* 5d. Horse Racing
       <div className="mt-4">
-        <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-4 rounded-xl overflow-hidden border border-[#1e4088]/50">
+        <div className="bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-primary)] text-[var(--header-text)] mx-4 rounded-xl overflow-hidden border border-[#1e4088]/50">
           <SectionHeader
             title="HORSE RACING"
             subtitle="Live & upcoming races"
@@ -385,7 +385,7 @@ const Homepage = () => {
 
       {/* 5e. Greyhound Racing */}
       {/* <div className="mt-4">
-        <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-4 rounded-xl overflow-hidden border border-[#1e4088]/50">
+        <div className="bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-primary)] text-[var(--header-text)] mx-4 rounded-xl overflow-hidden border border-[#1e4088]/50">
           <SectionHeader
             title="GREYHOUND RACING"
             subtitle="Live & upcoming races"
@@ -408,7 +408,7 @@ const Homepage = () => {
           showHeader={false}
           wrapper={(content) => (
             <div className="mt-4">
-              <div className="bg-gradient-to-r from-[#142969] to-[#142669] text-white mx-0 sm:mx-4 rounded-none sm:rounded-xl overflow-hidden border-y sm:border border-[#1e4088]/50">
+              <div className="bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-primary)] text-[var(--header-text)] mx-0 sm:mx-4 rounded-none sm:rounded-xl overflow-hidden border-y sm:border border-[#1e4088]/50">
                 <SectionHeader
                   title="POLITICS"
                   subtitle="Live & upcoming markets"

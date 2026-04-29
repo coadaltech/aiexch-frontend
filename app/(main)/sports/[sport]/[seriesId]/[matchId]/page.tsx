@@ -308,6 +308,31 @@ export default function MatchPage() {
     };
   }, [forceWsReconnect]);
 
+  // Auto-recovery while the staleness banner is up: 5s after the feed goes
+  // stale, force a WS reconnect and pull a fresh REST snapshot. If we're
+  // still stale, retry every 30s. This handles the "WS socket is open but
+  // server stopped broadcasting" case (no onclose fires, so the hook's
+  // internal backoff never kicks) and the "transient network blip" case
+  // (force-reconnect re-subscribes immediately instead of waiting for the
+  // exponential backoff). The banner clears on its own as soon as a fresh
+  // update lands and isStaleData flips to false.
+  useEffect(() => {
+    if (!isStaleData) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const attempt = () => {
+      if (cancelled) return;
+      forceWsReconnect();
+      refetchMatchDetailsRef.current({ silent: true });
+      timer = setTimeout(attempt, 30_000);
+    };
+    timer = setTimeout(attempt, 5_000);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [isStaleData, forceWsReconnect]);
+
   // Cleanup bet delay timer on unmount
   useEffect(() => {
     return () => {
@@ -1070,16 +1095,16 @@ export default function MatchPage() {
   if (pageStatus === "error") {
     return (
       <div className="px-3 py-2">
-        <div className="rounded-xl bg-gradient-to-b from-[#101e50] to-[#0b1545] border border-[#1e4088]/40 flex items-center justify-center py-16">
+        <div className="rounded-xl bg-gradient-to-b from-[var(--header-primary)] to-[var(--header-primary)] border border-[#1e4088]/40 flex items-center justify-center py-16">
           <div className="text-center max-w-md">
             <div className="w-16 h-16 mx-auto bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center mb-3">
               <span className="text-red-400 text-3xl">!</span>
             </div>
-            <h2 className="text-lg font-semibold text-white mb-2">Connection Failed</h2>
-            <p className="text-white/50 text-sm mb-4">Unable to connect to the live data server.</p>
+            <h2 className="text-lg font-semibold text-[var(--header-text)] mb-2">Connection Failed</h2>
+            <p className="text-[var(--header-text)]/70 text-sm mb-4">Unable to connect to the live data server.</p>
             <button
               onClick={() => window.location.reload()}
-              className="px-5 py-2 bg-gradient-to-r from-[#142969] to-[#84c2f1] text-white rounded-lg hover:from-[#1a3578] hover:to-[#9dd0f5] text-sm font-semibold shadow-lg shadow-[#142969]/30 transition-all"
+              className="px-5 py-2 bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)] rounded-lg hover:from-[#1a3578] hover:to-[#9dd0f5] text-sm font-semibold shadow-lg shadow-[var(--header-primary)]/30 transition-all"
             >
               Retry
             </button>
@@ -1092,10 +1117,10 @@ export default function MatchPage() {
   if (pageStatus === "connecting" || pageStatus === "connected") {
     return (
       <div className="px-3 py-2">
-        <div className="rounded-xl bg-gradient-to-b from-[#101e50] to-[#0b1545] border border-[#1e4088]/40 flex items-center justify-center py-16">
+        <div className="rounded-xl bg-gradient-to-b from-[var(--header-primary)] to-[var(--header-primary)] border border-[#1e4088]/40 flex items-center justify-center py-16">
           <div className="text-center">
-            <div className="w-12 h-12 mx-auto border-4 border-[#1e4088] border-t-[#84c2f1] rounded-full animate-spin mb-3"></div>
-            <p className="text-white/50 text-sm">Loading match data...</p>
+            <div className="w-12 h-12 mx-auto border-4 border-[#1e4088] border-t-[var(--header-secondary)] rounded-full animate-spin mb-3"></div>
+            <p className="text-[var(--header-text)]/70 text-sm">Loading match data...</p>
           </div>
         </div>
       </div>
@@ -1110,10 +1135,10 @@ export default function MatchPage() {
       <div className="px-2 py-1">
         {/* Show match header if available */}
         {(matchInfo || series || matchFromSeries) && (
-          <div className="bg-gradient-to-r from-[#142969] via-[#142669] to-[#1a3578] rounded-lg px-3 sm:px-4 py-3 mb-2 shadow-md border border-[#1e4088]/30">
+          <div className="bg-gradient-to-r from-[var(--header-primary)] via-[var(--header-primary)] to-[var(--header-secondary)] rounded-lg px-3 sm:px-4 py-3 mb-2 shadow-md border border-[#1e4088]/30">
             <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
               <div className="min-w-0 flex-1">
-                <h1 className="text-white font-bold text-base sm:text-lg truncate">
+                <h1 className="text-[var(--header-text)] font-bold text-base sm:text-lg truncate">
                   {[series?.name, matchFromSeries?.name || matchInfo?.eventName || "Match"]
                     .filter(Boolean)
                     .join(" - ")}
@@ -1121,7 +1146,7 @@ export default function MatchPage() {
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 {eventDate && (
-                  <span className="text-white/60 text-xs sm:text-sm">
+                  <span className="text-[var(--header-text)]/70 text-xs sm:text-sm">
                     {formatDate(eventDate)}
                   </span>
                 )}
@@ -1131,24 +1156,24 @@ export default function MatchPage() {
         )}
 
         {isEventEnded ? (
-          <div className="rounded-xl bg-gradient-to-b from-[#101e50] to-[#0b1545] border border-[#1e4088]/40 flex items-center justify-center py-16">
+          <div className="rounded-xl bg-gradient-to-b from-[var(--header-primary)] to-[var(--header-primary)] border border-[#1e4088]/40 flex items-center justify-center py-16">
             <div className="text-center max-w-md px-4">
               <div className="w-14 h-14 mx-auto bg-[#1e4088]/30 rounded-full flex items-center justify-center mb-4 border border-[#1e4088]/40">
                 <svg className="w-7 h-7 text-[#5878a8]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                 </svg>
               </div>
-              <h2 className="text-lg font-semibold text-white mb-2">Event Has Ended</h2>
-              <p className="text-white/50 text-sm mb-1">This event concluded on {formatDate(eventDate)}.</p>
-              <p className="text-xs text-white/30">Markets are no longer available for this match.</p>
+              <h2 className="text-lg font-semibold text-[var(--header-text)] mb-2">Event Has Ended</h2>
+              <p className="text-[var(--header-text)]/80 text-sm mb-1">This event concluded on {formatDate(eventDate)}.</p>
+              <p className="text-xs text-[var(--header-text)]/60">Markets are no longer available for this match.</p>
             </div>
           </div>
         ) : (
-          <div className="rounded-xl bg-gradient-to-b from-[#101e50] to-[#0b1545] border border-[#1e4088]/40 flex items-center justify-center py-16">
+          <div className="rounded-xl bg-gradient-to-b from-[var(--header-primary)] to-[var(--header-primary)] border border-[#1e4088]/40 flex items-center justify-center py-16">
             <div className="text-center max-w-md">
-              <h2 className="text-lg font-semibold text-white mb-2">No Active Markets</h2>
-              <p className="text-white/50 text-sm mb-1">This match currently has no open markets.</p>
-              <p className="text-xs text-white/30">Markets will appear automatically when they become available.</p>
+              <h2 className="text-lg font-semibold text-[var(--header-text)] mb-2">No Active Markets</h2>
+              <p className="text-[var(--header-text)]/80 text-sm mb-1">This match currently has no open markets.</p>
+              <p className="text-xs text-[var(--header-text)]/60">Markets will appear automatically when they become available.</p>
             </div>
           </div>
         )}
@@ -1322,28 +1347,28 @@ export default function MatchPage() {
           : null;
 
         return (
-          <div className="bg-gradient-to-r from-[#142969] via-[#142669] to-[#1a3578] rounded-lg px-3 sm:px-4 py-3 mb-2 shadow-md border border-[#1e4088]/30">
+          <div className="bg-[var(--header-primary)]  rounded-lg px-3 sm:px-4 py-3 mb-2 shadow-md border border-[#1e4088]/30">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
                 {series?.name && (
-                  <p className="text-[#84c2f1] font-bold text-xs sm:text-sm truncate leading-tight mb-0.5 uppercase tracking-wide font-condensed">
+                  <p className="text-[var(--header-secondary)] font-bold text-xs sm:text-sm truncate leading-tight mb-0.5 uppercase tracking-wide font-condensed">
                     {series.name}
                   </p>
                 )}
-                <h1 className="text-white font-bold text-base sm:text-lg truncate leading-tight">
+                <h1 className="text-[var(--header-text)] font-bold text-base sm:text-lg truncate leading-tight">
                   {matchFromSeries?.name || matchInfo?.eventName || "Match"}
                 </h1>
               </div>
               <div className="shrink-0 text-right flex flex-col items-end gap-1">
-                
+
                 {openDate && (
-                  <span className="text-white/60 text-xs sm:text-sm flex items-center gap-2 sm:gap-6 flex-wrap justify-end">
+                  <span className="text-[var(--header-text)]/70 text-xs sm:text-sm flex items-center gap-2 sm:gap-6 flex-wrap justify-end">
                     {formatDate(openDate)}
                   </span>
                 )}
                 
                 {clockStr && (
-                  <span className="text-[#84c2f1] font-mono text-[11px] sm:text-xs block mt-0.5 bg-black/20 px-2 py-0.5 rounded">
+                  <span className="text-[var(--header-text)] font-mono text-[11px] sm:text-xs block mt-0.5 bg-black/20 px-2 py-0.5 rounded">
                     {clockStr}
                   </span>
                 )}
@@ -1412,7 +1437,7 @@ export default function MatchPage() {
                 className="rounded-lg overflow-hidden border border-gray-200 shadow-sm"
               >
                 {/* Mobile header */}
-                <div className="grid grid-cols-[1fr_auto] gap-1 px-2 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578] items-center sm:hidden">
+                <div className="grid grid-cols-[1fr_auto] gap-1 px-2 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)] items-center sm:hidden">
                   <div className="min-w-0">
                     <h3 className="font-bold text-white text-sm truncate leading-tight flex items-center gap-1.5">
                       <PinMarketButton parent={pinParent} market={market} />
@@ -1429,7 +1454,7 @@ export default function MatchPage() {
                   </div>
                 </div>
                 {/* Desktop header */}
-                <div className="hidden sm:grid grid-cols-3 gap-2 px-3 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578] items-center">
+                <div className="hidden sm:grid grid-cols-3 gap-2 px-3 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)] items-center">
                   <div className="min-w-0 flex flex-col gap-0.5">
                     <h3 className="font-bold text-white text-base truncate leading-tight flex items-center gap-1.5">
                       <PinMarketButton parent={pinParent} market={market} />
@@ -1582,7 +1607,7 @@ export default function MatchPage() {
               return (
                 <div key={market.marketId} className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
                   {/* Mobile header */}
-                  <div className="grid grid-cols-[1fr_auto] gap-1 px-2 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578] items-center sm:hidden">
+                  <div className="grid grid-cols-[1fr_auto] gap-1 px-2 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)] items-center sm:hidden">
                     <div className="min-w-0">
                       <h3 className="font-bold text-white text-sm truncate leading-tight flex items-center gap-1.5">
                         <PinMarketButton parent={pinParent} market={market} />
@@ -1599,7 +1624,7 @@ export default function MatchPage() {
                     </div>
                   </div>
                   {/* Desktop header */}
-                  <div className="hidden sm:grid grid-cols-3 gap-2 px-3 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578] items-center">
+                  <div className="hidden sm:grid grid-cols-3 gap-2 px-3 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)] items-center">
                     <div className="min-w-0 flex flex-col gap-0.5">
                       <h3 className="font-bold text-white text-base truncate leading-tight flex items-center gap-1.5">
                         <PinMarketButton parent={pinParent} market={market} />
@@ -1664,7 +1689,7 @@ export default function MatchPage() {
 
             // Shared ADV market header
             const advHeader = (
-              <div className="px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578] flex items-center justify-between gap-2">
+              <div className="px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)] flex items-center justify-between gap-2">
                 <span className="font-bold text-white text-sm sm:text-base truncate flex items-center gap-1.5">
                   <PinMarketButton parent={pinParent} market={market} />
                   <span className="truncate">{market.marketName}</span>
@@ -1774,7 +1799,7 @@ export default function MatchPage() {
                               <button key={runner.selectionId}
                                 disabled={isRunnerSusp || rawPrice == null}
                                 onClick={() => rawPrice != null && handleBackClick(market, runner, rawPrice, null, 0, true)}
-                                className="w-9 h-9 rounded-full bg-[#142669] hover:bg-[#142669] text-white font-bold text-sm flex items-center justify-center shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                                className="w-9 h-9 rounded-full bg-[var(--header-primary)] hover:bg-[var(--header-primary)] text-[var(--header-text)] font-bold text-sm flex items-center justify-center shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                                 {runner.name}
                               </button>
                             );
@@ -1837,7 +1862,7 @@ export default function MatchPage() {
         {visibleMarkets.some((m) => m.bettingType === "LINE") && (
         <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
           {/* Mobile header */}
-          <div className="grid grid-cols-[1fr_auto] gap-1 px-2 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578] items-center sm:hidden">
+          <div className="grid grid-cols-[1fr_auto] gap-1 px-2 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)] items-center sm:hidden">
             <h3 className="font-bold text-white text-sm truncate leading-tight">Fancy</h3>
             <div className="flex items-center gap-1">
               <div className="w-24 flex justify-center">
@@ -1849,7 +1874,7 @@ export default function MatchPage() {
             </div>
           </div>
           {/* Desktop header */}
-          <div className="hidden sm:grid grid-cols-3 gap-2 px-3 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578] items-center">
+          <div className="hidden sm:grid grid-cols-3 gap-2 px-3 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)] items-center">
             <h3 className="font-bold text-white text-base truncate leading-tight" style={{gridColumn: "1"}}>
               Fancy
             </h3>
@@ -1978,7 +2003,7 @@ export default function MatchPage() {
             );
 
             const advHeader = (
-              <div className="px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578] flex items-center justify-between gap-2">
+              <div className="px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)] flex items-center justify-between gap-2">
                 <span className="font-bold text-white text-sm sm:text-base truncate flex items-center gap-1.5">
                   <PinMarketButton parent={pinParent} market={market} />
                   <span className="truncate">{market.marketName}</span>
@@ -2092,7 +2117,7 @@ export default function MatchPage() {
                                 <button
                                   disabled={isRunnerSusp || rawPrice == null}
                                   onClick={() => rawPrice != null && handleBackClick(market, runner, rawPrice, null, 0, true)}
-                                  className="w-9 h-9 rounded-full bg-[#142669] hover:bg-[#142669] text-white font-bold text-sm flex items-center justify-center shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                                  className="w-9 h-9 rounded-full bg-[var(--header-primary)] hover:bg-[var(--header-primary)] text-[var(--header-text)] font-bold text-sm flex items-center justify-center shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                                   {runner.name}
                                 </button>
                                 {runnerPnl !== null && (
@@ -2162,7 +2187,7 @@ export default function MatchPage() {
       {exposureChartMarket && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setExposureChartMarket(null)}>
           <div className="bg-white rounded-xl shadow-2xl w-[90vw] max-w-md max-h-[80vh] overflow-hidden border border-gray-200" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[#142969] to-[#1a3578] text-white">
+            <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)]">
               <div>
                 <h3 className="font-semibold text-sm">Exposure</h3>
                 <p className="text-xs text-white/80">{exposureChartMarket.name}</p>

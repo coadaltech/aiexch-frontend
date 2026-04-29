@@ -312,12 +312,12 @@ export function MarketCard(props: MarketCardProps) {
   if (!market) {
     return (
       <div className="rounded-lg overflow-hidden border border-gray-200 bg-white">
-        <div className="px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578] flex items-center justify-between gap-2">
-          <h3 className="min-w-0 font-bold text-white text-sm sm:text-base leading-tight flex items-center gap-1.5 flex-1">
+        <div className="px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)] flex items-center justify-between gap-2">
+          <h3 className="min-w-0 font-bold text-[var(--header-text)] text-sm sm:text-base leading-tight flex items-center gap-1.5 flex-1">
             {headerPrefix}
             <span className="flex-1 break-words">{fallbackName ?? "Market"}</span>
           </h3>
-          <span className="shrink-0 text-white/70 text-xs sm:text-sm whitespace-nowrap">
+          <span className="shrink-0 text-[var(--header-text)]/70 text-xs sm:text-sm whitespace-nowrap">
             Min: {fallbackMinBet ?? "-"} | Max: {fallbackMaxBet ?? "-"}
           </span>
         </div>
@@ -355,14 +355,14 @@ export function MarketCard(props: MarketCardProps) {
   if (layout === "standard") {
     return (
       <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
-        <div className="flex items-center justify-between gap-2 px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578]">
-          <h3 className="min-w-0 font-bold text-white text-sm sm:text-base leading-tight flex items-center gap-1.5 flex-1">
+        <div className="flex items-center justify-between gap-2 px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)]">
+          <h3 className="min-w-0 font-bold text-[var(--header-text)] text-sm sm:text-base leading-tight flex items-center gap-1.5 flex-1">
             {headerPrefix}
             <span className="flex-1 break-words">
               {titleOverride ?? market.marketName ?? fallbackName}
             </span>
           </h3>
-          <div className="shrink-0 text-white/70 text-xs sm:text-sm hidden md:flex items-center gap-x-1">
+          <div className="shrink-0 text-[var(--header-text)]/70 text-xs sm:text-sm hidden md:flex items-center gap-x-1">
             <span>
               Min: {minBet} / Max: {maxBet}
             </span>
@@ -530,14 +530,14 @@ export function MarketCard(props: MarketCardProps) {
   if (layout === "team-binary") {
     return (
       <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
-        <div className="flex items-center justify-between gap-2 px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578]">
-          <h3 className="min-w-0 font-bold text-white text-sm sm:text-base leading-tight flex items-center gap-1.5 flex-1">
+        <div className="flex items-center justify-between gap-2 px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)]">
+          <h3 className="min-w-0 font-bold text-[var(--header-text)] text-sm sm:text-base leading-tight flex items-center gap-1.5 flex-1">
             {headerPrefix}
             <span className="flex-1 break-words">
               {titleOverride ?? market.marketName ?? fallbackName}
             </span>
           </h3>
-          <p className="shrink-0 text-white/70 text-xs sm:text-sm leading-tight hidden md:block">
+          <p className="shrink-0 text-[var(--header-text)]/70 text-xs sm:text-sm leading-tight hidden md:block">
             Min: {minBet} / Max: {maxBet}
           </p>
         </div>
@@ -643,14 +643,14 @@ export function MarketCard(props: MarketCardProps) {
 
   // ── Shared ADV header ────────────────────────────────────────────────
   const advHeader = (
-    <div className="px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578] flex items-center justify-between gap-2">
-      <h3 className="min-w-0 font-bold text-white text-sm sm:text-base leading-tight flex items-center gap-1.5 flex-1">
+    <div className="px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)] flex items-center justify-between gap-2">
+      <h3 className="min-w-0 font-bold text-[var(--header-text)] text-sm sm:text-base leading-tight flex items-center gap-1.5 flex-1">
         {headerPrefix}
         <span className="flex-1 break-words">
           {titleOverride ?? market.marketName ?? fallbackName}
         </span>
       </h3>
-      <span className="shrink-0 text-white/70 text-xs sm:text-sm whitespace-nowrap">
+      <span className="shrink-0 text-[var(--header-text)]/70 text-xs sm:text-sm whitespace-nowrap">
         Min: {minBet} | Max: {maxBet}
       </span>
     </div>
@@ -771,7 +771,7 @@ export function MarketCard(props: MarketCardProps) {
                       onClick={() =>
                         rawPrice != null && handleBackClick(market, runner, rawPrice, null, 0, true)
                       }
-                      className="w-9 h-9 rounded-full bg-[#142669] hover:bg-[#142669] text-white font-bold text-sm flex items-center justify-center shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-9 h-9 rounded-full bg-[var(--header-primary)] hover:bg-[var(--header-primary)] text-[var(--header-text)] font-bold text-sm flex items-center justify-center shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {runner.name}
                     </button>
@@ -803,8 +803,8 @@ export function MarketCard(props: MarketCardProps) {
 
     return (
       <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
-        <div className="flex items-center justify-between gap-2 px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-gradient-to-r from-[#142969] to-[#1a3578]">
-          <h3 className="min-w-0 font-bold text-white text-sm sm:text-base leading-tight flex items-center gap-1.5 flex-1">
+        <div className="flex items-center justify-between gap-2 px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)]">
+          <h3 className="min-w-0 font-bold text-[var(--header-text)] text-sm sm:text-base leading-tight flex items-center gap-1.5 flex-1">
             {headerPrefix}
             <span className="flex-1 break-words">
               {titleOverride ?? market.marketName ?? fallbackName}

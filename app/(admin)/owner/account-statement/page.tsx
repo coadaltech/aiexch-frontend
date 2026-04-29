@@ -160,7 +160,7 @@ export default function OwnerAccountStatement() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm border-collapse min-w-[820px]">
                   <thead>
-                    <tr className="bg-[#142969] text-white text-[12px] font-bold uppercase tracking-wide">
+                    <tr className="bg-[var(--header-primary)] text-[var(--header-text)] text-[12px] font-bold uppercase tracking-wide">
                       <th className="px-3 py-2 text-left">Date</th>
                       <th className="px-3 py-2 text-right">Credit</th>
                       <th className="px-3 py-2 text-right">Debit</th>
