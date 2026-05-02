@@ -95,12 +95,21 @@ export default function MultimarketPage() {
       betDelayTimerRef.current = null;
     }
     setBetDelayRemaining(0);
+    // CRITICAL: resolve the pending Promise BEFORE nulling the ref, otherwise
+    // the awaiter in handleQuickBetPlace hangs forever, the finally never runs,
+    // and placeInFlightRef stays true → all subsequent place-bet clicks are
+    // silently dropped until the user refreshes the page.
+    const resolvePending = betDelayResolveRef.current;
     betDelayResolveRef.current = null;
+    if (resolvePending) resolvePending();
     setIsPlacing(false);
   }, []);
 
+  // Skip auto-close while a placement is in flight — see same comment on the
+  // matchId page. Closing here orphans placeInFlightRef and silently swallows
+  // the user's next click.
   useEffect(() => {
-    if (!quickBet) return;
+    if (!quickBet || isPlacing) return;
     const liveMarket = oddsByMarketId[quickBet.marketId];
     if (!liveMarket) return;
     if (liveMarket.status === "SUSPENDED" || liveMarket.sportingEvent) {
@@ -110,30 +119,7 @@ export default function MultimarketPage() {
       setQuickBetStake("");
       toast.error(`Bet panel closed — ${reason}`);
     }
-  }, [oddsByMarketId, quickBet, cancelBetDelay]);
-
-  // Fancy/LINE markets only: close the panel as soon as the live line at the
-  // clicked slot drifts away from the value the user clicked on.
-  useEffect(() => {
-    if (!quickBet || quickBet.bettingType !== "LINE") return;
-    const liveMarket = oddsByMarketId[quickBet.marketId];
-    if (!liveMarket) return;
-    const liveRunner = liveMarket.runners?.find(
-      (r: any) => r.selectionId?.toString() === quickBet.runner.selectionId?.toString(),
-    );
-    if (!liveRunner) return;
-    const slot = (quickBet.isLay ? liveRunner.lay : liveRunner.back)?.[quickBet.priceIndex];
-    if (!slot) return;
-    const liveLine = String(slot.line ?? slot.price ?? "");
-    const originalRun = quickBet.run != null ? String(quickBet.run) : "";
-    if (!liveLine || !originalRun) return;
-    if (liveLine !== originalRun) {
-      cancelBetDelay();
-      setQuickBet(null);
-      setQuickBetStake("");
-      toast.error("Bet panel closed — fancy odds changed");
-    }
-  }, [oddsByMarketId, quickBet, cancelBetDelay]);
+  }, [oddsByMarketId, quickBet, cancelBetDelay, isPlacing]);
 
   useEffect(() => {
     if (!quickBet || isPlacing) return;
@@ -515,6 +501,11 @@ export default function MultimarketPage() {
       if (placeInFlightRef.current) return;
       placeInFlightRef.current = true;
       let placementHandedOff = false;
+      // Set true once we cross setIsPlacing(true). Pre-flight returns leave
+      // the panel open; anything past that point must always reset isPlacing
+      // even if executeBetPlacement throws — otherwise the place-bet button
+      // gets stuck on "Placing..." until refresh.
+      let placementStarted = false;
       try {
       const { market, runner, isLay } = quickBet;
       const oddsValue = odds || quickBet.odds;
@@ -523,19 +514,6 @@ export default function MultimarketPage() {
       const preCheck = isMarketBlocked(market.marketId);
       if (preCheck.blocked) {
         toast.error(`Cannot place bet — ${preCheck.reason}`);
-        handleQuickBetClose();
-        return;
-      }
-
-      const livePriceNow = getLivePrice(
-        market.marketId,
-        runner.selectionId?.toString() ?? "",
-        isLay,
-        quickBet.priceIndex,
-        quickBet.isRawOdds,
-      );
-      if (livePriceNow !== null && livePriceNow !== oddsValue) {
-        toast.error(`Price changed from ${oddsValue} to ${livePriceNow}. Please try again.`);
         handleQuickBetClose();
         return;
       }
@@ -612,6 +590,7 @@ export default function MultimarketPage() {
 
       const betDelay = parseFloat(market?.marketCondition?.betDelay) || 0;
       setIsPlacing(true);
+      placementStarted = true;
 
       if (betDelay > 0) {
         const selId = runner.selectionId?.toString() ?? "";
@@ -672,13 +651,24 @@ export default function MultimarketPage() {
         return;
       }
 
-      await executeBetPlacement(quickBet, stake, oddsValue);
-      setIsPlacing(false);
-      handleQuickBetClose();
+      try {
+        await executeBetPlacement(quickBet, stake, oddsValue);
+      } catch (e) {
+        console.error("Bet placement threw unexpectedly:", e);
+        toast.error("Failed to place bet. Please try again.");
+      }
       } finally {
         // Delay path hands the lock off to the deferred placement's .finally();
-        // every other exit path resets it here.
-        if (!placementHandedOff) placeInFlightRef.current = false;
+        // every other exit path resets here. Cleanup MUST run even if
+        // executeBetPlacement throws, otherwise isPlacing stays true and the
+        // place-bet button stays disabled on "Placing..." until refresh.
+        if (!placementHandedOff) {
+          if (placementStarted) {
+            setIsPlacing(false);
+            handleQuickBetClose();
+          }
+          placeInFlightRef.current = false;
+        }
       }
     },
     [

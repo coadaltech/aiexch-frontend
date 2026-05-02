@@ -95,7 +95,7 @@ function normalizeSessions(sessions: any[]): any[] {
       const isBallRunning = s.GameStatus === "Ball Running" || s.GameStatus === "BALL RUNNING" || s.ballsess === 1;
       const st = isSuspended || isBallRunning ? "SUSPENDED" : "OPEN";
       return {
-        marketId: `session-${s.SelectionId}`,
+        marketId: String(s.SelectionId),
         marketName: s.RunnerName,
         bettingType: "LINE",
         status: st,

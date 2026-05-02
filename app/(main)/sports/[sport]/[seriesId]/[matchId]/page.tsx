@@ -171,14 +171,14 @@ export default function MatchPage() {
         else if (isBallRunning) st = "SUSPENDED";
 
         return {
-          marketId: `session-${s.SelectionId}`,
+          marketId: String(s.SelectionId),
           marketName: s.RunnerName,
           marketType: "SESSION",
           status: st,
           inPlay: true,
           bettingType: "LINE",
           marketCondition: {
-            marketId: `session-${s.SelectionId}`,
+            marketId: String(s.SelectionId),
             betDelay: 0,
             minBet: parseFloat(s.min || "100"),
             maxBet: parseFloat(s.max || "25000"),
@@ -346,12 +346,22 @@ export default function MatchPage() {
       betDelayTimerRef.current = null;
     }
     setBetDelayRemaining(0);
+    // CRITICAL: resolve the pending Promise BEFORE nulling the ref. If we
+    // null without resolving, the `await new Promise(...)` in handleQuickBetPlace
+    // hangs forever — its finally never runs — and placeInFlightRef stays true,
+    // so every subsequent click on Place Bet silently returns until refresh.
+    const resolvePending = betDelayResolveRef.current;
     betDelayResolveRef.current = null;
+    if (resolvePending) resolvePending();
     setIsPlacing(false);
   }, []);
-  // Auto-close QuickBetPanel if the selected market becomes suspended or ball-running
+  // Auto-close QuickBetPanel if the selected market becomes suspended or ball-running.
+  // Skip while a placement is in flight — the in-flight call's own pre-flight or
+  // backend response will reject the bet and close the panel through the normal
+  // flow, which also releases placeInFlightRef. Closing here would orphan the
+  // in-flight ref and silently swallow the user's next click.
   useEffect(() => {
-    if (!quickBet) return;
+    if (!quickBet || isPlacing) return;
     const liveMarket = markets.find((m: any) => m.marketId === quickBet.marketId);
     if (!liveMarket) return;
     if (liveMarket.status === "SUSPENDED" || liveMarket.sportingEvent) {
@@ -361,32 +371,7 @@ export default function MatchPage() {
       setQuickBetStake("");
       toast.error(`Bet panel closed — ${reason}`);
     }
-  }, [markets, quickBet, cancelBetDelay]);
-
-  // Fancy/LINE markets only: close the panel as soon as the live line at the
-  // clicked slot drifts away from the value the user clicked on. Fancy odds
-  // tick rapidly, and a stake input that re-renders under the user's finger
-  // is worse than just asking them to click again.
-  useEffect(() => {
-    if (!quickBet || quickBet.bettingType !== "LINE") return;
-    const liveMarket = markets.find((m: any) => m.marketId === quickBet.marketId);
-    if (!liveMarket) return;
-    const liveRunner = liveMarket.runners?.find(
-      (r: any) => r.selectionId?.toString() === quickBet.runner.selectionId?.toString()
-    );
-    if (!liveRunner) return;
-    const slot = (quickBet.isLay ? liveRunner.lay : liveRunner.back)?.[quickBet.priceIndex];
-    if (!slot) return;
-    const liveLine = String(slot.line ?? slot.price ?? "");
-    const originalRun = quickBet.run != null ? String(quickBet.run) : "";
-    if (!liveLine || !originalRun) return;
-    if (liveLine !== originalRun) {
-      cancelBetDelay();
-      setQuickBet(null);
-      setQuickBetStake("");
-      toast.error("Bet panel closed — fancy odds changed");
-    }
-  }, [markets, quickBet, cancelBetDelay]);
+  }, [markets, quickBet, cancelBetDelay, isPlacing]);
 
   // Auto-close QuickBetPanel after 4s of no stake interaction
   useEffect(() => {
@@ -711,14 +696,7 @@ export default function MatchPage() {
         }
       }
 
-      // Final pre-placement check: price change on the exact slot user clicked
       const selId = runner.selectionId?.toString() ?? "";
-      const currentPrice = getLivePrice(market.marketId, selId, isLay, qb.priceIndex, qb.isRawOdds);
-      if (currentPrice !== null && currentPrice !== oddsValue) {
-        toast.error(`Bet cancelled — price changed from ${oddsValue} to ${currentPrice}`);
-        return;
-      }
-
       const marketName = market?.marketName || "";
       const runnerName = runner?.name || "";
       const stakeNum = parseFloat(stakeStr);
@@ -864,8 +842,14 @@ export default function MatchPage() {
     if (placeInFlightRef.current) return;
     placeInFlightRef.current = true;
     let placementHandedOff = false;
+    // Tracks whether we crossed the setIsPlacing(true) boundary. Pre-flight
+    // returns (min/max/limit) leave the panel open so the user can adjust
+    // stake, but anything past this point must always reset isPlacing and
+    // close the panel — even if executeBetPlacement throws — otherwise the
+    // place-bet button gets stuck on "Placing..." until a refresh.
+    let placementStarted = false;
     try {
-    const { market, runner, isLay } = quickBet;
+    const { market } = quickBet;
     const oddsValue = odds || quickBet.odds;
     const stakeNum = parseFloat(stake);
 
@@ -873,14 +857,6 @@ export default function MatchPage() {
     const preCheck = isMarketBlocked(market.marketId);
     if (preCheck.blocked) {
       toast.error(`Cannot place bet — ${preCheck.reason}`);
-      handleQuickBetClose();
-      return;
-    }
-
-    // Pre-flight: check if price has changed since panel was opened
-    const livePriceNow = getLivePrice(market.marketId, runner.selectionId?.toString() ?? "", isLay, quickBet.priceIndex, quickBet.isRawOdds);
-    if (livePriceNow !== null && livePriceNow !== oddsValue) {
-      toast.error(`Price changed from ${oddsValue} to ${livePriceNow}. Please try again.`);
       handleQuickBetClose();
       return;
     }
@@ -970,10 +946,10 @@ export default function MatchPage() {
     const betDelay = parseFloat(market?.marketCondition?.betDelay) || 0;
 
     setIsPlacing(true);
+    placementStarted = true;
 
     // If betDelay > 0, start countdown and monitor for price changes
     if (betDelay > 0) {
-      const selId = runner.selectionId?.toString() ?? "";
       const mktId = market.marketId;
       let remaining = Math.ceil(betDelay);
       setBetDelayRemaining(remaining);
@@ -1018,23 +994,6 @@ export default function MatchPage() {
             return;
           }
 
-          // Check if price changed during delay
-          const currentPrice = getLivePrice(mktId, selId, isLay, qbSnapshot.priceIndex);
-          if (currentPrice !== null && currentPrice !== oddsSnapshot) {
-            // Price changed — cancel the bet
-            if (betDelayTimerRef.current)
-              clearInterval(betDelayTimerRef.current);
-            betDelayTimerRef.current = null;
-            setBetDelayRemaining(0);
-            setIsPlacing(false);
-            betDelayResolveRef.current = null;
-            toast.error(
-              `Bet cancelled — price changed from ${oddsSnapshot} to ${currentPrice}`
-            );
-            resolve();
-            return;
-          }
-
           if (remaining <= 0) {
             // Delay complete, price unchanged — proceed with placement
             if (betDelayTimerRef.current)
@@ -1058,14 +1017,29 @@ export default function MatchPage() {
       return;
     }
 
-    // No delay — place immediately
-    await executeBetPlacement(quickBet, stake, oddsValue);
-    setIsPlacing(false);
-    handleQuickBetClose();
+    // No delay — place immediately. The catch is defensive: executeBetPlacement
+    // already swallows API errors with toasts, but if anything synchronous
+    // upstream throws (e.g. a runtime error in addToBetSlip or runner mapping)
+    // we still want the finally to run cleanly without an uncaught rejection.
+    try {
+      await executeBetPlacement(quickBet, stake, oddsValue);
+    } catch (e) {
+      console.error("Bet placement threw unexpectedly:", e);
+      toast.error("Failed to place bet. Please try again.");
+    }
     } finally {
-      // For the delay path we hand the lock off to the deferred placement's
-      // .finally() — otherwise reset it here so future clicks can proceed.
-      if (!placementHandedOff) placeInFlightRef.current = false;
+      // The delay path hands the lock off to the deferred placement's
+      // .finally() — skip cleanup here in that case.
+      if (!placementHandedOff) {
+        // Only reset isPlacing/close panel if we actually started placing.
+        // Pre-flight returns (min/max/limit) intentionally leave the panel
+        // open so the user can adjust stake.
+        if (placementStarted) {
+          setIsPlacing(false);
+          handleQuickBetClose();
+        }
+        placeInFlightRef.current = false;
+      }
     }
   };
 
