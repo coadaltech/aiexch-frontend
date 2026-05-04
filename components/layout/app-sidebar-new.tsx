@@ -62,6 +62,7 @@ const SPECIAL_SPORT_HREFS: Record<string, string> = {
   "1002": "/lotry",
   "1003": "/skil-games",
   "1004": "/jambo",
+  "1005": "/kalyan-new",
 };
 
 // Helper: Get menu groups

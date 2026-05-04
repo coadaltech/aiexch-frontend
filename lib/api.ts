@@ -506,6 +506,20 @@ export const ownerApi = {
   reorderJamboShifts: (orders: { id: string; shiftOrder: number }[]) =>
     api.put("/owner/jambo/shifts/reorder", { orders }),
 
+  // Kalyan-New Shifts (sport_type=1005, 6 rate buckets + closing time)
+  getKalyanNewShifts: (date?: string) =>
+    api.get(`/owner/kalyan-new/shifts${date ? `?date=${date}` : ""}`),
+  createKalyanNewShift: (data: any) =>
+    api.post("/owner/kalyan-new/shifts", data),
+  updateKalyanNewShift: (id: string, data: any) =>
+    api.put(`/owner/kalyan-new/shifts/${id}`, data),
+  deleteKalyanNewShift: (id: string) =>
+    api.delete(`/owner/kalyan-new/shifts/${id}`),
+  getKalyanNewJantri: (shiftId: string) =>
+    api.get(`/owner/kalyan-new/shifts/${shiftId}/jantri`),
+  reorderKalyanNewShifts: (orders: { id: string; shiftOrder: number }[]) =>
+    api.put("/owner/kalyan-new/shifts/reorder", { orders }),
+
   // Matka Live Prediction
   getMatkaLivePrediction: (shiftId: string) =>
     api.get(`/owner/matka/live-prediction/${shiftId}`),
@@ -744,6 +758,30 @@ export const sportsApi = {
     api.post(`/sports/matchDetails/${eventTypeId}/${eventId}`),
   getNewResult: (eventId: string) =>
     api.get(`/sports/new-result/${eventId}`),
+};
+
+export const kalyanNewApi = {
+  getShifts: (date?: string) =>
+    api.get(`/kalyan-new/shifts${date ? `?date=${date}` : ""}`),
+  getShift: (id: string) => api.get(`/kalyan-new/shifts/${id}`),
+  getJantri: (shiftId: string) =>
+    api.get(`/kalyan-new/shifts/${shiftId}/jantri`),
+  placeBet: (data: {
+    shiftId: string;
+    bets: { number: string; numberType: number; amount: number }[];
+    copyReferenceShiftId?: string;
+    whitelabelId?: string;
+  }) => api.post("/kalyan-new/place", data),
+  getMyBets: (params?: { shiftId?: string; status?: "active" | "inactive" }) => {
+    const qs = new URLSearchParams();
+    if (params?.shiftId) qs.set("shiftId", params.shiftId);
+    if (params?.status) qs.set("status", params.status);
+    const query = qs.toString();
+    return api.get(`/kalyan-new/my-bets${query ? `?${query}` : ""}`);
+  },
+  getTransaction: (id: string) => api.get(`/kalyan-new/transactions/${id}`),
+  deleteTransaction: (id: string) =>
+    api.delete(`/kalyan-new/transactions/${id}`),
 };
 
 export const jamboApi = {

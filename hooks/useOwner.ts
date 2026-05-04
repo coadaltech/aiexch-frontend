@@ -1357,3 +1357,61 @@ export const useReorderJamboShifts = () => {
     onError: () => toast.error("Failed to reorder shifts"),
   });
 };
+
+// ── Kalyan-New Shifts (owner) ───────────────────────────────────────────────
+export const useOwnerKalyanNewShifts = (date?: string) => {
+  return useQuery({
+    queryKey: ["owner-kalyan-new-shifts", date],
+    queryFn: () =>
+      ownerApi.getKalyanNewShifts(date).then((res) => res.data.data),
+  });
+};
+
+export const useCreateKalyanNewShift = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: any) => ownerApi.createKalyanNewShift(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["owner-kalyan-new-shifts"] });
+      toast.success("Shift created successfully");
+    },
+    onError: () => toast.error("Failed to create shift"),
+  });
+};
+
+export const useUpdateKalyanNewShift = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...data }: any) =>
+      ownerApi.updateKalyanNewShift(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["owner-kalyan-new-shifts"] });
+      toast.success("Shift updated successfully");
+    },
+    onError: () => toast.error("Failed to update shift"),
+  });
+};
+
+export const useDeleteKalyanNewShift = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => ownerApi.deleteKalyanNewShift(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["owner-kalyan-new-shifts"] });
+      toast.success("Shift deleted successfully");
+    },
+    onError: () => toast.error("Failed to delete shift"),
+  });
+};
+
+export const useReorderKalyanNewShifts = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (orders: { id: string; shiftOrder: number }[]) =>
+      ownerApi.reorderKalyanNewShifts(orders),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["owner-kalyan-new-shifts"] });
+    },
+    onError: () => toast.error("Failed to reorder shifts"),
+  });
+};

@@ -6,6 +6,7 @@ import { usePanelPrefix } from "@/hooks/usePanelPrefix";
 
 const MATKA_SPORT_ID = 1001;
 const JAMBO_SPORT_ID = 1004;
+const KALYAN_NEW_SPORT_ID = 1005;
 
 interface Sport {
   id: number;
@@ -74,6 +75,8 @@ export default function SportsPage() {
       router.push(`${panelPrefix}/matka`);
     } else if (sport.id === JAMBO_SPORT_ID) {
       router.push(`${panelPrefix}/jambo`);
+    } else if (sport.id === KALYAN_NEW_SPORT_ID) {
+      router.push(`${panelPrefix}/kalyan-new`);
     } else {
       router.push(`${panelPrefix}/sports-games/competitions/${sport.id}`);
     }
