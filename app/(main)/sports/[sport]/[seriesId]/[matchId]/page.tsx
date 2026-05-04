@@ -223,10 +223,22 @@ export default function MatchPage() {
       sessionMarkets = normalizeSessions(initialData.sessions || []);
     }
 
+    // Pin MATCH_ODDS / WINNING_ODDS to the top of the odds group — backends
+    // (e.g. Betfair football) sometimes return Over/Under before Match Odds,
+    // but users always expect Match Odds first, then other odds, then bookmaker.
+    const isMatchOdds = (m: any) => {
+      const t = String(m?.marketType || "").toUpperCase();
+      return t === "MATCH_ODDS" || t === "WINNING_ODDS";
+    };
+    const sortedMatchOdds = [
+      ...matchOdds.filter(isMatchOdds),
+      ...matchOdds.filter((m: any) => !isMatchOdds(m)),
+    ];
+
     // Deduplicate by marketId
-    const seenIds = new Set(matchOdds.map((m: any) => m.marketId));
+    const seenIds = new Set(sortedMatchOdds.map((m: any) => m.marketId));
     const deduped = [
-      ...matchOdds,
+      ...sortedMatchOdds,
       ...bookmakerMarkets.filter((m: any) => !seenIds.has(m.marketId)),
       ...sessionMarkets,
     ];
