@@ -796,3 +796,17 @@ th {
     background: oklch(1 0 0) !important;
   }
 }
+
+/* Sonner: slide right-anchored toasts in horizontally instead of vertically.
+   Default sonner uses translateY for entry/exit; override --y so the toast
+   travels along the X axis when the toaster is positioned on the right. */
+[data-sonner-toaster][data-x-position="right"] [data-sonner-toast] {
+  --y: translateX(calc(100% + var(--offset-right, 16px)));
+}
+[data-sonner-toaster][data-x-position="right"] [data-sonner-toast][data-mounted="true"] {
+  --y: translateX(0);
+}
+[data-sonner-toaster][data-x-position="right"] [data-sonner-toast][data-removed="true"] {
+  --y: translateX(calc(100% + var(--offset-right, 16px)));
+  opacity: 0;
+}
