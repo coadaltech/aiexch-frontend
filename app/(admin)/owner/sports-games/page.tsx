@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ownerApi } from "@/lib/api";
 import { usePanelPrefix } from "@/hooks/usePanelPrefix";
+import { Switch } from "@/components/ui/switch";
 
 const MATKA_SPORT_ID = 1001;
 const JAMBO_SPORT_ID = 1004;
@@ -14,6 +15,8 @@ interface Sport {
   totalCompetitions: number;
   isActive: boolean;
   is_active?: boolean;
+  isLive: boolean;
+  is_live?: boolean;
   sort_order: number;
 }
 
@@ -25,6 +28,7 @@ export default function SportsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [togglingId, setTogglingId] = useState<number | null>(null);
+  const [togglingLiveId, setTogglingLiveId] = useState<number | null>(null);
 
   // Drag state
   const dragIndexRef = useRef<number | null>(null);
@@ -53,6 +57,7 @@ export default function SportsPage() {
         const list: Sport[] = raw.map((s: any) => ({
           ...s,
           isActive: s.isActive ?? s.is_active ?? false,
+          isLive: s.isLive ?? s.is_live ?? true,
         }));
         // Already sorted by sort_order from backend; ensure stable display
         setSports(list);
@@ -156,6 +161,35 @@ export default function SportsPage() {
     }
   };
 
+  const handleToggleLive = async (
+    e: React.MouseEvent,
+    sport: Sport,
+  ) => {
+    e.stopPropagation();
+    if (togglingLiveId !== null) return;
+    const nextLive = !sport.isLive;
+    setTogglingLiveId(sport.id);
+    setSports((prev) =>
+      prev.map((s) =>
+        s.id === sport.id ? { ...s, isLive: nextLive, is_live: nextLive } : s,
+      ),
+    );
+    try {
+      await ownerApi.toggleSportLive(sport.id, nextLive);
+    } catch (err) {
+      console.error("Failed to toggle sport live state:", err);
+      setSports((prev) =>
+        prev.map((s) =>
+          s.id === sport.id
+            ? { ...s, isLive: sport.isLive, is_live: sport.isLive }
+            : s,
+        ),
+      );
+    } finally {
+      setTogglingLiveId(null);
+    }
+  };
+
   const saveOrder = async (ordered: Sport[]) => {
     setSaving(true);
     try {
@@ -190,7 +224,14 @@ export default function SportsPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-800">Sports Games</h1>
             <p className="text-gray-600 mt-1">
-              Drag rows to reorder • click to manage competitions
+              Drag rows to reorder • click a row to manage competitions
+            </p>
+            <p className="text-gray-500 text-xs mt-1">
+              <span className="font-medium text-gray-700">Visible</span>: show
+              the sport in the sidebar &amp; header.
+              <span className="mx-2">·</span>
+              <span className="font-medium text-gray-700">Live</span>: when off,
+              the sport stays in nav but its page shows a Coming Soon banner.
             </p>
           </div>
           {saving && (
@@ -248,37 +289,56 @@ export default function SportsPage() {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`px-3 py-1 rounded-full text-sm ${
-                      sport.isActive
-                        ? "bg-green-100 text-green-800"
-                        : "bg-gray-100 text-gray-800"
-                    }`}
-                  >
-                    {sport.isActive ? "Active" : "Inactive"}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={(e) => handleToggleActive(e, sport)}
-                    disabled={togglingId === sport.id}
+                <div
+                  className="flex items-center gap-5"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <label
                     title={
                       sport.isActive
-                        ? "Click to hide this sport across the site"
-                        : "Click to show this sport across the site"
+                        ? "Visible across the site. Toggle off to hide everywhere."
+                        : "Hidden everywhere. Toggle on to show across the site."
                     }
-                    className={`px-3 py-1 rounded-md text-sm font-medium border transition-colors disabled:opacity-60 disabled:cursor-wait ${
-                      sport.isActive
-                        ? "bg-white border-red-300 text-red-600 hover:bg-red-50"
-                        : "bg-white border-green-300 text-green-700 hover:bg-green-50"
-                    }`}
+                    className="flex items-center gap-2 cursor-pointer select-none"
                   >
-                    {togglingId === sport.id
-                      ? "Saving…"
-                      : sport.isActive
-                        ? "Deactivate"
-                        : "Activate"}
-                  </button>
+                    <span className="text-xs font-medium text-gray-700 w-12 text-right">
+                      Visible
+                    </span>
+                    <Switch
+                      checked={sport.isActive}
+                      disabled={togglingId === sport.id}
+                      onCheckedChange={() =>
+                        handleToggleActive(
+                          { stopPropagation: () => {} } as React.MouseEvent,
+                          sport,
+                        )
+                      }
+                      className="data-[state=checked]:bg-green-500"
+                    />
+                  </label>
+                  <label
+                    title={
+                      sport.isLive
+                        ? "Showing live content. Toggle off to display Coming Soon."
+                        : "Showing Coming Soon. Toggle on to display live content."
+                    }
+                    className="flex items-center gap-2 cursor-pointer select-none"
+                  >
+                    <span className="text-xs font-medium text-gray-700 w-12 text-right">
+                      Live
+                    </span>
+                    <Switch
+                      checked={sport.isLive}
+                      disabled={togglingLiveId === sport.id}
+                      onCheckedChange={() =>
+                        handleToggleLive(
+                          { stopPropagation: () => {} } as React.MouseEvent,
+                          sport,
+                        )
+                      }
+                      className="data-[state=checked]:bg-blue-500"
+                    />
+                  </label>
                   <svg
                     className="w-5 h-5 text-gray-400"
                     fill="none"
@@ -334,6 +394,12 @@ export default function SportsPage() {
               <p className="text-sm text-gray-600">Active Sports</p>
               <p className="text-2xl font-bold text-green-600">
                 {sports.filter((s) => s.isActive).length}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Live Sports</p>
+              <p className="text-2xl font-bold text-blue-600">
+                {sports.filter((s) => s.isLive).length}
               </p>
             </div>
           </div>

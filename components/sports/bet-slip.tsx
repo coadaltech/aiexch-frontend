@@ -24,7 +24,7 @@ export function BetSlip({ matchId, allBetsOnly = false }: { matchId: string; all
     if (allBetsOnly) {
       return (
         <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5 mb-2 flex-shrink-0">
-          <div className="flex-1 text-sm font-bold py-2 rounded-md bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)] shadow-sm text-center">
+          <div className="flex-1 text-base font-bold py-2 rounded-md bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)] shadow-sm text-center">
             All Bets ({allBets.length})
           </div>
         </div>
@@ -34,7 +34,7 @@ export function BetSlip({ matchId, allBetsOnly = false }: { matchId: string; all
       <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5 mb-2 flex-shrink-0">
         <button
           onClick={() => setActiveTab("match")}
-          className={`flex-1 text-sm font-bold py-2 rounded-md transition-all cursor-pointer ${
+          className={`flex-1 text-base font-bold py-2 rounded-md transition-all cursor-pointer ${
             activeTab === "match"
               ? "bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)] shadow-sm"
               : "text-gray-500 hover:text-gray-800"
@@ -44,7 +44,7 @@ export function BetSlip({ matchId, allBetsOnly = false }: { matchId: string; all
         </button>
         <button
           onClick={() => setActiveTab("all")}
-          className={`flex-1 text-sm font-bold py-2 rounded-md transition-all cursor-pointer ${
+          className={`flex-1 text-base font-bold py-2 rounded-md transition-all cursor-pointer ${
             activeTab === "all"
               ? "bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)] shadow-sm"
               : "text-gray-500 hover:text-gray-800"
@@ -76,9 +76,9 @@ export function BetSlip({ matchId, allBetsOnly = false }: { matchId: string; all
         <table className="w-full text-base border-collapse table-fixed">
           <thead className="sticky top-0 z-10">
             <tr className="bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)] font-bold">
-              <th className="text-left py-2.5 px-3 w-auto text-sm">Matched Bet</th>
-              <th className="text-center py-2.5 px-1 w-16 text-sm">Odds</th>
-              <th className="text-right py-2.5 px-3 w-20 text-sm">Stake</th>
+              <th className="text-left py-2.5 px-3 w-auto text-base">Matched Bet</th>
+              <th className="text-center py-2.5 px-1 w-16 text-base">Odds</th>
+              <th className="text-right py-2.5 px-3 w-20 text-base">Stake</th>
             </tr>
           </thead>
           <tbody>
@@ -155,7 +155,16 @@ function CurrentBetTableRow({ bet }: { bet: any }) {
     const decimals = str.includes(".") ? str.split(".")[1].length : 0;
     return decimals > 4 ? num.toFixed(4) : str;
   };
-  const oddsFormatted = bet.odds != null ? capDecimals(Number(bet.odds)) : "-";
+  // Match the on-page (Indian) format the user clicked. Match-odds families
+  // are stored in the same decimal form they're displayed in (e.g. 1.78), so
+  // pass-through. Bookmaker prices get divided by 100 at place-time
+  // (see toDecimalOdds), so multiply back by 100 here to recover the page
+  // value (78). Fancy already shows the line/run, not the price.
+  const isBookmaker = bet.marketType === "bookmaker";
+  const oddsFormatted =
+    bet.odds == null
+      ? "-"
+      : capDecimals(isBookmaker ? Number(bet.odds) * 100 : Number(bet.odds));
   const matchedBetLabel = isFancy
     ? `${bet.marketName || bet.selectionName || "Bet"} / ${capDecimals(Number(bet.odds) * 100)}`
     : bet.selectionName && bet.marketName
@@ -172,9 +181,9 @@ function CurrentBetTableRow({ bet }: { bet: any }) {
 
   return (
     <tr className={rowBg + " border-b border-gray-200"} >
-      <td className="py-2 px-2 text-left text-xs truncate max-w-0" title={matchedBetLabel}>{matchedBetLabel}</td>
-      <td className="py-2 px-1 text-center text-xs font-medium">{isFancy ? lineFormatted : oddsFormatted}</td>
-      <td className="py-2 px-2 text-right text-xs font-medium">{stakeFormatted}</td>
+      <td className="py-2 px-2 text-left text-sm truncate max-w-0" title={matchedBetLabel}>{matchedBetLabel}</td>
+      <td className="py-2 px-1 text-center text-sm font-medium">{isFancy ? lineFormatted : oddsFormatted}</td>
+      <td className="py-2 px-2 text-right text-sm font-medium">{stakeFormatted}</td>
     </tr>
   );
 }

@@ -15,8 +15,8 @@ import {
 
 const oddsBtnClass =
   "flex-1 min-w-0 px-1 py-1 flex flex-col items-center justify-center rounded-md cursor-pointer leading-tight transition-all duration-150";
-const oddsPriceClass = "text-gray-900 font-bold text-sm sm:text-base";
-const oddsSizeClass = "text-gray-900 font-bold text-[11px] sm:text-[13px]";
+const oddsPriceClass = "text-gray-900 font-bold text-base sm:text-lg";
+const oddsSizeClass = "text-gray-900 font-bold text-[12px] sm:text-[14px]";
 
 function formatOddsPrice(price: number | string | null | undefined): string {
   if (price == null) return "0";

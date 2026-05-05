@@ -34,6 +34,7 @@ import { publicApi } from "@/lib/api";
 import Dropheader from "./dropheader";
 import { isPanelPath } from "@/lib/panel-utils";
 import { SPORT_ROUTES } from "@/lib/sports-config";
+import { useSportsList } from "@/hooks/useSportsList";
 
 // Sport link mapping derived from shared config
 const SPORT_LINK_MAPPING: Record<string, { basePath: string; eventTypeId: string }> =
@@ -50,6 +51,7 @@ const SPECIAL_SPORT_HREFS: Record<string, string> = {
   "1002": "/lotry",
   "1003": "/skil-games",
   "1004": "/jambo",
+  "1005": "/kalyan-new",
 };
 
 const rightMenu = [
@@ -65,7 +67,10 @@ export default function Header() {
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [isExposureModalOpen, setIsExposureModalOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
-  const [sports, setSports] = useState<{ label: string; link: string }[]>([]);
+  const [sports, setSports] = useState<
+    { label: string; link: string; isLive: boolean; eventTypeId: string }[]
+  >([]);
+  const { data: sportsListData } = useSportsList();
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const userDropdownCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -101,29 +106,30 @@ export default function Header() {
   const { open: sidebarOpen, toggleSidebar } = useSidebar();
 
   useEffect(() => {
-    const fetchSportsList = async () => {
-      try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/sports/sports-list`
-        );
-        const json = await response.json();
-        const data = json.data ?? [];
-        const items = data.map((sport: any) => {
-          const eventTypeId = String(sport.id || sport.eventType || "");
-          const sportName = sport.name || sport.title || sport.displayName || "Unknown Sport";
-          const specialHref = SPECIAL_SPORT_HREFS[eventTypeId];
-          if (specialHref) return { label: sportName, link: specialHref };
-          const config = SPORT_LINK_MAPPING[eventTypeId];
-          const basePath = config?.basePath || eventTypeId;
-          return { label: sportName, link: `/sports/${basePath}` };
-        });
-        setSports(items);
-      } catch (error) {
-        console.error("Error fetching sports list:", error);
+    if (!sportsListData) return;
+    const items = sportsListData.map((sport) => {
+      const eventTypeId = sport.id;
+      const sportName = sport.name;
+      const specialHref = SPECIAL_SPORT_HREFS[eventTypeId];
+      if (specialHref) {
+        return {
+          label: sportName,
+          link: specialHref,
+          isLive: sport.isLive,
+          eventTypeId,
+        };
       }
-    };
-    fetchSportsList();
-  }, []);
+      const config = SPORT_LINK_MAPPING[eventTypeId];
+      const basePath = config?.basePath || eventTypeId;
+      return {
+        label: sportName,
+        link: `/sports/${basePath}`,
+        isLive: sport.isLive,
+        eventTypeId,
+      };
+    });
+    setSports(items);
+  }, [sportsListData]);
 
   const leftMenu = [
     { label: "Home", link: "/home" },

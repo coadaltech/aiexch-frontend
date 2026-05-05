@@ -321,6 +321,11 @@ export const ownerApi = {
   toggleSportActive: (sportId: number | string, isActive: boolean) =>
     api.post(`/owner/sports-games/toggle-active/${sportId}`, { isActive }),
 
+  // Toggle a sport's live state (owner only). When false, the sport stays
+  // visible in nav but its page shows a "Coming Soon" banner.
+  toggleSportLive: (sportId: number | string, isLive: boolean) =>
+    api.post(`/owner/sports-games/toggle-live/${sportId}`, { isLive }),
+
   // Competitions (per-sport, role + whitelabel aware) — server-paginated
   getCompetitions: (
     sportId: string,

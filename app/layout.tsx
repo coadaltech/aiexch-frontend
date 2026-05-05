@@ -51,7 +51,18 @@ export default function RootLayout({
         className={`${roboto.variable} ${robotoCondensed.variable} font-roboto min-h-screen`}
         suppressHydrationWarning={true}
       >
-        <Toaster closeButton position="bottom-right" />
+        <Toaster
+          closeButton
+          position="top-right"
+          toastOptions={{
+            classNames: {
+              toast:
+                "!text-[15px] sm:!text-base !py-3.5 !px-4 !min-h-[56px] !shadow-lg",
+              title: "!text-[15px] sm:!text-base !font-medium !leading-snug",
+              description: "!text-[13px] sm:!text-sm !leading-snug",
+            },
+          }}
+        />
         <NextTopLoader />
         {/* <ThemeLoader /> */}
         <MetadataLoader />

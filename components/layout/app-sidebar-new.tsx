@@ -387,10 +387,24 @@ function SportItem({
   pathname,
   rounded = false,
 }: {
-  sport: { title: string; eventTypeId: string; basePath: string };
+  sport: { title: string; eventTypeId: string; basePath: string; isLive: boolean };
   pathname: string;
   rounded?: boolean;
 }) {
+  // Coming Soon — bypass the sport's normal target and route to the
+  // shared coming-soon page. Renders as a simple non-expandable button
+  // so series/matches can't be drilled into either.
+  if (!sport.isLive) {
+    return (
+      <SimpleSportButton
+        title={sport.title}
+        href={`/sports/coming-soon?name=${encodeURIComponent(sport.title)}`}
+        pathname={pathname}
+        rounded={rounded}
+      />
+    );
+  }
+
   // Matka — special accordion
   if (sport.eventTypeId === "1001") {
     return <MatkaAccordionItem pathname={pathname} />;
@@ -621,7 +635,7 @@ export function AppSidebar() {
   const [mounted, setMounted] = useState(false);
   const [loadingGames, setLoadingGames] = useState(false);
   const [sports, setSports] = useState<
-    { title: string; eventTypeId: string; basePath: string }[]
+    { title: string; eventTypeId: string; basePath: string; isLive: boolean }[]
   >([]);
   const [liveTab, setLiveTab] = useState<"live" | "sports">("sports");
 
@@ -644,6 +658,8 @@ export function AppSidebar() {
             title: sportName,
             eventTypeId,
             basePath: config?.basePath || eventTypeId,
+            // Default to live=true so older payloads (pre-migration) keep working.
+            isLive: sport.isLive ?? sport.is_live ?? true,
           };
         });
         setSports(transformedData);

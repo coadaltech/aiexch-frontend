@@ -1207,8 +1207,8 @@ export default function MatchPage() {
 
   const oddsBtnClass =
     "flex-1 min-w-0 px-1 py-1 flex flex-col items-center justify-center rounded-md cursor-pointer leading-tight transition-all duration-150";
-  const oddsPriceClass = "text-gray-900 font-bold text-sm sm:text-base";
-  const oddsSizeClass = "text-gray-900 font-bold text-[11px] sm:text-[13px]";
+  const oddsPriceClass = "text-gray-900 font-bold text-base sm:text-lg";
+  const oddsSizeClass = "text-gray-900 font-bold text-[12px] sm:text-[14px]";
 
   // Runner name cell: shows name + per-runner P&L from DB function
   const RunnerNameCell = ({
@@ -1700,10 +1700,10 @@ export default function MatchPage() {
                 return (
                   <button
                     onClick={() => rawPrice != null && handleBackClick(market, runner, rawPrice, null, 0, true)}
-                    className={`min-h-[2.75rem]  flex flex-col items-center justify-center font-bold text-sm text-gray-900 transition-all ${side === "back" ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back" : "bg-gradient-to-b from-lay to-lay-deep hover:from-lay-hover hover:to-lay"}`}
+                    className={`min-h-[2.75rem]  flex flex-col items-center justify-center font-bold text-base text-gray-900 transition-all ${side === "back" ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back" : "bg-gradient-to-b from-lay to-lay-deep hover:from-lay-hover hover:to-lay"}`}
                   >
-                    <span className="text-base font-bold">{rawPrice != null ? formatOddsPrice(rawPrice) : "-"}</span>
-                    {backItem?.size && <span className="text-[11px]">{formatAmount(parseFloat(String(backItem.size)))}</span>}
+                    <span className="text-lg font-bold">{rawPrice != null ? formatOddsPrice(rawPrice) : "-"}</span>
+                    {backItem?.size && <span className="text-[12px]">{formatAmount(parseFloat(String(backItem.size)))}</span>}
                   </button>
                 );
               };

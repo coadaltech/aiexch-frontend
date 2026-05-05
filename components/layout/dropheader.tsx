@@ -9,6 +9,9 @@ import { cn } from "@/lib/utils";
 interface MenuItem {
   label: string;
   link?: string;
+  // When explicitly false, clicking this menu item routes to the
+  // shared "coming soon" page instead of the sport's normal target.
+  isLive?: boolean;
 }
 
 interface HeaderProps {
@@ -21,8 +24,18 @@ export default function Dropheader({ leftMenu, rightMenu }: HeaderProps) {
   const pathname = usePathname();
   const { user, isLoggedIn, logout, isLoading } = useAuth();
 
-  const handleNavigation = (link?: string, label?: string) => {
+  const handleNavigation = (
+    link?: string,
+    label?: string,
+    isLive?: boolean,
+  ) => {
     if (link && link !== "#") {
+      if (isLive === false) {
+        router.push(
+          `/sports/coming-soon?name=${encodeURIComponent(label ?? "This game")}`,
+        );
+        return;
+      }
       // Special handling for specific menu items
       if (label === "Cricket") {
         router.push("/sports/cricket");
@@ -69,7 +82,9 @@ export default function Dropheader({ leftMenu, rightMenu }: HeaderProps) {
             return (
               <button
                 key={index}
-                onClick={() => handleNavigation(item.link, item.label)}
+                onClick={() =>
+                  handleNavigation(item.link, item.label, item.isLive)
+                }
                 className={cn(`group relative px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium transition-all duration-150 flex items-center gap-1 touch-manipulation flex-shrink-0 cursor-pointer border-b-2 rounded-t-lg ${active
                   ? "text-[var(--header-secondary)] border-[var(--header-secondary)]"
                   : "text-[var(--header-text)] border-transparent hover:text-[var(--header-text)] hover:border-[color-mix(in_srgb,var(--header-text)_30%,transparent)]"
