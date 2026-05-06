@@ -23,6 +23,8 @@ export interface User {
   currencyId?: string | null;
   country?: string | null;
   timezone?: string | null;
+  // Per-bet cap. "0" means no per-bet cap (only market max applies).
+  transactionLimit?: string;
 }
 
 const applyUserTimezone = (u: { country?: string | null; timezone?: string | null } | null | undefined) => {

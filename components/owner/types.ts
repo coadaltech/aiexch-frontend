@@ -131,6 +131,8 @@ export interface User {
   country?: string;
   password?: string;
   type?: "user" | "profile";
+  // Per-bet cap stored on ledger_limit.transaction_limit. 0 = no per-bet cap.
+  transactionLimit?: string | number;
 }
 
 export interface UserModalProps {

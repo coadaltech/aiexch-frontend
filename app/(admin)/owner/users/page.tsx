@@ -10,9 +10,9 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { cn } from "@/lib/utils";
 import { UserModal } from "@/components/owner/user-modal";
 import { QuickVoucherModal } from "@/components/owner/quick-voucher-modal";
-import { CommissionModal } from "@/components/owner/commission-modal";
 import { EditProfileModal } from "@/components/owner/edit-profile-modal";
 import { ChangeStatusModal, type ChangeStatusModalUser } from "@/components/owner/change-status-modal";
+import { TransactionLimitModal, type TransactionLimitModalUser } from "@/components/owner/transaction-limit-modal";
 import { useModal } from "@/hooks/useModal";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
@@ -111,10 +111,11 @@ export default function UsersPage() {
     | { user: { id: string; username: string; email?: string | null }; type: "deposit" | "withdraw" | "limit" }
     | null
   >(null);
-  const [commissionUser, setCommissionUser] = useState<any | null>(null);
   const [profileEditUser, setProfileEditUser] = useState<any | null>(null);
   const [statusModalUser, setStatusModalUser] = useState<ChangeStatusModalUser | null>(null);
   const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
+  const [txLimitUser, setTxLimitUser] = useState<TransactionLimitModalUser | null>(null);
+  const [updatingTxLimitId, setUpdatingTxLimitId] = useState<string | null>(null);
 
   // Only show users directly created by the current logged-in user
   const myUsers = useMemo(
@@ -186,6 +187,7 @@ export default function UsersPage() {
           lastName: userData.lastName,
           phone: userData.phone,
           country: userData.country,
+          transactionLimit: String(userData.transactionLimit ?? "0"),
           ...(whitelabelInfo?.id != null && { whitelabelId: whitelabelInfo.id }),
           ...(typeof window !== "undefined" && window.location?.host && { domain: window.location.host }),
         };
@@ -208,6 +210,21 @@ export default function UsersPage() {
       accountStatus: u.accountStatus !== false && u.parentAccountStatus !== false,
       betStatus:     u.betStatus     !== false && u.parentBetStatus     !== false,
     });
+  };
+
+  const handleTxLimitConfirm = ({ transactionLimit }: { transactionLimit: string }) => {
+    if (!txLimitUser) return;
+    setUpdatingTxLimitId(txLimitUser.id);
+    updateUserMutation.mutate(
+      { id: txLimitUser.id, transactionLimit },
+      {
+        onSuccess: () => setTxLimitUser(null),
+        onError: (err: any) => {
+          toast.error(err?.response?.data?.message || "Failed to update transaction limit");
+        },
+        onSettled: () => setUpdatingTxLimitId(null),
+      },
+    );
   };
 
   const handleChangeStatusConfirm = (data: {
@@ -275,18 +292,18 @@ export default function UsersPage() {
       {/* Table */}
       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-[13px] border-collapse">
+          <table className="w-full text-[16px] border-collapse">
             <thead>
-              <tr className="bg-gray-100 text-gray-700 text-[12px] font-bold uppercase tracking-wide border-b border-gray-200">
+              <tr className="bg-gray-100 text-gray-700 text-[14px] font-bold uppercase tracking-wide border-b border-gray-200">
                 <th className="px-3 py-2 text-left">User Name</th>
                 <th className="px-3 py-2 text-right">Credit Reference</th>
-                <th className="px-3 py-2 text-right">Balance</th>
                 <th className="px-3 py-2 text-right">Client (P/L)</th>
+                <th className="px-3 py-2 text-right">Balance</th>
                 <th className="px-3 py-2 text-right">Exposure</th>
                 <th className="px-3 py-2 text-right">Available Balance</th>
                 <th className="px-3 py-2 text-center">U st</th>
                 <th className="px-3 py-2 text-center">B st</th>
-                <th className="px-3 py-2 text-right">Exposure Limit</th>
+                <th className="px-3 py-2 text-right">Transaction Limit</th>
                 <th className="px-3 py-2 text-left">Account Type</th>
                 <th className="px-3 py-2 text-center">Action</th>
               </tr>
@@ -309,15 +326,17 @@ export default function UsersPage() {
               )}
 
               {!isLoading && filteredUsers.map((u: any) => {
-                const fixLimit      = u.fixLimit      ?? "0";
-                const finalLimit    = u.finalLimit    ?? "0";
-                const limitConsumed = u.limitConsumed ?? "0";
-                const userBalance   = u.balance       ?? u.userBalance ?? "0";
-                const userLimit     = u.userLimit     ?? "0";
+                const fixLimit        = u.fixLimit        ?? "0";
+                const finalLimit      = u.finalLimit      ?? "0";
+                const limitConsumed   = u.limitConsumed   ?? "0";
+                const userBalance     = u.balance         ?? u.userBalance ?? "0";
+                const transactionLimit = u.transactionLimit ?? "0";
 
-                // Client P/L = finalLimit - fixLimit.
-                //   positive → profit   negative → loss
-                const clientPnl = parseFloat(finalLimit) - parseFloat(fixLimit);
+                // Client P/L = finalLimit - fixLimit (positive = profit, negative = loss).
+                // Balance shown to the user is CR - Client P/L (= 2·CR − finalLimit).
+                const fixLimitNum = parseFloat(fixLimit);
+                const clientPnl = parseFloat(finalLimit) - fixLimitNum;
+                const computedBalance = fixLimitNum + clientPnl;
 
                 const uActive = u.accountStatus !== false && u.parentAccountStatus !== false;
                 const bActive = u.betStatus     !== false && u.parentBetStatus     !== false;
@@ -341,9 +360,6 @@ export default function UsersPage() {
                     <td className="px-3 py-2 text-right font-semibold text-gray-800 whitespace-nowrap">
                       {fmt(fixLimit)}
                     </td>
-                    <td className="px-3 py-2 text-right font-semibold text-gray-800 whitespace-nowrap">
-                      {fmt(finalLimit)}
-                    </td>
                     <td
                       className={cn(
                         "px-3 py-2 text-right font-semibold whitespace-nowrap",
@@ -358,6 +374,9 @@ export default function UsersPage() {
                       {clientPnl > 0 ? "+" : ""}{fmt(clientPnl)}
                     </td>
                     <td className="px-3 py-2 text-right font-semibold text-gray-800 whitespace-nowrap">
+                      {fmt(computedBalance)}
+                    </td>
+                    <td className="px-3 py-2 text-right font-semibold text-gray-800 whitespace-nowrap">
                       {fmt(limitConsumed)}
                     </td>
                     <td className="px-3 py-2 text-right font-semibold text-gray-800 whitespace-nowrap">
@@ -366,19 +385,17 @@ export default function UsersPage() {
                     <td className="px-3 py-2 text-center">
                       <StatusDot
                         active={uActive}
-                        onClick={() => handleOpenChangeStatus(u)}
-                        title={uActive ? "User active — click to change" : "User disabled — click to change"}
+                        title={uActive ? "User active" : "User disabled"}
                       />
                     </td>
                     <td className="px-3 py-2 text-center">
                       <StatusDot
                         active={bActive}
-                        onClick={() => handleOpenChangeStatus(u)}
-                        title={bActive ? "Betting active — click to change" : "Betting disabled — click to change"}
+                        title={bActive ? "Betting active" : "Betting disabled"}
                       />
                     </td>
                     <td className="px-3 py-2 text-right font-semibold text-gray-800 whitespace-nowrap">
-                      {fmt(userLimit)}
+                      {fmt(transactionLimit)}
                     </td>
                     <td className="px-3 py-2 text-left text-gray-800 whitespace-nowrap">
                       {roleLabel(u.role)}
@@ -401,16 +418,26 @@ export default function UsersPage() {
                           onClick={() => setVoucherState({ user: quickUser, type: "limit" })}
                         />
                         <ActionBtn
-                          letter="C"
-                          title="Commission (upline / downline)"
-                          onClick={() => setCommissionUser(u)}
+                          letter="TL"
+                          title="Update transaction limit"
+                          onClick={() =>
+                            setTxLimitUser({
+                              id: u.id,
+                              username: u.username,
+                              transactionLimit: u.transactionLimit ?? "0",
+                            })
+                          }
                         />
                         <ActionBtn
                           letter="P"
                           title="Password & profile"
                           onClick={() => setProfileEditUser(u)}
                         />
-                        <ActionBtn letter="S" title="Not available yet" disabled />
+                        <ActionBtn
+                          letter="S"
+                          title="Change status (account / betting)"
+                          onClick={() => handleOpenChangeStatus(u)}
+                        />
                       </div>
                     </td>
                   </tr>
@@ -438,11 +465,12 @@ export default function UsersPage() {
         type={voucherState?.type ?? "deposit"}
       />
 
-      <CommissionModal
-        open={commissionUser !== null}
-        onClose={() => setCommissionUser(null)}
-        user={commissionUser}
-        canEditUpline={String(currentUser?.role ?? "").toLowerCase() === "owner"}
+      <TransactionLimitModal
+        open={txLimitUser !== null}
+        onClose={() => setTxLimitUser(null)}
+        user={txLimitUser}
+        onConfirm={handleTxLimitConfirm}
+        isLoading={updatingTxLimitId !== null}
       />
 
       <EditProfileModal

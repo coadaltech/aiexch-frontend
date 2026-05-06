@@ -132,6 +132,7 @@ export function UserModal({
       phone: "",
       country: "",
       password: "",
+      transactionLimit: "0",
     }
   );
 
@@ -166,6 +167,7 @@ export function UserModal({
         accountStatus: user.accountStatus ?? true,
         betStatus: user.betStatus ?? true,
         password: "",
+        transactionLimit: user.transactionLimit != null ? String(user.transactionLimit) : "0",
       });
     }
   }, [open, user]);
@@ -537,6 +539,29 @@ export function UserModal({
                     />
                   )}
                 </div>
+
+                {!user && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
+                      Transaction Limit
+                    </Label>
+                    <Input
+                      type="number"
+                      step="1"
+                      min="0"
+                      value={String(formData.transactionLimit ?? "0")}
+                      onChange={(e) =>
+                        setFormData({ ...formData, transactionLimit: e.target.value })
+                      }
+                      className="bg-background border-input text-foreground h-10 focus:ring-2 focus:ring-primary/20"
+                      placeholder="0 (no per-bet cap)"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Max stake the user can place on a single bet. 0 = no per-bet cap.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 

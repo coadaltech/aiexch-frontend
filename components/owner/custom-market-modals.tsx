@@ -390,6 +390,12 @@ export function ManageMarketPriceModal({ market, onClose }: { market: any; onClo
   const [backLayDiff, setBackLayDiff] = useState(1);
   const [addDiffs, setAddDiffs] = useState<number[]>([]);
   const [backPrices, setBackPrices] = useState<string[]>([]);
+  // Which side(s) the typed price publishes:
+  //   "both" — back gets the typed value (+addDiff), lay gets +backLayDiff (+addDiff).
+  //   "back" — only back gets the typed value (+addDiff); lay is sent empty (shows 0).
+  //   "lay"  — only lay gets the typed value (+addDiff); back is sent empty (shows 0).
+  // Single-side modes ignore backLayDiff entirely.
+  const [priceSide, setPriceSide] = useState<"back" | "lay" | "both">("both");
   // Per-runner line value (only meaningful for LINE markets). This is the
   // "over/under" number — e.g. 6.5 for "total runs > 6.5". Back price is the
   // YES-side price for that line; lay is computed via the diff.
@@ -418,25 +424,30 @@ export function ManageMarketPriceModal({ market, onClose }: { market: any; onClo
     }
   }, [runners, initialized]);
 
-  const computeLay = (backStr: string, diff: number) => {
-    const back = parseFloat(backStr);
-    if (isNaN(back)) return { layInput: 0 };
-    return { layInput: back + diff };
-  };
-
-  // Add Diff is applied to BOTH back and lay so both sides move together when
-  // the owner nudges the margin. Previously it only shifted lay, which left
-  // back unchanged — the two values drifted apart as owners tuned the diff.
-  const computeFinalBack = (backStr: string, addDiff: number) => {
-    const back = parseFloat(backStr);
-    if (isNaN(back)) return 0;
-    return parseFloat((back + addDiff / 100).toFixed(2));
-  };
-
-  const computeFinalLay = (backStr: string, diff: number, addDiff: number) => {
-    const back = parseFloat(backStr);
-    if (isNaN(back)) return 0;
-    return parseFloat((back + diff + addDiff / 100).toFixed(2));
+  // Single source of truth for everything the row displays + submits.
+  // - "both": typed value is the back price; lay is computed via backLayDiff.
+  // - "back": typed value is the back price; lay is suppressed (sent empty,
+  //   preview shows 0).
+  // - "lay":  typed value is the lay  price; back is suppressed (sent empty,
+  //   preview shows 0).
+  // Add Diff is applied to whichever side(s) we publish.
+  const computeFinals = (
+    typedStr: string,
+    diff: number,
+    addDiff: number,
+    side: "back" | "lay" | "both"
+  ) => {
+    const typed = parseFloat(typedStr);
+    if (isNaN(typed)) return { finalBack: 0, finalLay: 0, layInput: 0 };
+    const adjusted = parseFloat((typed + addDiff / 100).toFixed(2));
+    if (side === "back") return { finalBack: adjusted, finalLay: 0, layInput: 0 };
+    if (side === "lay") return { finalBack: 0, finalLay: adjusted, layInput: 0 };
+    const layAdjusted = parseFloat((typed + diff + addDiff / 100).toFixed(2));
+    return {
+      finalBack: adjusted,
+      finalLay: layAdjusted,
+      layInput: parseFloat((typed + diff).toFixed(2)),
+    };
   };
 
   // Focus + select the active runner's Back price input. Used after the
@@ -464,7 +475,7 @@ export function ManageMarketPriceModal({ market, onClose }: { market: any; onClo
     const runner = runners[runnerIdx];
     if (!runner) return;
     const backVal = parseFloat(backPrices[runnerIdx]);
-    if (isNaN(backVal)) { toast.error("Enter a valid back price"); return; }
+    if (isNaN(backVal)) { toast.error("Enter a valid price"); return; }
 
     let lineVal: number | undefined;
     if (isLine) {
@@ -472,27 +483,27 @@ export function ManageMarketPriceModal({ market, onClose }: { market: any; onClo
       if (isNaN(lineVal)) { toast.error("Enter a valid line value"); return; }
     }
 
-    const finalBack = computeFinalBack(backPrices[runnerIdx], addDiffs[runnerIdx]);
-    const finalLay = computeFinalLay(backPrices[runnerIdx], backLayDiff, addDiffs[runnerIdx]);
+    const { finalBack, finalLay } = computeFinals(
+      backPrices[runnerIdx],
+      backLayDiff,
+      addDiffs[runnerIdx] ?? 25,
+      priceSide
+    );
 
-    const backEntry: { price: number; size: number; line?: number } = {
-      price: finalBack,
-      size: 0,
-    };
-    const layEntry: { price: number; size: number; line?: number } = {
-      price: finalLay,
-      size: 0,
-    };
-    if (lineVal !== undefined) {
-      backEntry.line = lineVal;
-      layEntry.line = lineVal;
-    }
+    const back: { price: number; size: number; line?: number }[] =
+      priceSide === "lay"
+        ? []
+        : [{ price: finalBack, size: 0, ...(lineVal !== undefined && { line: lineVal }) }];
+    const lay: { price: number; size: number; line?: number }[] =
+      priceSide === "back"
+        ? []
+        : [{ price: finalLay, size: 0, ...(lineVal !== undefined && { line: lineVal }) }];
 
     updateOdds.mutate({
       marketId: market.marketId,
       selectionId: String(runner.selectionId),
-      back: [backEntry],
-      lay: [layEntry],
+      back,
+      lay,
     });
   };
 
@@ -597,10 +608,31 @@ export function ManageMarketPriceModal({ market, onClose }: { market: any; onClo
               </span>
             </label>
           )}
-          <div className="ml-auto flex items-center gap-2">
-            <span className="text-sm text-gray-600 font-medium">Back/Lay Diff</span>
-            <select value={backLayDiff} onChange={(e) => setBackLayDiff(parseInt(e.target.value))}
-              className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:outline-none">
+          <div className="ml-auto flex items-center gap-2 flex-wrap">
+            <span className="text-sm text-gray-600 font-medium">Side</span>
+            {(["both", "back", "lay"] as const).map((side) => (
+              <label key={side} className="flex items-center gap-1 cursor-pointer">
+                <input
+                  type="radio"
+                  name="priceSide"
+                  checked={priceSide === side}
+                  onChange={() => setPriceSide(side)}
+                  className="accent-blue-600"
+                />
+                <span
+                  className={`text-sm ${priceSide === side ? "text-blue-700 font-medium" : "text-gray-600"}`}
+                >
+                  {side === "back" ? "Back Only" : side === "lay" ? "Lay Only" : "Both"}
+                </span>
+              </label>
+            ))}
+            <span className="text-sm text-gray-600 font-medium ml-2">Back/Lay Diff</span>
+            <select
+              value={backLayDiff}
+              onChange={(e) => setBackLayDiff(parseInt(e.target.value))}
+              disabled={priceSide !== "both"}
+              className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:outline-none disabled:bg-gray-100 disabled:text-gray-400"
+            >
               {[1, 2, 3, 5, 10, 20].map((v) => <option key={v} value={v}>{v}</option>)}
             </select>
             <button
@@ -634,8 +666,8 @@ export function ManageMarketPriceModal({ market, onClose }: { market: any; onClo
           >
             <span>Runner Name</span>
             {isLine && <span className="text-center">Line</span>}
-            <span className="text-center">Back</span>
-            <span className="text-center">Lay</span>
+            <span className="text-center">{priceSide === "lay" ? "Lay" : "Back"}</span>
+            <span className="text-center">{priceSide === "both" ? "Lay" : "—"}</span>
             <span className="text-center">Add Dif</span>
             <span></span>
             <span className="text-center text-green-700">Back</span>
@@ -643,9 +675,12 @@ export function ManageMarketPriceModal({ market, onClose }: { market: any; onClo
           </div>
 
           {runners.map((runner: any, idx: number) => {
-            const { layInput } = computeLay(backPrices[idx] || "", backLayDiff);
-            const finalBack = computeFinalBack(backPrices[idx] || "", addDiffs[idx] || 25);
-            const finalLay = computeFinalLay(backPrices[idx] || "", backLayDiff, addDiffs[idx] || 25);
+            const { layInput, finalBack, finalLay } = computeFinals(
+              backPrices[idx] || "",
+              backLayDiff,
+              addDiffs[idx] ?? 25,
+              priceSide
+            );
             const isSelected = allRunnersActive || selectedRunner === idx;
             const inputsDisabled = !isSelected || isBallRunning;
 
@@ -691,12 +726,12 @@ export function ManageMarketPriceModal({ market, onClose }: { market: any; onClo
                   {backPrices[idx] ? layInput : 0}
                 </div>
 
-                <select value={addDiffs[idx] || 25}
+                <select value={addDiffs[idx] ?? 25}
                   onChange={(e) => { const u = [...addDiffs]; u[idx] = parseInt(e.target.value); setAddDiffs(u); }}
                   disabled={!isSelected}
                   tabIndex={-1}
                   className="w-full px-1 py-1 text-sm border border-gray-300 rounded text-center focus:ring-1 focus:ring-blue-500 focus:outline-none disabled:bg-gray-100">
-                  {[25, 50, 75].map((v) => <option key={v} value={v}>{v}</option>)}
+                  {[0, 25, 50, 75].map((v) => <option key={v} value={v}>{v}</option>)}
                 </select>
 
                 <div />
@@ -713,7 +748,7 @@ export function ManageMarketPriceModal({ market, onClose }: { market: any; onClo
         </div>
 
         <div className="text-xs text-gray-500 mt-3">
-          Type the Back price and press Enter to save — the field stays focused with the value selected, so the next amount you type replaces the old one. Press <kbd className="px-1 py-0.5 bg-gray-200 rounded text-[10px]">F1</kbd> to toggle Ball Running (focus snaps back to the price input). Pick <span className="font-medium">All Runners Active</span> to Tab between runners and price them in one pass. Final Back = Back + (Add Diff / 100). Final Lay = Back + Back/Lay Diff + (Add Diff / 100).
+          Pick a <span className="font-medium">Side</span> (Both / Back Only / Lay Only), type the price, and press Enter — the field stays focused with the value selected so the next amount replaces it. Add Diff <span className="font-medium">0</span> publishes the typed price as-is. In Back Only / Lay Only mode the other side is sent empty and shows 0 to users; Back/Lay Diff is ignored. Press <kbd className="px-1 py-0.5 bg-gray-200 rounded text-[10px]">F1</kbd> to toggle Ball Running. Pick <span className="font-medium">All Runners Active</span> to Tab between runners and price them in one pass. Both: Final Back = typed + (Add Diff / 100); Final Lay = typed + Back/Lay Diff + (Add Diff / 100).
         </div>
         <div className="flex justify-end mt-4">
           <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">Close</button>

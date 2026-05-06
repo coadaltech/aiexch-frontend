@@ -874,13 +874,20 @@ export default function MatchPage() {
     }
 
     const minBet = parseFloat(market?.marketCondition?.minBet) || 0;
-    const maxBet = parseFloat(market?.marketCondition?.maxBet) || 0;
+    const marketMaxBet = parseFloat(market?.marketCondition?.maxBet) || 0;
+    // Per-user single-bet cap. 0 = no per-bet cap; otherwise it tightens the
+    // ceiling alongside the market's own maxBet.
+    const txLimit = parseFloat(String(user?.transactionLimit ?? "0")) || 0;
     if (minBet > 0 && stakeNum < minBet) {
       toast.error(`Minimum bet is ${minBet}`);
       return;
     }
-    if (maxBet > 0 && stakeNum > maxBet) {
-      toast.error(`Maximum bet is ${maxBet}`);
+    if (marketMaxBet > 0 && stakeNum > marketMaxBet) {
+      toast.error(`Maximum bet is ${marketMaxBet}`);
+      return;
+    }
+    if (txLimit > 0 && stakeNum > txLimit) {
+      toast.error(`Per-bet limit is ${txLimit}`);
       return;
     }
 

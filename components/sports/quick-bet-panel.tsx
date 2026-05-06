@@ -7,6 +7,7 @@
 
 import { useEffect, useRef } from "react";
 import { DEFAULT_STAKES } from "@/hooks/useUserQueries";
+import { useAuth } from "@/contexts/AuthContext";
 
 export type RunnerSummary = {
   id: string;
@@ -94,6 +95,7 @@ export function QuickBetPanel({
   currentOdds?: string;
   currentRun?: string;
 }) {
+  const { user: currentUser } = useAuth();
   const { market, runner, odds } = data;
   // Fancy/LINE markets: keep the displayed odds frozen at click time. The
   // parent closes the panel when the live line changes, so showing updated
@@ -118,15 +120,31 @@ export function QuickBetPanel({
   const runnerName = runner?.name || "";
 
   const minBet = parseFloat(market?.marketCondition?.minBet) || 0;
-  const maxBet = parseFloat(market?.marketCondition?.maxBet) || 0;
+  const marketMaxBet = parseFloat(market?.marketCondition?.maxBet) || 0;
+  // Per-user single-bet cap from /profile/me. 0 means "no per-bet cap".
+  const txLimit = parseFloat(String(currentUser?.transactionLimit ?? "0")) || 0;
+  // The effective ceiling is the more restrictive of (market maxBet, user txLimit).
+  // 0 from either side means "no limit on that side", so we ignore zeros when
+  // taking the min — the min of two positive values, or whichever is positive.
+  const effectiveMaxBet =
+    marketMaxBet > 0 && txLimit > 0
+      ? Math.min(marketMaxBet, txLimit)
+      : marketMaxBet > 0
+        ? marketMaxBet
+        : txLimit;
   const stakeNum = parseFloat(stake) || 0;
 
   const belowMin = stakeNum > 0 && minBet > 0 && stakeNum < minBet;
-  const aboveMax = stakeNum > 0 && maxBet >= 0 && stakeNum > maxBet;
+  const aboveMax = stakeNum > 0 && effectiveMaxBet > 0 && stakeNum > effectiveMaxBet;
+  // When the user's own per-bet cap is the tighter limit, surface that wording
+  // so they understand why the bet is being rejected.
+  const cappedByTxLimit = aboveMax && txLimit > 0 && txLimit <= (marketMaxBet || Infinity);
   const stakeError = belowMin
     ? `Min bet is ${minBet}`
     : aboveMax
-      ? `Max bet is ${maxBet}`
+      ? cappedByTxLimit
+        ? `Per-bet limit is ${txLimit}`
+        : `Max bet is ${marketMaxBet}`
       : null;
 
   const resolvedStakes = (stakeButtons && stakeButtons.length > 0 ? stakeButtons : DEFAULT_STAKES).map(
