@@ -334,7 +334,9 @@ export function UserModal({
                     <Input
                       value={formData.username}
                       onChange={(e) =>
-                        setFormData({ ...formData, username: e.target.value })
+                        // Usernames are stored lowercase so login is
+                        // case-insensitive — coerce here as the user types.
+                        setFormData({ ...formData, username: e.target.value.toLowerCase() })
                       }
                       className={`bg-background border-input text-foreground h-9 focus:ring-2 focus:ring-primary/20 pr-9 ${
                         !user && usernameStatus === "taken"

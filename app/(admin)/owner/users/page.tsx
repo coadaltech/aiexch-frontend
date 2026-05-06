@@ -348,7 +348,7 @@ export default function UsersPage() {
                 // Client P/L = finalLimit - fixLimit (positive = profit, negative = loss).
                 // Balance shown to the user is CR - Client P/L (= 2·CR − finalLimit).
                 const fixLimitNum = parseFloat(fixLimit);
-                const clientPnl = parseFloat(finalLimit) - fixLimitNum;
+                const clientPnl = parseFloat(userBalance);
                 const computedBalance = fixLimitNum + clientPnl;
 
                 const uActive = u.accountStatus !== false && u.parentAccountStatus !== false;
