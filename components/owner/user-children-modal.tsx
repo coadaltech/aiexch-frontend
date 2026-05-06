@@ -190,7 +190,7 @@ export function UserChildrenModal({
                         {fmt(limitConsumed)}
                       </td>
                       <td className="px-3 py-2 text-right font-semibold text-gray-800 whitespace-nowrap">
-                        {fmt(userBalance)}
+                        {fmt(finalLimit)}
                       </td>
                       <td className="px-3 py-2 text-center">
                         <StatusDot
