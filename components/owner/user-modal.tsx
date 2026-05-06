@@ -35,7 +35,6 @@ import {
   Mail,
   Phone,
   MapPin,
-  Handshake,
   Save,
   Loader2,
   AlertCircle,
@@ -280,28 +279,26 @@ export function UserModal({
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) setFormError(null); onClose(); }}>
-      <DialogContent className="bg-card border max-w-7xl max-h-[95vh] overflow-hidden flex flex-col p-0">
-        {/* Header */}
-        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
+      <DialogContent className="bg-card border max-w-4xl max-h-[85vh] overflow-hidden flex flex-col p-0 text-sm">
+        {/* Header — kept compact so the modal fits 720p laptop screens. */}
+        <DialogHeader className="px-4 py-2 sm:px-5 sm:py-3 border-b border-border">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
+            <div className="flex items-center gap-2">
+              <div className="p-1 rounded-md bg-primary/10 shrink-0">
                 {user ? (
-                  <UserCircle className="h-5 w-5 text-primary" />
+                  <UserCircle className="h-4 w-4 text-primary" />
                 ) : (
-                  <UserIcon className="h-5 w-5 text-primary" />
+                  <UserIcon className="h-4 w-4 text-primary" />
                 )}
               </div>
-              <div>
-                <DialogTitle className="text-xl font-bold text-foreground">
-                  {user ? "Edit User" : "Create New User"}
-                </DialogTitle>
-                <DialogDescription className="text-sm text-muted-foreground mt-1">
-                  {user
-                    ? "Update user account and profile information"
-                    : "Fill in the details to create a new user account"}
-                </DialogDescription>
-              </div>
+              <DialogTitle className="text-sm sm:text-base font-bold text-foreground">
+                {user ? "Edit User" : "Create New User"}
+              </DialogTitle>
+              <DialogDescription className="sr-only">
+                {user
+                  ? "Update user account and profile information"
+                  : "Fill in the details to create a new user account"}
+              </DialogDescription>
             </div>
             {/* <Button
               variant="ghost"
@@ -314,22 +311,21 @@ export function UserModal({
           </div>
         </DialogHeader>
 
-        {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto px-6 py-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Scrollable Content — paddings/gaps stay small even on desktop so
+            the form fits a typical 720p laptop without inner scroll. */}
+        <div className="flex-1 overflow-y-auto px-4 py-3 sm:px-5 sm:py-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-5">
             {/* Account Information */}
-            <div className="space-y-5">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="p-1.5 rounded-md bg-blue-500/10">
-                  <Shield className="h-4 w-4 text-blue-500" />
-                </div>
-                <h3 className="text-lg font-semibold text-foreground">
-                  Account Information
+            <div className="space-y-2 sm:space-y-3">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Shield className="h-3.5 w-3.5 text-blue-500" />
+                <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                  Account
                 </h3>
               </div>
 
-              <div className="space-y-4">
-                <div className="space-y-2">
+              <div className="space-y-2 sm:space-y-2.5">
+                <div className="space-y-1">
                   <Label className="text-sm font-medium text-foreground flex items-center gap-2">
                     <UserIcon className="h-3.5 w-3.5 text-muted-foreground" />
                     Username
@@ -340,7 +336,7 @@ export function UserModal({
                       onChange={(e) =>
                         setFormData({ ...formData, username: e.target.value })
                       }
-                      className={`bg-background border-input text-foreground h-10 focus:ring-2 focus:ring-primary/20 pr-9 ${
+                      className={`bg-background border-input text-foreground h-9 focus:ring-2 focus:ring-primary/20 pr-9 ${
                         !user && usernameStatus === "taken"
                           ? "border-red-500 focus:ring-red-500/20"
                           : !user && usernameStatus === "available"
@@ -369,7 +365,7 @@ export function UserModal({
                   )}
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label className="text-sm font-medium text-foreground flex items-center gap-2">
                     <Mail className="h-3.5 w-3.5 text-muted-foreground" />
                     Email Address
@@ -380,14 +376,14 @@ export function UserModal({
                     onChange={(e) =>
                       setFormData({ ...formData, email: e.target.value })
                     }
-                    className="bg-background border-input text-foreground h-10 focus:ring-2 focus:ring-primary/20"
+                    className="bg-background border-input text-foreground h-9 focus:ring-2 focus:ring-primary/20"
                     placeholder="user@example.com"
                     required
                     disabled={!!user}
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label className="text-sm font-medium text-foreground flex items-center gap-2">
                     <Lock className="h-3.5 w-3.5 text-muted-foreground" />
                     {user ? "Change Password" : "Password"}
@@ -398,15 +394,15 @@ export function UserModal({
                     onChange={(e) =>
                       setFormData({ ...formData, password: e.target.value })
                     }
-                    className="bg-background border-input text-foreground h-10 focus:ring-2 focus:ring-primary/20"
+                    className="bg-background border-input text-foreground h-9 focus:ring-2 focus:ring-primary/20"
                     placeholder={user ? "Leave empty to keep current" : "Minimum 6 characters"}
                     required={!user}
                     minLength={6}
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div className="space-y-1">
                     <Label className="text-sm font-medium text-foreground flex items-center gap-2">
                       <Shield className="h-3.5 w-3.5 text-muted-foreground" />
                       Role
@@ -418,7 +414,7 @@ export function UserModal({
                       }
                       required
                     >
-                      <SelectTrigger className="bg-background border-input text-foreground h-10 focus:ring-2 focus:ring-primary/20">
+                      <SelectTrigger className="bg-background border-input text-foreground h-9 focus:ring-2 focus:ring-primary/20">
                         <SelectValue placeholder="Select role" />
                       </SelectTrigger>
                       <SelectContent className="bg-card border">
@@ -431,7 +427,7 @@ export function UserModal({
                     </Select>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <Label className="text-sm font-medium text-foreground flex items-center gap-2">
                       <Crown className="h-3.5 w-3.5 text-muted-foreground" />
                       Membership
@@ -443,7 +439,7 @@ export function UserModal({
                       }
                       required
                     >
-                      <SelectTrigger className="bg-background border-input text-foreground h-10 focus:ring-2 focus:ring-primary/20">
+                      <SelectTrigger className="bg-background border-input text-foreground h-9 focus:ring-2 focus:ring-primary/20">
                         <SelectValue placeholder="Select tier" />
                       </SelectTrigger>
                       <SelectContent className="bg-card border">
@@ -465,8 +461,8 @@ export function UserModal({
                 </div>
 
                 {user && currentUser?.id != null && user.addedBy != null && String(user.addedBy) === String(currentUser.id) && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div className="space-y-1">
                       <Label className="text-sm font-medium text-foreground">
                         Account status
                       </Label>
@@ -482,7 +478,7 @@ export function UserModal({
                         </span>
                       </div>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <Label className="text-sm font-medium text-foreground">
                         Bet status
                       </Label>
@@ -501,47 +497,11 @@ export function UserModal({
                   </div>
                 )}
 
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-foreground flex items-center gap-2">
-                    <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
-                    Currency
-                  </Label>
-                  {currentUserRole === "owner" ? (
-                    <Select
-                      value={formData.currencyId || ""}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, currencyId: value || null })
-                      }
-                    >
-                      <SelectTrigger className="bg-background border-input text-foreground h-10">
-                        <SelectValue placeholder="Select currency" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {(currencies as any[]).map((c: any) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.code} — {c.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <Input
-                      readOnly
-                      value={
-                        (() => {
-                          const effectiveCurrencyId = formData.currencyId ?? currentUser?.currencyId;
-                          if (!effectiveCurrencyId) return "—";
-                          const cur = (currencies as any[]).find((c: any) => String(c.id) === String(effectiveCurrencyId));
-                          return cur ? `${cur.code} — ${cur.name}` : "—";
-                        })()
-                      }
-                      className="bg-muted border-input text-foreground h-10 cursor-not-allowed"
-                    />
-                  )}
-                </div>
-
-                {!user && (
-                  <div className="space-y-2">
+                {/* Transaction limit only applies to leaf-level "user" accounts.
+                    Admins/agents/masters etc. don't place bets, so the field is
+                    hidden entirely for those roles. */}
+                {!user && formData.role === "user" && (
+                  <div className="space-y-1">
                     <Label className="text-sm font-medium text-foreground flex items-center gap-2">
                       <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
                       Transaction Limit
@@ -554,7 +514,7 @@ export function UserModal({
                       onChange={(e) =>
                         setFormData({ ...formData, transactionLimit: e.target.value })
                       }
-                      className="bg-background border-input text-foreground h-10 focus:ring-2 focus:ring-primary/20"
+                      className="bg-background border-input text-foreground h-9 focus:ring-2 focus:ring-primary/20"
                       placeholder="0 (no per-bet cap)"
                     />
                     <p className="text-xs text-muted-foreground">
@@ -566,21 +526,19 @@ export function UserModal({
             </div>
 
             {/* Right column: Personal Info + Partnership */}
-            <div className="space-y-8 flex flex-col">
+            <div className="space-y-3 sm:space-y-5 flex flex-col">
               {/* Personal Information */}
-              <div className="space-y-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="p-1.5 rounded-md bg-purple-500/10">
-                    <UserCircle className="h-4 w-4 text-purple-500" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-foreground">
-                    Personal Information
+              <div className="space-y-2 sm:space-y-3">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <UserCircle className="h-3.5 w-3.5 text-purple-500" />
+                  <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                    Personal
                   </h3>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
+                <div className="space-y-2 sm:space-y-2.5">
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div className="space-y-1">
                       <Label className="text-sm font-medium text-foreground">
                         First Name
                       </Label>
@@ -589,12 +547,12 @@ export function UserModal({
                         onChange={(e) =>
                           setFormData({ ...formData, firstName: e.target.value })
                         }
-                        className="bg-background border-input text-foreground h-10 focus:ring-2 focus:ring-primary/20"
+                        className="bg-background border-input text-foreground h-9 focus:ring-2 focus:ring-primary/20"
                         placeholder="John"
                       />
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <Label className="text-sm font-medium text-foreground">
                         Last Name
                       </Label>
@@ -603,13 +561,13 @@ export function UserModal({
                         onChange={(e) =>
                           setFormData({ ...formData, lastName: e.target.value })
                         }
-                        className="bg-background border-input text-foreground h-10 focus:ring-2 focus:ring-primary/20"
+                        className="bg-background border-input text-foreground h-9 focus:ring-2 focus:ring-primary/20"
                         placeholder="Doe"
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <Label className="text-sm font-medium text-foreground flex items-center gap-2">
                       <Phone className="h-3.5 w-3.5 text-muted-foreground" />
                       Phone Number
@@ -620,84 +578,107 @@ export function UserModal({
                       onChange={(e) =>
                         setFormData({ ...formData, phone: e.target.value })
                       }
-                      className="bg-background border-input text-foreground h-10 focus:ring-2 focus:ring-primary/20"
+                      className="bg-background border-input text-foreground h-9 focus:ring-2 focus:ring-primary/20"
                       placeholder="+1 234 567 8900"
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-foreground flex items-center gap-2">
-                      <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                      Country
-                    </Label>
-                    <Input
-                      value={formData.country || ""}
-                      onChange={(e) =>
-                        setFormData({ ...formData, country: e.target.value })
-                      }
-                      className="bg-background border-input text-foreground h-10 focus:ring-2 focus:ring-primary/20"
-                      placeholder="United States"
-                    />
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div className="space-y-1">
+                      <Label className="text-sm font-medium text-foreground flex items-center gap-2">
+                        <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
+                        Currency
+                      </Label>
+                      {currentUserRole === "owner" ? (
+                        <Select
+                          value={formData.currencyId || ""}
+                          onValueChange={(value) =>
+                            setFormData({ ...formData, currencyId: value || null })
+                          }
+                        >
+                          <SelectTrigger className="bg-background border-input text-foreground h-9">
+                            <SelectValue placeholder="Select currency" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {(currencies as any[]).map((c: any) => (
+                              <SelectItem key={c.id} value={c.id}>
+                                {c.code} — {c.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Input
+                          readOnly
+                          value={
+                            (() => {
+                              const effectiveCurrencyId = formData.currencyId ?? currentUser?.currencyId;
+                              if (!effectiveCurrencyId) return "—";
+                              const cur = (currencies as any[]).find((c: any) => String(c.id) === String(effectiveCurrencyId));
+                              return cur ? `${cur.code} — ${cur.name}` : "—";
+                            })()
+                          }
+                          className="bg-muted border-input text-foreground h-9 cursor-not-allowed"
+                        />
+                      )}
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-sm font-medium text-foreground flex items-center gap-2">
+                        <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                        Country
+                      </Label>
+                      <Input
+                        value={formData.country || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, country: e.target.value })
+                        }
+                        className="bg-background border-input text-foreground h-9 focus:ring-2 focus:ring-primary/20"
+                        placeholder="United States"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Partnership (Commission) */}
-              <div className="space-y-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="p-1.5 rounded-md bg-emerald-500/10">
-                    <Handshake className="h-4 w-4 text-emerald-500" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-foreground">
-                    Partnership
-                  </h3>
+              {/* Upline / Downline — plain row, no section chrome. */}
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="space-y-1">
+                  <Label className="text-sm font-medium text-foreground">
+                    Upline (%)
+                  </Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    value={formData.upline ?? "0.00"}
+                    readOnly
+                    className="bg-muted border-input text-foreground h-9 cursor-not-allowed"
+                    placeholder="0.00"
+                  />
                 </div>
-                <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-foreground">
-                        Upline commission (%)
-                      </Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        max="100"
-                        value={formData.upline ?? "0.00"}
-                        readOnly
-                        className="bg-muted border-input text-foreground h-10 cursor-not-allowed"
-                        placeholder="0.00"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        {isCreatingUserRole ? "Fixed at 100% for user role" : "Set by parent (100% for admin, parent’s downline for others)"}
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-foreground">
-                        Downline commission (%)
-                      </Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        max={maxDownlineAllowed}
-                        value={formData.downline ?? "0.00"}
-                        readOnly={isCreatingUserRole}
-                        onChange={(e) => {
-                          if (isCreatingUserRole) return;
-                          const v = e.target.value;
-                          const num = parseFloat(v) || 0;
-                          const clamped = v === "" ? "" : (num > maxDownlineAllowed ? String(maxDownlineAllowed) : v);
-                          setFormData({ ...formData, downline: clamped });
-                        }}
-                        className={isCreatingUserRole ? "bg-muted border-input text-foreground h-10 cursor-not-allowed" : "bg-background border-input text-foreground h-10 focus:ring-2 focus:ring-primary/20"}
-                        placeholder="0.00"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        {isCreatingUserRole ? "Fixed at 100% for user role" : `Editable; must be ≤ upline (${maxDownlineAllowed}%)`}
-                      </p>
-                    </div>
-                  </div>
+                <div className="space-y-1">
+                  <Label className="text-sm font-medium text-foreground">
+                    Downline (%)
+                  </Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max={maxDownlineAllowed}
+                    value={formData.downline ?? "0.00"}
+                    readOnly={isCreatingUserRole}
+                    onChange={(e) => {
+                      if (isCreatingUserRole) return;
+                      const v = e.target.value;
+                      const num = parseFloat(v) || 0;
+                      const clamped = v === "" ? "" : (num > maxDownlineAllowed ? String(maxDownlineAllowed) : v);
+                      setFormData({ ...formData, downline: clamped });
+                    }}
+                    className={isCreatingUserRole ? "bg-muted border-input text-foreground h-9 cursor-not-allowed" : "bg-background border-input text-foreground h-9 focus:ring-2 focus:ring-primary/20"}
+                    placeholder="0.00"
+                  />
                 </div>
               </div>
             </div>
@@ -705,18 +686,18 @@ export function UserModal({
         </div>
 
         {/* Footer Actions */}
-        <div className="border-t border-border px-6 py-4 bg-muted/30">
+        <div className="border-t border-border px-4 py-2 sm:px-5 sm:py-2.5 bg-muted/30">
           {formError && (
-            <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-md px-3 py-2 mb-3">
-              <AlertCircle className="h-4 w-4 shrink-0" />
+            <div className="flex items-center gap-2 text-xs text-destructive bg-destructive/10 border border-destructive/30 rounded-md px-2.5 py-1.5 mb-2">
+              <AlertCircle className="h-3.5 w-3.5 shrink-0" />
               {formError}
             </div>
           )}
-          <div className="flex items-center justify-end gap-3">
+          <div className="flex items-center justify-end gap-2">
             <Button
               variant="outline"
               onClick={onClose}
-              className="h-10 px-6"
+              className="h-9 px-3 sm:px-6"
               disabled={isUpdating || isUpdatingProfile}
             >
               Cancel
@@ -726,7 +707,7 @@ export function UserModal({
                 <Button
                   onClick={handleSaveProfileInfo}
                   disabled={isUpdatingProfile}
-                  className="h-10 px-6 bg-purple-600 hover:bg-purple-700 text-white"
+                  className="h-9 px-3 sm:px-6 bg-purple-600 hover:bg-purple-700 text-white"
                 >
                   {isUpdatingProfile ? (
                     <>
@@ -743,7 +724,7 @@ export function UserModal({
                 <Button
                   onClick={handleSaveUserInfo}
                   disabled={isUpdating}
-                  className="h-10 px-6 bg-primary text-primary-foreground hover:bg-primary/90"
+                  className="h-9 px-3 sm:px-6 bg-primary text-primary-foreground hover:bg-primary/90"
                 >
                   {isUpdating ? (
                     <>
@@ -762,7 +743,7 @@ export function UserModal({
               <Button
                 onClick={handleCreateUser}
                 disabled={isUpdating}
-                className="h-10 px-6 bg-primary text-primary-foreground hover:bg-primary/90"
+                className="h-9 px-3 sm:px-6 bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 {isUpdating ? (
                   <>

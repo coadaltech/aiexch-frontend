@@ -238,6 +238,7 @@ export const ownerApi = {
   // Users
   getUsers: () => api.get("/owner/users"),
   getUserCreatedUsers: (id: string) => api.get(`/owner/users/${id}/created-users`),
+  getUserDownline: (id: string) => api.get(`/owner/users/${id}/downline`),
   getUserLedger: (id: string) => api.get(`/owner/users/${id}/ledger`),
   createUser: (data: any) => api.post("/owner/users", data),
   updateUser: (id: string, data: any) => api.put(`/owner/users/${id}`, data),

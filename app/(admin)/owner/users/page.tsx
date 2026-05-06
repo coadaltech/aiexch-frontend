@@ -13,6 +13,7 @@ import { QuickVoucherModal } from "@/components/owner/quick-voucher-modal";
 import { EditProfileModal } from "@/components/owner/edit-profile-modal";
 import { ChangeStatusModal, type ChangeStatusModalUser } from "@/components/owner/change-status-modal";
 import { TransactionLimitModal, type TransactionLimitModalUser } from "@/components/owner/transaction-limit-modal";
+import { UserChildrenModal } from "@/components/owner/user-children-modal";
 import { useModal } from "@/hooks/useModal";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
@@ -116,6 +117,7 @@ export default function UsersPage() {
   const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
   const [txLimitUser, setTxLimitUser] = useState<TransactionLimitModalUser | null>(null);
   const [updatingTxLimitId, setUpdatingTxLimitId] = useState<string | null>(null);
+  const [childrenUser, setChildrenUser] = useState<{ id: string; username: string } | null>(null);
 
   // Only show users directly created by the current logged-in user
   const myUsers = useMemo(
@@ -187,7 +189,12 @@ export default function UsersPage() {
           lastName: userData.lastName,
           phone: userData.phone,
           country: userData.country,
-          transactionLimit: String(userData.transactionLimit ?? "0"),
+          // Only leaf-level "user" accounts have a per-bet cap. For any other
+          // role we always send 0 so a stale value from the form (if the role
+          // was switched after typing) can't sneak through.
+          transactionLimit: userData.role === "user"
+            ? String(userData.transactionLimit ?? "0")
+            : "0",
           ...(whitelabelInfo?.id != null && { whitelabelId: whitelabelInfo.id }),
           ...(typeof window !== "undefined" && window.location?.host && { domain: window.location.host }),
         };
@@ -218,7 +225,13 @@ export default function UsersPage() {
     updateUserMutation.mutate(
       { id: txLimitUser.id, transactionLimit },
       {
-        onSuccess: () => setTxLimitUser(null),
+        onSuccess: async () => {
+          // The shared useUpdateUser hook calls invalidateQueries fire-and-
+          // forget. For this flow we want the new value visible *before* the
+          // modal closes, so wait for the owner-users list to refetch.
+          await queryClient.refetchQueries({ queryKey: ["owner-users"] });
+          setTxLimitUser(null);
+        },
         onError: (err: any) => {
           toast.error(err?.response?.data?.message || "Failed to update transaction limit");
         },
@@ -341,6 +354,11 @@ export default function UsersPage() {
                 const uActive = u.accountStatus !== false && u.parentAccountStatus !== false;
                 const bActive = u.betStatus     !== false && u.parentBetStatus     !== false;
 
+                // Per-bet transaction limit only applies to leaf-level "user"
+                // accounts (admins/agents/masters etc. don't place bets), so
+                // the C action button is disabled for everyone else.
+                const isLeafUser = String(u.role ?? "").toLowerCase() === "user";
+
                 const quickUser = { id: u.id, username: u.username, email: u.email };
 
                 return (
@@ -350,9 +368,11 @@ export default function UsersPage() {
                   >
                     <td className="px-3 py-2">
                       <button
-                        onClick={() => userModal.open({ ...u, username: u.username || u.name })}
+                        onClick={() =>
+                          setChildrenUser({ id: u.id, username: u.username || u.name })
+                        }
                         className="font-semibold text-[var(--header-primary)] hover:underline text-left"
-                        title="Edit user"
+                        title="View this user's downline"
                       >
                         {u.username}
                       </button>
@@ -380,7 +400,7 @@ export default function UsersPage() {
                       {fmt(limitConsumed)}
                     </td>
                     <td className="px-3 py-2 text-right font-semibold text-gray-800 whitespace-nowrap">
-                      {fmt(userBalance)}
+                      {fmt(finalLimit)}
                     </td>
                     <td className="px-3 py-2 text-center">
                       <StatusDot
@@ -419,7 +439,12 @@ export default function UsersPage() {
                         />
                         <ActionBtn
                           letter="TL"
-                          title="Update transaction limit"
+                          title={
+                            isLeafUser
+                              ? "Update transaction limit"
+                              : "Transaction limit only applies to user accounts"
+                          }
+                          disabled={!isLeafUser}
                           onClick={() =>
                             setTxLimitUser({
                               id: u.id,
@@ -485,6 +510,12 @@ export default function UsersPage() {
         user={statusModalUser}
         onConfirm={handleChangeStatusConfirm}
         isLoading={updatingStatusId !== null}
+      />
+
+      <UserChildrenModal
+        open={childrenUser !== null}
+        onClose={() => setChildrenUser(null)}
+        user={childrenUser}
       />
     </div>
   );

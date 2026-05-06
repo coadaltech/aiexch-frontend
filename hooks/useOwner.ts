@@ -326,6 +326,25 @@ export const useUserCreatedUsers = (userId: string | null) => {
   });
 };
 
+// Direct downline of a user, full row shape (matches the owner-users table).
+// Backed by /owner/users/:id/downline → fn_list_user_children. Used by the
+// drill-down modal that opens when an owner clicks a username.
+export const useUserDownline = (userId: string | null) => {
+  return useQuery({
+    queryKey: ["user-downline", userId],
+    queryFn: () =>
+      ownerApi.getUserDownline(userId!).then((res) =>
+        (res.data.data as any[]).map((u: any) => ({
+          ...u,
+          role: normalizeRole(u.role),
+          membership: normalizeMembership(u.membership),
+        }))
+      ),
+    enabled: !!userId,
+    staleTime: 0,
+  });
+};
+
 export const useUserLedger = (userId: string | null) => {
   return useQuery({
     queryKey: ["user-ledger", userId],
