@@ -133,6 +133,31 @@ export default function UsersPage() {
     );
   }, [myUsers, debouncedSearch]);
 
+  // Column totals shown under the header. Mirrors the per-row math:
+  //   Balance = fixLimit + userBalance (Client P/L)
+  // so the Balance total stays consistent with summing the row values.
+  const totals = useMemo(() => {
+    const t = {
+      fixLimit: 0,
+      clientPnl: 0,
+      balance: 0,
+      limitConsumed: 0,
+      finalLimit: 0,
+      transactionLimit: 0,
+    };
+    for (const u of filteredUsers as any[]) {
+      const fix = parseFloat(u.fixLimit ?? "0") || 0;
+      const pnl = parseFloat(u.balance ?? u.userBalance ?? "0") || 0;
+      t.fixLimit         += fix;
+      t.clientPnl        += pnl;
+      t.balance          += fix + pnl;
+      t.limitConsumed    += parseFloat(u.limitConsumed   ?? "0") || 0;
+      t.finalLimit       += parseFloat(u.finalLimit      ?? "0") || 0;
+      t.transactionLimit += parseFloat(u.transactionLimit ?? "0") || 0;
+    }
+    return t;
+  }, [filteredUsers]);
+
   const updateProfileMutation = useMutation({
     mutationFn: ({ id, ...data }: any) => api.put(`/owner/users/${id}/profile`, data),
     onSuccess: () => {
@@ -322,6 +347,33 @@ export default function UsersPage() {
               </tr>
             </thead>
             <tbody>
+              {!isLoading && filteredUsers.length > 0 && (
+                <tr className="bg-gray-50 border-b border-gray-200 font-bold text-gray-900">
+                  <td className="px-3 py-2 text-left">Total</td>
+                  <td className="px-3 py-2 text-right whitespace-nowrap">{fmt(totals.fixLimit)}</td>
+                  <td
+                    className={cn(
+                      "px-3 py-2 text-right whitespace-nowrap",
+                      totals.clientPnl > 0
+                        ? "text-emerald-600"
+                        : totals.clientPnl < 0
+                          ? "text-rose-600"
+                          : "text-gray-900",
+                    )}
+                  >
+                    {totals.clientPnl > 0 ? "+" : ""}{fmt(totals.clientPnl)}
+                  </td>
+                  <td className="px-3 py-2 text-right whitespace-nowrap">{fmt(totals.balance)}</td>
+                  <td className="px-3 py-2 text-right whitespace-nowrap">{fmt(totals.limitConsumed)}</td>
+                  <td className="px-3 py-2 text-right whitespace-nowrap">{fmt(totals.finalLimit)}</td>
+                  <td className="px-3 py-2" />
+                  <td className="px-3 py-2" />
+                  <td className="px-3 py-2 text-right whitespace-nowrap">{fmt(totals.transactionLimit)}</td>
+                  <td className="px-3 py-2" />
+                  <td className="px-3 py-2" />
+                </tr>
+              )}
+
               {isLoading && (
                 <tr>
                   <td colSpan={11} className="py-10 text-center">
