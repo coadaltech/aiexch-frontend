@@ -928,7 +928,11 @@ export default function MatchPage() {
         (worstBetLoss < 0 && Math.abs(worstBetLoss) > finalLimit) ||
         (worstBetLoss >= 0 && stakeNum > finalLimit);
 
-      if (wouldReject) {
+      // Fancy P&L varies per outcome run, not per runner — the per-runner
+      // exposure map can't represent a hedge across different lines (e.g. an
+      // existing NO 41 + a new YES 35 never lose at the same run). Defer to
+      // the backend's per-run check (set_limit_used_of_user) instead.
+      if (wouldReject && !isFancyMkt) {
         // Exposure-reducing exception: allow any bet (back or lay) that improves
         // (reduces) the overall worst-case loss compared to current exposure.
         // This lets users hedge their position even after hitting their limit.
@@ -1917,7 +1921,7 @@ export default function MatchPage() {
                                 ) : runner.lay?.length > 0 ? (
                                   runner.lay.map((layItem: any, layIdx: number) => (
                                     <button key={layIdx} onClick={() => handleLayClick(market, runner, toDecimalfancyOdds(layItem.price, market.provider), String(layItem.line ?? ""), layIdx)} className={`${oddsBtnClass} bg-gradient-to-b from-lay to-lay-deep hover:from-lay-hover hover:to-lay shadow-sm transition-all w-24`}>
-                                      <span className={oddsPriceClass}>{layItem.line}</span><span className={oddsSizeClass}>{formatAmount(layItem.price)}</span>
+                                      <span className={oddsPriceClass}>{layItem.price}</span><span className={oddsSizeClass}>{layItem.line}</span>
                                     </button>
                                   ))
                                 ) : (
@@ -1932,7 +1936,7 @@ export default function MatchPage() {
                                 ) : runner.back?.length > 0 ? (
                                   runner.back.map((backItem: any, backIdx: number) => (
                                     <button key={backIdx} onClick={() => handleBackClick(market, runner, toDecimalfancyOdds(backItem.price, market.provider), String(backItem.line ?? ""), backIdx)} className={`${oddsBtnClass} transition-all w-24 ${backIdx === 0 ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back shadow-sm" : "bg-white hover:bg-back/30 border border-back/50"}`}>
-                                      <span className={oddsPriceClass}>{backItem.line}</span><span className={oddsSizeClass}>{formatAmount(backItem.price)}</span>
+                                      <span className={oddsPriceClass}>{backItem.price}</span><span className={oddsSizeClass}>{backItem.line}</span>
                                     </button>
                                   ))
                                 ) : (

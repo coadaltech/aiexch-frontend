@@ -394,8 +394,12 @@ export function ManageMarketPriceModal({ market, onClose }: { market: any; onClo
   //   "both" — back gets the typed value (+addDiff), lay gets +backLayDiff (+addDiff).
   //   "back" — only back gets the typed value (+addDiff); lay is sent empty (shows 0).
   //   "lay"  — only lay gets the typed value (+addDiff); back is sent empty (shows 0).
-  // Single-side modes ignore backLayDiff entirely.
   const [priceSide, setPriceSide] = useState<"back" | "lay" | "both">("both");
+  // Number of price slots to publish per side (matches the up-to-3 grid the
+  // user-facing match page renders). The owner enters the best price; deeper
+  // slots are derived by stepping outward by backLayDiff (back walks down,
+  // lay walks up). slotCount=1 sends a single entry per side.
+  const [slotCount, setSlotCount] = useState<number>(3);
   // Per-runner line value (only meaningful for LINE markets). This is the
   // "over/under" number — e.g. 6.5 for "total runs > 6.5". Back price is the
   // YES-side price for that line; lay is computed via the diff.
@@ -425,29 +429,49 @@ export function ManageMarketPriceModal({ market, onClose }: { market: any; onClo
   }, [runners, initialized]);
 
   // Single source of truth for everything the row displays + submits.
-  // - "both": typed value is the back price; lay is computed via backLayDiff.
-  // - "back": typed value is the back price; lay is suppressed (sent empty,
-  //   preview shows 0).
-  // - "lay":  typed value is the lay  price; back is suppressed (sent empty,
-  //   preview shows 0).
-  // Add Diff is applied to whichever side(s) we publish.
+  // Returns parallel arrays of length up to `slots`, ready to be sent to the
+  // backend as the back/lay prices array (matches the up-to-3 grid the user
+  // match page renders).
+  //
+  // - "both": back[0] = typed (+addDiff); lay[0] = typed + diff (+addDiff).
+  //   Each subsequent slot steps outward by `diff` — back walks down, lay
+  //   walks up. Example typed=50, diff=1, slots=3 → back [50,49,48],
+  //   lay [51,52,53].
+  // - "back": typed is the best back price; lay is empty. back[i] = typed -
+  //   i*diff (+addDiff).
+  // - "lay":  typed is the best lay  price; back is empty. lay[i]  = typed +
+  //   i*diff (+addDiff). No initial offset since there's no back to be away
+  //   from.
   const computeFinals = (
     typedStr: string,
     diff: number,
     addDiff: number,
-    side: "back" | "lay" | "both"
+    side: "back" | "lay" | "both",
+    slots: number
   ) => {
     const typed = parseFloat(typedStr);
-    if (isNaN(typed)) return { finalBack: 0, finalLay: 0, layInput: 0 };
-    const adjusted = parseFloat((typed + addDiff / 100).toFixed(2));
-    if (side === "back") return { finalBack: adjusted, finalLay: 0, layInput: 0 };
-    if (side === "lay") return { finalBack: 0, finalLay: adjusted, layInput: 0 };
-    const layAdjusted = parseFloat((typed + diff + addDiff / 100).toFixed(2));
-    return {
-      finalBack: adjusted,
-      finalLay: layAdjusted,
-      layInput: parseFloat((typed + diff).toFixed(2)),
-    };
+    if (isNaN(typed)) return { backArr: [] as number[], layArr: [] as number[], layInput: 0 };
+    const round = (n: number) => parseFloat(n.toFixed(2));
+    const adj = addDiff / 100;
+    const count = Math.max(1, Math.min(3, slots));
+
+    if (side === "back") {
+      const backArr: number[] = [];
+      for (let i = 0; i < count; i++) backArr.push(round(typed - i * diff + adj));
+      return { backArr, layArr: [] as number[], layInput: 0 };
+    }
+    if (side === "lay") {
+      const layArr: number[] = [];
+      for (let i = 0; i < count; i++) layArr.push(round(typed + i * diff + adj));
+      return { backArr: [] as number[], layArr, layInput: 0 };
+    }
+    const backArr: number[] = [];
+    const layArr: number[] = [];
+    for (let i = 0; i < count; i++) {
+      backArr.push(round(typed - i * diff + adj));
+      layArr.push(round(typed + (i + 1) * diff + adj));
+    }
+    return { backArr, layArr, layInput: round(typed + diff) };
   };
 
   // Focus + select the active runner's Back price input. Used after the
@@ -483,21 +507,21 @@ export function ManageMarketPriceModal({ market, onClose }: { market: any; onClo
       if (isNaN(lineVal)) { toast.error("Enter a valid line value"); return; }
     }
 
-    const { finalBack, finalLay } = computeFinals(
+    const { backArr, layArr } = computeFinals(
       backPrices[runnerIdx],
       backLayDiff,
       addDiffs[runnerIdx] ?? 25,
-      priceSide
+      priceSide,
+      slotCount
     );
 
-    const back: { price: number; size: number; line?: number }[] =
-      priceSide === "lay"
-        ? []
-        : [{ price: finalBack, size: 0, ...(lineVal !== undefined && { line: lineVal }) }];
-    const lay: { price: number; size: number; line?: number }[] =
-      priceSide === "back"
-        ? []
-        : [{ price: finalLay, size: 0, ...(lineVal !== undefined && { line: lineVal }) }];
+    const toEntry = (price: number) => ({
+      price,
+      size: 0,
+      ...(lineVal !== undefined && { line: lineVal }),
+    });
+    const back: { price: number; size: number; line?: number }[] = backArr.map(toEntry);
+    const lay: { price: number; size: number; line?: number }[] = layArr.map(toEntry);
 
     updateOdds.mutate({
       marketId: market.marketId,
@@ -609,7 +633,7 @@ export function ManageMarketPriceModal({ market, onClose }: { market: any; onClo
             </label>
           )}
           <div className="ml-auto flex items-center gap-2 flex-wrap">
-            <span className="text-sm text-gray-600 font-medium">Side</span>
+            {/* <span className="text-sm text-gray-600 font-medium">Side</span> */}
             {(["both", "back", "lay"] as const).map((side) => (
               <label key={side} className="flex items-center gap-1 cursor-pointer">
                 <input
@@ -626,11 +650,19 @@ export function ManageMarketPriceModal({ market, onClose }: { market: any; onClo
                 </span>
               </label>
             ))}
+            <span className="text-sm text-gray-600 font-medium ml-2">Slots</span>
+            <select
+              value={slotCount}
+              onChange={(e) => setSlotCount(parseInt(e.target.value))}
+              className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            >
+              {[1, 2, 3].map((v) => <option key={v} value={v}>{v}</option>)}
+            </select>
             <span className="text-sm text-gray-600 font-medium ml-2">Back/Lay Diff</span>
             <select
               value={backLayDiff}
               onChange={(e) => setBackLayDiff(parseInt(e.target.value))}
-              disabled={priceSide !== "both"}
+              disabled={priceSide !== "both" && slotCount === 1}
               className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:outline-none disabled:bg-gray-100 disabled:text-gray-400"
             >
               {[1, 2, 3, 5, 10, 20].map((v) => <option key={v} value={v}>{v}</option>)}
@@ -675,12 +707,14 @@ export function ManageMarketPriceModal({ market, onClose }: { market: any; onClo
           </div>
 
           {runners.map((runner: any, idx: number) => {
-            const { layInput, finalBack, finalLay } = computeFinals(
+            const { layInput, backArr, layArr } = computeFinals(
               backPrices[idx] || "",
               backLayDiff,
               addDiffs[idx] ?? 25,
-              priceSide
+              priceSide,
+              slotCount
             );
+            const hasInput = !!backPrices[idx];
             const isSelected = allRunnersActive || selectedRunner === idx;
             const inputsDisabled = !isSelected || isBallRunning;
 
@@ -736,20 +770,24 @@ export function ManageMarketPriceModal({ market, onClose }: { market: any; onClo
 
                 <div />
 
-                <div className="text-center text-sm font-bold text-green-700 bg-green-50 rounded py-1">
-                  {backPrices[idx] ? finalBack : 0}
+                <div className="flex flex-col items-center justify-center text-[11px] font-bold text-green-700 bg-green-50 rounded py-0.5 leading-tight">
+                  {hasInput && backArr.length > 0
+                    ? backArr.map((v, i) => <span key={i}>{v}</span>)
+                    : <span>0</span>}
                 </div>
-                <div className="text-center text-sm font-bold text-red-700 bg-red-50 rounded py-1">
-                  {backPrices[idx] ? finalLay : 0}
+                <div className="flex flex-col items-center justify-center text-[11px] font-bold text-red-700 bg-red-50 rounded py-0.5 leading-tight">
+                  {hasInput && layArr.length > 0
+                    ? layArr.map((v, i) => <span key={i}>{v}</span>)
+                    : <span>0</span>}
                 </div>
               </div>
             );
           })}
         </div>
 
-        <div className="text-xs text-gray-500 mt-3">
+        {/* <div className="text-xs text-gray-500 mt-3">
           Pick a <span className="font-medium">Side</span> (Both / Back Only / Lay Only), type the price, and press Enter — the field stays focused with the value selected so the next amount replaces it. Add Diff <span className="font-medium">0</span> publishes the typed price as-is. In Back Only / Lay Only mode the other side is sent empty and shows 0 to users; Back/Lay Diff is ignored. Press <kbd className="px-1 py-0.5 bg-gray-200 rounded text-[10px]">F1</kbd> to toggle Ball Running. Pick <span className="font-medium">All Runners Active</span> to Tab between runners and price them in one pass. Both: Final Back = typed + (Add Diff / 100); Final Lay = typed + Back/Lay Diff + (Add Diff / 100).
-        </div>
+        </div> */}
         <div className="flex justify-end mt-4">
           <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">Close</button>
         </div>

@@ -567,7 +567,11 @@ export default function MultimarketPage() {
           (worstBetLoss < 0 && Math.abs(worstBetLoss) > finalLimit) ||
           (worstBetLoss >= 0 && stakeNum > finalLimit);
 
-        if (wouldReject) {
+        // Fancy P&L varies per outcome run, not per runner — the per-runner
+        // exposure map can't represent a hedge across different lines (e.g. an
+        // existing NO 41 + a new YES 35 never lose at the same run). Defer to
+        // the backend's per-run check (set_limit_used_of_user) instead.
+        if (wouldReject && !isFancyMkt) {
           if (existingMarket) {
             const existingWorstLoss = Math.min(
               ...allRunners.map((r) => existingMarket.get(r.id) ?? 0),
