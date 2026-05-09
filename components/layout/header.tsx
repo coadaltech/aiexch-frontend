@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -67,9 +67,6 @@ export default function Header() {
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [isExposureModalOpen, setIsExposureModalOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
-  const [sports, setSports] = useState<
-    { label: string; link: string; isLive: boolean; eventTypeId: string }[]
-  >([]);
   const { data: sportsListData } = useSportsList();
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const userDropdownCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -105,9 +102,9 @@ export default function Header() {
   const pathname = usePathname();
   const { open: sidebarOpen, toggleSidebar } = useSidebar();
 
-  useEffect(() => {
-    if (!sportsListData) return;
-    const items = sportsListData.map((sport) => {
+  const sports = useMemo(() => {
+    if (!sportsListData) return [];
+    return sportsListData.map((sport) => {
       const eventTypeId = sport.id;
       const sportName = sport.name;
       const specialHref = SPECIAL_SPORT_HREFS[eventTypeId];
@@ -128,16 +125,18 @@ export default function Header() {
         eventTypeId,
       };
     });
-    setSports(items);
   }, [sportsListData]);
 
-  const leftMenu = [
-    { label: "Home", link: "/home" },
-    { label: "IPL 2026", link: "/sports/cricket/101480/28127348" },
-    ...sports,
-    { label: "Live Casino", link: "/casino" },
-    { label: "Promotions", link: "/promotions" },
-  ];
+  const leftMenu = useMemo(
+    () => [
+      { label: "Home", link: "/home" },
+      { label: "IPL 2026", link: "/sports/cricket/101480/28127348" },
+      ...sports,
+      { label: "Live Casino", link: "/casino" },
+      { label: "Promotions", link: "/promotions" },
+    ],
+    [sports]
+  );
 
   // Listen for custom event to open auth modal
   React.useEffect(() => {
@@ -154,24 +153,6 @@ export default function Header() {
   const handleSearchClick = () => {
     setIsSearchActive(true);
   };
-
-  const getCurrentTime = () => {
-    const now = new Date();
-    return now.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
-  };
-
-  const [currentTime, setCurrentTime] = useState(getCurrentTime());
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(getCurrentTime());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   // Close user dropdown on click outside
   useEffect(() => {

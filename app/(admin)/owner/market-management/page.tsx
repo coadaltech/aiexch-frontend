@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect, Suspense } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useLiveMatch } from "@/hooks/useLiveMatch";
 import {
@@ -11,7 +11,6 @@ import {
   useDeleteCustomMarket,
   useUpdateCustomOdds,
   useOddsHistory,
-  useSearchEvents,
   useListCustomMarkets,
 } from "@/hooks/useOwner";
 import {
@@ -67,7 +66,7 @@ function Toggle({
   return (
     <div className="flex flex-col items-center gap-0.5 min-w-[50px]">
       {label && (
-        <span className="text-[10px] text-gray-500 font-medium">{label}</span>
+        <span className="text-xs text-gray-600 font-semibold">{label}</span>
       )}
       {loading ? (
         <div className="h-5 flex items-center justify-center text-blue-500">
@@ -93,6 +92,45 @@ function Toggle({
   );
 }
 
+// ─── Compact pill toggle — used on grouped Fancy rows where horizontal
+// space is tight. Renders a single-letter button that flips state on click. ───
+function PillToggle({
+  label,
+  on,
+  onClick,
+  loading,
+  disabled,
+  activeColor = "bg-green-500",
+}: {
+  label: string;
+  on: boolean;
+  onClick: () => void;
+  loading?: boolean;
+  disabled?: boolean;
+  activeColor?: string;
+}) {
+  if (loading) {
+    return (
+      <span className="w-6 h-6 rounded inline-flex items-center justify-center text-blue-500 bg-gray-100">
+        <Spinner size={10} />
+      </span>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={`${label}: ${on ? "ON" : "OFF"}`}
+      className={`w-6 h-6 rounded text-[10px] font-bold inline-flex items-center justify-center transition-colors disabled:opacity-50 ${
+        on ? `${activeColor} text-white` : "bg-gray-200 text-gray-500"
+      }`}
+    >
+      {label.charAt(0)}
+    </button>
+  );
+}
+
 // ─── Format amount like match page ───
 function formatAmount(n: number | string | undefined) {
   if (n == null || n === "") return "0";
@@ -103,19 +141,78 @@ function formatAmount(n: number | string | undefined) {
   return num.toFixed(0);
 }
 
-// ─── Price cell (matches the frontend match page style) ───
+// ─── Format odds price (mirrors matchid: 3 dp under 0.1, 2 dp otherwise) ───
+function formatOddsPrice(price: number | string | null | undefined): string {
+  if (price == null) return "0";
+  const num = parseFloat(String(price));
+  if (isNaN(num)) return "0";
+  const dp = num < 0.1 ? 3 : 2;
+  return parseFloat(num.toFixed(dp)).toString();
+}
+
+// ─── Detect best rendering layout for a non-LINE market.
+// Mirrors the public match page so admins see markets in the same shape
+// users see them. ───
+type MarketLayout =
+  | "standard"
+  | "team-binary"
+  | "binary"
+  | "odd-even"
+  | "lottery"
+  | "multi-grid";
+function detectMarketLayout(market: any): MarketLayout {
+  const runners: any[] = market.runners || [];
+  const names = runners.map((r: any) => (r.name || "").toUpperCase().trim());
+  const hasLay = runners.some((r: any) => {
+    const lay = r.lay || [];
+    return lay.length > 0 && parseFloat(String(lay[0]?.price)) > 0;
+  });
+  if (hasLay) return "standard";
+  if (runners.length >= 8 && names.every((n) => /^\d$/.test(n))) return "lottery";
+  if (names.includes("ODD") && names.includes("EVEN")) return "odd-even";
+  if (names.includes("YES") && names.includes("NO")) return "binary";
+  if (runners.length === 2) return "team-binary";
+  return "multi-grid";
+}
+
+// ─── Suspended striped cell, used by ADV layouts (binary / odd-even /
+// lottery / multi-grid) to mark unavailable runners. ───
+function SuspendedCell({ className = "" }: { className?: string }) {
+  return (
+    <div
+      className={`relative overflow-hidden flex items-center justify-center ${className}`}
+      style={{
+        background:
+          "repeating-linear-gradient(45deg,#374151 0,#374151 4px,#4B5563 4px,#4B5563 8px)",
+      }}
+    >
+      <span className="text-red-300 font-bold text-xs relative z-10">
+        Suspended
+      </span>
+    </div>
+  );
+}
+
+// ─── Price cell — mirrors the bet-button styling on the public match page ───
+//
+// `emphasis="best"` renders the cell with the gradient back/lay treatment
+// the public page uses for the headline (best) price. `emphasis="depth"`
+// is the lighter outlined treatment used for the secondary depth levels.
+// `empty` collapses to the disabled grey background.
 function PriceCell({
   price,
   size,
   line,
   type,
   bettingType,
+  emphasis = "best",
 }: {
   price?: number | string;
   size?: number | string;
   line?: number | string;
   type: "back" | "lay";
   bettingType?: string;
+  emphasis?: "best" | "depth";
 }) {
   const isLine = bettingType === "LINE";
 
@@ -124,23 +221,32 @@ function PriceCell({
   const topValue = isLine ? line : price;
   const bottomValue = isLine ? price : size;
 
-  const isEmpty = !topValue && topValue !== 0;
+  const isEmpty = topValue == null || topValue === "";
 
-  // For LINE: NO side uses lay color (red), YES side uses back color (green)
-  // In LINE the left column = lay items shown as NO (red), right column = back items shown as YES (green)
-  const bgClass =
-    type === "back" ? "bg-green-900" : "bg-[#39111A]";
+  let cellClass: string;
+  if (isEmpty) {
+    cellClass =
+      type === "back" ? "bg-back-disabled" : "bg-lay-disabled";
+  } else if (emphasis === "best") {
+    cellClass =
+      type === "back"
+        ? "bg-gradient-to-b from-back to-back-deep shadow-sm"
+        : "bg-gradient-to-b from-lay to-lay-deep shadow-sm";
+  } else {
+    cellClass =
+      type === "back"
+        ? "bg-white border border-back/50"
+        : "bg-white border border-lay/50";
+  }
 
   return (
     <div
-      className={`min-w-[50px] w-[60px] px-1 py-1 flex flex-col items-center justify-center rounded leading-tight ${bgClass} ${
-        isEmpty ? "opacity-100" : ""
-      }`}
+      className={`w-16 sm:w-20 px-1 py-1 flex flex-col items-center justify-center rounded-md leading-tight ${cellClass}`}
     >
-      <span className="text-white font-bold text-[10px] sm:text-xs">
+      <span className="text-gray-900 font-bold text-sm sm:text-base">
         {isEmpty ? "-" : topValue}
       </span>
-      <span className="text-gray-400 font-medium text-[8px] sm:text-[9px]">
+      <span className="text-gray-900 font-bold text-[11px] sm:text-xs">
         {isEmpty ? "-" : formatAmount(bottomValue)}
       </span>
     </div>
@@ -358,16 +464,16 @@ function RunnerOddsRow({
   const isLine = bettingType === "LINE";
 
   return (
-    <div className="px-2 sm:px-3 py-1 grid grid-cols-3 gap-1 sm:gap-2 items-center min-h-0">
+    <div className="px-2 sm:px-3 py-1 grid grid-cols-3 gap-1 sm:gap-2 items-center min-h-0 bg-white hover:bg-gray-50/80 transition-colors">
       {/* Runner name (LINE markets show market name via displayName) */}
       <div className="min-w-0 pr-1 flex items-center gap-1.5">
-        <span className="text-gray-800 font-semibold text-[11px] sm:text-xs truncate block leading-tight">
+        <span className="text-gray-900 font-bold text-sm sm:text-base truncate block leading-tight">
           {displayName ?? runner.name}
         </span>
         {isCustom && (
           <button
             onClick={startEditing}
-            className="shrink-0 px-1 py-0.5 text-[8px] bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+            className="shrink-0 px-1.5 py-0.5 text-[10px] bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors font-medium"
             title="Edit odds"
           >
             Edit
@@ -375,11 +481,12 @@ function RunnerOddsRow({
         )}
       </div>
 
-      {/* Back + Lay cells */}
-      <div className="col-span-2 gap-2 relative flex min-h-[2.25rem]">
+      {/* Back + Lay cells — mirrors the matchid page layout: back on the
+          left (best price closest to the lay column), lay on the right. */}
+      <div className="col-span-2 gap-1 sm:gap-2 relative flex min-h-[2.25rem]">
         {isLine ? (
           <>
-            {/* LINE: Left = NO (lay items, red bg), Right = YES (back items, green bg) */}
+            {/* LINE: Left = NO (lay-styled), Right = YES (back-styled) */}
             <div className="flex-1 flex flex-col items-end min-w-0">
               <div className="gap-1 flex justify-end items-center">
                 {layItems.length > 0 ? (
@@ -390,6 +497,7 @@ function RunnerOddsRow({
                       line={item?.line}
                       type="lay"
                       bettingType="LINE"
+                      emphasis={idx === 0 ? "best" : "depth"}
                     />
                   ))
                 ) : (
@@ -407,6 +515,7 @@ function RunnerOddsRow({
                       line={item?.line}
                       type="back"
                       bettingType="LINE"
+                      emphasis={idx === 0 ? "best" : "depth"}
                     />
                   ))
                 ) : (
@@ -417,7 +526,9 @@ function RunnerOddsRow({
           </>
         ) : (
           <>
-            {/* ODDS/BOOKMAKER: Left = Back (reversed order), Right = Lay */}
+            {/* ODDS/BOOKMAKER: Back column right-aligned (best back closest
+                to the lay column), then Lay column left-aligned with best
+                lay nearest. Same visual ordering as the matchid page. */}
             <div className="flex-1 flex flex-col items-end min-w-0">
               <div className="gap-1 flex justify-end items-center">
                 {backSlots.map((item, posIdx) => (
@@ -427,6 +538,7 @@ function RunnerOddsRow({
                     size={item?.size}
                     type="back"
                     bettingType={bettingType}
+                    emphasis={posIdx === 2 ? "best" : "depth"}
                   />
                 ))}
               </div>
@@ -440,6 +552,7 @@ function RunnerOddsRow({
                     size={item?.size}
                     type="lay"
                     bettingType={bettingType}
+                    emphasis={posIdx === 0 ? "best" : "depth"}
                   />
                 ))}
               </div>
@@ -452,14 +565,9 @@ function RunnerOddsRow({
             affected row); otherwise falls back to the market-level overlay. */}
         {(isSuspended || runner.status === "SUSPENDED") && (
           <div
-            className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[70%] min-w-[4rem] flex items-center justify-center pointer-events-none z-10"
-            style={{
-              background:
-                "repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(0,0,0,0.08) 6px, rgba(0,0,0,0.08) 12px)",
-              backgroundColor: "rgba(0,0,0,0.2)",
-            }}
+            className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 bg-white/70 backdrop-blur-[1px]"
           >
-            <span className="text-red-600 font-bold text-sm drop-shadow-sm">
+            <span className="text-red-600 font-bold text-xs sm:text-sm bg-red-50 px-3 py-1 rounded-full border border-red-200/50 shadow-sm">
               {isCustom && runner.status === "SUSPENDED" && !isSuspended
                 ? "Ball Running"
                 : "Suspended"}
@@ -570,102 +678,293 @@ function MarketCard({ market }: { market: any }) {
 
   const condition = market.marketCondition || {};
 
+  // LINE markets are routed through FancyGroupCard, so MarketCard only
+  // sees non-LINE markets. Pick the same body layout the public match
+  // page uses so admins see markets in their natural shape.
+  const layout: MarketLayout = detectMarketLayout(market);
+  const isStandardLayout = layout === "standard" || layout === "team-binary";
+
+  const headerBadges = (
+    <>
+      <span
+        className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+          market.bettingType === "ODDS"
+            ? "bg-blue-100 text-blue-700"
+            : "bg-orange-100 text-orange-700"
+        }`}
+      >
+        {market.bettingType}
+      </span>
+      {isCustom && (
+        <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-100 text-indigo-700">
+          CUSTOM
+        </span>
+      )}
+      {isDisabled && (
+        <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-700">
+          DISABLED
+        </span>
+      )}
+      {isHidden && (
+        <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-yellow-100 text-yellow-700">
+          HIDDEN
+        </span>
+      )}
+      {isSuspended && (
+        <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-orange-100 text-orange-700">
+          SUSPENDED
+        </span>
+      )}
+    </>
+  );
+
+  const conditionLine = (
+    <>
+      Min: {condition.minBet ?? "-"} / Max: {condition.maxBet ?? "-"} / Delay: {condition.betDelay ?? 0}s
+    </>
+  );
+
+  // Render the body matching the public match page's layout for this
+  // market shape. Each branch parallels the same branch in the matchid
+  // page's render so the visual structure stays in sync.
+  const renderBody = () => {
+    if (isStandardLayout) {
+      return (
+        <div className="divide-y divide-gray-100">
+          {(market.runners || []).map((runner: any) => (
+            <RunnerOddsRow
+              key={runner.selectionId}
+              runner={runner}
+              isCustom={isCustom}
+              marketId={market.marketId}
+              isSuspended={isSuspended}
+              bettingType={market.bettingType}
+            />
+          ))}
+        </div>
+      );
+    }
+
+    if (layout === "binary") {
+      const runners: any[] = market.runners || [];
+      const yesRunner =
+        runners.find((r: any) => (r.name || "").toUpperCase() === "YES") ?? runners[0];
+      const noRunner =
+        runners.find((r: any) => (r.name || "").toUpperCase() === "NO") ?? runners[1];
+      const renderCell = (runner: any, side: "back" | "lay") => {
+        if (!runner) return <SuspendedCell className="min-h-[2.5rem]" />;
+        const isRunnerSusp =
+          isSuspended || runner.status === "SUSPENDED" || runner.status === "REMOVED";
+        if (isRunnerSusp) return <SuspendedCell className="min-h-[2.5rem]" />;
+        const backItem = runner.back?.[0];
+        const rawPrice = backItem ? parseFloat(String(backItem.price)) : null;
+        return (
+          <div
+            className={`min-h-[2.5rem] flex flex-col items-center justify-center leading-tight ${
+              side === "back"
+                ? "bg-gradient-to-b from-back to-back-deep"
+                : "bg-gradient-to-b from-lay to-lay-deep"
+            }`}
+          >
+            <span className="text-base text-gray-900 font-bold">
+              {rawPrice != null ? formatOddsPrice(rawPrice) : "-"}
+            </span>
+            {backItem?.size != null && (
+              <span className="text-[11px] text-gray-900 font-bold">
+                {formatAmount(backItem.size)}
+              </span>
+            )}
+          </div>
+        );
+      };
+      return (
+        <div className="bg-white grid grid-cols-2 sm:grid-cols-4 items-stretch">
+          <div className="px-3 flex items-center min-h-[2.5rem] min-w-0">
+            <span className="text-gray-900 font-bold text-sm sm:text-base truncate">
+              {yesRunner?.name ?? "YES"}
+            </span>
+          </div>
+          {renderCell(yesRunner, "back")}
+          <div className="px-3 flex items-center min-h-[2.5rem] min-w-0">
+            <span className="text-gray-900 font-bold text-sm sm:text-base truncate">
+              {noRunner?.name ?? "NO"}
+            </span>
+          </div>
+          {renderCell(noRunner, "lay")}
+        </div>
+      );
+    }
+
+    if (layout === "odd-even") {
+      const runners: any[] = market.runners || [];
+      return (
+        <div className="bg-white grid grid-cols-2 sm:grid-cols-4 items-stretch">
+          {runners.flatMap((runner: any) => {
+            const isRunnerSusp =
+              isSuspended || runner.status === "SUSPENDED" || runner.status === "REMOVED";
+            const backItem = runner.back?.[0];
+            const rawPrice = backItem ? parseFloat(String(backItem.price)) : null;
+            return [
+              <span
+                key={`lbl-${runner.selectionId}`}
+                className="text-gray-900 font-bold text-sm sm:text-base px-3 flex items-center truncate min-h-[2.5rem]"
+              >
+                {runner.name}
+              </span>,
+              isRunnerSusp ? (
+                <SuspendedCell key={`susp-${runner.selectionId}`} className="min-h-[2.5rem]" />
+              ) : (
+                <div
+                  key={`btn-${runner.selectionId}`}
+                  className="min-h-[2.5rem] flex flex-col items-center justify-center font-bold text-gray-900 bg-back leading-tight"
+                >
+                  <span className="text-base">
+                    {rawPrice != null ? formatOddsPrice(rawPrice) : "-"}
+                  </span>
+                  {backItem?.size != null && (
+                    <span className="text-[11px] font-semibold">
+                      {formatAmount(backItem.size)}
+                    </span>
+                  )}
+                </div>
+              ),
+            ];
+          })}
+        </div>
+      );
+    }
+
+    if (layout === "lottery") {
+      const runners: any[] = market.runners || [];
+      return (
+        <div className="bg-white px-2 sm:px-3 py-2">
+          {isSuspended ? (
+            <SuspendedCell className="w-full min-h-[2.5rem] rounded" />
+          ) : (
+            <div className="flex items-center justify-end gap-2 flex-wrap">
+              {runners.map((runner: any) => {
+                const backItem = runner.back?.[0];
+                const rawPrice = backItem ? parseFloat(String(backItem.price)) : null;
+                const isRunnerSusp =
+                  runner.status === "SUSPENDED" || runner.status === "REMOVED";
+                return (
+                  <div
+                    key={runner.selectionId}
+                    className={`flex flex-col items-center gap-0.5 ${
+                      isRunnerSusp || rawPrice == null ? "opacity-40" : ""
+                    }`}
+                  >
+                    <span className="w-9 h-9 rounded-full bg-[var(--header-primary)] text-[var(--header-text)] font-bold text-sm flex items-center justify-center shadow-sm">
+                      {runner.name}
+                    </span>
+                    <span className="text-gray-700 text-[11px] font-semibold">
+                      {rawPrice != null ? formatOddsPrice(rawPrice) : "-"}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // multi-grid (3+ runners with no lay): name+odds tiles, up to 3 cols.
+    const runners: any[] = market.runners || [];
+    const cols = Math.min(runners.length, 3);
+    const mdColsClass =
+      cols <= 1 ? "md:grid-cols-1" : cols === 2 ? "md:grid-cols-2" : "md:grid-cols-3";
+    return (
+      <div
+        className={`bg-white grid grid-cols-1 sm:grid-cols-2 ${mdColsClass} divide-x divide-y divide-gray-100`}
+      >
+        {runners.map((runner: any) => {
+          const isRunnerSusp =
+            isSuspended || runner.status === "SUSPENDED" || runner.status === "REMOVED";
+          const backItem = runner.back?.[0];
+          const rawPrice = backItem ? parseFloat(String(backItem.price)) : null;
+          return (
+            <div key={runner.selectionId} className="flex items-stretch min-w-0">
+              <div className="flex-1 px-2 py-1 min-w-0 flex items-center">
+                <span className="text-gray-900 font-bold text-sm truncate">{runner.name}</span>
+              </div>
+              {isRunnerSusp ? (
+                <SuspendedCell className="w-16 min-h-[2.25rem] shrink-0" />
+              ) : (
+                <div className="w-16 min-h-[2.25rem] flex flex-col items-center justify-center font-bold text-sm text-gray-900 bg-back shrink-0 leading-tight">
+                  <span>{rawPrice != null ? formatOddsPrice(rawPrice) : "-"}</span>
+                  {backItem?.size != null && (
+                    <span className="text-[10px] font-semibold">
+                      {formatAmount(backItem.size)}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div
-      className={`border rounded-lg overflow-hidden transition-colors ${
+      className={`rounded-lg overflow-hidden border shadow-sm transition-colors ${
         isDisabled
-          ? "border-red-200 bg-red-50/30"
+          ? "border-red-200"
           : isHidden
-            ? "border-yellow-200 bg-yellow-50/30"
-            : "border-gray-200 hover:border-blue-300"
+            ? "border-yellow-200"
+            : "border-gray-200"
       }`}
     >
       {/* Status color bar */}
       <div className={`h-1 ${statusColor}`} />
 
-      {/* Market header: name + back/lay or NO/YES labels */}
-      <div className="grid grid-cols-3 gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 border-b border-gray-100 bg-gray-50/80 items-center">
-        <div className="min-w-0 flex flex-col gap-0.5">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <h3 className="font-semibold text-gray-800 text-[11px] sm:text-xs truncate leading-tight">
-              {market.bettingType === "LINE" ? "Fancy" : market.marketName}
-            </h3>
-            <span
-              className={`px-1 py-0.5 rounded text-[8px] font-medium ${
-                market.bettingType === "ODDS"
-                  ? "bg-blue-100 text-blue-700"
-                  : market.bettingType === "LINE"
-                    ? "bg-purple-100 text-purple-700"
-                    : "bg-orange-100 text-orange-700"
-              }`}
-            >
-              {market.bettingType}
-            </span>
-            {isCustom && (
-              <span className="px-1 py-0.5 rounded text-[8px] font-medium bg-indigo-100 text-indigo-700">
-                CUSTOM
-              </span>
-            )}
-            {isDisabled && (
-              <span className="px-1 py-0.5 rounded text-[8px] font-medium bg-red-100 text-red-700">
-                DISABLED
-              </span>
-            )}
-            {isHidden && (
-              <span className="px-1 py-0.5 rounded text-[8px] font-medium bg-yellow-100 text-yellow-700">
-                HIDDEN
-              </span>
-            )}
-            {isSuspended && (
-              <span className="px-1 py-0.5 rounded text-[8px] font-medium bg-orange-100 text-orange-700">
-                SUSPENDED
-              </span>
-            )}
+      {/* Header — standard back/lay layouts get the 3-col header with
+          Back/Lay column labels (mirrors runner cells below). ADV layouts
+          (binary / odd-even / lottery / multi-grid) don't have side-by-side
+          back+lay columns, so they get a simpler single-row header. */}
+      {isStandardLayout ? (
+        <div className="grid grid-cols-3 gap-2 px-2 sm:px-3 py-1.5 border-b border-[#1e4088]/40 bg-[var(--header-primary)] items-center">
+          <div className="min-w-0 flex flex-col gap-0.5">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <h3 className="font-bold text-white text-sm sm:text-base truncate leading-tight">
+                {market.marketName}
+              </h3>
+              {headerBadges}
+            </div>
+            <p className="text-white/70 text-[11px] sm:text-xs truncate leading-tight">
+              {conditionLine}
+            </p>
           </div>
-          <p className="text-gray-500 text-[9px] sm:text-[10px] truncate leading-tight">
-            Min: {condition.minBet ?? "-"} / Max: {condition.maxBet ?? "-"} / Delay: {condition.betDelay ?? 0}s
-          </p>
+          <div className="justify-self-end font-bold uppercase bg-back text-black text-xs sm:text-sm py-0.5 px-1.5 rounded">
+            Back
+          </div>
+          <div className="font-bold uppercase bg-lay text-black text-xs sm:text-sm py-0.5 px-1.5 rounded w-fit">
+            Lay
+          </div>
         </div>
-        {market.bettingType === "LINE" ? (
-          <>
-            <div className="justify-self-end font-semibold uppercase bg-[#39111A] text-white text-[10px] sm:text-xs py-0.5 px-1.5 rounded w-fit">
-              NO
-            </div>
-            <div className="w-fit font-semibold uppercase bg-green-900 text-white text-[10px] sm:text-xs py-0.5 px-1.5 rounded">
-              YES
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="justify-self-end font-semibold uppercase bg-green-900 text-white text-[10px] sm:text-xs py-0.5 px-1.5 rounded">
-              Back
-            </div>
-            <div className="font-semibold uppercase bg-[#39111A] text-white text-[10px] sm:text-xs py-0.5 px-1.5 rounded w-fit">
-              Lay
-            </div>
-          </>
-        )}
-      </div>
+      ) : (
+        <div className="px-2 sm:px-3 py-1.5 border-b border-[#1e4088]/40 bg-[var(--header-primary)] flex items-center justify-between gap-2">
+          <div className="min-w-0 flex items-center gap-1.5 flex-wrap">
+            <h3 className="font-bold text-white text-sm sm:text-base truncate leading-tight">
+              {market.marketName}
+            </h3>
+            {headerBadges}
+          </div>
+          <span className="text-white/70 text-[11px] sm:text-xs whitespace-nowrap shrink-0">
+            {conditionLine}
+          </span>
+        </div>
+      )}
 
-      {/* Runners with back/lay prices */}
-      <div className="divide-y divide-gray-100">
-        {(market.runners || []).map((runner: any) => (
-          <RunnerOddsRow
-            key={runner.selectionId}
-            runner={runner}
-            isCustom={isCustom}
-            marketId={market.marketId}
-            isSuspended={isSuspended}
-            bettingType={market.bettingType}
-            displayName={market.bettingType === "LINE" ? market.marketName : undefined}
-          />
-        ))}
-      </div>
+      {/* Body */}
+      {renderBody()}
 
       {/* Controls bar */}
-      <div className="px-2 sm:px-3 py-2 border-t border-gray-100 bg-gray-50/50">
+      <div className="px-2 sm:px-3 py-1.5 border-t border-gray-200 bg-gray-50">
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <Toggle
               label="Active"
               checked={!isDisabled}
@@ -696,7 +995,7 @@ function MarketCard({ market }: { market: any }) {
                 setMaxBet(String(condition.maxBet || ""));
                 setBetDelay(String(condition.betDelay || "0"));
               }}
-              className="px-2 py-1 text-[10px] bg-gray-100 hover:bg-gray-200 rounded text-gray-700 transition-colors"
+              className="px-2.5 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded text-gray-800 font-medium transition-colors"
             >
               {showSettings ? "Close" : "Settings"}
             </button>
@@ -704,7 +1003,7 @@ function MarketCard({ market }: { market: any }) {
               <button
                 onClick={handleDelete}
                 disabled={deleteCustom.isPending}
-                className="px-2 py-1 text-[10px] bg-red-100 hover:bg-red-200 rounded text-red-700 transition-colors disabled:opacity-50 flex items-center gap-1"
+                className="px-2.5 py-1 text-xs bg-red-100 hover:bg-red-200 rounded text-red-700 font-medium transition-colors disabled:opacity-50 flex items-center gap-1"
               >
                 {deleteCustom.isPending && <Spinner size={10} />}
                 Delete
@@ -763,6 +1062,433 @@ function MarketCard({ market }: { market: any }) {
   );
 }
 
+// ─── Fancy market row — one LINE market rendered as a single row inside
+// the grouped FancyGroupCard. Mirrors the matchid Fancy section layout
+// (market name on the left, NO/YES cells in the middle) and adds a
+// compact admin control strip on the right. ───
+function FancyMarketRow({ market }: { market: any }) {
+  const updateMarket = useUpdateMarketSettings();
+  const deleteCustom = useDeleteCustomMarket();
+  const updateOdds = useUpdateCustomOdds();
+
+  const [pendingField, setPendingField] = useState<string | null>(null);
+  const [optimistic, setOptimistic] = useState<Record<string, boolean>>({});
+  const prevMarketRef = useRef(market);
+
+  const [showSettings, setShowSettings] = useState(false);
+  const [minBet, setMinBet] = useState("");
+  const [maxBet, setMaxBet] = useState("");
+  const [betDelay, setBetDelay] = useState("");
+
+  const [editing, setEditing] = useState(false);
+  const [editBack, setEditBack] = useState<{ price: string; size: string }[]>([]);
+  const [editLay, setEditLay] = useState<{ price: string; size: string }[]>([]);
+
+  useEffect(() => {
+    const prev = prevMarketRef.current;
+    if (
+      prev.adminDisabled !== market.adminDisabled ||
+      prev.adminHidden !== market.adminHidden ||
+      prev.status !== market.status
+    ) {
+      setOptimistic({});
+    }
+    prevMarketRef.current = market;
+  }, [market.adminDisabled, market.adminHidden, market.status]);
+
+  const isCustom = market.isCustom || market.marketType === "CUSTOM";
+  const isDisabled =
+    optimistic.isActive !== undefined ? !optimistic.isActive : market.adminDisabled;
+  const isHidden =
+    optimistic.isVisible !== undefined ? !optimistic.isVisible : market.adminHidden;
+  const isSuspended =
+    optimistic.suspended !== undefined ? optimistic.suspended : market.status === "SUSPENDED";
+
+  const handleToggle = (field: string, value: boolean) => {
+    setOptimistic((prev) => ({ ...prev, [field]: value }));
+    setPendingField(field);
+    updateMarket.mutate(
+      {
+        marketId: market.marketId,
+        eventId: String(market.eventId || ""),
+        marketName: market.marketName,
+        marketType: market.marketType || market.bettingType || "LINE",
+        bettingType: market.bettingType || "LINE",
+        [field]: value,
+      },
+      {
+        onSettled: () => setPendingField(null),
+        onError: () => {
+          setOptimistic((prev) => {
+            const next = { ...prev };
+            delete next[field];
+            return next;
+          });
+        },
+      }
+    );
+  };
+
+  const handleSaveOverrides = () => {
+    setPendingField("overrides");
+    const data: any = {
+      marketId: market.marketId,
+      eventId: String(market.eventId || ""),
+      marketName: market.marketName,
+      marketType: market.marketType || "FANCY",
+      bettingType: market.bettingType || "LINE",
+    };
+    if (minBet) data.minBet = parseFloat(minBet);
+    if (maxBet) data.maxBet = parseFloat(maxBet);
+    if (betDelay) data.betDelay = parseInt(betDelay);
+    updateMarket.mutate(data, {
+      onSettled: () => {
+        setPendingField(null);
+        setShowSettings(false);
+      },
+    });
+  };
+
+  const handleDelete = () => {
+    if (!confirm(`Delete custom market "${market.marketName}"?`)) return;
+    deleteCustom.mutate(market.marketId);
+  };
+
+  const condition = market.marketCondition || {};
+  const runner = market.runners?.[0];
+  if (!runner) return null;
+
+  const layItems = runner.lay || [];
+  const backItems = runner.back || [];
+
+  // Inline edit mode for custom market odds
+  const startEditing = () => {
+    const toEdit = (arr: any[]) =>
+      arr.length > 0
+        ? arr.map((x: any) => ({
+            price: String(x.price ?? x[0] ?? ""),
+            size: String(x.size ?? x[1] ?? ""),
+          }))
+        : [{ price: "", size: "" }];
+    setEditBack(toEdit(backItems));
+    setEditLay(toEdit(layItems));
+    setEditing(true);
+  };
+  const handleEditSave = () => {
+    const backPrices = editBack
+      .filter((b) => b.price)
+      .map((b) => ({ price: parseFloat(b.price), size: parseFloat(b.size) || 0 }));
+    const layPrices = editLay
+      .filter((l) => l.price)
+      .map((l) => ({ price: parseFloat(l.price), size: parseFloat(l.size) || 0 }));
+    updateOdds.mutate(
+      { marketId: market.marketId, selectionId: runner.selectionId, back: backPrices, lay: layPrices },
+      { onSuccess: () => setEditing(false) }
+    );
+  };
+
+  if (editing && isCustom) {
+    return (
+      <div className="px-3 py-2 bg-gray-50 border-b border-gray-200 last:border-b-0">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-gray-800 font-semibold text-sm">{market.marketName}</span>
+          <div className="flex items-center gap-2">
+            {updateOdds.isPending && (
+              <span className="text-blue-500"><Spinner size={12} /></span>
+            )}
+            <button
+              onClick={handleEditSave}
+              disabled={updateOdds.isPending}
+              className="px-2 py-0.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+            >
+              Save
+            </button>
+            <button
+              onClick={() => setEditing(false)}
+              className="px-2 py-0.5 text-xs bg-gray-200 text-gray-600 rounded hover:bg-gray-300"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <span className="text-[11px] text-red-700 font-medium">No (Lay)</span>
+            {editLay.map((l, i) => (
+              <div key={i} className="flex items-center gap-1 mt-1">
+                <input
+                  type="number"
+                  value={l.price}
+                  onChange={(e) => {
+                    const u = [...editLay];
+                    u[i] = { ...u[i], price: e.target.value };
+                    setEditLay(u);
+                  }}
+                  placeholder="Line"
+                  className="flex-1 px-1.5 py-1 text-xs border border-red-300 rounded focus:ring-1 focus:ring-red-500 focus:outline-none"
+                />
+                <input
+                  type="number"
+                  value={l.size}
+                  onChange={(e) => {
+                    const u = [...editLay];
+                    u[i] = { ...u[i], size: e.target.value };
+                    setEditLay(u);
+                  }}
+                  placeholder="Price"
+                  className="flex-1 px-1.5 py-1 text-xs border border-red-300 rounded focus:ring-1 focus:ring-red-500 focus:outline-none"
+                />
+              </div>
+            ))}
+          </div>
+          <div>
+            <span className="text-[11px] text-green-700 font-medium">Yes (Back)</span>
+            {editBack.map((b, i) => (
+              <div key={i} className="flex items-center gap-1 mt-1">
+                <input
+                  type="number"
+                  value={b.price}
+                  onChange={(e) => {
+                    const u = [...editBack];
+                    u[i] = { ...u[i], price: e.target.value };
+                    setEditBack(u);
+                  }}
+                  placeholder="Line"
+                  className="flex-1 px-1.5 py-1 text-xs border border-green-300 rounded focus:ring-1 focus:ring-green-500 focus:outline-none"
+                />
+                <input
+                  type="number"
+                  value={b.size}
+                  onChange={(e) => {
+                    const u = [...editBack];
+                    u[i] = { ...u[i], size: e.target.value };
+                    setEditBack(u);
+                  }}
+                  placeholder="Price"
+                  className="flex-1 px-1.5 py-1 text-xs border border-green-300 rounded focus:ring-1 focus:ring-green-500 focus:outline-none"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="px-2 sm:px-3 py-1 grid grid-cols-[1fr_auto_auto] gap-2 items-center bg-white hover:bg-gray-50/80 transition-colors border-b border-gray-100 last:border-b-0 relative">
+        {/* Market name + condition info + status badges */}
+        <div className="min-w-0 flex flex-col gap-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-gray-900 font-bold text-sm sm:text-base truncate">
+              {market.marketName}
+            </span>
+            {isCustom && (
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-100 text-indigo-700">
+                CUSTOM
+              </span>
+            )}
+            {isDisabled && (
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-700">
+                DISABLED
+              </span>
+            )}
+            {isHidden && (
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-yellow-100 text-yellow-700">
+                HIDDEN
+              </span>
+            )}
+          </div>
+          <p className="text-gray-500 text-[11px] sm:text-xs leading-tight truncate">
+            Min: {condition.minBet ?? "-"} / Max: {condition.maxBet ?? "-"} / Delay: {condition.betDelay ?? 0}s
+          </p>
+        </div>
+
+        {/* NO + YES cells (matches the Fancy column widths in the header) */}
+        <div className="relative flex items-center gap-1 sm:gap-2 min-h-[2.25rem]">
+          <div className="flex gap-1">
+            {layItems.length > 0 ? (
+              layItems.map((item: any, idx: number) => (
+                <PriceCell
+                  key={`no-${idx}`}
+                  price={item?.price}
+                  line={item?.line}
+                  type="lay"
+                  bettingType="LINE"
+                  emphasis={idx === 0 ? "best" : "depth"}
+                />
+              ))
+            ) : (
+              <PriceCell type="lay" bettingType="LINE" />
+            )}
+          </div>
+          <div className="flex gap-1">
+            {backItems.length > 0 ? (
+              backItems.map((item: any, idx: number) => (
+                <PriceCell
+                  key={`yes-${idx}`}
+                  price={item?.price}
+                  line={item?.line}
+                  type="back"
+                  bettingType="LINE"
+                  emphasis={idx === 0 ? "best" : "depth"}
+                />
+              ))
+            ) : (
+              <PriceCell type="back" bettingType="LINE" />
+            )}
+          </div>
+          {(isSuspended || runner.status === "SUSPENDED") && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 bg-white/70 backdrop-blur-[1px]">
+              <span className="text-red-600 font-bold text-xs bg-red-50 px-2 py-0.5 rounded-full border border-red-200/50 shadow-sm">
+                {isCustom && runner.status === "SUSPENDED" && !isSuspended
+                  ? "Ball Running"
+                  : "Suspended"}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Compact admin control strip */}
+        <div className="flex items-center gap-1 shrink-0">
+          <PillToggle
+            label="Active"
+            on={!isDisabled}
+            onClick={() => handleToggle("isActive", isDisabled)}
+            loading={pendingField === "isActive"}
+            disabled={updateMarket.isPending}
+          />
+          <PillToggle
+            label="Visible"
+            on={!isHidden}
+            onClick={() => handleToggle("isVisible", isHidden)}
+            loading={pendingField === "isVisible"}
+            disabled={updateMarket.isPending}
+          />
+          <PillToggle
+            label="Suspend"
+            on={isSuspended}
+            onClick={() => handleToggle("suspended", !isSuspended)}
+            loading={pendingField === "suspended"}
+            disabled={updateMarket.isPending}
+            activeColor="bg-orange-500"
+          />
+          {isCustom && (
+            <button
+              onClick={startEditing}
+              className="px-1.5 h-6 text-[10px] bg-blue-100 text-blue-700 rounded hover:bg-blue-200 font-semibold"
+              title="Edit odds"
+            >
+              Edit
+            </button>
+          )}
+          <button
+            onClick={() => {
+              setShowSettings(!showSettings);
+              setMinBet(String(condition.minBet || ""));
+              setMaxBet(String(condition.maxBet || ""));
+              setBetDelay(String(condition.betDelay || "0"));
+            }}
+            className="w-6 h-6 inline-flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded text-gray-700 text-xs"
+            title="Settings"
+          >
+            ⚙
+          </button>
+          {isCustom && (
+            <button
+              onClick={handleDelete}
+              disabled={deleteCustom.isPending}
+              className="w-6 h-6 inline-flex items-center justify-center bg-red-100 hover:bg-red-200 rounded text-red-700 text-xs font-bold disabled:opacity-50"
+              title="Delete"
+            >
+              {deleteCustom.isPending ? <Spinner size={10} /> : "×"}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {showSettings && (
+        <div className="px-3 py-2 border-b border-gray-200 bg-gray-50">
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <label className="text-[11px] text-gray-600 block mb-0.5">Min Bet</label>
+              <input
+                type="number"
+                value={minBet}
+                onChange={(e) => setMinBet(e.target.value)}
+                placeholder={String(condition.minBet || "")}
+                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] text-gray-600 block mb-0.5">Max Bet</label>
+              <input
+                type="number"
+                value={maxBet}
+                onChange={(e) => setMaxBet(e.target.value)}
+                placeholder={String(condition.maxBet || "")}
+                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] text-gray-600 block mb-0.5">Bet Delay (s)</label>
+              <input
+                type="number"
+                value={betDelay}
+                onChange={(e) => setBetDelay(e.target.value)}
+                placeholder={String(condition.betDelay || "0")}
+                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+          </div>
+          <button
+            onClick={handleSaveOverrides}
+            disabled={pendingField === "overrides"}
+            className="mt-2 px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1.5"
+          >
+            {pendingField === "overrides" && <Spinner size={10} />}
+            Save Settings
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ─── Fancy group card — mirrors the matchid Fancy section: a single
+// outer card with one shared "Fancy" header, then every LINE/fancy
+// market for the event listed as a row inside. ───
+function FancyGroupCard({ markets }: { markets: any[] }) {
+  if (markets.length === 0) return null;
+  return (
+    <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+      {/* Single shared Fancy header — mirrors matchid's layout. The
+          NO/YES cell widths must match the row cells below so columns
+          line up vertically. */}
+      <div className="grid grid-cols-[1fr_auto_auto] gap-2 px-2 sm:px-3 py-1.5 border-b border-[#1e4088]/40 bg-[var(--header-primary)] items-center">
+        <h3 className="font-bold text-white text-sm sm:text-base truncate leading-tight">
+          Fancy ({markets.length})
+        </h3>
+        <div className="flex items-center gap-1 sm:gap-2">
+          <div className="w-16 sm:w-20 text-center font-bold uppercase bg-lay text-black text-xs sm:text-sm py-0.5 rounded">
+            NO
+          </div>
+          <div className="w-16 sm:w-20 text-center font-bold uppercase bg-back text-black text-xs sm:text-sm py-0.5 rounded">
+            YES
+          </div>
+        </div>
+        <span className="text-white/60 text-[10px] sm:text-[11px] uppercase tracking-wide whitespace-nowrap font-semibold">
+          Controls
+        </span>
+      </div>
+      {markets.map((m) => (
+        <FancyMarketRow key={m.marketId} market={m} />
+      ))}
+    </div>
+  );
+}
+
 // ─── Event Settings Panel ───
 function EventSettingsPanel({
   eventId,
@@ -793,56 +1519,56 @@ function EventSettingsPanel({
   };
 
   return (
-    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="font-semibold text-gray-800">Event Settings</h3>
-        <span className="text-xs text-gray-500">
-          {liveMarketCount} market{liveMarketCount !== 1 ? "s" : ""}
-        </span>
+    <div className="bg-blue-50 border border-blue-200 rounded px-3 py-2 mb-2 flex items-center gap-4 flex-wrap">
+      <span className="font-semibold text-gray-800 text-sm whitespace-nowrap">
+        Event Settings
+      </span>
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-gray-700">Active</span>
+        <Toggle
+          checked={eventSettings?.isActive ?? true}
+          onChange={(v) => handleToggle("isActive", v)}
+          loading={pendingField === "isActive"}
+          disabled={updateEvent.isPending}
+        />
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-sm text-gray-700">Active</span>
-          <Toggle
-            checked={eventSettings?.isActive ?? true}
-            onChange={(v) => handleToggle("isActive", v)}
-            loading={pendingField === "isActive"}
-            disabled={updateEvent.isPending}
-          />
-        </div>
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-sm text-gray-700">Visible</span>
-          <Toggle
-            checked={eventSettings?.isVisible ?? true}
-            onChange={(v) => handleToggle("isVisible", v)}
-            loading={pendingField === "isVisible"}
-            disabled={updateEvent.isPending}
-          />
-        </div>
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-sm text-gray-700">Suspended</span>
-          <Toggle
-            checked={eventSettings?.suspended ?? false}
-            onChange={(v) => handleToggle("suspended", v)}
-            loading={pendingField === "suspended"}
-            disabled={updateEvent.isPending}
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-700 whitespace-nowrap">Delay</span>
-          <input
-            type="number"
-            min="0"
-            defaultValue={eventSettings?.betDelay ?? 0}
-            onBlur={(e) => handleBetDelay(e.target.value)}
-            className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:outline-none"
-          />
-          <span className="text-xs text-gray-500">s</span>
-          {pendingField === "betDelay" && (
-            <span className="text-blue-500"><Spinner size={12} /></span>
-          )}
-        </div>
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-gray-700">Visible</span>
+        <Toggle
+          checked={eventSettings?.isVisible ?? true}
+          onChange={(v) => handleToggle("isVisible", v)}
+          loading={pendingField === "isVisible"}
+          disabled={updateEvent.isPending}
+        />
       </div>
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-gray-700">Suspended</span>
+        <Toggle
+          checked={eventSettings?.suspended ?? false}
+          onChange={(v) => handleToggle("suspended", v)}
+          loading={pendingField === "suspended"}
+          disabled={updateEvent.isPending}
+        />
+      </div>
+      <div className="flex items-center gap-1.5">
+        <span className="text-sm text-gray-700">Delay</span>
+        <input
+          type="number"
+          min="0"
+          defaultValue={eventSettings?.betDelay ?? 0}
+          onBlur={(e) => handleBetDelay(e.target.value)}
+          className="w-14 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:outline-none"
+        />
+        <span className="text-xs text-gray-500">s</span>
+        {pendingField === "betDelay" && (
+          <span className="text-blue-500">
+            <Spinner size={12} />
+          </span>
+        )}
+      </div>
+      <span className="ml-auto text-xs text-gray-500 whitespace-nowrap">
+        {liveMarketCount} market{liveMarketCount !== 1 ? "s" : ""}
+      </span>
     </div>
   );
 }
@@ -968,20 +1694,20 @@ function MarketManagementContent() {
   const router = useRouter();
   const preselectedEventId = searchParams.get("eventId");
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeEventId, setActiveEventId] = useState(preselectedEventId || "");
-  const [activeEventTypeId, setActiveEventTypeId] = useState("4");
+  const [activeEventId] = useState(preselectedEventId || "");
+  const [activeEventTypeId] = useState("4");
   const [activeTab, setActiveTab] = useState<"markets" | "custom" | "history">(
     "markets"
   );
   const [filter, setFilter] = useState<"all" | "active" | "disabled">(
     "all"
   );
-  const [showDropdown, setShowDropdown] = useState(false);
+  // Filters the markets currently loaded for the active event by their
+  // marketName — purely client-side.
+  const [marketNameQuery, setMarketNameQuery] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingCustomMarket, setEditingCustomMarket] = useState<any>(null);
   const [managingCustomMarket, setManagingCustomMarket] = useState<any>(null);
-  const searchRef = useRef<HTMLDivElement>(null);
 
   const deleteCustom = useDeleteCustomMarket();
 
@@ -1001,49 +1727,22 @@ function MarketManagementContent() {
     deleteCustom.mutate(market.marketId);
   };
 
-  const { data: searchResults, isLoading: isSearching } = useSearchEvents(searchQuery);
-
   const { matchOdds: rawMarkets, isConnected, status } = useLiveMatch(
     activeEventId || "", activeEventTypeId
   );
 
   const { data: savedMarkets } = useMarketsByEvent(activeEventId || null);
 
-  // Close dropdown on outside click
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        setShowDropdown(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleSelectEvent = useCallback((eventId: string, eventName: string, eventTypeId?: string) => {
-    setSearchQuery(eventName);
-    setActiveEventId(eventId);
-    if (eventTypeId) setActiveEventTypeId(eventTypeId);
-    setShowDropdown(false);
-  }, []);
-
-  const handleSearchKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      // If the input looks like a raw event ID (all digits), load it directly
-      const trimmed = searchQuery.trim();
-      if (trimmed && /^\d+$/.test(trimmed)) {
-        setActiveEventId(trimmed);
-        setShowDropdown(false);
-      } else if (searchResults && searchResults.length > 0) {
-        // Auto-select first result on Enter
-        handleSelectEvent(searchResults[0].eventId, searchResults[0].name, searchResults[0].eventTypeId);
-      }
-    }
-  }, [searchQuery, searchResults, handleSelectEvent]);
-
+  const trimmedMarketQuery = marketNameQuery.trim().toLowerCase();
   const markets = rawMarkets.filter((m: any) => {
-    if (filter === "active") return !m.adminDisabled && !m.adminHidden;
-    if (filter === "disabled") return m.adminDisabled || m.adminHidden;
+    if (filter === "active" && (m.adminDisabled || m.adminHidden)) return false;
+    if (filter === "disabled" && !m.adminDisabled && !m.adminHidden) return false;
+    if (
+      trimmedMarketQuery &&
+      !(m.marketName || "").toLowerCase().includes(trimmedMarketQuery)
+    ) {
+      return false;
+    }
     return true;
   });
 
@@ -1052,115 +1751,74 @@ function MarketManagementContent() {
   ).length;
 
   return (
-    <div className="min-h-screen bg-white p-4">
+    <div className="min-h-screen bg-[#efefef] p-3">
       <div className="">
-        {/* Header */}
-        <div className="mb-6">
+        {/* Header — single compact row: back, title, and live-event status */}
+        <div className="flex items-center gap-3 mb-2">
           <button
             onClick={() => router.back()}
-            className="flex items-center text-gray-600 hover:text-gray-900 mb-4 transition-colors"
+            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors text-sm"
+            title="Back to Events"
           >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            Back to Events
+            Back
           </button>
-          <h1 className="text-2xl font-bold text-gray-800">Market Management</h1>
-          <p className="text-gray-600 mt-1">
-            View live markets, manage settings, and review odds history
-          </p>
-        </div>
-
-        {/* Event Search */}
-        <div className="relative mb-6" ref={searchRef}>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setShowDropdown(true);
-                }}
-                onFocus={() => searchQuery.trim().length >= 2 && setShowDropdown(true)}
-                onKeyDown={handleSearchKeyDown}
-                placeholder="Search by team name, event name, or Event ID..."
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          <h1 className="text-lg sm:text-xl font-bold text-gray-800">Market Management</h1>
+          {activeEventId && (
+            <div className="ml-auto flex items-center gap-2">
+              <span
+                className={`w-2.5 h-2.5 rounded-full ${
+                  isConnected ? "bg-green-500 animate-pulse" : "bg-red-500"
+                }`}
               />
-              {isSearching && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500">
-                  <Spinner size={16} />
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Search Results Dropdown */}
-          {showDropdown && searchQuery.trim().length >= 2 && (
-            <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-y-auto">
-              {isSearching ? (
-                <div className="px-4 py-3 text-sm text-gray-500 flex items-center gap-2">
-                  <Spinner size={14} /> Searching...
-                </div>
-              ) : searchResults && searchResults.length > 0 ? (
-                searchResults.map((event: any) => (
-                  <button
-                    key={event.eventId}
-                    onClick={() => handleSelectEvent(event.eventId, event.name, event.eventTypeId)}
-                    className="w-full text-left px-4 py-2.5 hover:bg-blue-50 border-b border-gray-100 last:border-0 transition-colors"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="min-w-0 flex-1">
-                        <div className="font-medium text-gray-800 text-sm truncate">
-                          {event.name}
-                        </div>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-xs text-gray-500">
-                            {event.sportName}
-                          </span>
-                          <span className="text-gray-300">|</span>
-                          <span className="text-xs text-gray-500 truncate">
-                            {event.seriesName}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 ml-3 shrink-0">
-                        {event.inPlay && (
-                          <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-green-100 text-green-700 rounded">
-                            LIVE
-                          </span>
-                        )}
-                        <span className="text-xs text-gray-400 font-mono">
-                          {event.eventId}
-                        </span>
-                      </div>
-                    </div>
-                  </button>
-                ))
-              ) : (
-                <div className="px-4 py-3 text-sm text-gray-500">
-                  No events found for &quot;{searchQuery}&quot;
-                </div>
-              )}
+              <span className="text-sm text-gray-700 font-medium">
+                {isConnected ? "Connected" : status}
+              </span>
+              <span className="text-xs text-gray-500 font-mono">ID: {activeEventId}</span>
             </div>
           )}
         </div>
 
+        {/* Market-name search — filters the markets currently loaded for
+            this event by their marketName. Replaces the old event-search
+            input; events are loaded via the eventId URL param. */}
+        <div className="relative mb-2">
+          <svg
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+          <input
+            type="text"
+            value={marketNameQuery}
+            onChange={(e) => setMarketNameQuery(e.target.value)}
+            placeholder="Search markets by name..."
+            className="w-full pl-9 pr-9 py-2 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          {marketNameQuery && (
+            <button
+              type="button"
+              onClick={() => setMarketNameQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-lg leading-none"
+              title="Clear"
+            >
+              ×
+            </button>
+          )}
+        </div>
+
         {/* Tabs - always visible */}
-        <div className="flex gap-1 mb-4 border-b border-gray-200">
+        <div className="flex gap-1 mb-2 border-b border-gray-200">
           <button
             onClick={() => setActiveTab("markets")}
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
@@ -1196,25 +1854,6 @@ function MarketManagementContent() {
         {/* Active Event Area */}
         {activeEventId && (
           <>
-            {/* Connection Status */}
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <span
-                  className={`w-2.5 h-2.5 rounded-full ${
-                    isConnected ? "bg-green-500 animate-pulse" : "bg-red-500"
-                  }`}
-                />
-                <span className="text-sm text-gray-600">
-                  {isConnected
-                    ? `Connected - Event ${activeEventId}`
-                    : `${status} - Event ${activeEventId}`}
-                </span>
-              </div>
-              <span className="text-xs text-gray-400 font-mono">
-                ID: {activeEventId}
-              </span>
-            </div>
-
             {activeTab === "markets" && (
               <>
                 {/* Event Settings */}
@@ -1223,55 +1862,72 @@ function MarketManagementContent() {
                   liveMarketCount={rawMarkets.length}
                 />
 
-                {/* Saved Overrides Info */}
-                {savedMarkets && savedMarkets.length > 0 && (
-                  <div className="mb-3 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800">
-                    {savedMarkets.length} market override(s) saved in DB for this event
+                {/* Filter pills (compact). The market-name search lives
+                    in the top bar and applies on top of these filters. */}
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  <div className="flex gap-1">
+                    {(
+                      [
+                        { key: "all", label: `All (${rawMarkets.length})` },
+                        {
+                          key: "active",
+                          label: `Active (${rawMarkets.length - disabledCount})`,
+                        },
+                        { key: "disabled", label: `Disabled (${disabledCount})` },
+                      ] as const
+                    ).map(({ key, label }) => (
+                      <button
+                        key={key}
+                        onClick={() => setFilter(key)}
+                        className={`px-3 py-1 text-xs rounded-full transition-colors ${
+                          filter === key
+                            ? "bg-blue-600 text-white"
+                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
                   </div>
-                )}
-
-                {/* Filter pills */}
-                <div className="flex gap-2 mb-3">
-                  {(
-                    [
-                      { key: "all", label: `All (${rawMarkets.length})` },
-                      {
-                        key: "active",
-                        label: `Active (${rawMarkets.length - disabledCount})`,
-                      },
-                      { key: "disabled", label: `Disabled (${disabledCount})` },
-                    ] as const
-                  ).map(({ key, label }) => (
-                    <button
-                      key={key}
-                      onClick={() => setFilter(key)}
-                      className={`px-3 py-1 text-xs rounded-full transition-colors ${
-                        filter === key
-                          ? "bg-blue-600 text-white"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      }`}
+                  {savedMarkets && savedMarkets.length > 0 && (
+                    <span
+                      className="ml-auto text-[11px] text-yellow-800 bg-yellow-50 border border-yellow-200 rounded-full px-2 py-0.5 whitespace-nowrap"
+                      title={`${savedMarkets.length} market override(s) saved in DB for this event`}
                     >
-                      {label}
-                    </button>
-                  ))}
+                      {savedMarkets.length} override{savedMarkets.length !== 1 ? "s" : ""} saved
+                    </span>
+                  )}
                 </div>
 
-                {/* Markets List */}
+                {/* Markets List — non-LINE markets render as individual
+                    cards (Match Odds, Bookmaker, etc). LINE/fancy markets
+                    are grouped into a single card with one shared "Fancy"
+                    header, mirroring the public match page so much more
+                    fits on one screen. */}
                 {markets.length === 0 ? (
                   <div className="text-center py-12 text-gray-500">
                     {isConnected
-                      ? filter !== "all"
-                        ? "No markets match this filter"
+                      ? trimmedMarketQuery || filter !== "all"
+                        ? "No markets match the current filter"
                         : "No markets available for this event"
                       : "Connecting to live feed..."}
                   </div>
-                ) : (
-                  <div className="space-y-2">
-                    {markets.map((market: any) => (
-                      <MarketCard key={market.marketId} market={market} />
-                    ))}
-                  </div>
-                )}
+                ) : (() => {
+                    const standardMarkets = markets.filter(
+                      (m: any) => m.bettingType !== "LINE"
+                    );
+                    const fancyMarkets = markets.filter(
+                      (m: any) => m.bettingType === "LINE"
+                    );
+                    return (
+                      <div className="space-y-1.5">
+                        {standardMarkets.map((market: any) => (
+                          <MarketCard key={market.marketId} market={market} />
+                        ))}
+                        <FancyGroupCard markets={fancyMarkets} />
+                      </div>
+                    );
+                  })()}
               </>
             )}
 
@@ -1388,7 +2044,7 @@ function MarketManagementContent() {
           <CreateCustomMarketModal
             onClose={() => setShowCreateModal(false)}
             lockedEventId={activeEventId}
-            lockedEventName={searchQuery || `Event ${activeEventId}`}
+            lockedEventName={`Event ${activeEventId}`}
           />
         )}
         {editingCustomMarket && (
@@ -1423,10 +2079,10 @@ function MarketManagementContent() {
               </svg>
             </div>
             <h3 className="text-gray-700 font-medium text-lg">
-              Search for an event to get started
+              No event selected
             </h3>
             <p className="text-gray-500 text-sm mt-1">
-              Search by team name, event name, or enter an Event ID directly
+              Open this page with an <code className="font-mono">?eventId=…</code> URL parameter to load an event.
             </p>
           </div>
         )}

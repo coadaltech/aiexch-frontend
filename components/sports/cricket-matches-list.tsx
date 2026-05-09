@@ -285,26 +285,28 @@ export function CricketMatchesList({
   const marketMap: Record<string, any> =
     Object.keys(oddsByMarketId).length > 0 ? oddsByMarketId : cachedOddsMap;
 
-  // Keep only events that actually have at least one real price on their
-  // default market, then cap to maxMatches. Filtering first ensures the
-  // section fills up from the buffered candidate pool rather than leaving
-  // empty slots.
-  const visibleMatches = oddsCandidates
-    .filter((m) => {
-      const market = marketMap[m.defaultMarketId];
-      if (!market) return false;
-      const runners: any[] = market.runners ?? [];
-      return runners.some(
-        (r: any) => r.back?.[0]?.price != null || r.lay?.[0]?.price != null
-      );
-    })
-    .slice(0, maxMatches ?? undefined);
+  // Prefer events with live prices; fall back to events without prices yet so
+  // the section paints immediately on first load (rows render with "-" until
+  // the WS tick lands and React re-renders with real odds in place).
+  const matchesWithPrices = oddsCandidates.filter((m) => {
+    const market = marketMap[m.defaultMarketId];
+    if (!market) return false;
+    const runners: any[] = market.runners ?? [];
+    return runners.some(
+      (r: any) => r.back?.[0]?.price != null || r.lay?.[0]?.price != null
+    );
+  });
+
+  const visibleMatches = (
+    matchesWithPrices.length > 0 ? matchesWithPrices : oddsCandidates
+  ).slice(0, maxMatches ?? undefined);
 
   const hasAnythingToShow = visibleMatches.length > 0;
 
-  // Homepage mode: caller passes a `wrapper`. Show nothing until there are
-  // matches with live odds — no skeleton, no empty chrome. When data arrives
-  // React re-renders and the section pops in automatically.
+  // Homepage mode: caller passes a `wrapper`. Render as soon as the event
+  // list is available — odds rows show "-" until WS data arrives, then update
+  // in place. This is much faster than waiting for the WS roundtrip before
+  // the section becomes visible.
   if (wrapper) {
     if (!hasAnythingToShow) return null;
   } else {
