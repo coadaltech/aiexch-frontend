@@ -151,9 +151,12 @@ export function BetSlip({ matchId, allBetsOnly = false }: { matchId: string; all
 function CurrentBetTableRow({ bet }: { bet: any }) {
   const isFancy = bet.marketType === "fancy";
   const capDecimals = (num: number) => {
-    const str = String(num);
-    const decimals = str.includes(".") ? str.split(".")[1].length : 0;
-    return decimals > 4 ? num.toFixed(4) : str;
+    if (!Number.isFinite(num)) return "-";
+    // Round to 2 decimals max, then re-parse so an integer like 29 prints as
+    // "29" instead of "29.00" / "29.0000". Trailing zeros showed up on
+    // bookmaker prices because `Number(0.29) * 100` returns 29.000000000004
+    // — float drift the old `decimals > 4` check captured and pinned at 4dp.
+    return String(Number(num.toFixed(2)));
   };
   // Match the on-page (Indian) format the user clicked. Match-odds families
   // are stored in the same decimal form they're displayed in (e.g. 1.78), so
