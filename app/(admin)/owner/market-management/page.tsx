@@ -18,6 +18,7 @@ import {
   EditCustomMarketModal,
   ManageMarketPriceModal,
 } from "@/components/owner/custom-market-modals";
+import { usePermissions } from "@/contexts/PermissionContext";
 
 // ─── Spinner ───
 function Spinner({ size = 16 }: { size?: number }) {
@@ -2091,10 +2092,33 @@ function MarketManagementContent() {
   );
 }
 
+function MarketManagementGate() {
+  const { hasAny } = usePermissions();
+  // Page-level gate. Allow anyone with any market-write permission to land
+  // here; backend re-checks every individual action. Pure viewers get a
+  // friendly 'no access' panel instead of staring at disabled controls.
+  const allowed = hasAny([
+    "custom_markets.view",
+    "custom_markets.edit",
+    "custom_markets.manage_odds",
+    "live_markets.settle",
+  ]);
+  if (!allowed) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center p-6">
+        <div className="rounded-md border border-border bg-card p-6 text-center text-sm text-muted-foreground">
+          You don't have permission to manage markets.
+        </div>
+      </div>
+    );
+  }
+  return <MarketManagementContent />;
+}
+
 export default function MarketManagementPage() {
   return (
     <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading...</div>}>
-      <MarketManagementContent />
+      <MarketManagementGate />
     </Suspense>
   );
 }

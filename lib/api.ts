@@ -543,6 +543,45 @@ export const ownerApi = {
     api.post(`/owner/matka/live-prediction/${shiftId}/declare`, { result }),
   getMatkaDeclaredHistory: (limit = 50) =>
     api.get(`/owner/matka/live-prediction/declared-history?limit=${limit}`),
+
+  // ── Staff Management ─────────────────────────────────────────────────────
+  getPermissionsCatalog: () => api.get("/owner/permissions"),
+  /** List MY staff (non-Owner) or all staff (Owner). */
+  listMyStaff: () => api.get("/owner/staff/list"),
+  /** Create a delegated staff user under the caller. */
+  createStaff: (data: {
+    username: string;
+    email: string;
+    password: string;
+    firstName?: string;
+    lastName?: string;
+  }) => api.post("/owner/staff/create", data),
+  getStaffRoles: () => api.get("/owner/staff-roles"),
+  getStaffRole: (id: string) => api.get(`/owner/staff-roles/${id}`),
+  createStaffRole: (data: {
+    name: string;
+    description?: string;
+    scopeRole: number;
+    whitelabelId?: string | null;
+    permissionKeys?: string[];
+  }) => api.post("/owner/staff-roles", data),
+  updateStaffRole: (
+    id: string,
+    data: { name?: string; description?: string; scopeRole?: number },
+  ) => api.put(`/owner/staff-roles/${id}`, data),
+  setStaffRolePermissions: (id: string, permissionKeys: string[]) =>
+    api.put(`/owner/staff-roles/${id}/permissions`, { permissionKeys }),
+  deleteStaffRole: (id: string) => api.delete(`/owner/staff-roles/${id}`),
+  cloneStaffRole: (id: string, data?: { name?: string; whitelabelId?: string | null }) =>
+    api.post(`/owner/staff-roles/${id}/clone`, data ?? {}),
+  getStaffMember: (userId: string) => api.get(`/owner/staff/users/${userId}`),
+  assignStaffRole: (userId: string, staffRoleId: string) =>
+    api.put(`/owner/staff/users/${userId}/role`, { staffRoleId }),
+  unassignStaffRole: (userId: string) => api.delete(`/owner/staff/users/${userId}/role`),
+  upsertOverride: (userId: string, permissionKey: string, effect: "GRANT" | "DENY") =>
+    api.post(`/owner/staff/users/${userId}/overrides`, { permissionKey, effect }),
+  removeOverride: (userId: string, permissionId: string) =>
+    api.delete(`/owner/staff/users/${userId}/overrides/${permissionId}`),
 };
 
 export interface BetRecord {

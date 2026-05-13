@@ -11,6 +11,7 @@ import { useDomains } from "@/hooks/useDomains";
 import { useModal } from "@/hooks/useModal";
 import { useConfirm } from "@/hooks/useConfirm";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Can } from "@/contexts/PermissionContext";
 
 interface Domain {
   id: string;
@@ -62,10 +63,12 @@ export default function DomainsPage() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Domains</h1>
-        <Button onClick={openModal}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Domain
-        </Button>
+        <Can perm="domains.add">
+          <Button onClick={openModal}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Domain
+          </Button>
+        </Can>
       </div>
 
       <Card>
@@ -121,23 +124,27 @@ export default function DomainsPage() {
                     <Badge className={getStatusColor(domain.status)}>
                       {domain.status}
                     </Badge>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedDomain(domain);
-                        openModal();
-                      }}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteClick(domain)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <Can perm="domains.add">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedDomain(domain);
+                          openModal();
+                        }}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </Can>
+                    <Can perm="domains.delete">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteClick(domain)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </Can>
                   </div>
                 </div>
               ))

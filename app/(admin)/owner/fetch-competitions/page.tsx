@@ -1,8 +1,11 @@
 "use client";
 import { useState } from "react";
 import { ownerApi } from "@/lib/api";
+import { usePermissions } from "@/contexts/PermissionContext";
 
 export default function FetchCompetitionsPage() {
+  const { has } = usePermissions();
+  const canSync = has("sports.fetch_competitions");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -35,13 +38,19 @@ export default function FetchCompetitionsPage() {
           </p>
         </div>
 
-        <button
-          onClick={handleSync}
-          disabled={loading}
-          className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {loading ? "Syncing..." : "Fetch All Competitions"}
-        </button>
+        {canSync ? (
+          <button
+            onClick={handleSync}
+            disabled={loading}
+            className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {loading ? "Syncing..." : "Fetch All Competitions"}
+          </button>
+        ) : (
+          <p className="text-sm text-gray-500 italic">
+            You don't have permission to fetch competitions.
+          </p>
+        )}
 
         {error && (
           <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">

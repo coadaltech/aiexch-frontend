@@ -12,6 +12,7 @@ import { TableSkeleton } from "@/components/owner/skeletons";
 import { useModal } from "@/hooks/useModal";
 import { useConfirm } from "@/hooks/useConfirm";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Can } from "@/contexts/PermissionContext";
 
 export default function WithdrawalMethodsPage() {
   const methodModal = useModal<any>();
@@ -70,10 +71,12 @@ export default function WithdrawalMethodsPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Withdrawal Methods</h1>
           <p className="text-muted-foreground">Manage available withdrawal methods and their settings</p>
         </div>
-        <Button onClick={handleCreateMethod} className="bg-primary text-primary-foreground w-full sm:w-auto">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Method
-        </Button>
+        <Can perm="withdrawal_methods.create">
+          <Button onClick={handleCreateMethod} className="bg-primary text-primary-foreground w-full sm:w-auto">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Method
+          </Button>
+        </Can>
       </div>
 
       <Card className="bg-card border">
@@ -157,35 +160,39 @@ export default function WithdrawalMethodsPage() {
                       </td>
                       <td className="py-3 px-2">
                         <div className="flex gap-1">
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            onClick={() => handleToggleStatus(method)} 
-                            title={method.status === "active" ? "Suspend" : "Activate"}
-                            className="h-8 w-8 p-0 text-foreground"
-                            disabled={updateMutation.isPending}
-                          >
-                            {updateMutation.isPending ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : method.status === "active" ? (
-                              <Ban className="h-3 w-3" />
-                            ) : (
-                              <CheckCircle className="h-3 w-3" />
-                            )}
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => handleEditMethod(method)} title="Edit" className="h-8 w-8 p-0 text-foreground">
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            onClick={() => handleDeleteMethod(method.id)} 
-                            title="Delete" 
-                            className="h-8 w-8 p-0 text-foreground"
-                            disabled={deleteMutation.isPending}
-                          >
-                            {deleteMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
-                          </Button>
+                          <Can perm="withdrawal_methods.edit">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleToggleStatus(method)}
+                              title={method.status === "active" ? "Suspend" : "Activate"}
+                              className="h-8 w-8 p-0 text-foreground"
+                              disabled={updateMutation.isPending}
+                            >
+                              {updateMutation.isPending ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : method.status === "active" ? (
+                                <Ban className="h-3 w-3" />
+                              ) : (
+                                <CheckCircle className="h-3 w-3" />
+                              )}
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => handleEditMethod(method)} title="Edit" className="h-8 w-8 p-0 text-foreground">
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                          </Can>
+                          <Can perm="withdrawal_methods.delete">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDeleteMethod(method.id)}
+                              title="Delete"
+                              className="h-8 w-8 p-0 text-foreground"
+                              disabled={deleteMutation.isPending}
+                            >
+                              {deleteMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
+                            </Button>
+                          </Can>
                         </div>
                       </td>
                     </tr>

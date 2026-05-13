@@ -313,7 +313,7 @@ const Homepage = () => {
                 badge="LIVE"
                 oddsColumns
               />
-              <div className="px-1 sm:px-2 pb-3">{content}</div>
+              <div className="">{content}</div>
             </div>
           </div>
         )}
@@ -336,7 +336,7 @@ const Homepage = () => {
                 badge="LIVE"
                 oddsColumns
               />
-              <div className="px-1 sm:px-2 pb-3">{content}</div>
+              <div className="">{content}</div>
             </div>
           </div>
         )}
@@ -360,7 +360,7 @@ const Homepage = () => {
                   badge="LIVE"
                   oddsColumns
                 />
-                <div className="px-1 sm:px-2 pb-3">{content}</div>
+                <div className="">{content}</div>
               </div>
             </div>
           )}
@@ -417,7 +417,7 @@ const Homepage = () => {
                   badge="LIVE"
                   oddsColumns
                 />
-                <div className="px-1 sm:px-2 pb-3">{content}</div>
+                <div className="">{content}</div>
               </div>
             </div>
           )}

@@ -12,6 +12,7 @@ import { TableSkeleton } from "@/components/owner/skeletons";
 import { useModal } from "@/hooks/useModal";
 import { useConfirm } from "@/hooks/useConfirm";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Can } from "@/contexts/PermissionContext";
 
 export default function QrCodesPage() {
   const qrCodeModal = useModal<any>();
@@ -60,10 +61,12 @@ export default function QrCodesPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">QR Codes</h1>
           <p className="text-muted-foreground">Manage payment method QR codes for deposits</p>
         </div>
-        <Button onClick={handleCreateQrCode} className="bg-primary text-primary-foreground w-full sm:w-auto">
-          <Plus className="h-4 w-4 mr-2" />
-          Add QR Code
-        </Button>
+        <Can perm="qrcodes.create">
+          <Button onClick={handleCreateQrCode} className="bg-primary text-primary-foreground w-full sm:w-auto">
+            <Plus className="h-4 w-4 mr-2" />
+            Add QR Code
+          </Button>
+        </Can>
       </div>
 
       <Card className="bg-card border">
@@ -131,19 +134,23 @@ export default function QrCodesPage() {
                       </td>
                       <td className="py-3 px-2">
                         <div className="flex gap-1">
-                          <Button size="sm" variant="ghost" onClick={() => handleEditQrCode(qrCode)} title="Edit" className="h-8 w-8 p-0 text-foreground">
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            onClick={() => handleDeleteQrCode(qrCode.id)} 
-                            title="Delete" 
-                            className="h-8 w-8 p-0 text-foreground"
-                            disabled={deleteMutation.isPending}
-                          >
-                            {deleteMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
-                          </Button>
+                          <Can perm="qrcodes.edit">
+                            <Button size="sm" variant="ghost" onClick={() => handleEditQrCode(qrCode)} title="Edit" className="h-8 w-8 p-0 text-foreground">
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                          </Can>
+                          <Can perm="qrcodes.delete">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDeleteQrCode(qrCode.id)}
+                              title="Delete"
+                              className="h-8 w-8 p-0 text-foreground"
+                              disabled={deleteMutation.isPending}
+                            >
+                              {deleteMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
+                            </Button>
+                          </Can>
                         </div>
                       </td>
                     </tr>

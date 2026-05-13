@@ -9,6 +9,7 @@ import { useConfirm } from "@/hooks/useConfirm";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useRouter } from "next/navigation";
 import { usePanelPrefix } from "@/hooks/usePanelPrefix";
+import { Can } from "@/contexts/PermissionContext";
 
 export default function WhitelabelsPage() {
   const router = useRouter();
@@ -45,13 +46,15 @@ export default function WhitelabelsPage() {
             Manage white label casinos and their themes
           </p>
         </div>
-        <Button
-          onClick={handleCreateWhitelabel}
-          className="bg-primary text-primary-foreground w-full sm:w-auto"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Create White Label
-        </Button>
+        <Can perm="whitelabels.create">
+          <Button
+            onClick={handleCreateWhitelabel}
+            className="bg-primary text-primary-foreground w-full sm:w-auto"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create White Label
+          </Button>
+        </Can>
       </div>
 
       <Card className="bg-card border">
@@ -167,31 +170,35 @@ export default function WhitelabelsPage() {
                       </td>
                       <td className="py-3 px-2">
                         <div className="flex gap-1">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleEditWhitelabel(whitelabel)}
-                            title="Edit"
-                            className="h-8 w-8 p-0 text-foreground"
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() =>
-                              handleDeleteWhitelabel(whitelabel.id)
-                            }
-                            title="Delete"
-                            className="h-8 w-8 p-0 text-foreground"
-                            disabled={deleteMutation.isPending}
-                          >
-                            {deleteMutation.isPending ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-3 w-3" />
-                            )}
-                          </Button>
+                          <Can perm="whitelabels.edit">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleEditWhitelabel(whitelabel)}
+                              title="Edit"
+                              className="h-8 w-8 p-0 text-foreground"
+                            >
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                          </Can>
+                          <Can perm="whitelabels.delete">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() =>
+                                handleDeleteWhitelabel(whitelabel.id)
+                              }
+                              title="Delete"
+                              className="h-8 w-8 p-0 text-foreground"
+                              disabled={deleteMutation.isPending}
+                            >
+                              {deleteMutation.isPending ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-3 w-3" />
+                              )}
+                            </Button>
+                          </Can>
                         </div>
                       </td>
                     </tr>

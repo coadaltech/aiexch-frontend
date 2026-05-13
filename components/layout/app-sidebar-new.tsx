@@ -720,7 +720,7 @@ export function AppSidebar() {
       <SidebarContent className={contentClassName}>
 
         {/* ── Toggle button (always visible at top) ── */}
-        <div className={`pt-2 mb-1 ${open ? "flex justify-end px-2" : ""}`}>
+        <div className={`pt-2 mb-1 ${open ? "flex justify-start px-2" : ""}`}>
           <button
             onClick={toggleSidebar}
             title={open ? "Collapse sidebar" : "Expand sidebar"}

@@ -7,6 +7,7 @@ import MainLayout from "@/components/main-layout";
 import { PopupDisplay } from "@/components/popups/popup-display";
 import { QueryProvider } from "@/providers/query-provider";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { PermissionProvider } from "@/contexts/PermissionContext";
 import { BetSlipProvider } from "@/contexts/BetSlipContext";
 import { DatabaseErrorProvider } from "@/contexts/DatabaseErrorContext";
 // import { SportsProvider } from "@/contexts/SportsContext";
@@ -70,19 +71,21 @@ export default function RootLayout({
         <QueryProvider>
           {/* <UseSportsSeries> */}
           <AuthProvider>
-            <BetSlipProvider>
-              <DatabaseErrorProvider>
-                {/* <SportsProvider> */}
-                <MaintenanceWrapper>
-                  <MainLayout>
-                    {children}
-                    <PopupDisplay />
-                    <BottomNavigation />
-                  </MainLayout>
-                </MaintenanceWrapper>
-                {/* </SportsProvider> */}
-              </DatabaseErrorProvider>
-            </BetSlipProvider>
+            <PermissionProvider>
+              <BetSlipProvider>
+                <DatabaseErrorProvider>
+                  {/* <SportsProvider> */}
+                  <MaintenanceWrapper>
+                    <MainLayout>
+                      {children}
+                      <PopupDisplay />
+                      <BottomNavigation />
+                    </MainLayout>
+                  </MaintenanceWrapper>
+                  {/* </SportsProvider> */}
+                </DatabaseErrorProvider>
+              </BetSlipProvider>
+            </PermissionProvider>
           </AuthProvider>
           {/* </UseSportsSeries> */}
         </QueryProvider>

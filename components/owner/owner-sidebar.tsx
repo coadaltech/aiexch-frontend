@@ -6,9 +6,10 @@ import { X, LogOut, ChevronDown, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/contexts/PermissionContext";
 import { useWhitelabelInfo } from "@/hooks/useAuth";
 import { usePanelPrefix } from "@/hooks/usePanelPrefix";
-import { getNavigation } from "./data";
+import { getNavigation, type NavItem } from "./data";
 import { useState, useMemo } from "react";
 import { useSettings } from "@/hooks/usePublic";
 
@@ -63,13 +64,43 @@ function SidebarContent({
   setOpen?: (open: boolean) => void;
 }) {
   const { logout, user: currentUser } = useAuth();
+  const { hasAny } = usePermissions();
   const { data: whitelabelInfo } = useWhitelabelInfo();
   const panelPrefix = usePanelPrefix();
   const [openGroups, setOpenGroups] = useState<string[]>([]);
   const { data: settings } = useSettings();
   const isWhitelabel = !!settings?.whitelabelTheme;
   const whitelabelType = whitelabelInfo?.whitelabelType ? String(whitelabelInfo.whitelabelType).toUpperCase() : null;
-  const navigation = useMemo(() => getNavigation(panelPrefix), [panelPrefix]);
+  const baseNavigation = useMemo(() => getNavigation(panelPrefix), [panelPrefix]);
+
+  // Filter visible items by:
+  //   1. Permissions (each NavItem.requires is any-of). Owner has every key
+  //      via PermissionContext bypass, so this is a no-op for owners.
+  //   2. Surviving product-level constraints from before RBAC:
+  //        - "Configuration" hidden on whitelabel UIs
+  //        - "QR Codes" / "Withdrawal Methods" only shown on B2C whitelabels
+  //          (these endpoints additionally Owner-block at the API level)
+  const navigation = useMemo<NavItem[]>(() => {
+    const visibleByPermission = (item: NavItem): boolean =>
+      !item.requires || item.requires.length === 0 || hasAny(item.requires);
+
+    return baseNavigation
+      .map((item) => {
+        if (item.subItems) {
+          const filteredSubs = item.subItems.filter(visibleByPermission);
+          if (filteredSubs.length === 0) return null;
+          return { ...item, subItems: filteredSubs };
+        }
+        return visibleByPermission(item) ? item : null;
+      })
+      .filter((item): item is NavItem => item !== null)
+      .filter((item) => {
+        if (isWhitelabel && item.name === "Configuration") return false;
+        if (item.name === "QR Codes" && whitelabelType !== "B2C") return false;
+        if (item.name === "Withdrawal Methods" && whitelabelType !== "B2C") return false;
+        return true;
+      });
+  }, [baseNavigation, hasAny, isWhitelabel, whitelabelType]);
 
   const toggleGroup = (name: string) => {
     setOpenGroups((prev) =>
@@ -97,27 +128,7 @@ function SidebarContent({
 
 
       <nav className="flex-1 overflow-y-auto py-4 px-3 lg:px-4 space-y-1">
-        {navigation
-          .filter((item) => {
-            if (isWhitelabel && item.name === "Configuration") return false;
-            if (item.name === "Manage Currency" && currentUser?.role !== "owner") return false;
-            // Marketing is owner-only
-            if (item.name === "Marketing" && currentUser?.role !== "owner") return false;
-            // Result (Live Prediction + Sports Result) is owner-only
-            if (item.name === "Result" && currentUser?.role !== "owner") return false;
-            // QR Codes: only for non-owner users on B2C whitelabels
-            if (item.name === "QR Codes") {
-              if (currentUser?.role === "owner") return false;
-              if (whitelabelType !== "B2C") return false;
-            }
-            // Withdrawal Methods: only for non-owner users on B2C whitelabels
-            if (item.name === "Withdrawal Methods") {
-              if (currentUser?.role === "owner") return false;
-              if (whitelabelType !== "B2C") return false;
-            }
-            return true;
-          })
-          .map((item) =>
+        {navigation.map((item) =>
             item.subItems ? (
               <div key={item.name}>
                 <button

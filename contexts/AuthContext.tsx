@@ -25,6 +25,22 @@ export interface User {
   timezone?: string | null;
   // Per-bet cap. "0" means no per-bet cap (only market max applies).
   transactionLimit?: string;
+  /**
+   * Effective staff permissions (e.g. "banners.create"). Empty for player users.
+   * Owner role gets the full catalog (server-side bypass — see services/permissions.ts),
+   * UNLESS isStaff=true (an Owner's staff has restricted perms despite role).
+   * Source of truth for UI gating; backend re-checks on every request.
+   */
+  permissions?: string[];
+  /**
+   * True iff this user is a delegated staff member of another tier user
+   * (Owner/Admin/Super/Master/Agent). Staff inherit the parent's data scope
+   * but their permissions are restricted to what was explicitly granted.
+   * Owner-bypass does NOT apply to staff.
+   */
+  isStaff?: boolean;
+  /** The tier user this staff works under. Null for non-staff. */
+  parentUserId?: string | null;
 }
 
 const applyUserTimezone = (u: { country?: string | null; timezone?: string | null } | null | undefined) => {

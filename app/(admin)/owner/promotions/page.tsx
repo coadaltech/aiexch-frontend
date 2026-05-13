@@ -27,6 +27,7 @@ import { TableSkeleton } from "@/components/owner/skeletons";
 import { useModal } from "@/hooks/useModal";
 import { useConfirm } from "@/hooks/useConfirm";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Can } from "@/contexts/PermissionContext";
 import Image from "next/image";
 
 export default function PromotionsPage() {
@@ -89,13 +90,15 @@ export default function PromotionsPage() {
             Create and manage promotional campaigns
           </p>
         </div>
-        <Button
-          onClick={handleCreatePromotion}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Create Promotion
-        </Button>
+        <Can perm="promotions.create">
+          <Button
+            onClick={handleCreatePromotion}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create Promotion
+          </Button>
+        </Can>
       </div>
 
       <Card className="bg-card border">
@@ -228,29 +231,33 @@ export default function PromotionsPage() {
 
                       <td className="py-3 px-2">
                         <div className="flex gap-1">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleEditPromotion(promo)}
-                            title="Edit Promotion"
-                            className="h-8 w-8 p-0 hover:bg-accent hover:text-accent-foreground"
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleDeletePromotion(promo.id)}
-                            title="Delete Promotion"
-                            disabled={deleteMutation.isPending}
-                            className="h-8 w-8 p-0 hover:bg-accent hover:text-accent-foreground"
-                          >
-                            {deleteMutation.isPending ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-3 w-3" />
-                            )}
-                          </Button>
+                          <Can perm="promotions.edit">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleEditPromotion(promo)}
+                              title="Edit Promotion"
+                              className="h-8 w-8 p-0 hover:bg-accent hover:text-accent-foreground"
+                            >
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                          </Can>
+                          <Can perm="promotions.delete">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDeletePromotion(promo.id)}
+                              title="Delete Promotion"
+                              disabled={deleteMutation.isPending}
+                              className="h-8 w-8 p-0 hover:bg-accent hover:text-accent-foreground"
+                            >
+                              {deleteMutation.isPending ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-3 w-3" />
+                              )}
+                            </Button>
+                          </Can>
                         </div>
                       </td>
                     </tr>

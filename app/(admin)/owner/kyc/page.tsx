@@ -18,6 +18,7 @@ import { useTableSort } from "@/hooks/useTableSort";
 import { usePagination } from "@/hooks/usePagination";
 import { TableSkeleton } from "@/components/owner/skeletons";
 import { useModal } from "@/hooks/useModal";
+import { Can } from "@/contexts/PermissionContext";
 
 export default function KYCPage() {
   const kycModal = useModal<any>();
@@ -260,32 +261,36 @@ export default function KYCPage() {
                           </Button>
                           {submission.status === "pending" && (
                             <>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => quickApprove(submission.id)}
-                                disabled={updateKycMutation.isPending}
-                                title="Quick Approve"
-                              >
-                                {updateKycMutation.isPending ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <CheckCircle className="h-4 w-4 text-green-500" />
-                                )}
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => quickReject(submission.id)}
-                                disabled={updateKycMutation.isPending}
-                                title="Quick Reject"
-                              >
-                                {updateKycMutation.isPending ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <X className="h-4 w-4 text-red-500" />
-                                )}
-                              </Button>
+                              <Can perm="kyc.approve">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => quickApprove(submission.id)}
+                                  disabled={updateKycMutation.isPending}
+                                  title="Quick Approve"
+                                >
+                                  {updateKycMutation.isPending ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <CheckCircle className="h-4 w-4 text-green-500" />
+                                  )}
+                                </Button>
+                              </Can>
+                              <Can perm="kyc.reject">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => quickReject(submission.id)}
+                                  disabled={updateKycMutation.isPending}
+                                  title="Quick Reject"
+                                >
+                                  {updateKycMutation.isPending ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <X className="h-4 w-4 text-red-500" />
+                                  )}
+                                </Button>
+                              </Can>
                             </>
                           )}
                         </div>

@@ -24,6 +24,7 @@ import {
 } from "@/hooks/useOwner";
 import { TableSkeleton } from "@/components/owner/skeletons";
 import { cn } from "@/lib/utils";
+import { Can } from "@/contexts/PermissionContext";
 
 export default function ManageCurrencyPage() {
   const { user } = useAuth();
@@ -114,14 +115,16 @@ export default function ManageCurrencyPage() {
             history.
           </p>
         </div>
-        <Button
-          className="bg-primary text-primary-foreground w-full sm:w-auto"
-          disabled={canAddList.length === 0}
-          onClick={() => setAddOpen(true)}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Currency
-        </Button>
+        <Can perm="currency.create">
+          <Button
+            className="bg-primary text-primary-foreground w-full sm:w-auto"
+            disabled={canAddList.length === 0}
+            onClick={() => setAddOpen(true)}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Currency
+          </Button>
+        </Can>
       </div>
 
       <Dialog
@@ -302,15 +305,17 @@ export default function ManageCurrencyPage() {
                       <td className="py-3 px-2">
                         <div className="flex gap-1">
                           {editingId !== row.id && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleStartEdit(row)}
-                              title="Edit value"
-                              className="h-8 w-8 p-0 text-foreground"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
+                            <Can perm="currency.set_rates">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleStartEdit(row)}
+                                title="Edit value"
+                                className="h-8 w-8 p-0 text-foreground"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </Can>
                           )}
                           <Button
                             size="sm"

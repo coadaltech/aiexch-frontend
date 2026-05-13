@@ -20,6 +20,7 @@ import {
 import { useConfirm } from "@/hooks/useConfirm";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { MatkaShiftModal } from "./shift-modal";
+import { Can } from "@/contexts/PermissionContext";
 
 export default function OwnerMatkaPage() {
   const [dateFilter, setDateFilter] = useState<string>("");
@@ -139,13 +140,15 @@ export default function OwnerMatkaPage() {
             className="border border-border bg-card text-foreground rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             placeholder="Filter by date"
           />
-          <Button
-            onClick={handleCreate}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Create Shift
-          </Button>
+          <Can perm="matka.create">
+            <Button
+              onClick={handleCreate}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create Shift
+            </Button>
+          </Can>
         </div>
       </div>
 
@@ -210,29 +213,33 @@ export default function OwnerMatkaPage() {
                     </div>
                     <div className="flex-1" />
                     <div className="flex gap-1 shrink-0">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleEdit(shift)}
-                        title="Edit"
-                        className="h-8 w-8 p-0 text-foreground hover:bg-accent hover:text-accent-foreground"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleDelete(shift.id)}
-                        title="Delete"
-                        className="h-8 w-8 p-0 text-foreground hover:bg-accent hover:text-accent-foreground"
-                        disabled={deleteMutation.isPending}
-                      >
-                        {deleteMutation.isPending ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
-                        )}
-                      </Button>
+                      <Can perm="matka.edit">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleEdit(shift)}
+                          title="Edit"
+                          className="h-8 w-8 p-0 text-foreground hover:bg-accent hover:text-accent-foreground"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </Can>
+                      <Can perm="matka.delete">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDelete(shift.id)}
+                          title="Delete"
+                          className="h-8 w-8 p-0 text-foreground hover:bg-accent hover:text-accent-foreground"
+                          disabled={deleteMutation.isPending}
+                        >
+                          {deleteMutation.isPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </Can>
                     </div>
                   </div>
 

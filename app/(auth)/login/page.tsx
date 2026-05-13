@@ -48,6 +48,13 @@ export default function LoginPage() {
               downline?: string;
               groupId?: number | null;
               currencyId?: string | null;
+              // Staff-permission payload from the new auth response. Without
+              // these, AuthContext can't tell a real Owner from an Owner-staff
+              // on the first render, and the sidebar shows every tab until a
+              // page refresh fetches /profile/me. Always pass them through.
+              permissions?: string[];
+              isStaff?: boolean;
+              parentUserId?: string | null;
             };
             const roleStr = normalizeRole(user.role);
             login({
@@ -61,6 +68,9 @@ export default function LoginPage() {
               downline: user.downline,
               groupId: user.groupId,
               currencyId: user.currencyId,
+              permissions: user.permissions ?? [],
+              isStaff: user.isStaff ?? false,
+              parentUserId: user.parentUserId ?? null,
             });
             // Check panel access: support both numeric and string role from API
             const isPanelRole = typeof user.role === "number"
@@ -83,10 +93,16 @@ export default function LoginPage() {
   };
 
   return (
-    <>
+    <div className="space-y-7">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">
+      <div>
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-4">
+          <Sparkles className="w-3 h-3 text-primary" />
+          <span className="text-primary text-[11px] font-semibold uppercase tracking-wider">
+            Sign In
+          </span>
+        </div>
+        <h1 className="text-4xl font-bold text-foreground mb-2 tracking-tight">
           Welcome Back
         </h1>
         <p className="text-muted-foreground text-sm">
@@ -214,6 +230,6 @@ export default function LoginPage() {
           </p>
         )}
       </div>
-    </>
+    </div>
   );
 }

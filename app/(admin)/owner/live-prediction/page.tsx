@@ -12,6 +12,7 @@ import {
   type LivePredictionWhitelabelRow,
 } from "@/hooks/useOwner";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/contexts/PermissionContext";
 import { JantriGridModal } from "./jantri-modal";
 import { Button } from "@/components/ui/button";
 import { formatLocalDate } from "@/lib/date-utils";
@@ -88,7 +89,13 @@ function useMainJantriCountdown(
 export default function OwnerLivePredictionPage() {
 
   const { user: currentUser } = useAuth();
-  const isOwner = String(currentUser?.role ?? "").toLowerCase() === "owner";
+  const { has } = usePermissions();
+  // Allow anyone with the declare permission (not just role=Owner). This
+  // includes staff explicitly granted the live_prediction.declare key.
+  const isOwner = has("live_prediction.declare");
+  // Suppress unused-var warning while keeping the original auth import in case
+  // other code reads currentUser further down.
+  void currentUser;
 
   const { data: shifts = [], isLoading: shiftsLoading } = useOwnerMatkaShifts();
   const [shiftId, setShiftId] = useState<string>("");

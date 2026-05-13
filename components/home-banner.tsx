@@ -8,7 +8,9 @@ export default function HomeBanner() {
 
   if (isLoading) {
     return (
-      <div className="mx-4 h-[180px] sm:h-[240px] md:h-[280px] rounded-xl bg-gray-200 animate-pulse" />
+      <div className="px-4 mb-2">
+        <div className="w-full h-[220px] sm:h-[240px] md:h-[320px] rounded-2xl bg-gray-200 animate-pulse" />
+      </div>
     );
   }
 

@@ -56,6 +56,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserCreatedUsers, useUserLedger, useCreateVoucher, useVouchers, useUpdateVoucher } from "@/hooks/useOwner";
+import { usePermissions } from "@/contexts/PermissionContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { usePanelPrefix } from "@/hooks/usePanelPrefix";
@@ -108,6 +109,20 @@ const getStatusBadge = (status: string) => {
 export function CreateVoucherPage({ type }: { type: "limit" | "deposit" | "withdraw" }) {
   const router = useRouter();
   const panelPrefix = usePanelPrefix();
+  const { has: hasPerm } = usePermissions();
+  const requiredPerm =
+    type === "limit" ? "vouchers.limit" : type === "deposit" ? "vouchers.deposit" : "vouchers.withdraw";
+  // Soft gate for direct URL navigation. Sidebar already hides these entries
+  // for users without the relevant permission; this prevents bypassing it.
+  if (!hasPerm(requiredPerm)) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <div className="rounded-md border border-border bg-card p-6 text-center text-sm text-muted-foreground">
+          You don't have permission to manage {type} vouchers.
+        </div>
+      </div>
+    );
+  }
   const { data: allVouchers = [], isLoading: vouchersLoading, error } = useVouchers();
   const updateVoucherMutation = useUpdateVoucher();
   const createVoucherMutation = useCreateVoucher();

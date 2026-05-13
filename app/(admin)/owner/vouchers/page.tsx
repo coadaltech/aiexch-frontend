@@ -17,6 +17,7 @@ import { VoucherEditModal } from "@/components/owner/voucher-edit-modal";
 import { Pagination } from "@/components/ui/pagination";
 import { TableSkeleton } from "@/components/owner/skeletons";
 import { useModal } from "@/hooks/useModal";
+import { Can } from "@/contexts/PermissionContext";
 
 export default function VouchersPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -344,12 +345,15 @@ export default function VouchersPage() {
                               <Image className="h-3 w-3" />
                             </Button>
                           )}
-                          {voucher.status !== "approved" &&
-                            <Button size="sm" variant="ghost" onClick={() => handleEditVoucher(voucher)} title="Edit" className="h-8 w-8 p-0">
-                              <Edit className="h-3 w-3" />
-                            </Button>}
+                          {voucher.status !== "approved" && (
+                            <Can perm="vouchers.edit">
+                              <Button size="sm" variant="ghost" onClick={() => handleEditVoucher(voucher)} title="Edit" className="h-8 w-8 p-0">
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                            </Can>
+                          )}
                           {voucher.status === "pending" && (
-                            <>
+                            <Can perm="vouchers.edit">
                               <Button
                                 size="sm"
                                 variant="ghost"
@@ -368,7 +372,7 @@ export default function VouchersPage() {
                               >
                                 <XCircle className="h-3 w-3" />
                               </Button>
-                            </>
+                            </Can>
                           )}
                         </div>
                       </td>

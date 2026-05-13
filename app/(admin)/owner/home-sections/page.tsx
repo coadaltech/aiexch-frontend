@@ -11,6 +11,7 @@ import { TableSkeleton } from "@/components/owner/skeletons";
 import { useConfirm } from "@/hooks/useConfirm";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import Link from "next/link";
+import { Can } from "@/contexts/PermissionContext";
 
 export default function HomeSectionsPage() {
   const [sectionModalOpen, setSectionModalOpen] = useState(false);
@@ -47,13 +48,15 @@ export default function HomeSectionsPage() {
           </h1>
           <p className="text-muted-foreground">Manage homepage game sections</p>
         </div>
-        <Button
-          onClick={handleCreateSection}
-          className="bg-primary text-primary-foreground w-full sm:w-auto"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Create Section
-        </Button>
+        <Can perm="home_sections.create">
+          <Button
+            onClick={handleCreateSection}
+            className="bg-primary text-primary-foreground w-full sm:w-auto"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create Section
+          </Button>
+        </Can>
       </div>
 
       <Card className="bg-card border">
@@ -121,42 +124,48 @@ export default function HomeSectionsPage() {
                       </td>
                       <td className="py-3 px-2">
                         <div className="flex gap-1">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            asChild
-                            title="Manage Games"
-                            className="h-8 w-8 p-0 text-foreground"
-                          >
-                            <Link
-                              href={`/owner/home-sections/${section.id}/games`}
+                          <Can perm="home_sections.manage_games">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              asChild
+                              title="Manage Games"
+                              className="h-8 w-8 p-0 text-foreground"
                             >
-                              <Gamepad2 className="h-3 w-3" />
-                            </Link>
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleEditSection(section)}
-                            title="Edit"
-                            className="h-8 w-8 p-0 text-foreground"
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleDeleteSection(section.id)}
-                            title="Delete"
-                            className="h-8 w-8 p-0 text-foreground"
-                            disabled={deleteMutation.isPending}
-                          >
-                            {deleteMutation.isPending ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-3 w-3" />
-                            )}
-                          </Button>
+                              <Link
+                                href={`/owner/home-sections/${section.id}/games`}
+                              >
+                                <Gamepad2 className="h-3 w-3" />
+                              </Link>
+                            </Button>
+                          </Can>
+                          <Can perm="home_sections.edit">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleEditSection(section)}
+                              title="Edit"
+                              className="h-8 w-8 p-0 text-foreground"
+                            >
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                          </Can>
+                          <Can perm="home_sections.delete">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDeleteSection(section.id)}
+                              title="Delete"
+                              className="h-8 w-8 p-0 text-foreground"
+                              disabled={deleteMutation.isPending}
+                            >
+                              {deleteMutation.isPending ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-3 w-3" />
+                              )}
+                            </Button>
+                          </Can>
                         </div>
                       </td>
                     </tr>

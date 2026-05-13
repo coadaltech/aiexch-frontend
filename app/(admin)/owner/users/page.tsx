@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Loader2, Plus, Search } from "lucide-react";
 import { useOwnerUsers } from "@/hooks/useOwner";
 import { useAuth } from "@/contexts/AuthContext";
+import { Can, usePermissions } from "@/contexts/PermissionContext";
 import { useDebounce } from "@/hooks/useDebounce";
 import { cn } from "@/lib/utils";
 import { UserModal } from "@/components/owner/user-modal";
@@ -119,10 +120,24 @@ export default function UsersPage() {
   const [updatingTxLimitId, setUpdatingTxLimitId] = useState<string | null>(null);
   const [childrenUser, setChildrenUser] = useState<{ id: string; username: string } | null>(null);
 
-  // Only show users directly created by the current logged-in user
+  const { has } = usePermissions();
+  const canDeposit = has("vouchers.deposit");
+  const canWithdraw = has("vouchers.withdraw");
+  const canLimit = has("vouchers.limit");
+  const canSetTxLimit = has("users.set_limit");
+  const canEditUser = has("users.edit") || has("users.reset_password");
+  const canToggleStatus = has("users.status_toggle");
+
+  // Only show users directly created by the current logged-in user.
+  // For staff users, the "owner" of the downline is the parent — staff are
+  // delegated proxies of their parent and should see exactly the parent's
+  // downline, not their own (a staff doesn't create users themselves).
+  const effectiveOwnerId = currentUser?.isStaff
+    ? currentUser?.parentUserId ?? currentUser.id
+    : currentUser?.id;
   const myUsers = useMemo(
-    () => currentUser?.id ? users.filter((u: any) => (u.createdBy ?? u.addedBy) === currentUser.id) : users,
-    [users, currentUser?.id],
+    () => effectiveOwnerId ? users.filter((u: any) => (u.createdBy ?? u.addedBy) === effectiveOwnerId) : users,
+    [users, effectiveOwnerId],
   );
 
   const filteredUsers = useMemo(() => {
@@ -317,13 +332,15 @@ export default function UsersPage() {
               className="pl-10 bg-input border h-9"
             />
           </div>
-          <Button
-            onClick={() => userModal.open(undefined)}
-            className="bg-primary text-primary-foreground h-9"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add User
-          </Button>
+          <Can perm="users.create">
+            <Button
+              onClick={() => userModal.open(undefined)}
+              className="bg-primary text-primary-foreground h-9"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add User
+            </Button>
+          </Can>
         </div>
       </div>
 
@@ -474,47 +491,62 @@ export default function UsersPage() {
                     </td>
                     <td className="px-3 py-2">
                       <div className="flex items-center justify-center gap-1">
-                        <ActionBtn
-                          letter="D"
-                          title="Deposit voucher"
-                          onClick={() => setVoucherState({ user: quickUser, type: "deposit" })}
-                        />
-                        <ActionBtn
-                          letter="W"
-                          title="Withdraw voucher"
-                          onClick={() => setVoucherState({ user: quickUser, type: "withdraw" })}
-                        />
-                        <ActionBtn
-                          letter="L"
-                          title="Limit voucher"
-                          onClick={() => setVoucherState({ user: quickUser, type: "limit" })}
-                        />
-                        <ActionBtn
-                          letter="TL"
-                          title={
-                            isLeafUser
-                              ? "Update transaction limit"
-                              : "Transaction limit only applies to user accounts"
-                          }
-                          disabled={!isLeafUser}
-                          onClick={() =>
-                            setTxLimitUser({
-                              id: u.id,
-                              username: u.username,
-                              transactionLimit: u.transactionLimit ?? "0",
-                            })
-                          }
-                        />
-                        <ActionBtn
-                          letter="P"
-                          title="Password & profile"
-                          onClick={() => setProfileEditUser(u)}
-                        />
-                        <ActionBtn
-                          letter="S"
-                          title="Change status (account / betting)"
-                          onClick={() => handleOpenChangeStatus(u)}
-                        />
+                        {canDeposit && (
+                          <ActionBtn
+                            letter="D"
+                            title="Deposit voucher"
+                            onClick={() => setVoucherState({ user: quickUser, type: "deposit" })}
+                          />
+                        )}
+                        {canWithdraw && (
+                          <ActionBtn
+                            letter="W"
+                            title="Withdraw voucher"
+                            onClick={() => setVoucherState({ user: quickUser, type: "withdraw" })}
+                          />
+                        )}
+                        {canLimit && (
+                          <ActionBtn
+                            letter="L"
+                            title="Limit voucher"
+                            onClick={() => setVoucherState({ user: quickUser, type: "limit" })}
+                          />
+                        )}
+                        {canSetTxLimit && (
+                          <ActionBtn
+                            letter="TL"
+                            title={
+                              isLeafUser
+                                ? "Update transaction limit"
+                                : "Transaction limit only applies to user accounts"
+                            }
+                            disabled={!isLeafUser}
+                            onClick={() =>
+                              setTxLimitUser({
+                                id: u.id,
+                                username: u.username,
+                                transactionLimit: u.transactionLimit ?? "0",
+                              })
+                            }
+                          />
+                        )}
+                        {canEditUser && (
+                          <ActionBtn
+                            letter="P"
+                            title="Password & profile"
+                            onClick={() => setProfileEditUser(u)}
+                          />
+                        )}
+                        {canToggleStatus && (
+                          <ActionBtn
+                            letter="S"
+                            title="Change status (account / betting)"
+                            onClick={() => handleOpenChangeStatus(u)}
+                          />
+                        )}
+                        {!canDeposit && !canWithdraw && !canLimit && !canSetTxLimit && !canEditUser && !canToggleStatus && (
+                          <span className="text-xs text-gray-400">—</span>
+                        )}
                       </div>
                     </td>
                   </tr>

@@ -9,6 +9,7 @@ import {
   EditCustomMarketModal,
   ManageMarketPriceModal,
 } from "@/components/owner/custom-market-modals";
+import { Can } from "@/contexts/PermissionContext";
 
 // ─── Spinner ───
 function Spinner({ size = 16 }: { size?: number }) {
@@ -112,12 +113,10 @@ export default function CustomMarketsPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2 ml-3 shrink-0">
-                  {/* <button onClick={() => setEditingMarket(market)}
-                    className="px-3 py-1.5 text-xs bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors font-medium">Edit</button> */}
-                  <button onClick={() => setManagingMarket(market)}
-                    className="px-3 py-1.5 text-xs bg-yellow-50 text-yellow-700 rounded-lg hover:bg-yellow-100 transition-colors font-medium">Manage Prices</button>
-                  {/* <button onClick={() => handleDelete(market)} disabled={deleteCustom.isPending}
-                    className="px-3 py-1.5 text-xs bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors font-medium disabled:opacity-50">Delete</button> */}
+                  <Can perm="custom_markets.manage_odds">
+                    <button onClick={() => setManagingMarket(market)}
+                      className="px-3 py-1.5 text-xs bg-yellow-50 text-yellow-700 rounded-lg hover:bg-yellow-100 transition-colors font-medium">Manage Prices</button>
+                  </Can>
                 </div>
               </div>
             </div>

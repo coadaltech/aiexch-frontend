@@ -25,6 +25,7 @@ import { usePagination } from "@/hooks/usePagination";
 import { NotificationListSkeleton } from "@/components/owner/skeletons";
 import { useConfirm } from "@/hooks/useConfirm";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Can } from "@/contexts/PermissionContext";
 
 export default function NotificationsPage() {
   const [title, setTitle] = useState("");
@@ -91,6 +92,7 @@ export default function NotificationsPage() {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
+        <Can perm="notifications.create">
         <Card className="bg-card border">
           <CardHeader>
             <CardTitle className="text-foreground flex items-center gap-2">
@@ -151,6 +153,7 @@ export default function NotificationsPage() {
             </form>
           </CardContent>
         </Card>
+        </Can>
 
         <Card className="lg:col-span-2 bg-card border">
           <CardHeader>
@@ -190,25 +193,27 @@ export default function NotificationsPage() {
                           {new Date(notification.addedDate).toLocaleString()}
                         </p>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() =>
-                          confirmDialog.confirm(
-                            "Delete Notification",
-                            "Are you sure you want to delete this notification? This action cannot be undone.",
-                            () => deleteNotification.mutate(notification.id)
-                          )
-                        }
-                        disabled={deleteNotification.isPending}
-                        className="text-red-400 hover:text-red-300 h-8 w-8 p-0 flex-shrink-0"
-                      >
-                        {deleteNotification.isPending ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-3 w-3" />
-                        )}
-                      </Button>
+                      <Can perm="notifications.delete">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() =>
+                            confirmDialog.confirm(
+                              "Delete Notification",
+                              "Are you sure you want to delete this notification? This action cannot be undone.",
+                              () => deleteNotification.mutate(notification.id)
+                            )
+                          }
+                          disabled={deleteNotification.isPending}
+                          className="text-red-400 hover:text-red-300 h-8 w-8 p-0 flex-shrink-0"
+                        >
+                          {deleteNotification.isPending ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-3 w-3" />
+                          )}
+                        </Button>
+                      </Can>
                     </div>
                   </div>
                 ))}

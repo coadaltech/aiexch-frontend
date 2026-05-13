@@ -19,6 +19,7 @@ import { TableSkeleton } from "@/components/owner/skeletons";
 import { useModal } from "@/hooks/useModal";
 import { useConfirm } from "@/hooks/useConfirm";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Can } from "@/contexts/PermissionContext";
 
 export default function PromocodesPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -96,10 +97,12 @@ export default function PromocodesPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Promocodes</h1>
           <p className="text-muted-foreground">Manage promotional codes and discounts</p>
         </div>
-        <Button onClick={handleCreatePromocode} className="bg-primary text-primary-foreground w-full sm:w-auto">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Promocode
-        </Button>
+        <Can perm="promocodes.create">
+          <Button onClick={handleCreatePromocode} className="bg-primary text-primary-foreground w-full sm:w-auto">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Promocode
+          </Button>
+        </Can>
       </div>
 
       <Card className="bg-card border">
@@ -230,18 +233,22 @@ export default function PromocodesPage() {
                           <Button size="sm" variant="ghost" title="View Details" className="h-8 w-8 p-0">
                             <Eye className="h-3 w-3" />
                           </Button>
-                          <Button size="sm" variant="ghost" onClick={() => handleEditPromocode(promocode)} title="Edit" className="h-8 w-8 p-0">
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            onClick={() => handleDeletePromocode(promocode.id)}
-                            title="Delete"
-                            className="h-8 w-8 p-0"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
+                          <Can perm="promocodes.edit">
+                            <Button size="sm" variant="ghost" onClick={() => handleEditPromocode(promocode)} title="Edit" className="h-8 w-8 p-0">
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                          </Can>
+                          <Can perm="promocodes.delete">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDeletePromocode(promocode.id)}
+                              title="Delete"
+                              className="h-8 w-8 p-0"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </Can>
                         </div>
                       </td>
                     </tr>

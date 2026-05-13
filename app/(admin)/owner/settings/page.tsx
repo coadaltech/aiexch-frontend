@@ -11,6 +11,7 @@ import Link from "next/link";
 import { usePanelPrefix } from "@/hooks/usePanelPrefix";
 import { useSettings, useUpdateSettings } from "@/hooks/useOwner";
 import { toast } from "sonner";
+import { Can } from "@/contexts/PermissionContext";
 
 export default function SettingsPage() {
   const { data: settings, isLoading } = useSettings();
@@ -144,13 +145,15 @@ export default function SettingsPage() {
             </div>
           )}
 
-          <Button
-            onClick={handleUpdateSetting}
-            className="bg-primary text-primary-foreground"
-          >
-            <Save className="h-4 w-4 mr-2" />
-            Save Settings
-          </Button>
+          <Can perm="settings.edit_global">
+            <Button
+              onClick={handleUpdateSetting}
+              className="bg-primary text-primary-foreground"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              Save Settings
+            </Button>
+          </Can>
         </CardContent>
       </Card>
     </div>

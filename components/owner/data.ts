@@ -28,81 +28,106 @@ import {
   Target,
   CheckCircle,
   ClipboardList,
+  ShieldCheck,
+  KeyRound,
+  UserCog,
 } from "lucide-react";
 
+/**
+ * Permission keys gating a nav entry.
+ *   - `requires` (any-of): show if the user has at least one key.
+ *   - leave both undefined: show to anyone with sidebar access.
+ * Sub-items can carry their own `requires` to be filtered independently;
+ * a parent group is auto-hidden when no visible children remain.
+ */
 export type NavItem = {
   name: string;
   href?: string;
   icon: React.ComponentType<any>;
-  subItems?: { name: string; href: string; icon: React.ComponentType<any> }[];
+  requires?: readonly string[];
+  subItems?: {
+    name: string;
+    href: string;
+    icon: React.ComponentType<any>;
+    requires?: readonly string[];
+  }[];
 };
 
 /** Build navigation with the correct panel prefix (e.g. "/admin", "/owner") */
 export function getNavigation(prefix: string): NavItem[] {
   return [
-    { name: "Dashboard", href: prefix, icon: BarChart3 },
-    { name: "Account Statement", href: `${prefix}/account-statement`, icon: BookOpen },
+    { name: "Dashboard", href: prefix, icon: BarChart3, requires: ["dashboard.view"] },
+    { name: "Account Statement", href: `${prefix}/account-statement`, icon: BookOpen, requires: ["account_statement.view"] },
     {
       name: "Result",
       icon: CheckCircle,
       subItems: [
-        { name: "Live Prediction", href: `${prefix}/live-prediction`, icon: Target },
-        { name: "Sports Result", href: `${prefix}/sports-result`, icon: ClipboardList },
+        { name: "Live Prediction", href: `${prefix}/live-prediction`, icon: Target, requires: ["live_prediction.view", "live_prediction.declare"] },
+        { name: "Sports Result", href: `${prefix}/sports-result`, icon: ClipboardList, requires: ["sports_result.view", "sports_result.declare"] },
       ],
     },
     {
       name: "Live Markets",
       icon: Activity,
       subItems: [
-        { name: "Summary", href: `${prefix}/live-markets/summary`, icon: LayoutList },
-        { name: "Details", href: `${prefix}/live-markets/details`, icon: FileText },
+        { name: "Summary", href: `${prefix}/live-markets/summary`, icon: LayoutList, requires: ["live_markets.view_summary"] },
+        { name: "Details", href: `${prefix}/live-markets/details`, icon: FileText, requires: ["live_markets.view_details"] },
       ],
     },
-    { name: "Users", href: `${prefix}/users`, icon: Users },
+    { name: "Users", href: `${prefix}/users`, icon: Users, requires: ["users.view"] },
     {
       name: "Sports Games",
       icon: Trophy,
       subItems: [
-        { name: "Sports Games", href: `${prefix}/sports-games`, icon: Trophy },
-        { name: "Fetch Competitions", href: `${prefix}/fetch-competitions`, icon: RefreshCw },
-        { name: "Custom Markets", href: `${prefix}/custom-markets`, icon: Wrench },
+        { name: "Sports Games", href: `${prefix}/sports-games`, icon: Trophy, requires: ["sports.view"] },
+        { name: "Fetch Competitions", href: `${prefix}/fetch-competitions`, icon: RefreshCw, requires: ["sports.fetch_competitions"] },
+        { name: "Custom Markets", href: `${prefix}/custom-markets`, icon: Wrench, requires: ["custom_markets.view"] },
       ],
     },
-    { name: "Home Sections", href: `${prefix}/home-sections`, icon: Image },
+    { name: "Home Sections", href: `${prefix}/home-sections`, icon: Image, requires: ["home_sections.view"] },
     {
       name: "Marketing",
       icon: Gift,
       subItems: [
-        { name: "Promotions", href: `${prefix}/promotions`, icon: Megaphone },
-        { name: "Promo Codes", href: `${prefix}/promocodes`, icon: Ticket },
-        { name: "Banners", href: `${prefix}/banners`, icon: PanelTop },
-        { name: "Popups", href: `${prefix}/popups`, icon: MessageSquare },
+        { name: "Promotions", href: `${prefix}/promotions`, icon: Megaphone, requires: ["promotions.view"] },
+        { name: "Promo Codes", href: `${prefix}/promocodes`, icon: Ticket, requires: ["promocodes.view"] },
+        { name: "Banners", href: `${prefix}/banners`, icon: PanelTop, requires: ["banners.view"] },
+        { name: "Popups", href: `${prefix}/popups`, icon: MessageSquare, requires: ["popups.view"] },
       ],
     },
     {
       name: "Vouchers",
       icon: CreditCard,
       subItems: [
-        { name: "All Vouchers", href: `${prefix}/vouchers`, icon: ListOrdered },
-        { name: "Limit Voucher", href: `${prefix}/vouchers/limit`, icon: CreditCardAlt },
-        { name: "Deposit Voucher", href: `${prefix}/vouchers/deposit`, icon: ArrowDownCircle },
-        { name: "Withdraw Voucher", href: `${prefix}/vouchers/withdraw`, icon: ArrowUpCircle },
+        { name: "All Vouchers", href: `${prefix}/vouchers`, icon: ListOrdered, requires: ["vouchers.view"] },
+        { name: "Limit Voucher", href: `${prefix}/vouchers/limit`, icon: CreditCardAlt, requires: ["vouchers.limit"] },
+        { name: "Deposit Voucher", href: `${prefix}/vouchers/deposit`, icon: ArrowDownCircle, requires: ["vouchers.deposit"] },
+        { name: "Withdraw Voucher", href: `${prefix}/vouchers/withdraw`, icon: ArrowUpCircle, requires: ["vouchers.withdraw"] },
       ],
     },
-    { name: "Notifications", href: `${prefix}/notifications`, icon: Bell },
-    { name: "QR Codes", href: `${prefix}/qrcodes`, icon: QrCode },
+    { name: "Notifications", href: `${prefix}/notifications`, icon: Bell, requires: ["notifications.view"] },
+    { name: "QR Codes", href: `${prefix}/qrcodes`, icon: QrCode, requires: ["qrcodes.view"] },
     {
       name: "Withdrawal Methods",
       href: `${prefix}/withdrawal-methods`,
       icon: Wallet,
+      requires: ["withdrawal_methods.view"],
     },
-    { name: "Manage Currency", href: `${prefix}/manage-currency`, icon: Banknote },
+    { name: "Manage Currency", href: `${prefix}/manage-currency`, icon: Banknote, requires: ["currency.create", "currency.set_rates"] },
+    {
+      name: "Staff Management",
+      icon: ShieldCheck,
+      subItems: [
+        { name: "Staff Members", href: `${prefix}/staff`, icon: UserCog, requires: ["staff.view"] },
+        { name: "Staff Roles", href: `${prefix}/staff-roles`, icon: KeyRound, requires: ["staff_roles.view"] },
+      ],
+    },
     {
       name: "Configuration",
       icon: Settings,
       subItems: [
-        { name: "White Labels", href: `${prefix}/whitelabels`, icon: Globe },
-        { name: "Settings", href: `${prefix}/settings`, icon: Wrench },
+        { name: "White Labels", href: `${prefix}/whitelabels`, icon: Globe, requires: ["whitelabels.view"] },
+        { name: "Settings", href: `${prefix}/settings`, icon: Wrench, requires: ["settings.view", "settings.edit_global"] },
       ],
     },
   ];

@@ -177,16 +177,7 @@ export default function Header() {
           <div className="flex items-center justify-between h-11 sm:h-12 px-2 sm:px-4 lg:px-6">
             {/* Left: Sidebar Toggle + Logo */}
             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-shrink-0">
-              <button
-                onClick={toggleSidebar}
-                className="hidden md:flex items-center justify-center h-8 w-8 rounded-lg bg-[#1e4088] hover:bg-[#2a4590] text-white transition-colors flex-shrink-0 border border-white/10"
-                aria-label="Toggle sidebar"
-              >
-                {sidebarOpen
-                  ? <PanelLeftClose className="h-4 w-4" />
-                  : <PanelLeftOpen className="h-4 w-4" />
-                }
-              </button>
+            
               <Logo onClick={() => router.push("/")} settings={settings} />
             </div>
 
@@ -331,13 +322,13 @@ export default function Header() {
                               <FileText className="h-4 w-4 flex-shrink-0" />
                               Account Statement
                             </button>
-                            <button
+                            {/* <button
                               onClick={() => { router.push("/settings"); setIsUserDropdownOpen(false); }}
                               className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white/75 hover:text-white hover:bg-[var(--header-secondary)] transition-colors cursor-pointer"
                             >
                               <Settings className="h-4 w-4 flex-shrink-0" />
                               Settings
-                            </button>
+                            </button> */}
                           </div>
 
                           {/* Logout */}

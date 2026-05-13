@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { ownerApi } from "@/lib/api";
 import { usePanelPrefix } from "@/hooks/usePanelPrefix";
 import { Switch } from "@/components/ui/switch";
+import { usePermissions } from "@/contexts/PermissionContext";
 
 const MATKA_SPORT_ID = 1001;
 const JAMBO_SPORT_ID = 1004;
@@ -23,6 +24,8 @@ interface Sport {
 export default function SportsPage() {
   const router = useRouter();
   const panelPrefix = usePanelPrefix();
+  const { has } = usePermissions();
+  const canToggleSport = has("sports.toggle");
   const [search, setSearch] = useState("");
   const [sports, setSports] = useState<Sport[]>([]);
   const [loading, setLoading] = useState(true);
@@ -306,7 +309,7 @@ export default function SportsPage() {
                     </span>
                     <Switch
                       checked={sport.isActive}
-                      disabled={togglingId === sport.id}
+                      disabled={togglingId === sport.id || !canToggleSport}
                       onCheckedChange={() =>
                         handleToggleActive(
                           { stopPropagation: () => {} } as React.MouseEvent,
@@ -329,7 +332,7 @@ export default function SportsPage() {
                     </span>
                     <Switch
                       checked={sport.isLive}
-                      disabled={togglingLiveId === sport.id}
+                      disabled={togglingLiveId === sport.id || !canToggleSport}
                       onCheckedChange={() =>
                         handleToggleLive(
                           { stopPropagation: () => {} } as React.MouseEvent,

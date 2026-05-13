@@ -50,6 +50,7 @@ import {
   useCheckMarketResult,
   useDeclareMarketResult,
 } from "@/hooks/useOwner";
+import { Can } from "@/contexts/PermissionContext";
 
 const MARKET_TYPE_LABELS: Record<number, string> = {
   0: "Match Odds",
@@ -448,18 +449,20 @@ export default function SportsResultPage() {
                                     </div>
                                   </TableCell> */}
                                   <TableCell className="text-right pr-4">
-                                    <Button
-                                      size="sm"
-                                      onClick={() => handleDeclare(market)}
-                                      disabled={
-                                        declaring === market.marketId
-                                      }
-                                    >
-                                      {declaring === market.marketId ? (
-                                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                                      ) : null}
-                                      Declare Result
-                                    </Button>
+                                    <Can perm="sports_result.declare">
+                                      <Button
+                                        size="sm"
+                                        onClick={() => handleDeclare(market)}
+                                        disabled={
+                                          declaring === market.marketId
+                                        }
+                                      >
+                                        {declaring === market.marketId ? (
+                                          <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                                        ) : null}
+                                        Declare Result
+                                      </Button>
+                                    </Can>
                                   </TableCell>
                                 </TableRow>
                               ))}
