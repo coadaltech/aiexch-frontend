@@ -8,6 +8,10 @@ import { useCompetitionEvents, useUpdateEventStatus } from "@/hooks/useOwner";
 import { usePanelPrefix } from "@/hooks/usePanelPrefix";
 import { ownerApi } from "@/lib/api";
 import { formatLocal } from "@/lib/date-utils";
+import { usePermissions } from "@/contexts/PermissionContext";
+
+// usePermissions kept above — we use `has("custom_markets.view")` here only
+// to decide whether the per-event "manage markets" link is clickable.
 
 interface EventItem {
   id: string;
@@ -39,6 +43,12 @@ export default function EventsPage() {
   const competitionId = params.competitionId as string;
   const { user: currentUser } = useAuth();
   const panelPrefix = usePanelPrefix();
+  const { has } = usePermissions();
+
+  // Gates the per-event "manage markets" link. Page itself stays accessible
+  // so non-Owner roles can still see/manage events; only the deeper
+  // market-management screen is reserved for users with custom_markets.view.
+  const canManageMarkets = has("custom_markets.view");
 
   const isOwner = currentUser?.role === "owner";
   const isAdmin = currentUser?.role === "admin";
@@ -181,6 +191,7 @@ export default function EventsPage() {
   }, []);
 
   const handleEventClick = (eventId: string) => {
+    if (!canManageMarkets) return;
     router.push(`${panelPrefix}/market-management?eventId=${eventId}`);
   };
 
@@ -351,11 +362,18 @@ export default function EventsPage() {
                   />
                 )}
                 <div
-                  className="flex-1 min-w-0 cursor-pointer"
+                  className={`flex-1 min-w-0 ${canManageMarkets ? "cursor-pointer" : "cursor-default"}`}
                   onClick={() => handleEventClick(evt.id)}
+                  title={canManageMarkets ? undefined : "Market management is restricted to owner accounts"}
                 >
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-medium text-gray-900 hover:text-blue-600 transition-colors truncate">{evt.name}</h3>
+                    <h3
+                      className={`font-medium text-gray-900 truncate transition-colors ${
+                        canManageMarkets ? "hover:text-blue-600" : ""
+                      }`}
+                    >
+                      {evt.name}
+                    </h3>
                     {isChanged && (
                       <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
                         Modified
