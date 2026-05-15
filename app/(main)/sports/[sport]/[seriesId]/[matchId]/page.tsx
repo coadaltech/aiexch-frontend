@@ -1227,13 +1227,11 @@ export default function MatchPage() {
     marketId,
     displayName,
     isFancy,
-    betDelay,
   }: {
     runner: any;
     marketId: string;
     displayName?: string;
     isFancy?: boolean;
-    betDelay?: number;
   }) => {
     const runnerId = runner.selectionId?.toString() ?? "";
     let pnl: number | null = null;
@@ -1289,15 +1287,6 @@ export default function MatchPage() {
             onClick={handleNameClick}
           >
             {displayName || runner.name}
-          </span>
-        )}
-        {betDelay != null && (
-          <span className=" md:flex items-center text-[8px] sm:text-[9px] text-black font-medium leading-tight hidden ">
-            <Timer size={20}/>
-             <span>
-            {betDelay}s
-
-            </span>
           </span>
         )}
         </div>
@@ -1856,126 +1845,113 @@ export default function MatchPage() {
             }
           })}
 
-        {visibleMarkets.some((m) => m.bettingType === "LINE") && (
-        <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
-          {/* Mobile header */}
-          <div className="grid grid-cols-[1fr_auto] gap-1 px-2 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)] items-center sm:hidden">
-            <h3 className="font-bold text-white text-sm truncate leading-tight">Fancy</h3>
-            <div className="flex items-center gap-1">
-              <div className="w-24 flex justify-center">
-                <span className="font-bold uppercase bg-lay text-black text-xs py-0.5 px-1.5 rounded">NO</span>
-              </div>
-              <div className="w-24 flex justify-center">
-                <span className="font-bold uppercase bg-back text-black text-xs py-0.5 px-1.5 rounded">YES</span>
-              </div>
-            </div>
-          </div>
-          {/* Desktop header */}
-          <div className="hidden sm:grid grid-cols-3 gap-2 px-3 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)] items-center">
-            <h3 className="font-bold text-white text-base truncate leading-tight" style={{gridColumn: "1"}}>
-              Fancy
-            </h3>
-            <div className="justify-self-end font-bold uppercase bg-lay text-black text-sm py-0.5 px-1.5 rounded w-fit">
-              NO
-            </div>
-            <div className="w-fit font-bold uppercase bg-back text-black text-sm py-0.5 px-1.5 rounded">
-              YES
-            </div>
-          </div>
-          {visibleMarkets.map(
-            (market) =>
-              market.bettingType == "LINE" && (
-                <div key={market.marketId} className="border-b border-gray-100 last:border-b-0 bg-white">
-                  {(() => {
-                    const isMarketSuspended = market.status === "SUSPENDED" || !!market.sportingEvent;
-                    const visibleRunners = isMarketSuspended
-                      ? market.runners
-                      : market.runners.filter((r: any) => r.status !== "SUSPENDED" && r.status !== "REMOVED");
-                    const midIdx = Math.floor((visibleRunners.length - 1) / 2);
-                    return visibleRunners.map((runner: any, runnerIdx: number) => {
-                      const isRunnerSuspended = isMarketSuspended;
-                      const showLabel = runnerIdx === midIdx;
-                      return (
-                        <div key={runner.selectionId} className={`px-2 sm:px-3 grid grid-cols-[1fr_auto] sm:grid-cols-3 gap-1 sm:gap-2 items-center min-h-0 bg-white${market.runners.length > 1 ? " py-0.5" : ""}`}>
-                          {showLabel ? (
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <PinMarketButton parent={pinParent} market={market} />
-                              <div className="min-w-0 flex-1">
-                                <RunnerNameCell
-                                  runner={runner}
-                                  marketId={market.marketId}
-                                  displayName={market.marketName}
-                                  isFancy
-                                  betDelay={market.marketCondition?.betDelay}
-                                />
-                              </div>
-                            </div>
-                          ) : (
-                            <div />
-                          )}
-                          <div className="col-span-1 sm:col-span-2 gap-1 sm:gap-2 relative flex justify-end min-h-[2.25rem]">
-                            <div className="sm:flex-1 flex flex-col items-end min-w-0">
-                              <div className="gap-1 flex justify-end items-center flex-wrap">
-                                {isRunnerSuspended ? (
-                                  <button className={`${oddsBtnClass} bg-back-disabled w-24`} disabled><span className={oddsPriceClass}>0</span><span className={oddsSizeClass}>0</span></button>
-                                ) : runner.lay?.length > 0 ? (
-                                  runner.lay.map((layItem: any, layIdx: number) => (
-                                    <button key={layIdx} onClick={() => handleLayClick(market, runner, toDecimalfancyOdds(layItem.price, market.provider), String(layItem.line ?? ""), layIdx)} className={`${oddsBtnClass} bg-gradient-to-b from-lay to-lay-deep hover:from-lay-hover hover:to-lay shadow-sm transition-all w-24`}>
-                                      <span className={oddsPriceClass}>{layItem.line}</span><span className={oddsSizeClass}>{formatAmount(layItem.price)}</span>
-                                    </button>
-                                  ))
-                                ) : (
-                                  <button className={`${oddsBtnClass} bg-lay-disabled w-24`} disabled><span className={oddsPriceClass}>-</span><span className={oddsSizeClass}>-</span></button>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex-1 flex items-center justify-between gap-1 min-w-0">
-                              <div className="gap-1 flex justify-start items-center flex-wrap min-w-0">
-                                {isRunnerSuspended ? (
-                                  <button className={`${oddsBtnClass} bg-back-disabled w-24`} disabled><span className={oddsPriceClass}>0</span><span className={oddsSizeClass}>0</span></button>
-                                ) : runner.back?.length > 0 ? (
-                                  runner.back.map((backItem: any, backIdx: number) => (
-                                    <button key={backIdx} onClick={() => handleBackClick(market, runner, toDecimalfancyOdds(backItem.price, market.provider), String(backItem.line ?? ""), backIdx)} className={`${oddsBtnClass} transition-all w-24 ${backIdx === 0 ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back shadow-sm" : "bg-white hover:bg-back/30 border border-back/50"}`}>
-                                      <span className={oddsPriceClass}>{backItem.line}</span><span className={oddsSizeClass}>{formatAmount(backItem.price)}</span>
-                                    </button>
-                                  ))
-                                ) : (
-                                  <button className={`${oddsBtnClass} bg-lay-disabled w-24`} disabled><span className={oddsPriceClass}>-</span><span className={oddsSizeClass}>-</span></button>
-                                )}
-                              </div>
-                              {showLabel && (
-                                <div className="hidden sm:flex flex-col text-xs text-black font-bold leading-tight text-right shrink-0">
-                                  <span>Max:{market.marketCondition?.["maxBet"] ?? "-"}</span>
-                                  <span>MKT:{market.marketCondition?.["potLimit"] ?? market.marketCondition?.["maxProfit"] ?? "-"}</span>
-                                </div>
-                              )}
-                            </div>
-                            {backLayOverlay(market)}
+        {visibleMarkets.some((m) => m.bettingType === "LINE") && (() => {
+          const fancyMarkets = visibleMarkets.filter((m: any) => m.bettingType === "LINE");
+          const half = Math.ceil(fancyMarkets.length / 2);
+          const columns = [fancyMarkets.slice(0, half), fancyMarkets.slice(half)];
+
+          const renderMarket = (market: any) => (
+            <div key={market.marketId} className="border-b border-gray-100 last:border-b-0 bg-white">
+              {(() => {
+                const isMarketSuspended = market.status === "SUSPENDED" || !!market.sportingEvent;
+                const visibleRunners = isMarketSuspended
+                  ? market.runners
+                  : market.runners.filter((r: any) => r.status !== "SUSPENDED" && r.status !== "REMOVED");
+                const midIdx = Math.floor((visibleRunners.length - 1) / 2);
+                return visibleRunners.map((runner: any, runnerIdx: number) => {
+                  const isRunnerSuspended = isMarketSuspended;
+                  const showLabel = runnerIdx === midIdx;
+                  return (
+                    <div key={runner.selectionId} className={`px-2 sm:px-3 grid grid-cols-[1fr_auto] gap-1 sm:gap-2 items-center min-h-0 bg-white${market.runners.length > 1 ? " py-0.5" : ""}`}>
+                      {showLabel ? (
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <PinMarketButton parent={pinParent} market={market} />
+                          <div className="min-w-0 flex-1">
+                            <RunnerNameCell
+                              runner={runner}
+                              marketId={market.marketId}
+                              displayName={market.marketName}
+                              isFancy
+                            />
                           </div>
                         </div>
-                      );
-                    });
-                  })()}
-                  {quickBet && quickBet.marketId === market.marketId && quickBet.bettingType === "LINE" && (
-                    <QuickBetPanel
-                      data={quickBet}
-                      stake={quickBetStake}
-                      onStakeChange={setQuickBetStake}
-                      onClose={handleQuickBetClose}
-                      onPlaceBet={handleQuickBetPlace}
-                      isLoading={isPlacing}
-                      betDelayRemaining={betDelayRemaining}
-                      onCancelDelay={cancelBetDelay}
-                      stakeButtons={customStakes}
-                      currentOdds={liveQuickBetOdds}
-                      currentRun={liveQuickBetRun}
-                    />
-                  )}
+                      ) : (
+                        <div />
+                      )}
+                      <div className="gap-1 relative flex justify-end items-center min-h-[2.25rem]">
+                        <div className="gap-1 flex justify-end items-center flex-wrap">
+                          {isRunnerSuspended ? (
+                            <button className={`${oddsBtnClass} bg-back-disabled w-16 sm:w-20`} disabled><span className={oddsPriceClass}>0</span><span className={oddsSizeClass}>0</span></button>
+                          ) : runner.lay?.length > 0 ? (
+                            runner.lay.map((layItem: any, layIdx: number) => (
+                              <button key={layIdx} onClick={() => handleLayClick(market, runner, toDecimalfancyOdds(layItem.price, market.provider), String(layItem.line ?? ""), layIdx)} className={`${oddsBtnClass} bg-gradient-to-b from-lay to-lay-deep hover:from-lay-hover hover:to-lay shadow-sm transition-all w-16 sm:w-20`}>
+                                <span className={oddsPriceClass}>{layItem.line}</span><span className={oddsSizeClass}>{formatAmount(layItem.price)}</span>
+                              </button>
+                            ))
+                          ) : (
+                            <button className={`${oddsBtnClass} bg-lay-disabled w-16 sm:w-20`} disabled><span className={oddsPriceClass}>-</span><span className={oddsSizeClass}>-</span></button>
+                          )}
+                        </div>
+                        <div className="gap-1 flex justify-start items-center flex-wrap min-w-0">
+                          {isRunnerSuspended ? (
+                            <button className={`${oddsBtnClass} bg-back-disabled w-16 sm:w-20`} disabled><span className={oddsPriceClass}>0</span><span className={oddsSizeClass}>0</span></button>
+                          ) : runner.back?.length > 0 ? (
+                            runner.back.map((backItem: any, backIdx: number) => (
+                              <button key={backIdx} onClick={() => handleBackClick(market, runner, toDecimalfancyOdds(backItem.price, market.provider), String(backItem.line ?? ""), backIdx)} className={`${oddsBtnClass} transition-all w-16 sm:w-20 ${backIdx === 0 ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back shadow-sm" : "bg-white hover:bg-back/30 border border-back/50"}`}>
+                                <span className={oddsPriceClass}>{backItem.line}</span><span className={oddsSizeClass}>{formatAmount(backItem.price)}</span>
+                              </button>
+                            ))
+                          ) : (
+                            <button className={`${oddsBtnClass} bg-lay-disabled w-16 sm:w-20`} disabled><span className={oddsPriceClass}>-</span><span className={oddsSizeClass}>-</span></button>
+                          )}
+                        </div>
+                        {backLayOverlay(market)}
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+              {quickBet && quickBet.marketId === market.marketId && quickBet.bettingType === "LINE" && (
+                <QuickBetPanel
+                  data={quickBet}
+                  stake={quickBetStake}
+                  onStakeChange={setQuickBetStake}
+                  onClose={handleQuickBetClose}
+                  onPlaceBet={handleQuickBetPlace}
+                  isLoading={isPlacing}
+                  betDelayRemaining={betDelayRemaining}
+                  onCancelDelay={cancelBetDelay}
+                  stakeButtons={customStakes}
+                  currentOdds={liveQuickBetOdds}
+                  currentRun={liveQuickBetRun}
+                />
+              )}
+            </div>
+          );
+
+          const renderColumn = (markets: any[], colIdx: number) => (
+            <div key={colIdx} className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+              <div className="grid grid-cols-[1fr_auto] gap-1 px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)] items-center">
+                <h3 className="font-bold text-white text-sm sm:text-base truncate leading-tight">Fancy</h3>
+                <div className="flex items-center gap-1">
+                  <div className="w-16 sm:w-20 flex justify-center">
+                    <span className="font-bold uppercase bg-lay text-black text-xs sm:text-sm py-0.5 px-1.5 rounded">NO</span>
+                  </div>
+                  <div className="w-16 sm:w-20 flex justify-center">
+                    <span className="font-bold uppercase bg-back text-black text-xs sm:text-sm py-0.5 px-1.5 rounded">YES</span>
+                  </div>
                 </div>
-              )
-          )}
-        </div>
-        )}
+              </div>
+              {markets.map(renderMarket)}
+            </div>
+          );
+
+          return (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              {columns.map((col, idx) => col.length > 0 ? renderColumn(col, idx) : null)}
+            </div>
+          );
+        })()}
 
         {/* ── ADV markets (binary, odd-even, lottery, multi-grid) ── */}
         {visibleMarkets
