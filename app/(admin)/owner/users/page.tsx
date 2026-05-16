@@ -149,7 +149,7 @@ export default function UsersPage() {
   }, [myUsers, debouncedSearch]);
 
   // Column totals shown under the header. Mirrors the per-row math:
-  //   Balance = fixLimit + userBalance (Client P/L)
+  //   Balance = fixLimit + totalpnl (Client P/L)
   // so the Balance total stays consistent with summing the row values.
   const totals = useMemo(() => {
     const t = {
@@ -162,7 +162,7 @@ export default function UsersPage() {
     };
     for (const u of filteredUsers as any[]) {
       const fix = parseFloat(u.fixLimit ?? "0") || 0;
-      const pnl = parseFloat(u.balance ?? u.userBalance ?? "0") || 0;
+      const pnl = parseFloat(u.totalpnl ?? "0") || 0;
       t.fixLimit         += fix;
       t.clientPnl        += pnl;
       t.balance          += fix + pnl;
@@ -411,13 +411,11 @@ export default function UsersPage() {
                 const fixLimit        = u.fixLimit        ?? "0";
                 const finalLimit      = u.finalLimit      ?? "0";
                 const limitConsumed   = u.limitConsumed   ?? "0";
-                const userBalance     = u.balance         ?? u.userBalance ?? "0";
+                const totalPnl        = u.totalpnl        ?? "0";
                 const transactionLimit = u.transactionLimit ?? "0";
 
-                // Client P/L = finalLimit - fixLimit (positive = profit, negative = loss).
-                // Balance shown to the user is CR - Client P/L (= 2·CR − finalLimit).
                 const fixLimitNum = parseFloat(fixLimit);
-                const clientPnl = parseFloat(userBalance);
+                const clientPnl = parseFloat(totalPnl);
                 const computedBalance = fixLimitNum + clientPnl;
 
                 const uActive = u.accountStatus !== false && u.parentAccountStatus !== false;
