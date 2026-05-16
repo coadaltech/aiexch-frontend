@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useBetSlip } from "@/contexts/BetSlipContext";
@@ -27,6 +28,88 @@ import {
   type QuickBetData,
 } from "@/components/sports/quick-bet-panel";
 
+
+type QuickBetHostProps = React.ComponentProps<typeof QuickBetPanel>;
+
+// Renders the QuickBetPanel into the right-sidebar slot on lg+ (above BetSlip),
+// or as a centered modal on smaller screens. Single source of the panel for the
+// whole page — replaces the old inline renders that sat below each market.
+function QuickBetHost(props: QuickBetHostProps) {
+  const [mounted, setMounted] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+  const [slot, setSlot] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+    const mql = window.matchMedia("(min-width: 1024px)");
+    const update = () => setIsDesktop(mql.matches);
+    update();
+    mql.addEventListener("change", update);
+    return () => mql.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    if (!isDesktop) {
+      setSlot(null);
+      return;
+    }
+    // Retry briefly in case the layout slot mounts after this component does
+    // (sidebar conditionals in the layout run on the next tick).
+    let attempts = 0;
+    const tick = () => {
+      const el = document.getElementById("quick-bet-slot-desktop");
+      if (el) {
+        setSlot(el);
+        return;
+      }
+      if (attempts++ < 20) requestAnimationFrame(tick);
+    };
+    tick();
+  }, [isDesktop]);
+
+  if (!mounted) return null;
+
+  const headerBar = (
+    <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)]">
+      <span className="text-sm font-semibold">Place Bet</span>
+      <button
+        type="button"
+        onClick={props.onClose}
+        aria-label="Close"
+        className="text-lg leading-none px-1 hover:opacity-80"
+      >
+        &times;
+      </button>
+    </div>
+  );
+
+  if (isDesktop) {
+    if (!slot) return null;
+    return createPortal(
+      <div className="rounded-t-xl overflow-hidden border border-gray-200 bg-white shadow-sm mb-2">
+        {headerBar}
+        <QuickBetPanel {...props} />
+      </div>,
+      slot,
+    );
+  }
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-3"
+      onClick={props.onClose}
+    >
+      <div
+        className="w-full max-w-md bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-200"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {headerBar}
+        <QuickBetPanel {...props} />
+      </div>
+    </div>,
+    document.body,
+  );
+}
 
 
 export default function MatchPage() {
@@ -1568,22 +1651,6 @@ export default function MatchPage() {
                     );
                   })}
                 </div>
-                {quickBet &&
-                  quickBet.marketId === market.marketId &&
-                  (quickBet.bettingType === "ODDS" || quickBet.bettingType === "BOOKMAKER") && (
-                    <QuickBetPanel
-                      data={quickBet}
-                      stake={quickBetStake}
-                      onStakeChange={setQuickBetStake}
-                      onClose={handleQuickBetClose}
-                      onPlaceBet={handleQuickBetPlace}
-                      isLoading={isPlacing}
-                      betDelayRemaining={betDelayRemaining}
-                      onCancelDelay={cancelBetDelay}
-                      stakeButtons={customStakes}
-                      currentOdds={liveQuickBetOdds}
-                    />
-                  )}
               </div>
             ); // end standard layout
             } // end if layout === "standard"
@@ -1663,12 +1730,6 @@ export default function MatchPage() {
                       );
                     })}
                   </div>
-                  {quickBet && quickBet.marketId === market.marketId && (
-                    <QuickBetPanel data={quickBet} stake={quickBetStake} onStakeChange={setQuickBetStake}
-                      onClose={handleQuickBetClose} onPlaceBet={handleQuickBetPlace} isLoading={isPlacing}
-                      betDelayRemaining={betDelayRemaining} onCancelDelay={cancelBetDelay}
-                      stakeButtons={customStakes} currentOdds={liveQuickBetOdds} />
-                  )}
                 </div>
               );
             }
@@ -1720,12 +1781,6 @@ export default function MatchPage() {
                     </div>
                     {renderBinaryCell(noRunner, "lay")}
                   </div>
-                  {quickBet && quickBet.marketId === market.marketId && (
-                    <QuickBetPanel data={quickBet} stake={quickBetStake} onStakeChange={setQuickBetStake}
-                      onClose={handleQuickBetClose} onPlaceBet={handleQuickBetPlace} isLoading={isPlacing}
-                      betDelayRemaining={betDelayRemaining} onCancelDelay={cancelBetDelay}
-                      stakeButtons={customStakes} currentOdds={liveQuickBetOdds} />
-                  )}
                 </div>
               );
             }
@@ -1756,12 +1811,6 @@ export default function MatchPage() {
                       ];
                     })}
                   </div>
-                  {quickBet && quickBet.marketId === market.marketId && (
-                    <QuickBetPanel data={quickBet} stake={quickBetStake} onStakeChange={setQuickBetStake}
-                      onClose={handleQuickBetClose} onPlaceBet={handleQuickBetPlace} isLoading={isPlacing}
-                      betDelayRemaining={betDelayRemaining} onCancelDelay={cancelBetDelay}
-                      stakeButtons={customStakes} currentOdds={liveQuickBetOdds} />
-                  )}
                 </div>
               );
             }
@@ -1794,12 +1843,6 @@ export default function MatchPage() {
                       )
                     }
                   </div>
-                  {quickBet && quickBet.marketId === market.marketId && (
-                    <QuickBetPanel data={quickBet} stake={quickBetStake} onStakeChange={setQuickBetStake}
-                      onClose={handleQuickBetClose} onPlaceBet={handleQuickBetPlace} isLoading={isPlacing}
-                      betDelayRemaining={betDelayRemaining} onCancelDelay={cancelBetDelay}
-                      stakeButtons={customStakes} currentOdds={liveQuickBetOdds} />
-                  )}
                 </div>
               );
             }
@@ -1834,12 +1877,6 @@ export default function MatchPage() {
                       );
                     })}
                   </div>
-                  {quickBet && quickBet.marketId === market.marketId && (
-                    <QuickBetPanel data={quickBet} stake={quickBetStake} onStakeChange={setQuickBetStake}
-                      onClose={handleQuickBetClose} onPlaceBet={handleQuickBetPlace} isLoading={isPlacing}
-                      betDelayRemaining={betDelayRemaining} onCancelDelay={cancelBetDelay}
-                      stakeButtons={customStakes} currentOdds={liveQuickBetOdds} />
-                  )}
                 </div>
               );
             }
@@ -1911,21 +1948,6 @@ export default function MatchPage() {
                   );
                 });
               })()}
-              {quickBet && quickBet.marketId === market.marketId && quickBet.bettingType === "LINE" && (
-                <QuickBetPanel
-                  data={quickBet}
-                  stake={quickBetStake}
-                  onStakeChange={setQuickBetStake}
-                  onClose={handleQuickBetClose}
-                  onPlaceBet={handleQuickBetPlace}
-                  isLoading={isPlacing}
-                  betDelayRemaining={betDelayRemaining}
-                  onCancelDelay={cancelBetDelay}
-                  stakeButtons={customStakes}
-                  currentOdds={liveQuickBetOdds}
-                  currentRun={liveQuickBetRun}
-                />
-              )}
             </div>
           );
 
@@ -2020,12 +2042,6 @@ export default function MatchPage() {
                     </div>
                     {renderBinaryCell(noRunner, "lay")}
                   </div>
-                  {quickBet && quickBet.marketId === market.marketId && (
-                    <QuickBetPanel data={quickBet} stake={quickBetStake} onStakeChange={setQuickBetStake}
-                      onClose={handleQuickBetClose} onPlaceBet={handleQuickBetPlace} isLoading={isPlacing}
-                      betDelayRemaining={betDelayRemaining} onCancelDelay={cancelBetDelay}
-                      stakeButtons={customStakes} currentOdds={liveQuickBetOdds} />
-                  )}
                 </div>
               );
             }
@@ -2054,12 +2070,6 @@ export default function MatchPage() {
                       ];
                     })}
                   </div>
-                  {quickBet && quickBet.marketId === market.marketId && (
-                    <QuickBetPanel data={quickBet} stake={quickBetStake} onStakeChange={setQuickBetStake}
-                      onClose={handleQuickBetClose} onPlaceBet={handleQuickBetPlace} isLoading={isPlacing}
-                      betDelayRemaining={betDelayRemaining} onCancelDelay={cancelBetDelay}
-                      stakeButtons={customStakes} currentOdds={liveQuickBetOdds} />
-                  )}
                 </div>
               );
             }
@@ -2105,12 +2115,6 @@ export default function MatchPage() {
                       )
                     }
                   </div>
-                  {quickBet && quickBet.marketId === market.marketId && (
-                    <QuickBetPanel data={quickBet} stake={quickBetStake} onStakeChange={setQuickBetStake}
-                      onClose={handleQuickBetClose} onPlaceBet={handleQuickBetPlace} isLoading={isPlacing}
-                      betDelayRemaining={betDelayRemaining} onCancelDelay={cancelBetDelay}
-                      stakeButtons={customStakes} currentOdds={liveQuickBetOdds} />
-                  )}
                 </div>
               );
             }
@@ -2144,12 +2148,6 @@ export default function MatchPage() {
                       );
                     })}
                   </div>
-                  {quickBet && quickBet.marketId === market.marketId && (
-                    <QuickBetPanel data={quickBet} stake={quickBetStake} onStakeChange={setQuickBetStake}
-                      onClose={handleQuickBetClose} onPlaceBet={handleQuickBetPlace} isLoading={isPlacing}
-                      betDelayRemaining={betDelayRemaining} onCancelDelay={cancelBetDelay}
-                      stakeButtons={customStakes} currentOdds={liveQuickBetOdds} />
-                  )}
                 </div>
               );
             }
@@ -2202,6 +2200,22 @@ export default function MatchPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {quickBet && (
+        <QuickBetHost
+          data={quickBet}
+          stake={quickBetStake}
+          onStakeChange={setQuickBetStake}
+          onClose={handleQuickBetClose}
+          onPlaceBet={handleQuickBetPlace}
+          isLoading={isPlacing}
+          betDelayRemaining={betDelayRemaining}
+          onCancelDelay={cancelBetDelay}
+          stakeButtons={customStakes}
+          currentOdds={liveQuickBetOdds}
+          currentRun={liveQuickBetRun}
+        />
       )}
     </div>
   );

@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { useAuth } from "./AuthContext";
 import { toast } from "sonner";
 
@@ -32,7 +32,19 @@ const BetSlipContext = createContext<BetSlipContextType | undefined>(undefined);
 
 export function BetSlipProvider({ children }: { children: ReactNode }) {
   const [bets, setBets] = useState<Bet[]>([]);
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, user } = useAuth();
+
+  // Drop any in-memory bets when the active user changes (logout, or switching
+  // accounts in the same tab). Otherwise the slip would show the previous
+  // user's selections until a page refresh.
+  const lastUserIdRef = useRef<string | null>(user?.id ?? null);
+  useEffect(() => {
+    const currentId = user?.id ?? null;
+    if (lastUserIdRef.current !== currentId) {
+      lastUserIdRef.current = currentId;
+      setBets([]);
+    }
+  }, [user?.id]);
 
   const addToBetSlip = (bet: Bet) => {
     if (!isLoggedIn) {

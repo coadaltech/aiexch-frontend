@@ -170,10 +170,35 @@ export function QuickBetPanel({
 
   const canPlace = !!stake && stakeNum > 0 && !stakeError && !isLoading && !isDelaying;
 
+  // Potential profit if the bet wins. For a BACK bet that's stake × (decimalOdds − 1).
+  // For a LAY bet the user's profit on a win is the stake amount itself.
+  const decimalOddsForCalc = data.isRawOdds
+    ? toDecimalOdds(numOdds, data.market?.provider, data.market?.marketType)
+    : numOdds;
+  const profit = !stakeNum || isNaN(decimalOddsForCalc)
+    ? 0
+    : data.isLay
+      ? stakeNum
+      : stakeNum * (decimalOddsForCalc - 1);
+  const formatProfit = (n: number) => {
+    if (!Number.isFinite(n) || n === 0) return "0";
+    return n.toFixed(2).replace(/\.00$/, "");
+  };
+
+  const formatStakeBtn = (v: number) => {
+    if (v >= 10000000) return `+${v / 10000000}Cr`;
+    if (v >= 100000) return `+${v / 100000}L`;
+    if (v >= 1000) return `+${v / 1000}k`;
+    return `+${v}`;
+  };
+
+  const tintRunnerBg = data.isLay ? "bg-lay" : "bg-back";
+  const tintListBg = data.isLay ? "bg-lay" : "bg-back";
+
   return (
-    <div className={`px-2 sm:px-3 py-2 border-t-2 w-full max-w-full overflow-hidden ${data.isLay ? "border-lay bg-gradient-to-b from-lay/50 to-lay/10" : "border-back bg-gradient-to-b from-back/50 to-back/10"}`}>
+    <div className="w-full max-w-full overflow-hidden bg-white">
       {isDelaying && (
-        <div className="mb-2 px-2 sm:px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between gap-2 shadow-sm">
+        <div className="mx-3 mt-2 px-2 sm:px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between gap-2 shadow-sm">
           <div className="flex items-center gap-2 min-w-0">
             <span className="w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin inline-block shrink-0" />
             <span className="text-xs sm:text-sm font-medium text-amber-700 truncate">
@@ -190,119 +215,116 @@ export function QuickBetPanel({
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 sm:justify-end mb-2">
-        <div className="text-gray-800 font-bold text-xs sm:text-sm truncate min-w-0 text-center sm:text-left sm:flex-1">
-          {runnerName} - {marketName.toUpperCase()}
-        </div>
-
-        <div className="flex items-start gap-2 sm:gap-3 justify-end flex-wrap">
-          <div className="flex items-center shrink-0">
-            <input
-              type="text"
-              value={displayOdds}
-              readOnly
-              className="w-20 sm:w-24 bg-gray-50 text-gray-900 text-sm sm:text-base font-bold py-1.5 px-2 text-center border border-gray-300 rounded cursor-default"
-            />
-          </div>
-
-          <div className="flex flex-col items-end gap-0.5 min-w-0">
-            <div className="flex items-center min-w-0">
-              <input
-                ref={stakeInputRef}
-                type="number"
-                value={stake}
-                onChange={(e) => handleStake(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "ArrowUp") {
-                    e.preventDefault();
-                    const current = parseFloat(stake) || 0;
-                    setStakeClamped(current === 0 ? 500 : current + 500);
-                  } else if (e.key === "ArrowDown") {
-                    e.preventDefault();
-                    setStakeClamped(Math.max(0, (parseFloat(stake) || 0) - 500));
-                  }
-                }}
-                placeholder="0"
-                disabled={isDelaying}
-                style={{ width: `${Math.max(7, (stake?.length || 1) + 3)}ch` }}
-                className={`min-w-[5rem] sm:min-w-[6rem] max-w-full bg-gray-50 text-gray-900 text-sm sm:text-base font-bold py-1.5 px-2 text-center border rounded focus:ring-1 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-[width] duration-150 ${
-                  stakeError
-                    ? "border-red-400 focus:ring-red-400"
-                    : "border-gray-300 focus:ring-[#1a3578]"
-                } ${isDelaying ? "opacity-50" : ""}`}
-              />
-              <div className="flex flex-col ml-0.5 shrink-0">
-                <button
-                  type="button"
-                  disabled={isDelaying}
-                  onClick={() => {
-                    const current = parseFloat(stake) || 0;
-                    setStakeClamped(current === 0 ? 500 : current + 500);
-                  }}
-                  className="bg-gray-100 text-gray-600 px-1 py-0.5 text-[10px] hover:bg-gray-200 border border-gray-300 rounded-t disabled:opacity-50"
-                >
-                  ▲
-                </button>
-                <button
-                  type="button"
-                  disabled={isDelaying}
-                  onClick={() => setStakeClamped(Math.max(0, (parseFloat(stake) || 0) - 500))}
-                  className="bg-gray-100 text-gray-600 px-1 py-0.5 text-[10px] hover:bg-gray-200 border border-gray-300 border-t-0 rounded-b disabled:opacity-50"
-                >
-                  ▼
-                </button>
-              </div>
-            </div>
-            {stakeError && (
-              <span className="text-danger text-[10px] sm:text-[10px] font-medium">{stakeError}</span>
-            )}
-          </div>
-        </div>
+      {/* Runner name + profit summary */}
+      <div className={`flex items-center justify-between gap-2 px-3 py-2 ${tintRunnerBg}`}>
+        <span className="font-bold text-sm text-gray-900 truncate" title={`${runnerName} - ${marketName}`}>
+          {runnerName}
+        </span>
+        <span className="text-sm text-gray-800 shrink-0">
+          Profit: <span className="font-semibold">{formatProfit(profit)}</span>
+        </span>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 justify-center sm:justify-end">
-        <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center sm:justify-end w-full sm:w-auto">
-          {resolvedStakes.map((btn) => (
-            <button
-              key={btn.value}
-              type="button"
-              disabled={isDelaying}
-              onClick={() => setStakeClamped(btn.value)}
-              className="flex-1 sm:flex-none min-w-[3.5rem] px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-semibold rounded bg-gradient-to-b from-sports-header to-sports-header/80 hover:from-sports-header/90 hover:to-sports-header/70 text-white shadow-sm transition-all disabled:opacity-50"
-            >
-              {btn.label}
-            </button>
+      {/* Odds + Amount inputs */}
+      <div className="grid grid-cols-2 gap-3 px-3 py-2">
+        <div className="flex flex-col">
+          <span className="text-xs text-gray-700 font-semibold text-center mb-1">Odds</span>
+          <input
+            type="text"
+            value={displayOdds}
+            readOnly
+            className="w-full h-9 text-center font-bold text-base border border-gray-300 rounded bg-gray-50 text-gray-900"
+          />
+        </div>
+        <div className="flex flex-col">
+          <span className="text-xs text-gray-700 font-semibold text-center mb-1">Amount</span>
+          <input
+            ref={stakeInputRef}
+            type="number"
+            inputMode="numeric"
+            value={stake}
+            onChange={(e) => handleStake(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowUp") {
+                e.preventDefault();
+                const current = parseFloat(stake) || 0;
+                setStakeClamped(current === 0 ? 500 : current + 500);
+              } else if (e.key === "ArrowDown") {
+                e.preventDefault();
+                setStakeClamped(Math.max(0, (parseFloat(stake) || 0) - 500));
+              } else if (e.key === "Enter") {
+                e.preventDefault();
+                if (canPlace) onPlaceBet(stake, rawOdds);
+              }
+            }}
+            placeholder=""
+            disabled={isDelaying}
+            className={`w-full h-9 text-center font-bold text-base border rounded bg-white text-gray-900 focus:ring-1 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+              stakeError
+                ? "border-red-400 focus:ring-red-400"
+                : "border-gray-300 focus:ring-[#1a3578]"
+            } ${isDelaying ? "opacity-50" : ""}`}
+          />
+        </div>
+      </div>
+      {stakeError && (
+        <div className="px-3 pb-1 -mt-1 text-right text-danger text-[11px] font-medium">{stakeError}</div>
+      )}
+
+      {/* Stake quick buttons — 4 per row */}
+      <div className="grid grid-cols-4 gap-1.5 px-3 pb-2">
+        {resolvedStakes.slice(0, 8).map((btn) => (
+          <button
+            key={btn.value}
+            type="button"
+            disabled={isDelaying}
+            onClick={() => setStakeClamped(btn.value)}
+            className={`px-1 py-2 text-xs sm:text-sm font-bold rounded ${tintListBg} cursor-pointer text-black transition-colors disabled:opacity-50`}
+          >
+            {formatStakeBtn(btn.value)}
+          </button>
+        ))}
+      </div>
+
+      {/* Action row: Place Bet | Cancel */}
+      <div className="flex items-center gap-2 px-3 pb-3 justify-end">
+        <button
+          type="button"
+          onClick={() => onPlaceBet(stake, rawOdds)}
+          disabled={!canPlace}
+          className="flex-1 sm:flex-none min-w-[96px] px-4 py-2 text-sm font-semibold rounded text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+        >
+          {isLoading ? (
+            <>
+              <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" />
+              <span className="truncate">Placing...</span>
+            </>
+          ) : isDelaying ? (
+            <span className="truncate">Waiting {betDelayRemaining}s...</span>
+          ) : (
+            "Place Bet"
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={isDelaying ? onCancelDelay : onClose}
+          disabled={isLoading}
+          className="flex-1 sm:flex-none min-w-[96px] px-4 py-2 text-sm font-semibold rounded text-white bg-danger-strong hover:bg-danger-strong/90 disabled:opacity-50"
+        >
+          Cancel
+        </button>
+      </div>
+
+      {/* Runner list (all selections in this market) */}
+      {data.allRunners?.length > 0 && (
+        <div className={`px-3 py-2 ${tintListBg} border-t border-black/5`}>
+          {data.allRunners.map((r) => (
+            <div key={r.id} className="text-sm text-gray-900 font-medium py-0.5 truncate">
+              {r.name}
+            </div>
           ))}
         </div>
-
-        <div className="flex gap-2 w-full sm:w-auto">
-          <button
-            type="button"
-            onClick={() => onPlaceBet(stake, rawOdds)}
-            disabled={!canPlace}
-            className="flex-1 sm:flex-none min-w-[84px] sm:min-w-[96px] px-3 sm:px-5 py-2 rounded text-xs sm:text-sm font-semibold bg-[var(--header-primary)] hover:from-cta-deposit-from-hover hover:to-cta-deposit-to-hover shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-[var(--header-text)] transition-all flex items-center justify-center gap-1.5"
-          >
-            {isLoading ? (
-              <>
-                <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" />
-                <span className="truncate">Placing...</span>
-              </>
-            ) : isDelaying ? (
-              <span className="truncate">Waiting {betDelayRemaining}s...</span>
-            ) : (
-              "Place Bet"
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={isDelaying ? onCancelDelay : onClose}
-            disabled={isLoading}
-            className="flex-1 sm:flex-none px-3 sm:px-5 py-2 rounded text-xs sm:text-sm font-semibold bg-gradient-to-b from-danger-strong to-danger-strong/80 hover:from-danger-strong/90 hover:to-danger-strong/70 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-white transition-all"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

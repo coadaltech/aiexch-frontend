@@ -6,6 +6,7 @@ import { setUserCountry, setUserTimezone } from "@/lib/date-utils";
 import { normalizeRole, normalizeMembership } from "@/types/enums";
 import { useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const DEMO_BALANCE = "5000";
 
@@ -83,9 +84,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const queryClient = useQueryClient();
   const refreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // Tracks the session key this tab set so we can detect another tab logging in
   const sessionKeyRef = useRef<string | null>(null);
+
+  // Drop every cached query/mutation so the next user never sees the previous
+  // user's data flash (owner users list, my-bets, balance, exposure, etc.).
+  const resetAppCache = () => {
+    queryClient.cancelQueries();
+    queryClient.removeQueries();
+    queryClient.getMutationCache().clear();
+  };
 
   // ── Proactive token refresh timer ─────────────────────────────────────────
   // Runs every 13 min to refresh the access token (expires at 15 min) so the
@@ -183,6 +193,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // 3. Listen for session-expired events dispatched by the API interceptor
     //    (fires when a refresh attempt fails with 401/403 — i.e. session kicked).
     const handleSessionExpired = () => {
+      resetAppCache();
       setUser(null);
       setIsLoggedIn(false);
       router.push("/login");
@@ -207,6 +218,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           } else {
             clearTokens();
             sessionStorage.removeItem("user");
+            resetAppCache();
             setUser(null);
             setIsLoggedIn(false);
             router.push("/login");
@@ -215,6 +227,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (e?.response?.status === 401 || e?.response?.status === 403) {
             clearTokens();
             sessionStorage.removeItem("user");
+            resetAppCache();
             setUser(null);
             setIsLoggedIn(false);
             router.push("/login");
@@ -232,6 +245,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Another browser tab/window just logged in — invalidate this session.
         clearTokens();
         sessionStorage.removeItem("user");
+        resetAppCache();
         setUser(null);
         setIsLoggedIn(false);
         router.push("/login");
@@ -281,6 +295,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     sessionStorage.removeItem("user");
     localStorage.removeItem("loginSessionKey");
     sessionKeyRef.current = null;
+    resetAppCache();
     setUser(null);
     setIsLoggedIn(false);
     router.push("/");
