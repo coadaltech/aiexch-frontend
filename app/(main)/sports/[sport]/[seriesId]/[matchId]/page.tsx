@@ -96,7 +96,7 @@ function QuickBetHost(props: QuickBetHostProps) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-3"
+      className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-start justify-center p-3 pt-[max(env(safe-area-inset-top),0.75rem)] overflow-y-auto"
       onClick={props.onClose}
     >
       <div
