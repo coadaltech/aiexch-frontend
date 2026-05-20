@@ -89,7 +89,8 @@ export const useMyBets = (status = "matched") => {
     },
     enabled: !!user,
     retry: isDemo ? false : 1,
-    refetchInterval: isDemo ? false : 30_000,
+    // Event-driven: fetched on mount (page load/refresh) and invalidated on bet
+    // placement/cancel (see placeBet/cancelBet mutations). No background polling.
   });
 };
 
@@ -131,8 +132,8 @@ export const useMarketExposure = (enabled = true) => {
     },
     enabled: enabled && !!user && !user.isDemo,
     staleTime: 10000,
-    refetchOnWindowFocus: true,
-    refetchInterval: 30000, // Refreshed on bet placement via invalidation
+    // Event-driven: fetched on mount (page load/refresh) and invalidated on bet
+    // placement/cancel (see placeBet/cancelBet mutations). No background polling.
   });
 };
 
@@ -178,7 +179,7 @@ export const useFancyMarketExposure = (enabled = true) => {
     },
     enabled: enabled && !!user && !user.isDemo,
     staleTime: 10000,
-    refetchOnWindowFocus: true,
-    refetchInterval: 30000, // Refreshed on bet placement via invalidation
+    // Event-driven: fetched on mount (page load/refresh) and invalidated on bet
+    // placement/cancel (see placeBet/cancelBet mutations). No background polling.
   });
 };

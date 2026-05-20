@@ -104,8 +104,8 @@ export const useBalance = (enabled = true) => {
     select: (data) => data.data.balance || "0",
     enabled,
     staleTime: 10000,
-    refetchOnWindowFocus: true,
-    refetchInterval: 30000, // Refetch every 30 seconds (also refreshed on bet placement)
+    // Event-driven: fetched on mount (page load/refresh) and invalidated on bet
+    // placement/cancel (see useBetting). No background polling or focus refetch.
   });
 };
 
@@ -123,8 +123,8 @@ export const useLedger = (enabled = true) => {
     } | null,
     enabled,
     staleTime: 10000,
-    refetchOnWindowFocus: true,
-    refetchInterval: 30000, // Refetch every 30 seconds (also refreshed on bet placement)
+    // Event-driven: fetched on mount (page load/refresh) and invalidated on bet
+    // placement/cancel (see useBetting). No background polling or focus refetch.
   });
 };
 

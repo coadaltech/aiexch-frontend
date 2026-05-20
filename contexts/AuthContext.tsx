@@ -88,6 +88,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // Tracks the session key this tab set so we can detect another tab logging in
   const sessionKeyRef = useRef<string | null>(null);
+  // Last time we hit /profile/me (epoch ms). Used to throttle the on-focus
+  // session re-validation so rapid tab toggling doesn't hammer the endpoint.
+  const lastMeCheckRef = useRef(0);
 
   // Drop every cached query/mutation so the next user never sees the previous
   // user's data flash (owner users list, my-bets, balance, exposure, etc.).
@@ -151,6 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       try {
+        lastMeCheckRef.current = Date.now();
         const { data } = await api.get("/profile/me", { withCredentials: true });
         if (data.loggedIn && data.user) {
           const u = {
@@ -203,8 +207,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // 4. Re-validate session when the tab becomes visible again (e.g. user
     //    switches back to this tab after logging in elsewhere). A 401 from
     //    /profile/me means the session was invalidated server-side.
+    // Re-validate at most once per minute so rapid tab toggling doesn't hammer
+    // /profile/me. Single-device enforcement / session-kick detection is still
+    // honoured — just rate-limited.
+    const ME_REVALIDATE_THROTTLE_MS = 60 * 1000;
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible" && sessionStorage.getItem("user")) {
+        if (Date.now() - lastMeCheckRef.current < ME_REVALIDATE_THROTTLE_MS) return;
+        lastMeCheckRef.current = Date.now();
         api.get("/profile/me", { withCredentials: true }).then(({ data }) => {
           if (data.loggedIn && data.user) {
             const u = {
@@ -304,6 +314,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshUser = async () => {
     if (user?.isDemo) return;
     try {
+      lastMeCheckRef.current = Date.now();
       const { data } = await api.get("/profile/me", { withCredentials: true });
       if (data.loggedIn && data.user) {
         const u = {
