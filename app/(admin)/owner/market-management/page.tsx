@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, Suspense } from "react";
+import { useState, useRef, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useLiveMatch } from "@/hooks/useLiveMatch";
 import {
@@ -1000,7 +1000,7 @@ function MarketCard({ market }: { market: any }) {
             >
               {showSettings ? "Close" : "Settings"}
             </button>
-            {isCustom && (
+            {isCustom && !market.hasBets && (
               <button
                 onClick={handleDelete}
                 disabled={deleteCustom.isPending}
@@ -1396,7 +1396,7 @@ function FancyMarketRow({ market }: { market: any }) {
           >
             ⚙
           </button>
-          {isCustom && (
+          {isCustom && !market.hasBets && (
             <button
               onClick={handleDelete}
               disabled={deleteCustom.isPending}
@@ -1734,18 +1734,33 @@ function MarketManagementContent() {
 
   const { data: savedMarkets } = useMarketsByEvent(activeEventId || null);
 
-  const trimmedMarketQuery = marketNameQuery.trim().toLowerCase();
-  const markets = rawMarkets.filter((m: any) => {
-    if (filter === "active" && (m.adminDisabled || m.adminHidden)) return false;
-    if (filter === "disabled" && !m.adminDisabled && !m.adminHidden) return false;
-    if (
-      trimmedMarketQuery &&
-      !(m.marketName || "").toLowerCase().includes(trimmedMarketQuery)
-    ) {
-      return false;
+  // Map of custom marketId → hasBets so per-market card components know
+  // whether the Delete button should be available.
+  const customMarketBetsMap = useMemo(() => {
+    const map = new Map<string, boolean>();
+    for (const m of allCustomMarkets || []) {
+      map.set(String(m.marketId), Boolean(m.hasBets));
     }
-    return true;
-  });
+    return map;
+  }, [allCustomMarkets]);
+
+  const trimmedMarketQuery = marketNameQuery.trim().toLowerCase();
+  const markets = rawMarkets
+    .filter((m: any) => {
+      if (filter === "active" && (m.adminDisabled || m.adminHidden)) return false;
+      if (filter === "disabled" && !m.adminDisabled && !m.adminHidden) return false;
+      if (
+        trimmedMarketQuery &&
+        !(m.marketName || "").toLowerCase().includes(trimmedMarketQuery)
+      ) {
+        return false;
+      }
+      return true;
+    })
+    .map((m: any) => ({
+      ...m,
+      hasBets: customMarketBetsMap.get(String(m.marketId)) ?? false,
+    }));
 
   const disabledCount = rawMarkets.filter(
     (m: any) => m.adminDisabled || m.adminHidden
@@ -2018,13 +2033,15 @@ function MarketManagementContent() {
                             >
                               Manage Prices
                             </button>
-                            <button
-                              onClick={() => handleDeleteCustom(market)}
-                              disabled={deleteCustom.isPending}
-                              className="px-3 py-1.5 text-xs bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors font-medium disabled:opacity-50"
-                            >
-                              Delete
-                            </button>
+                            {!market.hasBets && (
+                              <button
+                                onClick={() => handleDeleteCustom(market)}
+                                disabled={deleteCustom.isPending}
+                                className="px-3 py-1.5 text-xs bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors font-medium disabled:opacity-50"
+                              >
+                                Delete
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>

@@ -697,71 +697,35 @@ export const publicApi = {
   },
 };
 
-export const casinoApi = {
-  getGames: (expand?: string, page?: number, per_page?: number) => {
-    const params = new URLSearchParams();
-    if (expand) params.append("expand", expand);
-    if (page) params.append("page", page.toString());
-    if (per_page) params.append("per_page", per_page.toString());
-    const query = params.toString();
-    return api.get(`/casino/games${query ? `?${query}` : ""}`);
-  },
-  getLobby: (game_uuid: string, currency: string, technology?: string) => {
-    const params = new URLSearchParams({ game_uuid, currency });
-    if (technology) params.append("technology", technology);
-    return api.get(`/casino/lobby?${params}`);
-  },
-  initGame: (data: Record<string, any>) => api.post("/casino/init", data),
-  initDemo: (data: Record<string, any>) => api.post("/casino/init-demo", data),
-  getFreespinBets: (game_uuid: string, currency: string) =>
-    api.get(
-      `/casino/freespins/bets?game_uuid=${game_uuid}&currency=${currency}`
-    ),
-  setFreespin: (data: Record<string, any>) =>
-    api.post("/casino/freespins/set", data),
-  getFreespin: (freespin_id: string) =>
-    api.get(`/casino/freespins/${freespin_id}`),
-  cancelFreespin: (freespin_id: string) =>
-    api.post(`/casino/freespins/cancel/${freespin_id}`),
-  getLimits: () => api.get("/casino/limits"),
-  getFreespinLimits: () => api.get("/casino/limits/freespin"),
-  getJackpots: () => api.get("/casino/jackpots"),
-  balanceNotify: (balance: number, session_id?: string) =>
-    api.post("/casino/balance/notify", { balance, session_id }),
-  selfValidate: () => api.post("/casino/self-validate"),
-  getGameTags: (expand?: string) => {
-    const params = expand ? `?expand=${expand}` : "";
-    return api.get(`/casino/game-tags${params}`);
-  },
-  // Database games with filters
-  getGamesFromDb: (params?: {
-    provider?: string;
-    type?: string;
-    technology?: string;
-    search?: string;
-    page?: string;
-    per_page?: string;
-    sort_by?: string;
-    order?: string;
-  }) => {
-    const queryParams = new URLSearchParams();
-    if (params?.provider) queryParams.append("provider", params.provider);
-    if (params?.type) queryParams.append("type", params.type);
-    if (params?.technology) queryParams.append("technology", params.technology);
-    if (params?.search) queryParams.append("search", params.search);
-    if (params?.page) queryParams.append("page", params.page);
-    if (params?.per_page) queryParams.append("per_page", params.per_page);
-    if (params?.sort_by) queryParams.append("sort_by", params.sort_by);
-    if (params?.order) queryParams.append("order", params.order);
-    const query = queryParams.toString();
-    return api.get(`/casino/games${query ? `?${query}` : ""}`);
-  },
-  // Get unique providers from database
-  getProviders: () => api.get("/casino/games/providers"),
-  // Get unique types from database
-  getTypes: () => api.get("/casino/games/types"),
-  // Get providers mapped to their available types
-  getProvidersWithTypes: () => api.get("/casino/games/providers-types"),
+// Legacy `casinoApi` (Slotegrator) removed — the new live-casino flow lives
+// in `casinoAceApi` below.
+
+// ── Ace Gamings (live casino) — new flow ─────────────────────────────────
+export interface AceCasinoGame {
+  id: string;            // our internal UUID
+  externalId: number;    // Ace's id (use this to launch)
+  slug: string;
+  name: string;
+  lang: string;
+  currency: string;
+  thumbnailUrl: string | null;
+  specialNote: string | null;
+}
+
+export interface AceLaunchResponse {
+  success: boolean;
+  url: string;
+  playerSessionToken: string;
+  game: { id: number; name: string; slug: string };
+}
+
+export const casinoAceApi = {
+  /** Public — lobby data from our DB (synced from Ace). */
+  listGames: () => api.get<{ success: boolean; games: AceCasinoGame[] }>("/casino-ace/games"),
+
+  /** Authed — generate a launch URL + session token for the current user. */
+  launch: (gameId: number, returnUrl?: string) =>
+    api.post<AceLaunchResponse>("/casino-ace/launch", { gameId, returnUrl }),
 };
 
 export const sportsApi = {

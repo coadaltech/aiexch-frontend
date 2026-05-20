@@ -2,24 +2,13 @@
 
 import { useMemo, useRef } from "react";
 import { GameCard } from "./cards/game-card";
-import { CasinoGameCard } from "./cards/casino-game-card";
 import { Game, GameType } from "@/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useHomeSections, useSectionGames } from "@/hooks/usePublic";
-import { useCasinoGamesFromDb } from "@/hooks/useCasino";
 import { Skeleton } from "@/components/ui/skeleton";
-
-const CASINO_DB_SECTIONS: Array<{
-  key: string;
-  title: string;
-  subtitle?: string;
-  link: string;
-  filters?: { provider?: string; type?: string; technology?: string };
-}> = [
-  { key: "latest", title: "Latest Casino Picks", subtitle: "Fresh drops from our providers", link: "/casino", filters: {} },
-  { key: "slots",  title: "Trending Slots",       subtitle: "Spin the hottest reels",          link: "/casino?type=slots", filters: { type: "slots" } },
-  { key: "table",  title: "Table Classics",        subtitle: "Roulette, Blackjack & more",      link: "/casino?type=table", filters: { type: "table" } },
-];
+// Legacy Slotegrator casino carousels were removed when the casino flow
+// was migrated to Ace Gamings. A new live-casino carousel can be added here
+// later using casinoAceApi.listGames() from @/lib/api.
 
 /* ─── Shared section wrapper ─── */
 function CarouselSection({
@@ -75,53 +64,6 @@ function CarouselSection({
       </div>
       <div className="px-4 py-3">{children}</div>
     </div>
-  );
-}
-
-/* ─── Casino DB carousel ─── */
-function CasinoDbCarousel({ section }: { section: (typeof CASINO_DB_SECTIONS)[number] }) {
-  const { data, isLoading } = useCasinoGamesFromDb(section.filters, 12);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const games = useMemo(() => {
-    if (!data?.pages?.length) return [];
-    return data.pages.flatMap((page) => page?.data || []);
-  }, [data]);
-
-  const scrollBy = (dir: number) =>
-    scrollRef.current?.scrollBy({ left: dir * 320, behavior: "smooth" });
-
-  if (isLoading) {
-    return (
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mt-4">
-        <div className="flex items-center gap-2.5 px-4 py-3 border-b border-gray-100">
-          <div className="w-1 h-5 bg-[var(--header-secondary)] rounded-full" />
-          <Skeleton className="h-4 w-40 bg-gray-200" />
-        </div>
-        <div className="flex gap-3 px-4 py-3 overflow-hidden">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-44 w-36 shrink-0 rounded-lg bg-gray-200" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (!games.length) return null;
-
-  return (
-    <CarouselSection
-      title={section.title}
-      subtitle={section.subtitle}
-      link={section.link}
-      onScrollLeft={() => scrollBy(-1)}
-      onScrollRight={() => scrollBy(1)}
-    >
-      <div ref={scrollRef} className="flex gap-3 overflow-x-auto scrollbar-hide scroll-smooth pb-1">
-        {games.map((game: any) => (
-          <CasinoGameCard key={game.id || game.uuid} game={game} />
-        ))}
-      </div>
-    </CarouselSection>
   );
 }
 
@@ -182,7 +124,6 @@ function DynamicHomeSections() {
 
   return (
     <>
-      {CASINO_DB_SECTIONS.map((s) => <CasinoDbCarousel key={s.key} section={s} />)}
       {activeSections.map((s: any) => <SectionWithGames key={s.id} section={s} />)}
     </>
   );

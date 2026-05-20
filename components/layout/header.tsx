@@ -132,7 +132,7 @@ export default function Header() {
       { label: "Home", link: "/home" },
       { label: "IPL 2026", link: "/sports/cricket/101480/28127348" },
       ...sports,
-      { label: "Live Casino", link: "/casino" },
+      { label: "Live Casino", link: "/casino-ace" },
       { label: "Promotions", link: "/promotions" },
     ],
     [sports]
