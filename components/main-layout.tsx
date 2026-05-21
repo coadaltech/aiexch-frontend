@@ -21,6 +21,9 @@ export default function MainLayout({ children }: { children: ReactNode }) {
     pathname?.startsWith("/forgot-password");
 
   const isHomeOrRoot = pathname === "/" || pathname === "/home";
+  // Casino runs as a full-width "system" page: header + dropheader + content,
+  // but NO sidebar. The dropheader shows an Exchange button to return.
+  const isCasinoRoute = pathname?.startsWith("/casino-ace") ?? false;
   const whitelabelNotFound =
     !whitelabelLoading && whitelabelInfo?.whitelabelType == null;
 
@@ -84,8 +87,8 @@ const NOTICES = [
 
         {/* Main Content Area - only this part scrolls; header and (on mobile) bottom tab stay fixed */}
         <div className="flex flex-1 min-h-0 mt-14 md:mt-30 max-h-[calc(var(--vh-full)-4rem)] md:max-h-[calc(var(--vh-full)-7.5rem)] gap-2 p-2">
-          {/* Sidebar - Starts below header */}
-          <AppSidebar />
+          {/* Sidebar - Starts below header. Hidden on casino (full-width). */}
+          {!isCasinoRoute && <AppSidebar />}
 
           {/* Main Content - scrollable area; pb for mobile so content clears fixed bottom tab */}
           <main

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ArrowLeftRight } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -23,6 +23,10 @@ export default function Dropheader({ leftMenu, rightMenu }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, isLoggedIn, logout, isLoading } = useAuth();
+
+  // On casino routes the sidebar is hidden; surface an Exchange button here
+  // so users can jump back to the normal (sidebar) experience.
+  const isCasino = pathname?.startsWith("/casino-ace") ?? false;
 
   const handleNavigation = (
     link?: string,
@@ -77,6 +81,15 @@ export default function Dropheader({ leftMenu, rightMenu }: HeaderProps) {
       <div className="flex items-center justify-between w-full px-2 sm:px-4 lg:px-6 py-2 sm:py-2.5 gap-2">
         {/* LEFT SECTION - Main Navigation */}
         <nav className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto scrollbar-hide whitespace-nowrap flex-1 min-w-0">
+          {isCasino && (
+            <button
+              onClick={() => router.push("/home")}
+              className="group relative mr-1 flex flex-shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-[#ede105] px-3 py-2 text-xs font-bold text-black shadow-sm transition-all duration-150 hover:brightness-95 sm:px-4 sm:text-sm"
+            >
+              <ArrowLeftRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="whitespace-nowrap">Exchange</span>
+            </button>
+          )}
           {leftMenu.map((item, index) => {
             const active = isActive(item.link, item.label);
             return (

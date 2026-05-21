@@ -3,16 +3,8 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import {
-  AlertCircle,
-  Search,
-  Sparkles,
-  Play,
-  Dice5,
-  X,
-} from "lucide-react";
+import { AlertCircle, Search, Play, Dice5 } from "lucide-react";
 
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { casinoAceApi, type AceCasinoGame } from "@/lib/api";
 
@@ -63,7 +55,7 @@ export default function CasinoAceLobbyPage() {
         <link key={origin} rel="preconnect" href={origin} crossOrigin="anonymous" />
       ))}
       {/* Hero */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[var(--header-primary)] via-[#1e3a8a] to-[var(--header-secondary)]">
+      {/* <div className="relative overflow-hidden bg-gradient-to-r from-[var(--header-primary)] via-[#1e3a8a] to-[var(--header-secondary)]">
         <div className="pointer-events-none absolute -right-10 -top-10 h-44 w-44 rounded-full bg-white/10 blur-2xl" />
         <div className="pointer-events-none absolute -bottom-12 left-1/3 h-40 w-40 rounded-full bg-[#ede105]/20 blur-3xl" />
         <div className="relative flex flex-col gap-4 px-4 py-7 sm:flex-row sm:items-center sm:justify-between">
@@ -82,7 +74,6 @@ export default function CasinoAceLobbyPage() {
             </div>
           </div>
 
-          {/* Search */}
           <div className="relative w-full sm:w-72">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <Input
@@ -102,10 +93,10 @@ export default function CasinoAceLobbyPage() {
             )}
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Body */}
-      <div className=" px-4 py-6">
+      <div className=" px-4 py-2">
         {/* Count row */}
         {!isLoading && !isError && (
           <div className="mb-4 flex items-center justify-between">
@@ -120,13 +111,14 @@ export default function CasinoAceLobbyPage() {
 
         {/* Loading */}
         {isLoading && (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} className="overflow-hidden rounded-xl bg-white shadow-sm">
-                <Skeleton className="aspect-[3/4] w-full rounded-none bg-gray-200" />
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div key={i} className="overflow-hidden rounded-md bg-neutral-800 shadow-sm">
+                <Skeleton className="aspect-[4/3] w-full rounded-none bg-neutral-700" />
                 <div className="space-y-2 p-3">
-                  <Skeleton className="h-3.5 w-3/4 bg-gray-200" />
-                  <Skeleton className="h-3 w-1/3 bg-gray-200" />
+                  <Skeleton className="h-2.5 w-1/4 bg-neutral-700" />
+                  <Skeleton className="h-3.5 w-3/4 bg-neutral-700" />
+                  <Skeleton className="h-2.5 w-1/5 bg-neutral-700" />
                 </div>
               </div>
             ))}
@@ -173,7 +165,7 @@ export default function CasinoAceLobbyPage() {
 
         {/* Grid */}
         {filtered.length > 0 && (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             {filtered.map((game) => (
               <GameTile key={game.id} game={game} />
             ))}
@@ -188,11 +180,11 @@ function GameTile({ game }: { game: AceCasinoGame }) {
   return (
     <Link
       href={`/casino-ace/play/${game.externalId}`}
-      className="group block rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--header-primary)]"
+      className="group block overflow-hidden rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--header-primary)]"
     >
-      <div className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-200/70 transition-all duration-200 group-hover:-translate-y-1 group-hover:shadow-xl group-hover:ring-[var(--header-primary)]/40">
-        {/* Thumbnail */}
-        <div className="relative aspect-[3/4] w-full overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+      <div className="overflow-hidden rounded-md bg-neutral-800 shadow-sm transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-xl">
+        {/* Live thumbnail (landscape) */}
+        <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-900">
           {game.thumbnailUrl ? (
             <img
               src={game.thumbnailUrl}
@@ -200,43 +192,38 @@ function GameTile({ game }: { game: AceCasinoGame }) {
               loading="eager"
               decoding="async"
               fetchPriority="high"
-              className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
-            <div className="flex h-full items-center justify-center px-2 text-center text-xs font-medium text-gray-500">
+            <div className="flex h-full items-center justify-center px-2 text-center text-xs font-medium text-gray-400">
               {game.name}
             </div>
           )}
 
-          {/* Hover overlay with play button */}
+          {/* Hover play overlay */}
           <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-200 group-hover:bg-black/40 group-hover:opacity-100">
             <span className="flex items-center gap-1.5 rounded-full bg-[#ede105] px-3.5 py-1.5 text-xs font-bold text-black shadow-lg">
               <Play className="h-3.5 w-3.5 fill-black" />
               Play
             </span>
           </div>
-
-          {/* Special note badge */}
-          {game.specialNote && (
-            <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-[#ede105] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-black shadow">
-              <Sparkles className="h-2.5 w-2.5" />
-              {game.specialNote}
-            </span>
-          )}
-
-          {/* Currency chip */}
-          <span className="absolute bottom-2 right-2 rounded-md bg-black/55 px-1.5 py-0.5 text-[10px] font-semibold text-white backdrop-blur">
-            {game.currency}
-          </span>
         </div>
 
-        {/* Title */}
+        {/* Dark footer */}
         <div className="px-3 py-2.5">
+          {/* Top label: specialNote if present, else Live (all are live games) */}
+          <p className="text-[11px] font-medium leading-none text-gray-400">
+            {game.specialNote || "Live"}
+          </p>
           <p
-            className="truncate text-sm font-semibold text-gray-800"
+            className="mt-1 truncate text-sm font-bold uppercase tracking-wide text-white"
             title={game.name}
           >
             {game.name}
+          </p>
+          {/* Meta: only real data we have — the currency */}
+          <p className="mt-1.5 text-[11px] font-medium uppercase text-gray-400">
+            {game.currency}
           </p>
         </div>
       </div>
