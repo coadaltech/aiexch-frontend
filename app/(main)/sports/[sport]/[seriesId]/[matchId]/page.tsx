@@ -142,7 +142,21 @@ export default function MatchPage() {
   const eventTypeId = config?.eventTypeId ?? "4";
   const { data: seriesData = [] } = useSeries(config?.eventTypeId ?? null);
   const { data: customStakes } = useStakeSettings(!!user && !user.isDemo);
-  const { status, isConnected, matchOdds: wsMarkets, bookmakers: wsBookmakers, sessions: wsSessions, lastUpdate: wsLastUpdate, forceReconnect: forceWsReconnect } = useLiveMatch(matchId, eventTypeId);
+
+  // When the backend declares/voids a result for a market on this event, refetch
+  // everything settlement changes: open bets (drops the settled bet from the bet
+  // slip), exposure, ledger and balance. Event-driven via the live socket — no
+  // background polling. Demo users have no server-side bets to refetch.
+  const handleResultDeclared = useCallback(() => {
+    if (user?.isDemo) return;
+    queryClient.invalidateQueries({ queryKey: ["my-bets"] });
+    queryClient.invalidateQueries({ queryKey: ["market-exposure"] });
+    queryClient.invalidateQueries({ queryKey: ["market-exposure-fancy"] });
+    queryClient.invalidateQueries({ queryKey: ["ledger"] });
+    queryClient.invalidateQueries({ queryKey: ["balance"] });
+  }, [queryClient, user?.isDemo]);
+
+  const { status, isConnected, matchOdds: wsMarkets, bookmakers: wsBookmakers, sessions: wsSessions, lastUpdate: wsLastUpdate, forceReconnect: forceWsReconnect } = useLiveMatch(matchId, eventTypeId, handleResultDeclared);
 
   // Try to use cached odds data from the sport listing page for instant display
   const cachedOdds = queryClient.getQueryData<any[]>(["match-odds-list", matchId]);

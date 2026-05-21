@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import Image from "next/image";
 import {
   AlertCircle,
   Search,
@@ -42,8 +41,27 @@ export default function CasinoAceLobbyPage() {
     return data.filter((g) => g.name.toLowerCase().includes(q));
   }, [data, search]);
 
+  // Distinct thumbnail CDN origins — preconnect so the browser does DNS/TLS
+  // up front instead of per-image. React 19 hoists these <link>s to <head>.
+  const thumbOrigins = useMemo(() => {
+    if (!data) return [];
+    const set = new Set<string>();
+    for (const g of data) {
+      if (!g.thumbnailUrl) continue;
+      try {
+        set.add(new URL(g.thumbnailUrl).origin);
+      } catch {
+        /* ignore malformed URLs */
+      }
+    }
+    return Array.from(set);
+  }, [data]);
+
   return (
     <div className="min-h-full bg-[#efefef]">
+      {thumbOrigins.map((origin) => (
+        <link key={origin} rel="preconnect" href={origin} crossOrigin="anonymous" />
+      ))}
       {/* Hero */}
       <div className="relative overflow-hidden bg-gradient-to-r from-[var(--header-primary)] via-[#1e3a8a] to-[var(--header-secondary)]">
         <div className="pointer-events-none absolute -right-10 -top-10 h-44 w-44 rounded-full bg-white/10 blur-2xl" />
@@ -176,13 +194,13 @@ function GameTile({ game }: { game: AceCasinoGame }) {
         {/* Thumbnail */}
         <div className="relative aspect-[3/4] w-full overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
           {game.thumbnailUrl ? (
-            <Image
+            <img
               src={game.thumbnailUrl}
               alt={game.name}
-              fill
-              sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1280px) 20vw, 16vw"
-              className="object-cover transition-transform duration-300 group-hover:scale-110"
-              unoptimized
+              loading="eager"
+              decoding="async"
+              fetchPriority="high"
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
             />
           ) : (
             <div className="flex h-full items-center justify-center px-2 text-center text-xs font-medium text-gray-500">

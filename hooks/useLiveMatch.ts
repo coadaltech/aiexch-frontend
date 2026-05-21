@@ -16,7 +16,11 @@ type ConnectionStatus = "disconnected" | "connecting" | "connected" | "error";
 // rather than waiting for the next backoff tick.
 const VISIBILITY_RECONNECT_THRESHOLD_MS = 5_000;
 
-export function useLiveMatch(eventId: string, eventTypeId: string) {
+export function useLiveMatch(
+  eventId: string,
+  eventTypeId: string,
+  onResultDeclared?: (info: { marketId: string }) => void
+) {
   const [status, setStatus] = useState<ConnectionStatus>("disconnected");
   const [matchOdds, setMatchOdds] = useState<any[]>([]);
   const [bookmakers, setBookmakers] = useState<any[]>([]);
@@ -32,6 +36,13 @@ export function useLiveMatch(eventId: string, eventTypeId: string) {
   useEffect(() => {
     lastUpdateRef.current = lastUpdate;
   }, [lastUpdate]);
+
+  // Held in a ref so a changing callback identity never tears down / re-opens
+  // the socket (connect() only depends on eventId/eventTypeId).
+  const onResultDeclaredRef = useRef(onResultDeclared);
+  useEffect(() => {
+    onResultDeclaredRef.current = onResultDeclared;
+  }, [onResultDeclared]);
 
   const connect = useCallback(() => {
     if (!eventId || !eventTypeId) return;
@@ -85,6 +96,12 @@ export function useLiveMatch(eventId: string, eventTypeId: string) {
         else if (data.type === "market-update" && data.eventId === eventId) {
           setMatchOdds(data.markets || []);
           setLastUpdate(Date.now());
+        }
+        // A market on this event was just settled (result declared / voided).
+        // Let the page refetch open bets / exposure / ledger / balance so the
+        // settled bet drops out of the bet slip — no polling needed.
+        else if (data.type === "result-declared" && data.eventId === eventId) {
+          onResultDeclaredRef.current?.({ marketId: String(data.marketId) });
         }
       } catch (err) {
         console.error("[WS] Parse error:", err);
