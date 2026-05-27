@@ -132,7 +132,7 @@ export default function Header() {
       { label: "Home", link: "/home" },
       { label: "IPL 2026", link: "/sports/cricket/101480/28127348" },
       ...sports,
-      { label: "Live Casino", link: "/casino-ace" },
+      { label: "Live Casino", link: "/qtech-casino" },
       { label: "Promotions", link: "/promotions" },
     ],
     [sports]
@@ -432,8 +432,12 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Navigation Menu Bar */}
-        <Dropheader leftMenu={leftMenu} rightMenu={rightMenu} />
+        {/* Navigation Menu Bar — hidden on casino pages, which render their
+            own casino category bar instead. */}
+        {!(
+          pathname?.startsWith("/casino-ace") ||
+          pathname?.startsWith("/qtech-casino")
+        ) && <Dropheader leftMenu={leftMenu} rightMenu={rightMenu} />}
       </header>
 
       <SearchOverlay

@@ -23,7 +23,8 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   const isHomeOrRoot = pathname === "/" || pathname === "/home";
   // Casino runs as a full-width "system" page: header + dropheader + content,
   // but NO sidebar. The dropheader shows an Exchange button to return.
-  const isCasinoRoute = pathname?.startsWith("/casino-ace") ?? false;
+  const isCasinoRoute =
+    (pathname?.startsWith("/casino-ace") || pathname?.startsWith("/qtech-casino")) ?? false;
   const whitelabelNotFound =
     !whitelabelLoading && whitelabelInfo?.whitelabelType == null;
 
@@ -85,14 +86,24 @@ const NOTICES = [
         {/* Fixed Header - always visible at top */}
         <Header />
 
-        {/* Main Content Area - only this part scrolls; header and (on mobile) bottom tab stay fixed */}
-        <div className="flex flex-1 min-h-0 mt-14 md:mt-30 max-h-[calc(var(--vh-full)-4rem)] md:max-h-[calc(var(--vh-full)-7.5rem)] gap-2 p-2">
+        {/* Main Content Area - only this part scrolls; header and (on mobile) bottom tab stay fixed.
+            Casino pages hide the dropheader, so they only need to clear the ~3.5rem top bar
+            (no md:mt-30) — otherwise an empty grey gap appears. They're also flush (no padding). */}
+        <div
+          className={`flex flex-1 min-h-0 mt-14 ${
+            isCasinoRoute
+              ? "max-h-[calc(var(--vh-full)-3.5rem)]"
+              : "md:mt-30 max-h-[calc(var(--vh-full)-4rem)] md:max-h-[calc(var(--vh-full)-7.5rem)] gap-2 p-2"
+          }`}
+        >
           {/* Sidebar - Starts below header. Hidden on casino (full-width). */}
           {!isCasinoRoute && <AppSidebar />}
 
           {/* Main Content - scrollable area; pb for mobile so content clears fixed bottom tab */}
           <main
-            className="min-h-0 flex-1 w-full overflow-y-auto overflow-x-hidden transition-all duration-300 pb-20 lg:pb-0 bg-[#efefef] rounded-xl"
+            className={`min-h-0 flex-1 w-full overflow-y-auto overflow-x-hidden transition-all duration-300 ${
+              isCasinoRoute ? "" : "pb-20 lg:pb-0 bg-[#efefef] rounded-xl"
+            }`}
             id="main-content"
           >
             {children}

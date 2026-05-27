@@ -728,6 +728,50 @@ export const casinoAceApi = {
     api.post<AceLaunchResponse>("/casino-ace/launch", { gameId, returnUrl }),
 };
 
+// ── QTech casino (live data from QT Platform Services API) ────────────────
+// Lobby reads /qtech-casino/games (proxied + cached from QT). Launch returns
+// a demo-mode game URL for now (no wallet needed); real-money mode lands with
+// the Common Wallet integration.
+export interface QtechLobbyGame {
+  id: string;                 // QT game id (e.g. "TK-froggrog") — use to launch
+  name: string;
+  provider: string;
+  category: string | null;
+  currencies: string[];
+  thumbnailUrl: string | null;
+  bannerUrl: string | null;
+  demoSupport: boolean;
+}
+
+export interface QtechGamesResponse {
+  success: boolean;
+  cached?: boolean;
+  totalCount: number;
+  games: QtechLobbyGame[];
+}
+
+export interface QtechLaunchResponse {
+  success: boolean;
+  url: string;
+  gameId: string;
+}
+
+export const qtechCasinoApi = {
+  /** Public — game catalogue fetched live from QT (cached server-side). */
+  listGames: (params?: {
+    providers?: string;
+    currencies?: string;
+    gameTypes?: string;
+    size?: number;
+  }) => api.get<QtechGamesResponse>("/qtech-casino/games", { params }),
+
+  /** Public — launch URL. Defaults to demo mode (no wallet required yet). */
+  launch: (
+    gameId: string,
+    opts?: { mode?: "demo" | "real"; returnUrl?: string; device?: "desktop" | "mobile" },
+  ) => api.post<QtechLaunchResponse>("/qtech-casino/launch", { gameId, ...opts }),
+};
+
 export const sportsApi = {
   getSports: () => api.get("/sports/games"),
   getOdds: (eventTypeId: string, marketId: string) =>
