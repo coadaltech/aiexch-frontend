@@ -765,10 +765,14 @@ export const qtechCasinoApi = {
     size?: number;
   }) => api.get<QtechGamesResponse>("/qtech-casino/games", { params }),
 
-  /** Public — launch URL. Defaults to demo mode (no wallet required yet). */
+  /**
+   * Authed — generates a real-money launch URL for the logged-in user.
+   * Backend wires playerId + walletSessionId; QT will call back into our
+   * Common Wallet endpoints for balance and bet transactions.
+   */
   launch: (
     gameId: string,
-    opts?: { mode?: "demo" | "real"; returnUrl?: string; device?: "desktop" | "mobile" },
+    opts?: { returnUrl?: string; device?: "desktop" | "mobile"; currency?: string },
   ) => api.post<QtechLaunchResponse>("/qtech-casino/launch", { gameId, ...opts }),
 };
 

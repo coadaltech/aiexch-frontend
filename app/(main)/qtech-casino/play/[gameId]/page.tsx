@@ -10,8 +10,10 @@ import { qtechCasinoApi } from "@/lib/api";
 /**
  * QTech Game Launcher
  *
- * Requests a launch URL from the backend (/qtech-casino/launch) in demo mode
- * and renders it full-bleed in an iframe. The game id is a QT string id
+ * Requests a real-money launch URL from the backend (/qtech-casino/launch)
+ * and renders it full-bleed in an iframe. The backend wires the user's
+ * playerId and a fresh wallet session; QT calls back into our Common Wallet
+ * endpoints for balance and bets. The game id is a QT string id
  * (e.g. "TK-froggrog"), URL-encoded in the route.
  */
 export default function QtechPlayPage({
@@ -41,7 +43,7 @@ export default function QtechPlayPage({
       try {
         const returnUrl =
           typeof window !== "undefined" ? `${window.location.origin}/qtech-casino` : undefined;
-        const res = await qtechCasinoApi.launch(gameId, { mode: "demo", returnUrl });
+        const res = await qtechCasinoApi.launch(gameId, { returnUrl });
         if (cancelled) return;
         if (!res.data?.success || !res.data?.url) {
           setState({ kind: "error", message: "Launch URL was not returned", upstream: res.data });
@@ -83,7 +85,7 @@ export default function QtechPlayPage({
             {gameId}
           </span>
           <span className="rounded bg-emerald-500/90 px-1.5 py-0.5 text-[10px] font-bold uppercase">
-            Demo
+            Real
           </span>
         </div>
 

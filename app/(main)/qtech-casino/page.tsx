@@ -37,7 +37,7 @@ import { qtechCasinoApi, casinoAceApi } from "@/lib/api";
  * One page that shows games from BOTH providers — QTech (live data from QT
  * Platform) and Ace (our DB) — merged and split into casino categories via a
  * top category bar (reference-style). Each tile launches the right provider's
- * game page. Demo mode for QTech, so games open without the wallet.
+ * real-money game page (authed; the user's wallet balance shows inside QT).
  */
 
 // ── Normalized game shape used by the grid ────────────────────────────────
