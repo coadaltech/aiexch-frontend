@@ -107,6 +107,15 @@ export default function Header() {
   const myUserId = user?.id;
   const onLedgerChange = useCallback(
     (payload: { userId?: string }) => {
+      // Diagnostic — remove once header refresh is confirmed working.
+      console.log(
+        "[ledger-changed] received",
+        payload,
+        "mine=",
+        myUserId,
+        "match=",
+        payload?.userId === myUserId,
+      );
       if (!myUserId || payload?.userId !== myUserId) return;
       queryClient.invalidateQueries({ queryKey: ["ledger"] });
       queryClient.invalidateQueries({ queryKey: ["balance"] });
