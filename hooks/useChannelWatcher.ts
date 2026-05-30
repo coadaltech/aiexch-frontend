@@ -9,7 +9,14 @@ import { useEffect } from "react";
 // Multiple consumers share one connection via ref-counting and a local
 // EventTarget bus.
 
-type Channel = "sports-list" | "top-competitions" | "recommended-events";
+type Channel =
+  | "sports-list"
+  | "top-competitions"
+  | "recommended-events"
+  // User-balance change. The payload carries `userId` so subscribers can
+  // ignore changes not meant for them (channel is global, filter is client-
+  // side — fan-out is tiny so this is fine).
+  | "ledger";
 
 let ws: WebSocket | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -54,7 +61,10 @@ const connect = () => {
     try {
       const data = JSON.parse(event.data);
       if (typeof data?.type === "string" && data.type.endsWith("-changed")) {
-        bus.dispatchEvent(new Event(data.type));
+        // CustomEvent so payload (e.g. { userId } on ledger-changed) can
+        // reach subscribers via detail; existing handlers that ignore the
+        // arg continue to work unchanged.
+        bus.dispatchEvent(new CustomEvent(data.type, { detail: data }));
       }
     } catch {
       /* unrelated message */
@@ -93,9 +103,15 @@ const disconnectIfIdle = () => {
 
 /**
  * Subscribe to a backend broadcast channel. `onChange` is invoked each time
- * the server emits `{ type: "<channel>-changed" }` for this channel.
+ * the server emits `{ type: "<channel>-changed", ... }` for this channel.
+ *
+ * The full message (including any payload fields like `userId`) is passed
+ * as the argument so handlers can filter — e.g. `if (msg.userId !== mine) return`.
  */
-export function useChannelWatcher(channel: Channel, onChange: () => void) {
+export function useChannelWatcher<T extends Record<string, unknown> = Record<string, unknown>>(
+  channel: Channel,
+  onChange: (payload: T) => void,
+) {
   useEffect(() => {
     const prev = subscriptionCounts.get(channel) ?? 0;
     subscriptionCounts.set(channel, prev + 1);
@@ -105,7 +121,10 @@ export function useChannelWatcher(channel: Channel, onChange: () => void) {
     if (prev === 0) subscribeServer(channel);
 
     const evt = `${channel}-changed`;
-    const handler = () => onChange();
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<T>).detail ?? ({} as T);
+      onChange(detail);
+    };
     bus.addEventListener(evt, handler);
 
     return () => {

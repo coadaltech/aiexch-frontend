@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -35,6 +36,7 @@ import Dropheader from "./dropheader";
 import { isPanelPath } from "@/lib/panel-utils";
 import { SPORT_ROUTES } from "@/lib/sports-config";
 import { useSportsList } from "@/hooks/useSportsList";
+import { useChannelWatcher } from "@/hooks/useChannelWatcher";
 
 // Sport link mapping derived from shared config
 const SPORT_LINK_MAPPING: Record<string, { basePath: string; eventTypeId: string }> =
@@ -96,6 +98,22 @@ export default function Header() {
   const { data: ledger, isLoading: ledgerLoading } = useLedger(
     isLoggedIn && !user?.isDemo
   );
+
+  // Event-driven balance refresh: when the backend broadcasts a
+  // ledger-changed event for THIS user (casino bet placed via the Ace/QT
+  // iframe, settlement callback, sports settle, etc.), invalidate the
+  // queries so the header repaints without a manual refresh.
+  const queryClient = useQueryClient();
+  const myUserId = user?.id;
+  const onLedgerChange = useCallback(
+    (payload: { userId?: string }) => {
+      if (!myUserId || payload?.userId !== myUserId) return;
+      queryClient.invalidateQueries({ queryKey: ["ledger"] });
+      queryClient.invalidateQueries({ queryKey: ["balance"] });
+    },
+    [myUserId, queryClient],
+  );
+  useChannelWatcher("ledger", onLedgerChange);
 
   const { data: settings } = useSettings();
   const router = useRouter();
