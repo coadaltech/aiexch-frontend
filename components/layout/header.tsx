@@ -106,18 +106,32 @@ export default function Header() {
   const queryClient = useQueryClient();
   const myUserId = user?.id;
   const onLedgerChange = useCallback(
-    (payload: { userId?: string }) => {
-      // Diagnostic — remove once header refresh is confirmed working.
-      console.log(
-        "[ledger-changed] received",
-        payload,
-        "mine=",
-        myUserId,
-        "match=",
-        payload?.userId === myUserId,
-      );
+    (payload: {
+      userId?: string;
+      ledger?: {
+        userId: string;
+        userBalance: string;
+        userLimit: string;
+        limitConsumed: string;
+        fixLimit: string;
+        finalLimit: string;
+      };
+    }) => {
       if (!myUserId || payload?.userId !== myUserId) return;
-      queryClient.invalidateQueries({ queryKey: ["ledger"] });
+      if (payload.ledger) {
+        // Instant update: populate the cache directly with the snapshot the
+        // backend already computed post-commit. Skips the HTTP round-trip,
+        // so the header reflects the new balance in the same tick the WS
+        // message arrives. Shape must match what useLedger's queryFn returns
+        // (axios response → `.data.data` is the ledger object).
+        queryClient.setQueryData(["ledger"], {
+          data: { data: payload.ledger },
+        });
+      } else {
+        // No snapshot in payload — fall back to refetch.
+        queryClient.invalidateQueries({ queryKey: ["ledger"] });
+      }
+      // The /balance endpoint isn't snapshotted in the payload; refresh it.
       queryClient.invalidateQueries({ queryKey: ["balance"] });
     },
     [myUserId, queryClient],
