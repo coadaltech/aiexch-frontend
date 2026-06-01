@@ -29,7 +29,7 @@ import { isPanelPath } from "@/lib/panel-utils";
 const navItems = [
   { id: "home", label: "Home", icon: Home, link: "/" },
   { id: "sports", label: "Sports", icon: Volleyball, link: "/sports" },
-  { id: "casino", label: "Casino", icon: Dices, link: "/casino" },
+  { id: "casino", label: "Casino", icon: Dices, link: "/qtech-casino" },
   { id: "promotions", label: "Promotions", icon: Gift, link: "/promotions" },
   { id: "profile", label: "Profile", icon: User, link: "/profile" },
 ];
