@@ -173,7 +173,7 @@ export default function Header() {
       { label: "Home", link: "/home" },
       { label: "IPL 2026", link: "/sports/cricket/101480/28127348" },
       ...sports,
-      { label: "Live Casino", link: "/qtech-casino" },
+      { label: "Casino", link: "/qtech-casino" },
       { label: "Promotions", link: "/promotions" },
     ],
     [sports]

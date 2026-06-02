@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { AlertCircle, ArrowLeft, Loader2, Maximize2, Dice5 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { CasinoWallet } from "@/components/casino/casino-wallet";
+import { CasinoUserMenu } from "@/components/casino/casino-user-menu";
 import { qtechCasinoApi } from "@/lib/api";
 
 /**
@@ -89,16 +91,20 @@ export default function QtechPlayPage({
           </span>
         </div>
 
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={goFullscreen}
-          disabled={state.kind !== "ready"}
-          className="h-8 gap-1 text-white hover:bg-white/10 hover:text-white disabled:opacity-40"
-        >
-          <Maximize2 className="h-4 w-4" />
-          <span className="hidden sm:inline">Fullscreen</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <CasinoWallet />
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={goFullscreen}
+            disabled={state.kind !== "ready"}
+            className="h-8 gap-1 text-white hover:bg-white/10 hover:text-white disabled:opacity-40"
+          >
+            <Maximize2 className="h-4 w-4" />
+            <span className="hidden sm:inline">Fullscreen</span>
+          </Button>
+          <CasinoUserMenu />
+        </div>
       </div>
 
       {/* Stage */}
