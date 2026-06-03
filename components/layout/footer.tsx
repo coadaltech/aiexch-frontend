@@ -14,13 +14,13 @@ const FOOTER_COLS = [
   {
     title: "INFORMATION",
     links: [
-      { label: "IPL Betting App",       href: "/promotions" },
+      { label: "IPL Betting App",       href: "/sports/cricket" },
       { label: "Cricket World Cup",      href: "/sports/cricket" },
       { label: "Cricket App",            href: "/sports/cricket" },
-      { label: "Casino App",             href: "/casino" },
-      { label: "About us",               href: "/about" },
+      { label: "Casino App",             href: "/qtech-casino" },
+      { label: "About us",               href: "" },
       { label: "Terms and Conditions",   href: "/terms" },
-      { label: "Affiliate Program",      href: "/affiliate" },
+      { label: "Affiliate Program",      href: "" },
       { label: "Cookie Policy",          href: "/privacy" },
       { label: "Contacts",               href: "/live-support" },
     ],
@@ -30,15 +30,13 @@ const FOOTER_COLS = [
     links: [
       { label: "Sports",    href: "/sports" },
       { label: "Cricket",   href: "/sports/cricket" },
-      { label: "Live",      href: "/sports/all" },
       { label: "Matka",     href: "/matka" },
     ],
   },
   {
     title: "GAMES",
     links: [
-      { label: "Casino",      href: "/casino" },
-      { label: "Live Casino", href: "/live-casino" },
+      { label: "Casino",      href: "/qtech-casino" },
       { label: "Skill Games", href: "/skil-games" },
       { label: "Jambo",       href: "/jambo" },
     ],
@@ -53,12 +51,12 @@ const FOOTER_COLS = [
   {
     title: "USEFUL LINKS",
     links: [
-      { label: "Payment methods",    href: "/promotions" },
-      { label: "Mobile version",     href: "/" },
-      { label: "Registration",       href: "/signup" },
-      { label: "Responsible Gaming", href: "/responsible-gaming" },
-      { label: "Game Rules",         href: "/game-rules" },
-      { label: "FAQs",               href: "/faqs" },
+      { label: "Payment methods",    href: "#" },
+      { label: "Mobile version",     href: "#" },
+      { label: "Registration",       href: "#" },
+      { label: "Responsible Gaming", href: "#" },
+      { label: "Game Rules",         href: "#" },
+      { label: "FAQs",               href: "#" },
     ],
   },
   {

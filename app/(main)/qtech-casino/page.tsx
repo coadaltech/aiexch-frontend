@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   AlertCircle,
   ArrowLeftRight,
+  ChevronLeft,
   CircleDot,
   Club,
   Dices,
@@ -32,7 +33,7 @@ import Logo from "@/components/layout/logo";
 import { CasinoWallet } from "@/components/casino/casino-wallet";
 import { CasinoUserMenu } from "@/components/casino/casino-user-menu";
 import { useSettings } from "@/hooks/usePublic";
-import { useQtechGames, type CasinoGame } from "@/hooks/useCasinoGames";
+import { useAceGames, useQtechGames, type CasinoGame } from "@/hooks/useCasinoGames";
 
 /**
  * Casino lobby (QTech).
@@ -62,6 +63,7 @@ const CATS: { key: string; label: string; icon: LucideIcon }[] = [
   { key: "CRASH", label: "Crash", icon: Rocket },
   { key: "LOTTERY", label: "Lottery", icon: Ticket },
   { key: "OTHER", label: "Other", icon: Gamepad2 },
+  { key: "RVCASINO", label: "RV Casino", icon: Diamond },
 ];
 const CAT_LABEL = Object.fromEntries(CATS.map((c) => [c.key, c.label]));
 
@@ -72,16 +74,21 @@ export default function LiveCasinoPage() {
   const [search, setSearch] = useState("");
 
   const qt = useQtechGames();
+  const ace = useAceGames();
 
-  const games = useMemo<CasinoGame[]>(() => qt.data ?? [], [qt.data]);
+  const games = useMemo<CasinoGame[]>(
+    () => [...(qt.data ?? []), ...(ace.data ?? [])],
+    [qt.data, ace.data],
+  );
 
-  const isLoading = games.length === 0 && qt.isLoading;
+  const isLoading = games.length === 0 && (qt.isLoading || ace.isLoading);
   const isError = qt.isError;
   const error = qt.error;
-  const isFetching = qt.isFetching;
+  const isFetching = qt.isFetching || ace.isFetching;
   const refetch = useCallback(() => {
     qt.refetch();
-  }, [qt]);
+    ace.refetch();
+  }, [qt, ace]);
 
   // Category tabs that actually have games, in catalogue order, with counts.
   const tabs = useMemo(() => {
@@ -91,12 +98,16 @@ export default function LiveCasinoPage() {
       ...c,
       count: counts.get(c.key)!,
     }));
-    return [{ key: "ALL", label: "Lobby", icon: LayoutGrid, count: games.length }, ...present];
+    // The Lobby shows everything except RV Casino, so its count excludes it too.
+    const lobbyCount = games.length - (counts.get("RVCASINO") ?? 0);
+    return [{ key: "ALL", label: "Lobby", icon: LayoutGrid, count: lobbyCount }, ...present];
   }, [games]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return games.filter((g) => {
+      // RV Casino has its own tab; keep it out of the Lobby (ALL) view.
+      if (activeCat === "ALL" && g.cat === "RVCASINO") return false;
       if (activeCat !== "ALL" && g.cat !== activeCat) return false;
       if (q && !g.name.toLowerCase().includes(q)) return false;
       return true;
@@ -114,6 +125,25 @@ export default function LiveCasinoPage() {
       }
     }
     return Array.from(set);
+  }, [games]);
+
+  // ── Mobile category browse ──────────────────────────────────────────────
+  // On phones the lobby is a two-level flow: pick a category card, then see its
+  // games. (Desktop keeps the flat header-nav lobby.) RV Casino is its own tab,
+  // so it's excluded from the category grid here.
+  const mobileCategories = useMemo(
+    () => tabs.filter((t) => t.key !== "ALL" && t.key !== "RVCASINO"),
+    [tabs],
+  );
+
+  // A representative thumbnail per category (first game with an image) so the
+  // category cards have artwork instead of a bare icon.
+  const catThumbs = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const g of games) {
+      if (g.thumbnailUrl && !m.has(g.cat)) m.set(g.cat, g.thumbnailUrl);
+    }
+    return m;
   }, [games]);
 
   // ── Incremental rendering ───────────────────────────────────────────────
@@ -152,8 +182,8 @@ export default function LiveCasinoPage() {
         <link key={o} rel="preconnect" href={o} crossOrigin="anonymous" />
       ))}
 
-      {/* ── Casino header bar (full custom header — no white app header here) ── */}
-      <div className="flex shrink-0 items-stretch border-b border-white/10 bg-[#0e1218]">
+      {/* ── Casino header bar — DESKTOP only (full custom header) ── */}
+      <div className="hidden lg:flex shrink-0 items-stretch border-b border-white/10 bg-[#0e1218]">
         {/* Brand */}
         <div className="flex shrink-0 items-center border-r border-white/10 pl-3 pr-3 sm:pl-4">
           <Logo onClick={() => router.push("/home")} settings={settings} />
@@ -208,34 +238,77 @@ export default function LiveCasinoPage() {
         </div>
       </div>
 
-      {/* ── Toolbar: count + search ── */}
-      <div className="flex shrink-0 items-center gap-2 px-3 py-2">
-        <h2 className="text-sm font-semibold text-white">
-          {activeCat === "ALL" ? "All games" : CAT_LABEL[activeCat] ?? activeCat}
-        </h2>
-        <span className="text-xs text-gray-400">{filtered.length}</span>
-
-        <div className="relative ml-auto w-44 sm:w-64">
-          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search games…"
-            className="h-8 w-full rounded-md border border-white/10 bg-[#1a212b] pl-8 pr-7 text-sm text-white outline-none placeholder:text-gray-500 focus:ring-1 focus:ring-[#ede105]"
-          />
-          {search && (
+      {/* ── Casino header — MOBILE only (compact, two rows) ── */}
+      <div className="flex shrink-0 flex-col border-b border-white/10 bg-[#0e1218] lg:hidden">
+        {/* Row 1: brand + balance/exposure + actions, all on one line */}
+        <div className="flex items-center gap-2 px-3 py-2">
+          <div className="shrink-0">
+            <Logo onClick={() => router.push("/home")} settings={settings} />
+          </div>
+          <div className="ml-auto flex items-center gap-1.5">
+            <CasinoWallet layout="inline" />
             <button
-              onClick={() => setSearch("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+              onClick={() => refetch()}
+              title="Refresh"
+              className="flex h-8 w-8 items-center justify-center rounded-md text-gray-300 transition hover:bg-white/5 hover:text-white"
             >
-              <X className="h-3.5 w-3.5" />
+              <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
             </button>
-          )}
+            <CasinoUserMenu />
+          </div>
+        </div>
+
+        {/* Row 2: Exchange | Casino | RV Casino */}
+        <div className="flex items-stretch gap-1.5 px-3 pb-2">
+          <button
+            onClick={() => router.push("/home")}
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-md bg-white/5 px-3 py-2 text-xs font-bold text-gray-200 transition-colors hover:bg-white/10"
+          >
+            <ArrowLeftRight className="h-4 w-4" />
+            Exchange
+          </button>
+          <button
+            onClick={() => setActiveCat("ALL")}
+            className={`flex flex-1 items-center justify-center rounded-md px-3 py-2 text-xs font-bold transition-colors ${
+              activeCat !== "RVCASINO"
+                ? "bg-[#ede105] text-black"
+                : "bg-white/5 text-gray-200 hover:bg-white/10"
+            }`}
+          >
+            Casino
+          </button>
+          <button
+            onClick={() => setActiveCat("RVCASINO")}
+            className={`flex flex-1 items-center justify-center rounded-md px-3 py-2 text-xs font-bold transition-colors ${
+              activeCat === "RVCASINO"
+                ? "bg-[#ede105] text-black"
+                : "bg-white/5 text-gray-200 hover:bg-white/10"
+            }`}
+          >
+            RV Casino
+          </button>
         </div>
       </div>
 
       {/* ── Grid (scrolls) ── */}
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-6">
+        {/* Mobile: back-to-categories bar when browsing a single category */}
+        {activeCat !== "ALL" && activeCat !== "RVCASINO" && (
+          <div className="sticky top-0 z-10 -mx-3 mb-3 flex items-center gap-2 border-b border-white/10 bg-[#0d1117]/95 px-3 py-2 backdrop-blur lg:hidden">
+            <button
+              onClick={() => setActiveCat("ALL")}
+              className="flex items-center gap-1 text-sm font-semibold text-[#ede105]"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Back
+            </button>
+            <span className="text-sm font-bold text-white">
+              {CAT_LABEL[activeCat] ?? activeCat}
+            </span>
+            <span className="ml-auto text-xs text-gray-400">{filtered.length}</span>
+          </div>
+        )}
+
         {isLoading && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             {Array.from({ length: 15 }).map((_, i) => (
@@ -276,9 +349,32 @@ export default function LiveCasinoPage() {
           </div>
         )}
 
+        {/* Mobile only: category picker (the "Casino" lobby level) */}
+        {activeCat === "ALL" && mobileCategories.length > 0 && (
+          <div className="grid grid-cols-2 gap-3 lg:hidden">
+            {mobileCategories.map((c) => (
+              <CategoryCard
+                key={c.key}
+                label={c.label}
+                count={c.count}
+                icon={c.icon}
+                thumb={catThumbs.get(c.key) ?? null}
+                onClick={() => setActiveCat(c.key)}
+              />
+            ))}
+          </div>
+        )}
+
         {filtered.length > 0 && (
           <>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            {/* The flat games grid. On mobile it's hidden at the "ALL" level
+                (category cards show instead); for a picked category or RV it
+                shows on every screen. Desktop always shows it. */}
+            <div
+              className={`grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 ${
+                activeCat === "ALL" ? "hidden lg:grid" : "grid"
+              }`}
+            >
               {visible.map((g) => (
                 <GameTile key={g.key} game={g} />
               ))}
@@ -291,6 +387,59 @@ export default function LiveCasinoPage() {
         )}
       </div>
     </div>
+  );
+}
+
+// Mobile lobby card representing a whole category (artwork from a sample game).
+function CategoryCard({
+  label,
+  count,
+  icon: Icon,
+  thumb,
+  onClick,
+}: {
+  label: string;
+  count: number;
+  icon: LucideIcon;
+  thumb: string | null;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="group block overflow-hidden rounded-lg bg-[#1a212b] text-left shadow-sm transition-all duration-200 active:scale-[0.98]"
+    >
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-900">
+        {thumb ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={thumb}
+            alt={label}
+            loading="lazy"
+            decoding="async"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center">
+            <Icon className="h-10 w-10 text-gray-600" />
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+        <span className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold text-white">
+          {count}
+        </span>
+      </div>
+      <div className="px-2 py-2 text-center">
+        <p className="truncate text-sm font-bold uppercase tracking-wide text-white">
+          {label}
+        </p>
+        <div className="mt-1 flex justify-center gap-0.5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Star key={i} className="h-3 w-3 fill-[#ede105] text-[#ede105]" />
+          ))}
+        </div>
+      </div>
+    </button>
   );
 }
 

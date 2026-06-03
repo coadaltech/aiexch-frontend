@@ -171,7 +171,6 @@ export default function Header() {
   const leftMenu = useMemo(
     () => [
       { label: "Home", link: "/home" },
-      { label: "IPL 2026", link: "/sports/cricket/101480/28127348" },
       ...sports,
       { label: "Casino", link: "/qtech-casino" },
       { label: "Promotions", link: "/promotions" },

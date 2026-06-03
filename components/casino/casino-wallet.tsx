@@ -20,7 +20,14 @@ import { formatBalance } from "@/lib/format-balance";
  * mounted on casino routes and updates that cache from the `ledger` WebSocket
  * (bet placed / settled), so these chips update live without their own poll.
  */
-export function CasinoWallet({ className = "" }: { className?: string }) {
+export function CasinoWallet({
+  className = "",
+  layout = "stack",
+}: {
+  className?: string;
+  /** "stack" = two rows (desktop header); "inline" = one row (mobile header). */
+  layout?: "stack" | "inline";
+}) {
   const { isLoggedIn, user } = useAuth();
   const { data: ledger, isLoading } = useLedger(isLoggedIn && !user?.isDemo);
 
@@ -48,8 +55,14 @@ export function CasinoWallet({ className = "" }: { className?: string }) {
   const bal = formatBalance(ledger?.finalLimit ?? "0.00").inr;
   const liab = formatBalance(ledger?.limitConsumed ?? "0.00").inr;
 
+  const inline = layout === "inline";
+
   return (
-    <div className={`flex flex-col p-2 gap-2 shrink-0 items-center gap-1.5 ${className}`}>
+    <div
+      className={`flex shrink-0 items-center gap-1.5 ${
+        inline ? "flex-row" : "flex-col gap-2 p-2"
+      } ${className}`}
+    >
       <div className="flex items-center gap-1.5 rounded-md bg-[#1a212b] px-2.5 py-1 ring-1 ring-emerald-500/30">
         <Wallet className="h-3.5 w-3.5 text-emerald-400" />
         <span className="text-[10px] font-bold uppercase tracking-wide text-gray-400">
