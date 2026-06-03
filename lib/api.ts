@@ -651,6 +651,17 @@ export const userApi = {
     api.get(`/betting/exposure-usage/market?marketId=${encodeURIComponent(String(marketId))}`),
   getExposureShiftDetail: (shiftId: string) =>
     api.get(`/betting/exposure-usage/shift?shiftId=${encodeURIComponent(shiftId)}`),
+  getExposureCasinoDetail: (gameName: string, provider: string) =>
+    api.get(
+      `/betting/exposure-usage/casino?gameName=${encodeURIComponent(gameName)}&provider=${encodeURIComponent(provider)}`,
+    ),
+  getCasinoBetHistory: (params?: { status?: string }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.status && params.status !== "all")
+      queryParams.append("status", params.status);
+    const query = queryParams.toString();
+    return api.get(`/profile/casino-bet-history${query ? `?${query}` : ""}`);
+  },
 
   // Account ledger statement
   getAccountStatement: (params: { fromDate: string; toDate: string }) =>

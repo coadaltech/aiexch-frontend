@@ -6,6 +6,7 @@ import { ArrowLeft, Trophy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMyBets } from "@/hooks/useBetting";
 import { useMatkaMyBets } from "@/hooks/useMatkaApi";
+import { useCasinoBetHistory } from "@/hooks/useUserQueries";
 import { BetHistorySkeleton } from "@/components/skeletons/profile-skeletons";
 import { formatLocalDate, formatLocalDateTime, formatLocalTime } from "@/lib/date-utils";
 
@@ -39,11 +40,13 @@ export default function BetHistoryPage() {
 
   const { data: betsData, isLoading: sportsLoading } = useMyBets("all");
   const { data: matkaData, isLoading: matkaLoading } = useMatkaMyBets();
+  const { data: casinoData, isLoading: casinoLoading } = useCasinoBetHistory();
 
   const betHistory: any[]  = betsData?.data || [];
   const matkaHistory: any[] = matkaData || [];
+  const casinoHistory: any[] = casinoData || [];
 
-  if (sportsLoading || matkaLoading) return <BetHistorySkeleton />;
+  if (sportsLoading || matkaLoading || casinoLoading) return <BetHistorySkeleton />;
 
   const totalBets = betHistory.length;
   const totalWins = betHistory.filter((b) => b.status === "won").length;
@@ -59,6 +62,16 @@ export default function BetHistoryPage() {
       return true;
     })
     .sort((a, b) => new Date(b.addedDate).getTime() - new Date(a.addedDate).getTime());
+
+  const filteredCasino = casinoHistory
+    .filter((bet) => {
+      if (filter === "all") return true;
+      if (filter === "win") return bet.status === "won";
+      if (filter === "loss") return bet.status === "lost";
+      if (filter === "pending") return bet.status === "matched" || bet.status === "pending";
+      return true;
+    })
+    .sort((a, b) => new Date(b.placedAt).getTime() - new Date(a.placedAt).getTime());
 
   const FILTERS = [
     { key: "all",     label: "All",     count: totalBets },
@@ -109,7 +122,7 @@ export default function BetHistoryPage() {
 
         {/* Sports bets */}
         <div className="space-y-1.5">
-          {filteredSports.length === 0 && !showMatka && (
+          {filteredSports.length === 0 && filteredCasino.length === 0 && !showMatka && (
             <div className="py-12 text-center">
               <Trophy className="w-12 h-12 text-gray-300 mx-auto mb-3" />
               <p className="text-gray-700 font-medium">No bets found</p>
@@ -226,8 +239,58 @@ export default function BetHistoryPage() {
           </div>
         )}
 
+        {/* Casino bets */}
+        {filteredCasino.length > 0 && (
+          <div className="mt-1">
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-x-auto">
+              <table className="w-full border-separate border-spacing-0">
+                <thead>
+                  <tr className="bg-[var(--header-primary)] text-[var(--header-text)] text-[13px] font-bold uppercase tracking-wide">
+                    <th className="px-3 py-2.5 text-left whitespace-nowrap">Casino ({filteredCasino.length} records)</th>
+                    <th className="px-3 py-2.5 text-left whitespace-nowrap">Provider</th>
+                    <th className="px-3 py-2.5 text-right whitespace-nowrap">Odds</th>
+                    <th className="px-3 py-2.5 text-right whitespace-nowrap">Stake</th>
+                    <th className="px-3 py-2.5 text-center whitespace-nowrap">Status</th>
+                    <th className="px-3 py-2.5 text-right whitespace-nowrap">Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredCasino.map((bet: any) => {
+                    const statusCfg = STATUS_CONFIG[bet.status as keyof typeof STATUS_CONFIG]
+                      ?? { label: bet.status, style: "text-gray-700 bg-white/70 border-gray-300" };
+                    return (
+                      <tr key={bet.id} className="bg-purple-100 text-gray-800 border-t border-white/40">
+                        <td className="px-3 py-2.5 text-[14px] font-bold whitespace-nowrap">
+                          {bet.gameName || "Casino"}
+                        </td>
+                        <td className="px-3 py-2.5 text-[13px] font-semibold uppercase whitespace-nowrap">
+                          {bet.provider || "—"}
+                        </td>
+                        <td className="px-3 py-2.5 text-[14px] font-bold whitespace-nowrap text-right">
+                          {bet.odds != null ? Number(bet.odds).toFixed(2) : "—"}
+                        </td>
+                        <td className="px-3 py-2.5 text-[14px] font-bold whitespace-nowrap text-right">
+                          ₹{Number(bet.stake).toLocaleString()}
+                        </td>
+                        <td className="px-3 py-2.5 text-center">
+                          <Badge variant="outline" className={`text-[11px] px-2 py-0.5 border ${statusCfg.style}`}>
+                            {statusCfg.label}
+                          </Badge>
+                        </td>
+                        <td className="px-3 py-2.5 text-[13px] font-semibold whitespace-nowrap text-right">
+                          {formatDate(bet.placedAt)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {/* Empty state when all tabs show nothing */}
-        {showMatka && filteredSports.length === 0 && matkaHistory.length === 0 && (
+        {showMatka && filteredSports.length === 0 && matkaHistory.length === 0 && filteredCasino.length === 0 && (
           <div className="py-12 text-center">
             <Trophy className="w-12 h-12 text-gray-300 mx-auto mb-3" />
             <p className="text-gray-700 font-medium">No bets found</p>

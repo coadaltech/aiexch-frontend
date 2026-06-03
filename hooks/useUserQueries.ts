@@ -131,13 +131,17 @@ export const useLedger = (enabled = true) => {
 export interface ExposureUsageRow {
   marketId: string | number | null;
   shiftId: string | null;
-  intFlag: number;
+  intFlag: number;            // 0=sports market, 1=matka/jambo shift, 2=casino game
   limitUse: string;
   sportName: string | null;
   competitionName: string | null;
   eventName: string | null;
   shiftName: string | null;
   marketName: string | null;
+  // Casino-only (intFlag === 2)
+  gameName?: string | null;
+  provider?: string | null;
+  betCount?: number | null;
 }
 
 export const useExposureUsage = (enabled = true) => {
@@ -239,6 +243,69 @@ export const useExposureShiftDetail = (shiftId: string | null) => {
     select: (res) => (res.data?.data as ExposureShiftDetail | null) ?? null,
     enabled: !!shiftId,
     staleTime: 10000,
+  });
+};
+
+// ── Exposure drill-down: casino game (matched bets) ─────────────────────────
+export interface ExposureCasinoBet {
+  betId: string;
+  provider: string;
+  providerBetId: string;
+  providerRoundId: string | null;
+  gameName: string | null;
+  selectionName: string | null;
+  betType: string | null;      // BACK | LAY
+  stake: string;
+  odds: string | null;
+  exposure: string;
+  status: string;
+  placedAt: string;
+  ipAddress: string | null;
+}
+
+export interface ExposureCasinoDetail {
+  game: { gameName: string; provider: string } | null;
+  bets: ExposureCasinoBet[];
+  summary: { totalBets: number; totalStake: string; totalExposure: string };
+}
+
+export const useExposureCasinoDetail = (
+  gameName: string | null,
+  provider: string | null,
+) => {
+  return useQuery({
+    queryKey: ["exposure-usage", "casino", gameName, provider],
+    queryFn: () => userApi.getExposureCasinoDetail(gameName!, provider!),
+    select: (res) => (res.data?.data as ExposureCasinoDetail | null) ?? null,
+    enabled: !!gameName && !!provider,
+    staleTime: 10000,
+  });
+};
+
+// ── Casino bet history (for the Bet History page) ───────────────────────────
+export interface CasinoBetHistoryRow {
+  id: string;
+  provider: string;
+  gameName: string | null;
+  selectionName: string | null;
+  betType: string | null;
+  stake: string;
+  odds: string | null;
+  exposure: string | null;
+  status: string;
+  settledAmount: string | null;
+  payout: string | null;
+  outcome: string | null;
+  placedAt: string;
+  settledAt: string | null;
+  addedDate: string;
+}
+
+export const useCasinoBetHistory = (params?: { status?: string }) => {
+  return useQuery({
+    queryKey: ["casino-bet-history", params],
+    queryFn: () => userApi.getCasinoBetHistory(params),
+    select: (data) => (data.data?.data as CasinoBetHistoryRow[]) ?? [],
   });
 };
 

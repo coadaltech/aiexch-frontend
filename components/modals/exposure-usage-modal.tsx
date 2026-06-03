@@ -12,6 +12,7 @@ import {
   useExposureUsage,
   useExposureMarketDetail,
   useExposureShiftDetail,
+  useExposureCasinoDetail,
   type ExposureUsageRow,
 } from "@/hooks/useUserQueries";
 import { formatBalance } from "@/lib/format-balance";
@@ -19,13 +20,20 @@ import { formatLocalDateTime } from "@/lib/date-utils";
 
 type Selection =
   | { kind: "market"; marketId: string | number; eventLabel: string; marketLabel: string; amount: number }
-  | { kind: "shift"; shiftId: string; eventLabel: string; marketLabel: string; amount: number };
+  | { kind: "shift"; shiftId: string; eventLabel: string; marketLabel: string; amount: number }
+  | { kind: "casino"; gameName: string; provider: string; eventLabel: string; marketLabel: string; amount: number };
 
 function rowLabels(row: ExposureUsageRow) {
   if (row.intFlag === 1) {
     return {
       eventLabel: row.shiftName || "Matka Shift",
       marketLabel: "Matka",
+    };
+  }
+  if (row.intFlag === 2) {
+    return {
+      eventLabel: row.gameName || "Casino Game",
+      marketLabel: row.provider ? `Casino · ${row.provider.toUpperCase()}` : "Casino",
     };
   }
   return {
@@ -39,6 +47,9 @@ function rowToSelection(row: ExposureUsageRow): Selection | null {
   const amount = Math.abs(parseFloat(row.limitUse || "0"));
   if (row.intFlag === 1 && row.shiftId) {
     return { kind: "shift", shiftId: row.shiftId, eventLabel, marketLabel, amount };
+  }
+  if (row.intFlag === 2 && row.gameName && row.provider) {
+    return { kind: "casino", gameName: row.gameName, provider: row.provider, eventLabel, marketLabel, amount };
   }
   if (row.intFlag === 0 && row.marketId != null) {
     return { kind: "market", marketId: row.marketId, eventLabel, marketLabel, amount };
@@ -99,6 +110,8 @@ export function ExposureUsageModal({
             />
           ) : selected.kind === "market" ? (
             <MarketDetail selection={selected} />
+          ) : selected.kind === "casino" ? (
+            <CasinoDetail selection={selected} />
           ) : (
             <ShiftJantri selection={selected} />
           )}
@@ -339,6 +352,118 @@ function MarketDetail({ selection }: { selection: Extract<Selection, { kind: "ma
                     </td>
                     <td className="px-3 py-2 text-gray-700 whitespace-nowrap">
                       {b.log?.ipAddress || "—"}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Casino game drill-down: list of user's matched casino bets ─────────────
+function CasinoDetail({ selection }: { selection: Extract<Selection, { kind: "casino" }> }) {
+  const { data, isLoading, isError } = useExposureCasinoDetail(
+    selection.gameName,
+    selection.provider,
+  );
+
+  if (isLoading) {
+    return (
+      <div className="p-3 space-y-2">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="h-10 bg-gray-100 rounded animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+  if (isError || !data) {
+    return (
+      <div className="p-10 text-center">
+        <AlertCircle className="w-10 h-10 text-rose-400 mx-auto mb-2" />
+        <p className="text-gray-700 font-medium">Could not load casino bet details</p>
+      </div>
+    );
+  }
+
+  const { bets, summary } = data;
+
+  return (
+    <div className="p-2 sm:p-3 space-y-3">
+      <div className="bg-white border border-gray-200 rounded-lg p-3 text-[13px] flex flex-wrap gap-x-6 gap-y-1">
+        <div>
+          <span className="text-gray-500">Game:</span>{" "}
+          <span className="font-semibold text-gray-800">{selection.gameName}</span>
+        </div>
+        <div>
+          <span className="text-gray-500">Provider:</span>{" "}
+          <span className="font-semibold text-gray-800 uppercase">{selection.provider}</span>
+        </div>
+        <div>
+          <span className="text-gray-500">Total Bets:</span>{" "}
+          <span className="font-semibold text-gray-800">{summary.totalBets}</span>
+        </div>
+        <div>
+          <span className="text-gray-500">Total Stake:</span>{" "}
+          <span className="font-semibold text-gray-800">₹{fmt(summary.totalStake)}</span>
+        </div>
+        <div>
+          <span className="text-gray-500">Exposure:</span>{" "}
+          <span className="font-bold text-rose-600">₹{fmt(selection.amount)}</span>
+        </div>
+      </div>
+
+      {bets.length === 0 ? (
+        <div className="bg-white border border-gray-200 rounded-lg p-6 text-center text-sm text-gray-500">
+          No active bets on this game.
+        </div>
+      ) : (
+        <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto">
+          <table className="w-full text-[13px] border-collapse">
+            <thead>
+              <tr className="bg-gray-100 text-gray-600 text-[11px] uppercase border-b border-gray-200">
+                <th className="px-3 py-2 text-left font-semibold">Selection</th>
+                <th className="px-3 py-2 text-left font-semibold">Type</th>
+                <th className="px-3 py-2 text-right font-semibold">Odds</th>
+                <th className="px-3 py-2 text-right font-semibold">Stake</th>
+                <th className="px-3 py-2 text-right font-semibold">Exposure</th>
+                <th className="px-3 py-2 text-left font-semibold">Date</th>
+                <th className="px-3 py-2 text-left font-semibold">IP</th>
+              </tr>
+            </thead>
+            <tbody>
+              {bets.map((b) => {
+                const isBack = (b.betType || "").toUpperCase() === "BACK";
+                const isLay = (b.betType || "").toUpperCase() === "LAY";
+                return (
+                  <tr
+                    key={b.betId}
+                    className={`border-b border-gray-100 ${isBack ? "bg-blue-50" : isLay ? "bg-pink-50" : "bg-white"}`}
+                  >
+                    <td className="px-3 py-2 text-gray-800 font-medium">
+                      {b.selectionName || b.gameName || "—"}
+                    </td>
+                    <td className="px-3 py-2 text-gray-700">{b.betType || "—"}</td>
+                    <td className="px-3 py-2 text-right text-gray-800">
+                      {b.odds != null ? Number(b.odds).toFixed(2) : "—"}
+                    </td>
+                    <td className="px-3 py-2 text-right font-semibold text-gray-800">{fmt(b.stake)}</td>
+                    <td className="px-3 py-2 text-right font-semibold text-rose-700">{fmt(b.exposure)}</td>
+                    <td className="px-3 py-2 text-gray-700 whitespace-nowrap">
+                      {formatLocalDateTime(b.placedAt, {
+                        day: "2-digit",
+                        month: "short",
+                        year: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: true,
+                      })}
+                    </td>
+                    <td className="px-3 py-2 text-gray-700 whitespace-nowrap">
+                      {b.ipAddress || "—"}
                     </td>
                   </tr>
                 );
