@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Trophy } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -34,9 +33,15 @@ function capDecimals(num: number) {
   return decimals > 4 ? num.toFixed(4) : str;
 }
 
+// Open / unsettled bets only — settled outcomes (won/lost/cancelled/void/
+// rolled_back) are hidden. Matka has its own archive: declared (settled)
+// shifts are moved to matka_transactions_declare, so every row still in
+// matka_transactions is inherently unsettled.
+const UNSETTLED_STATUSES = new Set(["matched", "pending"]);
+const isUnsettled = (status: string) => UNSETTLED_STATUSES.has(status);
+
 export default function BetHistoryPage() {
   const router = useRouter();
-  const [filter, setFilter] = useState<"all" | "win" | "loss" | "pending">("all");
 
   const { data: betsData, isLoading: sportsLoading } = useMyBets("all");
   const { data: matkaData, isLoading: matkaLoading } = useMatkaMyBets();
@@ -48,39 +53,13 @@ export default function BetHistoryPage() {
 
   if (sportsLoading || matkaLoading || casinoLoading) return <BetHistorySkeleton />;
 
-  const totalBets = betHistory.length;
-  const totalWins = betHistory.filter((b) => b.status === "won").length;
-  const totalLosses = betHistory.filter((b) => b.status === "lost").length;
-  const pendingCount = betHistory.filter((b) => b.status === "pending" || b.status === "matched").length;
-
   const filteredSports = betHistory
-    .filter((bet) => {
-      if (filter === "all") return true;
-      if (filter === "win") return bet.status === "won";
-      if (filter === "loss") return bet.status === "lost";
-      if (filter === "pending") return bet.status === "pending" || bet.status === "matched";
-      return true;
-    })
+    .filter((bet) => isUnsettled(bet.status))
     .sort((a, b) => new Date(b.addedDate).getTime() - new Date(a.addedDate).getTime());
 
   const filteredCasino = casinoHistory
-    .filter((bet) => {
-      if (filter === "all") return true;
-      if (filter === "win") return bet.status === "won";
-      if (filter === "loss") return bet.status === "lost";
-      if (filter === "pending") return bet.status === "matched" || bet.status === "pending";
-      return true;
-    })
+    .filter((bet) => isUnsettled(bet.status))
     .sort((a, b) => new Date(b.placedAt).getTime() - new Date(a.placedAt).getTime());
-
-  const FILTERS = [
-    { key: "all",     label: "All",     count: totalBets },
-    { key: "win",     label: "Won",     count: totalWins },
-    { key: "loss",    label: "Lost",    count: totalLosses },
-    { key: "pending", label: "Pending", count: pendingCount },
-  ] as const;
-
-  const showMatka = filter === "all";
 
   return (
     <div className="min-h-screen w-full min-w-0 bg-gray-50 p-2">
@@ -100,35 +79,13 @@ export default function BetHistoryPage() {
           </div>
         </div>
 
-        {/* Filter tabs */}
-        <div className="flex gap-2 mb-1 overflow-x-auto pb-1">
-          {FILTERS.map((f) => (
-            <button
-              key={f.key}
-              onClick={() => setFilter(f.key)}
-              className={`shrink-0 flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg border transition-colors ${
-                filter === f.key
-                  ? "bg-[var(--header-primary)] text-[var(--header-text)] border-[var(--header-primary)]"
-                  : "bg-white text-gray-700 border-gray-200 hover:border-gray-300"
-              }`}
-            >
-              {f.label}
-              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${filter === f.key ? "bg-white/20 text-white" : "bg-gray-100 text-gray-600"}`}>
-                {f.count}
-              </span>
-            </button>
-          ))}
-        </div>
+        {/* Open bets caption */}
+        <p className="text-xs text-gray-500 mb-2 ml-9 lg:ml-0">
+          Showing your open (unsettled) bets only.
+        </p>
 
         {/* Sports bets */}
         <div className="space-y-1.5">
-          {filteredSports.length === 0 && filteredCasino.length === 0 && !showMatka && (
-            <div className="py-12 text-center">
-              <Trophy className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-700 font-medium">No bets found</p>
-              <p className="text-gray-400 text-sm mt-1">No betting history matches your filter</p>
-            </div>
-          )}
 
           {filteredSports.length > 0 && (
             <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-x-auto">
@@ -196,8 +153,8 @@ export default function BetHistoryPage() {
           )}
         </div>
 
-        {/* Matka transactions — shown only on "All" tab */}
-        {showMatka && matkaHistory.length > 0 && (
+        {/* Matka transactions — only undeclared (unsettled) rows remain in the table */}
+        {matkaHistory.length > 0 && (
           <div className="mt-1">
             {/* <div className="flex items-center gap-2 mb-2">
               <span className="text-[11px] font-bold text-orange-700 bg-orange-100 border border-orange-200 px-2 py-0.5 rounded">
@@ -289,8 +246,8 @@ export default function BetHistoryPage() {
           </div>
         )}
 
-        {/* Empty state when all tabs show nothing */}
-        {showMatka && filteredSports.length === 0 && matkaHistory.length === 0 && filteredCasino.length === 0 && (
+        {/* Empty state when there are no open bets */}
+        {filteredSports.length === 0 && matkaHistory.length === 0 && filteredCasino.length === 0 && (
           <div className="py-12 text-center">
             <Trophy className="w-12 h-12 text-gray-300 mx-auto mb-3" />
             <p className="text-gray-700 font-medium">No bets found</p>
