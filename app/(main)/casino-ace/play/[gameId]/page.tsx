@@ -1,19 +1,13 @@
 "use client";
 
-import { use, useEffect, useRef, useState, useCallback } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  AlertCircle,
-  ArrowLeft,
-  Loader2,
-  Maximize2,
-  Dice5,
-  Wallet,
-  RefreshCw,
-} from "lucide-react";
+import { AlertCircle, ArrowLeft, Loader2, Maximize2, Dice5 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { casinoAceApi, userApi } from "@/lib/api";
+import { CasinoWallet } from "@/components/casino/casino-wallet";
+import { CasinoUserMenu } from "@/components/casino/casino-user-menu";
+import { casinoAceApi } from "@/lib/api";
 
 /**
  * Ace Gamings Game Launcher
@@ -37,43 +31,6 @@ export default function CasinoAcePlayPage({
     | { kind: "error"; message: string; upstream?: unknown }
   >({ kind: "loading" });
 
-  const [balance, setBalance] = useState<string | null>(null);
-  const [balanceRefreshing, setBalanceRefreshing] = useState(false);
-
-  // ── Fetch balance from our API ─────────────────────────────────────────
-  const fetchBalance = useCallback(async () => {
-    setBalanceRefreshing(true);
-    try {
-      const res = await userApi.getBalance();
-      if (res.data?.balance !== undefined) {
-        const num = parseFloat(res.data.balance);
-        setBalance(
-          isNaN(num)
-            ? res.data.balance
-            : num.toLocaleString("en-IN", { maximumFractionDigits: 2 }),
-        );
-      }
-    } catch {
-      // silently ignore — balance display is non-critical
-    } finally {
-      setBalanceRefreshing(false);
-    }
-  }, []);
-
-  // Fetch balance on mount and refresh every 30 s
-  useEffect(() => {
-    fetchBalance();
-    const id = setInterval(fetchBalance, 30_000);
-    return () => clearInterval(id);
-  }, [fetchBalance]);
-
-  // Also refresh when the user switches back to this tab (bet may have settled)
-  useEffect(() => {
-    const onFocus = () => fetchBalance();
-    window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
-  }, [fetchBalance]);
-
   // ── Launch game ───────────────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
@@ -87,7 +44,7 @@ export default function CasinoAcePlayPage({
       try {
         const returnUrl =
           typeof window !== "undefined"
-            ? `${window.location.origin}/casino-ace`
+            ? `${window.location.origin}/qtech-casino`
             : undefined;
         const res = await casinoAceApi.launch(numericId, returnUrl);
         if (cancelled) return;
@@ -127,59 +84,46 @@ export default function CasinoAcePlayPage({
     <div className="flex h-full min-h-0 flex-col bg-[#0b1020]">
       {/* Toolbar */}
       <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/10 bg-[var(--header-primary)] px-3 py-2">
-        {/* Left — back to lobby */}
+        {/* Left — back to the unified casino lobby (where RV games launch from) */}
         <Button
           size="sm"
           variant="ghost"
-          onClick={() => router.push("/casino-ace")}
+          onClick={() => router.push("/qtech-casino")}
           className="h-8 gap-1 text-white hover:bg-white/10 hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" />
           <span className="hidden sm:inline">Lobby</span>
         </Button>
 
-        {/* Centre — game name + balance */}
-        <div className="flex min-w-0 flex-1 items-center justify-center gap-3">
-          <div className="flex min-w-0 items-center gap-2 text-white">
-            <Dice5 className="h-4 w-4 shrink-0 text-[#ede105]" />
-            <span
-              className="max-w-[130px] truncate text-sm font-semibold sm:max-w-none"
-              title={state.kind === "ready" ? state.gameName : undefined}
-            >
-              {state.kind === "ready" ? state.gameName : "Loading…"}
-            </span>
-          </div>
-
-          {/* Balance pill */}
-          <div className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1">
-            <Wallet className="h-3.5 w-3.5 text-[#ede105]" />
-            <span className="text-xs font-semibold text-white">
-              {balance !== null ? `₹${balance}` : "—"}
-            </span>
-            <button
-              onClick={fetchBalance}
-              disabled={balanceRefreshing}
-              className="ml-0.5 text-white/50 transition-colors hover:text-white disabled:opacity-30"
-              title="Refresh balance"
-            >
-              <RefreshCw
-                className={`h-3 w-3 ${balanceRefreshing ? "animate-spin" : ""}`}
-              />
-            </button>
-          </div>
+        {/* Centre — game name */}
+        <div className="flex min-w-0 items-center gap-2 text-white">
+          <Dice5 className="h-4 w-4 shrink-0 text-[#ede105]" />
+          <span
+            className="max-w-[130px] truncate text-sm font-semibold sm:max-w-none"
+            title={state.kind === "ready" ? state.gameName : undefined}
+          >
+            {state.kind === "ready" ? state.gameName : "Loading…"}
+          </span>
+          <span className="rounded bg-emerald-500/90 px-1.5 py-0.5 text-[10px] font-bold uppercase">
+            Real
+          </span>
         </div>
 
-        {/* Right — fullscreen */}
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={goFullscreen}
-          disabled={state.kind !== "ready"}
-          className="h-8 gap-1 text-white hover:bg-white/10 hover:text-white disabled:opacity-40"
-        >
-          <Maximize2 className="h-4 w-4" />
-          <span className="hidden sm:inline">Fullscreen</span>
-        </Button>
+        {/* Right — BAL/Exp + fullscreen + user menu (same as the QTech launcher) */}
+        <div className="flex items-center gap-2">
+          <CasinoWallet />
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={goFullscreen}
+            disabled={state.kind !== "ready"}
+            className="h-8 gap-1 text-white hover:bg-white/10 hover:text-white disabled:opacity-40"
+          >
+            <Maximize2 className="h-4 w-4" />
+            <span className="hidden sm:inline">Fullscreen</span>
+          </Button>
+          <CasinoUserMenu />
+        </div>
       </div>
 
       {/* Stage */}
@@ -206,7 +150,7 @@ export default function CasinoAcePlayPage({
               )}
               <Button
                 variant="outline"
-                onClick={() => router.push("/casino-ace")}
+                onClick={() => router.push("/qtech-casino")}
                 className="mt-4 gap-2"
               >
                 <ArrowLeft className="h-4 w-4" />

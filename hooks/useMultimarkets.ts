@@ -43,7 +43,12 @@ export function useMultimarkets() {
       return Array.isArray(data?.data) ? data.data : [];
     },
     enabled: isLoggedIn,
-    staleTime: 30_000,
+    // The pin list only changes via this user's own add/remove mutations
+    // (which invalidate this query), so there's no reason to refetch it on
+    // every page that renders a pin button. Cache it for the session — the
+    // pin buttons on match/sport pages read it without re-hitting the API,
+    // and the mutations keep it accurate.
+    staleTime: Infinity,
   });
 
   const addMutation = useMutation({

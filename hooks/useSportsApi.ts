@@ -10,8 +10,17 @@ export const useSports = () => {
   });
 };
 
-// Series with matches
-export const useSeries = (eventTypeId: string | null, enabled = true) => {
+// Series with matches.
+// `poll` (default true) keeps the list fresh on listing pages where matches
+// go in/out of play. Pass `{ poll: false }` on pages that only need the static
+// series/match names once (e.g. a single match page) so we don't background-
+// poll the whole sport's catalogue while the user watches one match.
+export const useSeries = (
+  eventTypeId: string | null,
+  enabled = true,
+  opts: { poll?: boolean } = {},
+) => {
+  const { poll = true } = opts;
   return useQuery({
     queryKey: ["series", eventTypeId],
     queryFn: async () => {
@@ -21,7 +30,7 @@ export const useSeries = (eventTypeId: string | null, enabled = true) => {
     enabled: enabled && !!eventTypeId,
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
-    refetchInterval: 5 * 60 * 1000,
+    refetchInterval: poll ? 5 * 60 * 1000 : false,
     placeholderData: (prev: any[] | undefined) => prev,
   });
 };

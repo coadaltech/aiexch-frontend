@@ -140,7 +140,9 @@ export default function MatchPage() {
 
   const config = getSportConfig(sport);
   const eventTypeId = config?.eventTypeId ?? "4";
-  const { data: seriesData = [] } = useSeries(config?.eventTypeId ?? null);
+  // Only need the static series/match names here — don't background-poll the
+  // whole sport's series catalogue every 5 min while viewing a single match.
+  const { data: seriesData = [] } = useSeries(config?.eventTypeId ?? null, true, { poll: false });
   const { data: customStakes } = useStakeSettings(!!user && !user.isDemo);
 
   // When the backend declares/voids a result for a market on this event, refetch
