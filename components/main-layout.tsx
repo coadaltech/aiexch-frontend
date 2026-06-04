@@ -30,8 +30,13 @@ export default function MainLayout({ children }: { children: ReactNode }) {
     (pathname?.startsWith("/casino-ace") || pathname?.startsWith("/qtech-casino")) ?? false;
   // The unified casino (/qtech-casino) renders its own full-width header bar
   // (logo + category nav + BAL/LIAB + settings), so the normal white header is
-  // dropped there entirely.
-  const hideHeader = pathname?.startsWith("/qtech-casino") ?? false;
+  // dropped there entirely. The RV Casino (Ace) game launcher likewise renders
+  // its own toolbar, so drop the global header on its play route too — otherwise
+  // two headers stack. The /casino-ace lobby keeps the global header.
+  const hideHeader =
+    (pathname?.startsWith("/qtech-casino") ||
+      pathname?.startsWith("/casino-ace/play")) ??
+    false;
   const whitelabelNotFound =
     !whitelabelLoading && whitelabelInfo?.whitelabelType == null;
 
