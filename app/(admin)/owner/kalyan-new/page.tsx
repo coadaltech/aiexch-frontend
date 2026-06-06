@@ -108,10 +108,10 @@ export default function OwnerKalyanNewPage() {
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-            Kalyan-New Management
+            Bombay Bazar Management
           </h1>
           <p className="text-muted-foreground">
-            Create and manage Kalyan-New shifts (opening + closing results, 6 rate buckets)
+            Create and manage Bombay Bazar shifts (opening + closing results, 6 rate buckets)
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -137,7 +137,7 @@ export default function OwnerKalyanNewPage() {
       <Card className="bg-card border">
         <CardHeader>
           <CardTitle className="text-foreground">
-            Kalyan-New Shifts {dateFilter && `- ${formatDate(dateFilter)}`}
+            Bombay Bazar Shifts {dateFilter && `- ${formatDate(dateFilter)}`}
           </CardTitle>
         </CardHeader>
         <CardContent>

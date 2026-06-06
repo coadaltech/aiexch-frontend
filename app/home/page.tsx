@@ -410,7 +410,7 @@ const Homepage = () => {
             <div className="mt-4">
               <div className="bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-primary)] text-[var(--header-text)] mx-0 sm:mx-4 rounded-none sm:rounded-xl overflow-hidden border-y sm:border border-[#1e4088]/50">
                 <SectionHeader
-                  title="POLITICS"
+                  title="ELECTION"
                   subtitle="Live & upcoming markets"
                   href="/sports/politics"
                   icon={Flag}

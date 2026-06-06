@@ -47,12 +47,40 @@ export const SPORT_ROUTES = {
   "politics": {
     basePath: "politics",
     eventTypeId: "500",
-    title: "Politics",
-    emptyText: "No live politics at the moment.",
+    title: "Election",
+    emptyText: "No live elections at the moment.",
     checkBackText: "Check back later for live action.",
     poster: "/greyhound-poster.jpeg",
   },
 } as const;
+
+/**
+ * User-facing display-name overrides keyed by eventTypeId. The backend may
+ * still send a legacy name (e.g. "Politics", "Kalyan New"); these take
+ * precedence for any label shown to users so a rename needs no data migration.
+ */
+export const SPORT_DISPLAY_NAME_OVERRIDES: Record<string, string> = {
+  "500": "Election", // was "Politics"
+  "1005": "Bombay Bazar", // was "Kalyan New"
+};
+
+/** Resolve the display name for a sport, applying any override. */
+export function getSportDisplayName(
+  eventTypeId: string | number | undefined | null,
+  fallbackName: string,
+): string {
+  const key = String(eventTypeId ?? "");
+  return SPORT_DISPLAY_NAME_OVERRIDES[key] ?? fallbackName;
+}
+
+/**
+ * Sports whose sidebar event list should NOT be date-filtered — every event is
+ * shown regardless of its open date. Keyed by eventTypeId.
+ */
+export const SPORTS_WITHOUT_DATE_FILTER = new Set<string>([
+  "4", // Cricket
+  "500", // Election (politics)
+]);
 
 export type SportSlug = keyof typeof SPORT_ROUTES;
 

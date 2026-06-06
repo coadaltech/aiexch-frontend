@@ -120,7 +120,7 @@ export function KalyanNewShiftModal({ open, onClose, shift }: Props) {
       <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-4xl max-h-[92vh] overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <h2 className="text-lg font-semibold text-foreground">
-            {isEdit ? "Edit Kalyan-New Shift" : "Create Kalyan-New Shift"}
+            {isEdit ? "Edit Bombay Bazar Shift" : "Create Bombay Bazar Shift"}
           </h2>
           <button
             onClick={onClose}
@@ -138,7 +138,7 @@ export function KalyanNewShiftModal({ open, onClose, shift }: Props) {
               <Input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="e.g. KALYAN MORNING, KALYAN EVENING"
+                placeholder="e.g. BOMBAY BAZAR MORNING, BOMBAY BAZAR EVENING"
                 required
               />
             </div>

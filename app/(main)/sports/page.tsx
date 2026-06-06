@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { api } from "@/lib/api";
 import { ChevronRight, Zap } from "lucide-react";
+import { getSportDisplayName } from "@/lib/sports-config";
 
 interface Sport {
   id?: string;
@@ -89,7 +90,11 @@ export default function SportsPage() {
   };
 
   const getSportName = (sport: Sport): string => {
-    return sport.name || sport.title || sport.displayName || "Unknown Sport";
+    const eventType = String(sport.id || sport.eventType || "");
+    return getSportDisplayName(
+      eventType,
+      sport.name || sport.title || sport.displayName || "Unknown Sport",
+    );
   };
 
   const isLive = (sport: Sport): boolean => {

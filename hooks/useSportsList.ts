@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import { getSportDisplayName } from "@/lib/sports-config";
 
 export interface PublicSport {
   id: string;
@@ -14,14 +15,20 @@ const fetchSportsList = async (): Promise<PublicSport[]> => {
     `${process.env.NEXT_PUBLIC_API_URL}/api/sports/sports-list`,
   );
   const raw: any[] = res.data?.data ?? [];
-  return raw.map((s) => ({
-    id: String(s.id ?? s.eventType ?? ""),
-    name: s.name ?? s.title ?? s.displayName ?? "Unknown Sport",
-    isActive: s.isActive ?? s.is_active ?? true,
-    // Default to live=true so older payloads (pre-migration) keep working.
-    isLive: s.isLive ?? s.is_live ?? true,
-    sort_order: s.sort_order,
-  }));
+  return raw.map((s) => {
+    const id = String(s.id ?? s.eventType ?? "");
+    return {
+      id,
+      name: getSportDisplayName(
+        id,
+        s.name ?? s.title ?? s.displayName ?? "Unknown Sport",
+      ),
+      isActive: s.isActive ?? s.is_active ?? true,
+      // Default to live=true so older payloads (pre-migration) keep working.
+      isLive: s.isLive ?? s.is_live ?? true,
+      sort_order: s.sort_order,
+    };
+  });
 };
 
 export const SPORTS_LIST_QUERY_KEY = ["public-sports-list"] as const;

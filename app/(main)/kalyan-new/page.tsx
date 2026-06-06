@@ -171,7 +171,7 @@ export default function KalyanNewPage() {
           <div className="w-1 h-5 bg-[var(--header-secondary)] rounded-full" />
           <div>
             <h1 className="text-white font-bold text-sm font-condensed tracking-wide">
-              KALYAN NEW
+              BOMBAY BAZAR
             </h1>
             <p className="text-white/50 text-[10px] mt-0.5">
               Two results a day · Single/Double/Triple Pana, Jodi, Akhar, Sangam

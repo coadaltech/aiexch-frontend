@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useRef, useCallback } from "react";
+import { useEffect, useMemo, useState, useRef, useCallback, memo, createContext, useContext } from "react";
 import { createPortal } from "react-dom";
 import { useParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -110,6 +110,155 @@ function QuickBetHost(props: QuickBetHostProps) {
     document.body,
   );
 }
+
+// Suspended odds cell. Module-level so it isn't redefined (and its subtree
+// remounted) on every render / live-socket tick.
+const SuspendedCell = ({ className = "" }: { className?: string }) => (
+  <div
+    className={`relative overflow-hidden rounded flex items-center justify-center ${className}`}
+    style={{ background: "repeating-linear-gradient(45deg,#374151 0,#374151 4px,#4B5563 4px,#4B5563 8px)" }}
+  >
+    <span className="text-red-400 font-bold text-xs relative z-10">Suspended</span>
+  </div>
+);
+
+// Exposure / quick-bet data the runner-name cell needs. Supplying it via context
+// (instead of closures) lets RunnerNameCell live at module scope and be memoized,
+// so it only re-renders when its own displayed values change — not on every
+// price tick coming off the websocket.
+type RunnerNameCtx = {
+  quickBet: QuickBetData | null;
+  quickBetStake: string;
+  liveQuickBetOdds: string | undefined;
+  fancyExposureMap: Map<string, number> | undefined;
+  marketExposureMap: Map<string, Map<string, number>> | undefined;
+  previewExposure: { marketId: string; runners: Map<string, number> } | null;
+  onOpenExposureChart: (m: { marketId: string; name: string }) => void;
+};
+const RunnerNameContext = createContext<RunnerNameCtx | null>(null);
+
+// Runner name cell: shows the runner name + per-runner P&L. Memoized on the
+// runner's id/name so live price updates (which never change the name) don't
+// re-render it. The exposure / quick-bet inputs flow through context, so it
+// still updates whenever a bet is placed or the quick-bet preview changes.
+const RunnerNameCell = memo(
+  function RunnerNameCell({
+    runner,
+    marketId,
+    displayName,
+    isFancy,
+  }: {
+    runner: any;
+    marketId: string;
+    displayName?: string;
+    isFancy?: boolean;
+  }) {
+    const ctx = useContext(RunnerNameContext);
+    const {
+      quickBet,
+      quickBetStake,
+      liveQuickBetOdds,
+      fancyExposureMap,
+      marketExposureMap,
+      previewExposure,
+      onOpenExposureChart,
+    } = ctx ?? ({} as RunnerNameCtx);
+
+    const runnerId = runner.selectionId?.toString() ?? "";
+    let pnl: number | null = null;
+
+    let prevPnl: number | null = null;
+
+    if (isFancy) {
+      // Fancy markets: per-market worst-case P&L (not per-runner)
+      // Treat 0 as null — API sometimes returns 0 for markets with no real exposure
+      const rawSettled = fancyExposureMap?.get(String(marketId));
+      const settled = rawSettled != null && rawSettled !== 0 ? rawSettled : null;
+      // Show preview if quickBet is active for this fancy market
+      if (quickBet && String(quickBet.marketId) === String(marketId) && quickBet.bettingType === "LINE") {
+        const stakeNum = parseFloat(quickBetStake) || 0;
+        const oddsNum = parseFloat(liveQuickBetOdds ?? quickBet.odds) || 0;
+        if (stakeNum > 0 && oddsNum > 0) {
+          // oddsNum is already converted by toDecimalfancyOdds (/100) for all providers
+          const layRisk = stakeNum * oddsNum;
+          const betPnl = quickBet.isLay ? -layRisk : -stakeNum;
+          prevPnl = settled;
+          pnl = (settled ?? 0) + betPnl;
+        } else {
+          pnl = settled;
+        }
+      } else {
+        pnl = settled;
+      }
+    } else if (previewExposure && previewExposure.marketId === String(marketId)) {
+      // Show preview exposure when quick bet panel is active
+      const marketRunners = marketExposureMap?.get(String(marketId));
+      prevPnl = marketRunners?.get(runnerId) ?? null;
+      pnl = previewExposure.runners.get(runnerId) ?? null;
+    } else {
+      // Odds/bookmaker markets: per-runner P&L from DB
+      const marketRunners = marketExposureMap?.get(String(marketId));
+      pnl = marketRunners?.get(runnerId) ?? null;
+    }
+
+    const handleNameClick = () => {
+      if (isFancy) {
+        onOpenExposureChart?.({ marketId: String(marketId), name: displayName ?? runner.name });
+      }
+    };
+
+    const fmtPnl = (v: number) => `${v >= 0 ? "+" : ""}${v.toFixed(2)}`;
+
+    return (
+      <div className="min-w-0 pr-1 flex flex-col gap-0.5">
+        <div className="flex items-center gap-4">
+        {(displayName !== "" || !isFancy) && (
+          <span
+            className={`text-gray-900 font-bold text-sm sm:text-base block leading-tight ${isFancy ? "cursor-pointer" : "truncate"}`}
+            onClick={handleNameClick}
+          >
+            {displayName || runner.name}
+          </span>
+        )}
+        </div>
+
+        {pnl !== null && prevPnl !== null ? (
+          // Second bet: previous => overall  diff: betPnl
+          (() => {
+            const diff = pnl - prevPnl;
+            return (
+              <span className="text-[10px] sm:text-xs font-bold leading-tight flex items-center gap-1 flex-wrap">
+                <span className={prevPnl >= 0 ? "text-live-text" : "text-danger"}>{fmtPnl(prevPnl)}</span>
+                <span className="text-gray-400">=&gt;</span>
+                <span className={pnl >= 0 ? "text-live-text" : "text-danger"}>{fmtPnl(pnl)}</span>
+                <span className="text-gray-400">=&gt;</span>
+                <span className="text-gray-500 font-normal">diff:</span>
+                <span className={diff >= 0 ? "text-live-text" : "text-danger"}>{fmtPnl(diff)}</span>
+              </span>
+            );
+          })()
+        ) : pnl !== null ? (
+          <span
+            className={`text-[10px] sm:text-xs font-bold leading-tight ${
+              pnl >= 0 ? "text-live-text" : "text-danger"
+            }`}
+          >
+            {fmtPnl(pnl)}
+          </span>
+        ) : null}
+      </div>
+    );
+  },
+  // Skip re-render on pure price ticks: the name cell's own props (runner
+  // identity/name, marketId, label) are unchanged then, and its exposure /
+  // quick-bet inputs come through context (which forces a re-render on change).
+  (prev, next) =>
+    prev.marketId === next.marketId &&
+    prev.displayName === next.displayName &&
+    prev.isFancy === next.isFancy &&
+    prev.runner?.selectionId === next.runner?.selectionId &&
+    prev.runner?.name === next.runner?.name
+);
 
 
 export default function MatchPage() {
@@ -388,9 +537,16 @@ export default function MatchPage() {
   const isStaleData =
     wsLastUpdate != null && now - wsLastUpdate > STALE_THRESHOLD_MS;
 
-  // When the tab regains visibility (laptop wake, tab switch), pull a fresh
-  // REST snapshot and kick the WS to reconnect. The REST fetch is what tells
-  // us if the match has actually ended on the backend.
+  // When the tab regains visibility (laptop wake, tab switch) or the network
+  // comes back, pull a fresh REST snapshot and kick the WS to reconnect. The
+  // REST fetch is what tells us if the match has actually ended on the backend.
+  //
+  // NOTE: we deliberately do NOT listen for the window `focus` event here.
+  // `focus` fires every time focus returns to the page — including when the
+  // user clicks back into the page from devtools, or after the quick-bet panel
+  // opens/closes — which made `matchDetails` refetch on essentially every cell
+  // click. `visibilitychange` already covers real tab switches / laptop wake,
+  // and the live WebSocket is the source of truth for ongoing market updates.
   const refetchMatchDetailsRef = useRef(refetchMatchDetails);
   useEffect(() => {
     refetchMatchDetailsRef.current = refetchMatchDetails;
@@ -411,11 +567,9 @@ export default function MatchPage() {
     };
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("online", onOnline);
-    window.addEventListener("focus", onVisibility);
     return () => {
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("online", onOnline);
-      window.removeEventListener("focus", onVisibility);
     };
   }, [forceWsReconnect]);
 
@@ -579,6 +733,22 @@ export default function MatchPage() {
   const visibleMarkets = useMemo(
     () => markets.filter((m: any) => !m.adminDisabled && !m.adminHidden),
     [markets]
+  );
+
+  // Data the runner-name cells consume, memoized so it stays a stable reference
+  // on pure price ticks (quickBet/exposure unchanged) — that's what lets the
+  // memoized RunnerNameCell skip re-rendering while live prices keep updating.
+  const runnerNameCtx = useMemo<RunnerNameCtx>(
+    () => ({
+      quickBet,
+      quickBetStake,
+      liveQuickBetOdds,
+      fancyExposureMap,
+      marketExposureMap,
+      previewExposure,
+      onOpenExposureChart: setExposureChartMarket,
+    }),
+    [quickBet, quickBetStake, liveQuickBetOdds, fancyExposureMap, marketExposureMap, previewExposure]
   );
 
   const [matchInfo, setMatchInfo] = useState<any>(null);
@@ -1316,109 +1486,12 @@ export default function MatchPage() {
   };
 
   const oddsBtnClass =
-    "flex-1 min-w-0 px-1 py-1 flex flex-col items-center justify-center rounded-md cursor-pointer leading-tight transition-all duration-150";
-  const oddsPriceClass = "text-gray-900 font-bold text-base sm:text-lg";
-  const oddsSizeClass = "text-gray-900 font-bold text-[12px] sm:text-[14px]";
-
-  // Runner name cell: shows name + per-runner P&L from DB function
-  const RunnerNameCell = ({
-    runner,
-    marketId,
-    displayName,
-    isFancy,
-  }: {
-    runner: any;
-    marketId: string;
-    displayName?: string;
-    isFancy?: boolean;
-  }) => {
-    const runnerId = runner.selectionId?.toString() ?? "";
-    let pnl: number | null = null;
-
-    let prevPnl: number | null = null;
-
-    if (isFancy) {
-      // Fancy markets: per-market worst-case P&L (not per-runner)
-      // Treat 0 as null — API sometimes returns 0 for markets with no real exposure
-      const rawSettled = fancyExposureMap?.get(String(marketId));
-      const settled = rawSettled != null && rawSettled !== 0 ? rawSettled : null;
-      // Show preview if quickBet is active for this fancy market
-      if (quickBet && String(quickBet.marketId) === String(marketId) && quickBet.bettingType === "LINE") {
-        const stakeNum = parseFloat(quickBetStake) || 0;
-        const oddsNum = parseFloat(liveQuickBetOdds ?? quickBet.odds) || 0;
-        if (stakeNum > 0 && oddsNum > 0) {
-          // oddsNum is already converted by toDecimalfancyOdds (/100) for all providers
-          const layRisk = stakeNum * oddsNum;
-          const betPnl = quickBet.isLay ? -layRisk : -stakeNum;
-          prevPnl = settled;
-          pnl = (settled ?? 0) + betPnl;
-        } else {
-          pnl = settled;
-        }
-      } else {
-        pnl = settled;
-      }
-    } else if (previewExposure && previewExposure.marketId === String(marketId)) {
-      // Show preview exposure when quick bet panel is active
-      const marketRunners = marketExposureMap?.get(String(marketId));
-      prevPnl = marketRunners?.get(runnerId) ?? null;
-      pnl = previewExposure.runners.get(runnerId) ?? null;
-    } else {
-      // Odds/bookmaker markets: per-runner P&L from DB
-      const marketRunners = marketExposureMap?.get(String(marketId));
-      pnl = marketRunners?.get(runnerId) ?? null;
-    }
-
-    const handleNameClick = () => {
-      if (isFancy) {
-        setExposureChartMarket({ marketId: String(marketId), name: displayName ?? runner.name });
-      }
-    };
-
-    const fmtPnl = (v: number) => `${v >= 0 ? "+" : ""}${v.toFixed(2)}`;
-
-    return (
-      <div className="min-w-0 pr-1 flex flex-col gap-0.5">
-        <div className="flex items-center gap-4">
-        {(displayName !== "" || !isFancy) && (
-          <span
-            className={`text-gray-900 font-bold text-sm sm:text-base block leading-tight ${isFancy ? "cursor-pointer" : "truncate"}`}
-            onClick={handleNameClick}
-          >
-            {displayName || runner.name}
-          </span>
-        )}
-        </div>
-
-        {pnl !== null && prevPnl !== null ? (
-          // Second bet: previous => overall  diff: betPnl
-          (() => {
-            const diff = pnl - prevPnl;
-            return (
-              <span className="text-[10px] sm:text-xs font-bold leading-tight flex items-center gap-1 flex-wrap">
-                <span className={prevPnl >= 0 ? "text-live-text" : "text-danger"}>{fmtPnl(prevPnl)}</span>
-                <span className="text-gray-400">=&gt;</span>
-                <span className={pnl >= 0 ? "text-live-text" : "text-danger"}>{fmtPnl(pnl)}</span>
-                <span className="text-gray-400">=&gt;</span>
-                <span className="text-gray-500 font-normal">diff:</span>
-                <span className={diff >= 0 ? "text-live-text" : "text-danger"}>{fmtPnl(diff)}</span>
-              </span>
-            );
-          })()
-        ) : pnl !== null ? (
-          <span
-            className={`text-[10px] sm:text-xs font-bold leading-tight ${
-              pnl >= 0 ? "text-live-text" : "text-danger"
-            }`}
-          >
-            {fmtPnl(pnl)}
-          </span>
-        ) : null}
-      </div>
-    );
-  };
+    "flex-1 min-w-0 px-1 py-0.5 flex flex-col items-center justify-center rounded-md cursor-pointer leading-tight transition-all duration-150";
+  const oddsPriceClass = "text-gray-900 font-bold text-sm sm:text-base";
+  const oddsSizeClass = "text-gray-900 font-bold text-[11px] sm:text-[12px]";
 
   return (
+    <RunnerNameContext.Provider value={runnerNameCtx}>
     <div className="px-2 bg-[#efefef] sm:px-3 py-2 w-full max-w-full min-w-0 min-h-full overflow-x-hidden">
       {/* Match header */}
       {(matchInfo || series || matchFromSeries) && (() => {
@@ -1504,16 +1577,6 @@ export default function MatchPage() {
             const minBet = market.marketCondition?.minBet ?? "-";
             const maxBet = market.marketCondition?.maxBet ?? "-";
 
-            // Shared suspended cell for ADV layouts
-            const SuspendedCell = ({ className = "" }: { className?: string }) => (
-              <div
-                className={`relative overflow-hidden rounded flex items-center justify-center ${className}`}
-                style={{ background: "repeating-linear-gradient(45deg,#374151 0,#374151 4px,#4B5563 4px,#4B5563 8px)" }}
-              >
-                <span className="text-red-400 font-bold text-xs relative z-10">Suspended</span>
-              </div>
-            );
-
             // ── STANDARD layout: back/lay 3-level grid ──
             if (layout === "standard") {
               return (
@@ -1530,10 +1593,10 @@ export default function MatchPage() {
                     </h3>
                   </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-24 flex justify-center">
+                    <div className="w-20 flex justify-center">
                       <span className="font-bold uppercase bg-back text-black text-xs py-0.5 px-1.5 rounded">Back</span>
                     </div>
-                    <div className="w-24 flex justify-center">
+                    <div className="w-20 flex justify-center">
                       <span className="font-bold uppercase bg-lay text-black text-xs py-0.5 px-1.5 rounded">Lay</span>
                     </div>
                   </div>
@@ -1582,7 +1645,7 @@ export default function MatchPage() {
                             {(() => {
                               if (isRunnerSuspended) {
                                 return Array(3).fill(null).map((_, posIdx) => (
-                                  <button key={`back-suspended-${posIdx}`} className={`${oddsBtnClass} bg-back-disabled w-24 ${posIdx !== 2 ? "hidden sm:flex" : ""}`} disabled>
+                                  <button key={`back-suspended-${posIdx}`} className={`${oddsBtnClass} bg-back-disabled w-20 ${posIdx !== 2 ? "hidden sm:flex" : ""}`} disabled>
                                     <span className={oddsPriceClass}>0</span>
                                     <span className={oddsSizeClass}>0</span>
                                   </button>
@@ -1604,13 +1667,13 @@ export default function MatchPage() {
                                       null,
                                       2 - posIdx
                                     )}
-                                    className={`${oddsBtnClass} transition-all w-24 ${posIdx === 2 ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back shadow-sm" : "bg-white hover:bg-back/30 border border-back/50 hidden sm:flex"}`}
+                                    className={`${oddsBtnClass} transition-all w-20 ${posIdx === 2 ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back shadow-sm" : "bg-white hover:bg-back/30 border border-back/50 hidden sm:flex"}`}
                                   >
                                     <span className={oddsPriceClass}>{formatOddsPrice(item.price)}</span>
                                     <span className={oddsSizeClass}>{formatAmount(item.size)}</span>
                                   </button>
                                 ) : (
-                                  <button key={`empty-back-${posIdx}`} className={`${oddsBtnClass} bg-back-disabled w-24 ${posIdx !== 2 ? "hidden sm:flex" : ""}`} disabled>
+                                  <button key={`empty-back-${posIdx}`} className={`${oddsBtnClass} bg-back-disabled w-20 ${posIdx !== 2 ? "hidden sm:flex" : ""}`} disabled>
                                     <span className={oddsPriceClass}>-</span>
                                     <span className={oddsSizeClass}>-</span>
                                   </button>
@@ -1623,7 +1686,7 @@ export default function MatchPage() {
                           <div className="gap-1 flex justify-start items-center flex-wrap ">
                             {isRunnerSuspended
                               ? Array(3).fill(null).map((_, idx) => (
-                                  <button key={`lay-suspended-${idx}`} className={`${oddsBtnClass} bg-lay-disabled w-24 ${idx !== 0 ? "hidden sm:flex" : ""}`} disabled>
+                                  <button key={`lay-suspended-${idx}`} className={`${oddsBtnClass} bg-lay-disabled w-20 ${idx !== 0 ? "hidden sm:flex" : ""}`} disabled>
                                     <span className={oddsPriceClass}>0</span>
                                     <span className={oddsSizeClass}>0</span>
                                   </button>
@@ -1640,7 +1703,7 @@ export default function MatchPage() {
                                           null,
                                           layIdx
                                         )}
-                                        className={`${oddsBtnClass} transition-all w-24 ${layIdx === 0 ? "bg-gradient-to-b from-lay to-lay-deep hover:from-lay-hover hover:to-lay shadow-sm" : "bg-white hover:bg-lay/30 border border-lay/50 hidden sm:flex"}`}
+                                        className={`${oddsBtnClass} transition-all w-20 ${layIdx === 0 ? "bg-gradient-to-b from-lay to-lay-deep hover:from-lay-hover hover:to-lay shadow-sm" : "bg-white hover:bg-lay/30 border border-lay/50 hidden sm:flex"}`}
                                       >
                                         <span className={oddsPriceClass}>{layItem.price ? formatOddsPrice(layItem.price) : "0"}</span>
                                         <span className={oddsSizeClass}>{formatAmount(layItem.size)}</span>
@@ -1651,7 +1714,7 @@ export default function MatchPage() {
                                   const hasLay = (runner.lay?.length || 0) > 0;
                                   const hideOnMobile = hasLay || emptyIdx > 0;
                                   return (
-                                    <button key={`empty-lay-${emptyIdx}`} className={`${oddsBtnClass} bg-lay-disabled w-24 ${hideOnMobile ? "hidden sm:flex" : ""}`} disabled>
+                                    <button key={`empty-lay-${emptyIdx}`} className={`${oddsBtnClass} bg-lay-disabled w-20 ${hideOnMobile ? "hidden sm:flex" : ""}`} disabled>
                                       <span className={oddsPriceClass}>-</span>
                                       <span className={oddsSizeClass}>-</span>
                                     </button>
@@ -1684,10 +1747,10 @@ export default function MatchPage() {
                       </h3>
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="w-24 flex justify-center">
+                      <div className="w-20 flex justify-center">
                         <span className="font-bold uppercase bg-back text-black text-xs py-0.5 px-1.5 rounded">Back</span>
                       </div>
-                      <div className="w-24 flex justify-center">
+                      <div className="w-20 flex justify-center">
                         <span className="font-bold uppercase bg-lay text-black text-xs py-0.5 px-1.5 rounded">Lay</span>
                       </div>
                     </div>
@@ -1717,18 +1780,18 @@ export default function MatchPage() {
                               <div className="gap-1 flex justify-end items-center flex-wrap">
                                 {(() => {
                                   if (isRunnerSuspended) return Array(3).fill(null).map((_, i) => (
-                                    <button key={i} className={`${oddsBtnClass} bg-back-disabled w-24 ${i !== 2 ? "hidden sm:flex" : ""}`} disabled><span className={oddsPriceClass}>0</span><span className={oddsSizeClass}>0</span></button>
+                                    <button key={i} className={`${oddsBtnClass} bg-back-disabled w-20 ${i !== 2 ? "hidden sm:flex" : ""}`} disabled><span className={oddsPriceClass}>0</span><span className={oddsSizeClass}>0</span></button>
                                   ));
                                   const backItems = runner.back || [];
                                   const positions = Array(3).fill(null);
                                   backItems.forEach((item: any, idx: number) => { if (idx < 3) positions[2 - idx] = item; });
                                   return positions.map((item, posIdx) => item ? (
                                     <button key={posIdx} onClick={() => handleBackClick(market, runner, toDecimalOdds(item.price, market.provider, market.marketType), null, 2 - posIdx)}
-                                      className={`${oddsBtnClass} transition-all w-24 ${posIdx === 2 ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back shadow-sm" : "bg-white hover:bg-back/30 border border-back/50 hidden sm:flex"}`}>
+                                      className={`${oddsBtnClass} transition-all w-20 ${posIdx === 2 ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back shadow-sm" : "bg-white hover:bg-back/30 border border-back/50 hidden sm:flex"}`}>
                                       <span className={oddsPriceClass}>{formatOddsPrice(item.price)}</span><span className={oddsSizeClass}>{formatAmount(item.size)}</span>
                                     </button>
                                   ) : (
-                                    <button key={posIdx} className={`${oddsBtnClass} bg-back-disabled w-24 ${posIdx !== 2 ? "hidden sm:flex" : ""}`} disabled><span className={oddsPriceClass}>-</span><span className={oddsSizeClass}>-</span></button>
+                                    <button key={posIdx} className={`${oddsBtnClass} bg-back-disabled w-20 ${posIdx !== 2 ? "hidden sm:flex" : ""}`} disabled><span className={oddsPriceClass}>-</span><span className={oddsSizeClass}>-</span></button>
                                   ));
                                 })()}
                               </div>
@@ -1736,7 +1799,7 @@ export default function MatchPage() {
                             <div className="sm:flex-1 flex flex-col items-start min-w-0">
                               <div className="gap-1 flex justify-start items-center flex-wrap">
                                 {Array(3).fill(null).map((_, i) => (
-                                  <button key={i} className={`${oddsBtnClass} bg-lay-disabled w-24 ${i !== 0 ? "hidden sm:flex" : ""}`} disabled><span className={oddsPriceClass}>-</span><span className={oddsSizeClass}>-</span></button>
+                                  <button key={i} className={`${oddsBtnClass} bg-lay-disabled w-20 ${i !== 0 ? "hidden sm:flex" : ""}`} disabled><span className={oddsPriceClass}>-</span><span className={oddsSizeClass}>-</span></button>
                                 ))}
                               </div>
                             </div>
@@ -2004,15 +2067,6 @@ export default function MatchPage() {
             const minBet = market.marketCondition?.minBet ?? "-";
             const maxBet = market.marketCondition?.maxBet ?? "-";
 
-            const SuspendedCell = ({ className = "" }: { className?: string }) => (
-              <div
-                className={`relative overflow-hidden rounded flex items-center justify-center ${className}`}
-                style={{ background: "repeating-linear-gradient(45deg,#374151 0,#374151 4px,#4B5563 4px,#4B5563 8px)" }}
-              >
-                <span className="text-red-400 font-bold text-xs relative z-10">Suspended</span>
-              </div>
-            );
-
             const advHeader = (
               <div className="px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)] flex items-center justify-between gap-2">
                 <span className="font-bold text-white text-sm sm:text-base truncate flex items-center gap-1.5">
@@ -2234,5 +2288,6 @@ export default function MatchPage() {
         />
       )}
     </div>
+    </RunnerNameContext.Provider>
   );
 }

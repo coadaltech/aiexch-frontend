@@ -44,7 +44,11 @@ import { isPanelPath } from "@/lib/panel-utils";
 import { Series, Match } from "@/components/sports/types";
 import axios from "axios";
 import { useSeries } from "@/hooks/useSportsApi";
-import { SPORT_ROUTES } from "@/lib/sports-config";
+import {
+  SPORT_ROUTES,
+  getSportDisplayName,
+  SPORTS_WITHOUT_DATE_FILTER,
+} from "@/lib/sports-config";
 
 // Sport link mapping derived from shared config
 const SPORT_LINK_MAPPING: Record<string, { basePath: string; eventTypeId: string }> =
@@ -214,7 +218,10 @@ function SportAccordionItem({
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
                     const seriesNameLower = series.name?.toLowerCase().trim() || "";
+                    // Cricket & Election show every event regardless of date.
+                    const skipDateFilter = SPORTS_WITHOUT_DATE_FILTER.has(sport.eventTypeId);
                     const upcomingMatches = series.matches.filter((match: Match) => {
+                      if (skipDateFilter) return true;
                       const matchName = (match.event?.name || (match as any).name || "").toLowerCase().trim();
                       if (seriesNameLower && matchName === seriesNameLower) return true;
                       const openDate = match.event?.openDate || (match as any).openDate;
@@ -652,7 +659,8 @@ export function AppSidebar() {
         const data = await response.data.data;
         const transformedData = data.map((sport: any) => {
           const eventTypeId = String(sport.id || sport.eventType || "");
-          const sportName = sport.name || sport.title || sport.displayName || "Unknown Sport";
+          const rawSportName = sport.name || sport.title || sport.displayName || "Unknown Sport";
+          const sportName = getSportDisplayName(eventTypeId, rawSportName);
           const config = SPORT_LINK_MAPPING[eventTypeId];
           return {
             title: sportName,
