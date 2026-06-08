@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -36,7 +35,6 @@ import Dropheader from "./dropheader";
 import { isPanelPath } from "@/lib/panel-utils";
 import { SPORT_ROUTES } from "@/lib/sports-config";
 import { useSportsList } from "@/hooks/useSportsList";
-import { useChannelWatcher } from "@/hooks/useChannelWatcher";
 
 // Sport link mapping derived from shared config
 const SPORT_LINK_MAPPING: Record<string, { basePath: string; eventTypeId: string }> =
@@ -99,44 +97,9 @@ export default function Header() {
     isLoggedIn && !user?.isDemo
   );
 
-  // Event-driven balance refresh: when the backend broadcasts a
-  // ledger-changed event for THIS user (casino bet placed via the Ace/QT
-  // iframe, settlement callback, sports settle, etc.), invalidate the
-  // queries so the header repaints without a manual refresh.
-  const queryClient = useQueryClient();
-  const myUserId = user?.id;
-  const onLedgerChange = useCallback(
-    (payload: {
-      userId?: string;
-      ledger?: {
-        userId: string;
-        userBalance: string;
-        userLimit: string;
-        limitConsumed: string;
-        fixLimit: string;
-        finalLimit: string;
-      };
-    }) => {
-      if (!myUserId || payload?.userId !== myUserId) return;
-      if (payload.ledger) {
-        // Instant update: populate the cache directly with the snapshot the
-        // backend already computed post-commit. Skips the HTTP round-trip,
-        // so the header reflects the new balance in the same tick the WS
-        // message arrives. Shape must match what useLedger's queryFn returns
-        // (axios response → `.data.data` is the ledger object).
-        queryClient.setQueryData(["ledger"], {
-          data: { data: payload.ledger },
-        });
-      } else {
-        // No snapshot in payload — fall back to refetch.
-        queryClient.invalidateQueries({ queryKey: ["ledger"] });
-      }
-      // The /balance endpoint isn't snapshotted in the payload; refresh it.
-      queryClient.invalidateQueries({ queryKey: ["balance"] });
-    },
-    [myUserId, queryClient],
-  );
-  useChannelWatcher("ledger", onLedgerChange);
+  // The BAL/EXP `ledger` WebSocket is owned by MainLayout (useLedgerLiveSync) so
+  // the subscription survives route changes — the header just reads the cache it
+  // keeps fresh. See hooks/useLedgerLiveSync.ts.
 
   const { data: settings } = useSettings();
   const router = useRouter();

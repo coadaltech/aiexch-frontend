@@ -7,6 +7,7 @@ import Header from "./layout/header";
 import { AppSidebar } from "./layout/app-sidebar-new";
 import { useWhitelabelInfo } from "@/hooks/useAuth";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLedgerLiveSync } from "@/hooks/useLedgerLiveSync";
 import { prefetchCasinoGames } from "@/hooks/useCasinoGames";
 import { isPanelPath } from "@/lib/panel-utils";
 import { NoticeTickerBar } from "./layout/notice-ticker-bar";
@@ -17,6 +18,13 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   const { data: whitelabelInfo, isLoading: whitelabelLoading } = useWhitelabelInfo();
   const { isLoggedIn } = useAuth();
   const queryClient = useQueryClient();
+
+  // Own the BAL/EXP `ledger` WebSocket here — the one component that stays
+  // mounted across every route change (exchange ↔ casino). Keeping it out of
+  // Header/CasinoWallet (which mount/unmount per route) means the socket never
+  // churns, so the post-bet balance/exposure push lands instantly with no poll.
+  useLedgerLiveSync();
+
   const isOwnerRoute = isPanelPath(pathname);
   const isAuthRoute =
     pathname?.startsWith("/login") ||

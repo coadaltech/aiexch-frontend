@@ -1,11 +1,8 @@
 "use client";
 
-import { useCallback } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { Wallet, TrendingDown } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { useChannelWatcher } from "@/hooks/useChannelWatcher";
 import { useLedger } from "@/hooks/useUserQueries";
 import { formatBalance } from "@/lib/format-balance";
 
@@ -31,24 +28,10 @@ export function CasinoWallet({
   const { isLoggedIn, user } = useAuth();
   const { data: ledger, isLoading } = useLedger(isLoggedIn && !user?.isDemo);
 
-  // The white header (which owns the global `ledger` socket) is removed on
-  // casino routes, so own the subscription here to keep BAL/LIAB live when a
-  // bet is placed or settled. Mirrors the header's handler.
-  const queryClient = useQueryClient();
-  const myUserId = user?.id;
-  const onLedgerChange = useCallback(
-    (payload: { userId?: string; ledger?: unknown }) => {
-      if (!myUserId || payload?.userId !== myUserId) return;
-      if (payload.ledger) {
-        queryClient.setQueryData(["ledger"], { data: { data: payload.ledger } });
-      } else {
-        queryClient.invalidateQueries({ queryKey: ["ledger"] });
-      }
-      queryClient.invalidateQueries({ queryKey: ["balance"] });
-    },
-    [myUserId, queryClient],
-  );
-  useChannelWatcher("ledger", onLedgerChange);
+  // The `ledger` WebSocket that keeps BAL/EXP live is owned by MainLayout
+  // (useLedgerLiveSync) — a component that stays mounted across route changes,
+  // so the subscription never drops when entering/leaving a casino game. These
+  // chips just read the ["ledger"] cache it keeps fresh.
 
   if (!isLoggedIn) return null;
 
@@ -59,8 +42,8 @@ export function CasinoWallet({
 
   return (
     <div
-      className={`flex shrink-0 items-center gap-1.5 ${
-        inline ? "flex-row" : "flex-col gap-2 p-2"
+      className={`flex flex-col shrink-0 items-center gap-1.5 ${
+        inline ? "flex-row" : "flex-row gap-2 p-2"
       } ${className}`}
     >
       <div className="flex items-center gap-1.5 rounded-md bg-[#1a212b] px-2.5 py-1 ring-1 ring-emerald-500/30">
