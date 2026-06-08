@@ -242,6 +242,15 @@ export default function MultimarketPage() {
       if (!liveMarket) return { blocked: false, reason: "" };
       if (liveMarket.status === "SUSPENDED") return { blocked: true, reason: "Market is suspended" };
       if (liveMarket.sportingEvent) return { blocked: true, reason: "Ball is running" };
+      // Impossible bet limits: a positive min above the max (e.g. min=1, max=0)
+      // means no valid stake exists, so the market can't be bet on at all. max=0
+      // is treated as a hard zero here — its "no upper limit" meaning only applies
+      // when there is no minimum.
+      const minBet = parseFloat(liveMarket?.marketCondition?.minBet) || 0;
+      const maxBet = parseFloat(liveMarket?.marketCondition?.maxBet) || 0;
+      if (minBet > 0 && minBet > maxBet) {
+        return { blocked: true, reason: "Betting is not available on this market" };
+      }
       return { blocked: false, reason: "" };
     },
     [oddsByMarketId],

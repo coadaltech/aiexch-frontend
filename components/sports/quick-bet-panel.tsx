@@ -134,18 +134,25 @@ export function QuickBetPanel({
         : txLimit;
   const stakeNum = parseFloat(stake) || 0;
 
+  // Impossible bet limits: a positive min above the market max (e.g. min=1,
+  // max=0) means no stake can ever be valid, so betting on this market must be
+  // blocked entirely. max=0 is a hard zero here — its "no upper limit" meaning
+  // only applies when there is no minimum.
+  const limitsImpossible = minBet > 0 && minBet > marketMaxBet;
   const belowMin = stakeNum > 0 && minBet > 0 && stakeNum < minBet;
   const aboveMax = stakeNum > 0 && effectiveMaxBet > 0 && stakeNum > effectiveMaxBet;
   // When the user's own per-bet cap is the tighter limit, surface that wording
   // so they understand why the bet is being rejected.
   const cappedByTxLimit = aboveMax && txLimit > 0 && txLimit <= (marketMaxBet || Infinity);
-  const stakeError = belowMin
-    ? `Min bet is ${minBet}`
-    : aboveMax
-      ? cappedByTxLimit
-        ? `Per-bet limit is ${txLimit}`
-        : `Max bet is ${marketMaxBet}`
-      : null;
+  const stakeError = limitsImpossible
+    ? "Betting is not available on this market"
+    : belowMin
+      ? `Min bet is ${minBet}`
+      : aboveMax
+        ? cappedByTxLimit
+          ? `Per-bet limit is ${txLimit}`
+          : `Max bet is ${marketMaxBet}`
+        : null;
 
   const resolvedStakes = (stakeButtons && stakeButtons.length > 0 ? stakeButtons : DEFAULT_STAKES).map(
     (btn) => ({ ...btn, label: formatStakeLabel(btn.value) }),
