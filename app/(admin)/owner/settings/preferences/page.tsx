@@ -414,7 +414,7 @@ export default function PreferencesPage() {
                         updateThemeColor("radius", value)
                       }
                     >
-                      <SelectTrigger className="bg-input border text-foreground w-[200px]">
+                      <SelectTrigger className="bg-input border text-foreground w-full sm:w-[200px]">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-card border">
@@ -434,7 +434,7 @@ export default function PreferencesPage() {
                         updateThemeColor("fontFamily", value)
                       }
                     >
-                      <SelectTrigger className="bg-input border text-foreground w-[200px]">
+                      <SelectTrigger className="bg-input border text-foreground w-full sm:w-[200px]">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-card border">
@@ -504,7 +504,7 @@ export default function PreferencesPage() {
               </CardHeader>
               <CardContent>
                 <div className="border rounded-lg overflow-hidden">
-                  <div className="h-[600px] w-full">
+                  <div className="h-[400px] sm:h-[600px] w-full">
                     <iframe
                       src="/"
                       className="w-full h-full border-0"

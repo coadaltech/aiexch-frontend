@@ -3,61 +3,57 @@ import { Card } from "@/components/ui/card";
 
 export function ProfileDashboardSkeleton() {
   return (
-    <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto lg:p-8">
-        {/* Profile Header */}
-        <div className="bg-card border border-border rounded-3xl p-6 lg:p-8 mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            {/* User Info */}
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <Skeleton className="w-16 h-16 lg:w-20 lg:h-20 rounded-2xl" />
-                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-muted rounded-full"></div>
-              </div>
-              <div>
-                <Skeleton className="h-8 lg:h-10 w-32 lg:w-40 mb-2" />
-                <Skeleton className="h-4 w-24" />
-              </div>
-            </div>
-
-            {/* Balance Card */}
-            <div className="bg-muted/50 border border-border rounded-2xl p-6 min-w-[280px]">
-              <div className="flex items-center gap-2 mb-2">
-                <Skeleton className="w-5 h-5" />
-                <Skeleton className="h-4 w-24" />
-              </div>
-              <Skeleton className="h-10 lg:h-12 w-32 mb-2" />
-              <Skeleton className="h-4 w-20" />
+    <div className="w-full px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
+      {/* Header card */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          {/* User Info */}
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-16 w-16 rounded-2xl bg-gray-200 sm:h-20 sm:w-20" />
+            <div>
+              <Skeleton className="mb-2 h-7 w-32 bg-gray-200 sm:w-40" />
+              <Skeleton className="h-4 w-24 bg-gray-200" />
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-4 mt-8">
-            <Skeleton className="flex-1 h-14 rounded-xl" />
-            <Skeleton className="flex-1 h-14 rounded-xl" />
+          {/* Balance box */}
+          <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 sm:min-w-[240px]">
+            <div className="mb-2 flex items-center gap-2">
+              <Skeleton className="h-4 w-4 bg-gray-200" />
+              <Skeleton className="h-4 w-24 bg-gray-200" />
+            </div>
+            <Skeleton className="mb-2 h-8 w-28 bg-gray-200" />
+            <Skeleton className="h-3 w-20 bg-gray-200" />
           </div>
         </div>
 
-        {/* Menu Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div
-              key={i}
-              className="bg-card border border-border rounded-2xl p-6"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <Skeleton className="w-12 h-12 rounded-xl" />
-                  <div>
-                    <Skeleton className="h-5 w-32 mb-2" />
-                    <Skeleton className="h-4 w-40" />
-                  </div>
-                </div>
-                <Skeleton className="w-5 h-5" />
-              </div>
-            </div>
-          ))}
+        {/* Action Buttons */}
+        <div className="mt-5 flex gap-3">
+          <Skeleton className="h-11 flex-1 rounded-md bg-gray-200 sm:h-12" />
+          <Skeleton className="h-11 flex-1 rounded-md bg-gray-200 sm:h-12" />
         </div>
+      </div>
+
+      {/* Account heading */}
+      <Skeleton className="h-4 w-20 bg-gray-200" />
+
+      {/* Menu Grid */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div
+            key={i}
+            className="rounded-xl border border-gray-200 bg-white p-3.5 shadow-sm sm:p-4"
+          >
+            <div className="flex items-center gap-3 sm:gap-4">
+              <Skeleton className="h-11 w-11 rounded-xl bg-gray-200 sm:h-12 sm:w-12" />
+              <div className="flex-1">
+                <Skeleton className="mb-2 h-4 w-32 bg-gray-200" />
+                <Skeleton className="h-3 w-40 bg-gray-200" />
+              </div>
+              <Skeleton className="h-4 w-4 bg-gray-200" />
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

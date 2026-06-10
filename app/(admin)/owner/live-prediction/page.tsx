@@ -179,7 +179,7 @@ export default function OwnerLivePredictionPage() {
       {/* ── Top header ── */}
       <div
         style={{ background: TEAL }}
-        className="flex items-center gap-3 px-4 py-2.5 text-white shrink-0 text-sm"
+        className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2.5 text-white shrink-0 text-sm"
       >
         <span className="font-bold">Live Prediction</span>
 
@@ -306,7 +306,7 @@ export default function OwnerLivePredictionPage() {
         </div>
 
         {/* Panel 2 — Party breakdown */}
-        <div className="flex flex-col bg-white border border-gray-300 rounded overflow-hidden text-sm flex-1 min-w-0">
+        <div className="flex flex-col bg-white border border-gray-300 rounded overflow-hidden text-sm flex-1 min-w-[320px]">
           {/* Header */}
           <div
             className="flex items-stretch shrink-0 text-white text-xs font-semibold"

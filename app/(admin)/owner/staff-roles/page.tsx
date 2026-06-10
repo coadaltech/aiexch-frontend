@@ -96,7 +96,7 @@ export default function StaffRolesPage() {
             placeholder="Search by name or description..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="max-w-md"
+            className="w-full sm:max-w-md"
           />
         </CardHeader>
         <CardContent>

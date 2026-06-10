@@ -9,6 +9,13 @@ import { formatLocal, getUserTimezone } from "@/lib/date-utils";
 
 const EVENT_TYPE_CRICKET = "4";
 
+// Shared width for one odds column (a back+lay pair, i.e. "1", "X" or "2").
+// Header and rows BOTH use this token, so the column labels always line up with
+// the price boxes beneath them at every breakpoint.
+const ODDS_COL = "w-[4.25rem] sm:w-32 md:w-40";
+// Width of the leading status/time column.
+const TIME_COL = "w-14 sm:w-28 md:w-32";
+
 // Date window: today + next 2 days (3-day window) in the user's local timezone.
 const DATE_WINDOW_DAYS = 3;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -69,11 +76,11 @@ const formatMatchTime = (dateString: string | null): { day: string; time: string
 
 function OddsCell({ back, lay }: { back: number | null; lay: number | null }) {
   return (
-    <div className="flex shrink-0">
-      <div className="w-8 sm:w-20 md:w-24 bg-gradient-to-b from-back to-back-deep flex items-center justify-center text-[12px] sm:text-sm md:text-base font-bold text-gray-900 border-l border-white/30 leading-tight">
+    <div className={`${ODDS_COL} shrink-0 flex gap-0.5 p-0.5`}>
+      <div className="flex-1 rounded-sm bg-gradient-to-b from-back to-back-deep flex items-center justify-center text-[11px] sm:text-sm md:text-base font-bold text-gray-900 leading-tight">
         {back ?? "-"}
       </div>
-      <div className="w-8 sm:w-20 md:w-24 bg-gradient-to-b from-lay to-lay-deep flex items-center justify-center text-[12px] sm:text-sm md:text-base font-bold text-gray-900 border-l border-white/30 leading-tight">
+      <div className="flex-1 rounded-sm bg-gradient-to-b from-lay to-lay-deep flex items-center justify-center text-[11px] sm:text-sm md:text-base font-bold text-gray-900 leading-tight">
         {lay ?? "-"}
       </div>
     </div>
@@ -112,14 +119,14 @@ function MatchRow({
   return (
     <Link
       href={`/sports/${sport}/${match.seriesId}/${match.id}`}
-      className="block bg-white hover:bg-gray-50 transition-colors"
+      className="block bg-white hover:bg-gray-50 transition-colors m-0.5"
     >
-      <div className="flex items-stretch">
+      <div className="flex items-stretch min-h-[2.75rem]">
         {/* Status / time badge — In-Play for live, stacked day+time otherwise */}
         {(() => {
           const t = formatMatchTime(match.openDate);
           return (
-            <div className="w-16 sm:w-32 md:w-36 shrink-0 flex flex-col items-center justify-center px-1 sm:px-2 py-1.5 text-center">
+            <div className={`${TIME_COL} shrink-0 flex flex-col items-center justify-center text-center`}>
               {match.inPlay ? (
                 <span className="bg-[#1f7a47] text-white px-1.5 py-1 rounded text-[10px] sm:text-xs font-bold leading-none">
                   In-Play
@@ -152,16 +159,7 @@ function MatchRow({
         </div>
 
         <OddsCell back={team1.back} lay={team1.lay} />
-
-        <div className="flex shrink-0">
-          <div className="w-8 sm:w-20 md:w-24 bg-gradient-to-b from-back to-back-deep text-center flex items-center justify-center text-[12px] sm:text-sm md:text-base font-bold text-gray-900 border-l border-white/30 leading-tight">
-            {draw.back ?? "-"}
-          </div>
-          <div className="w-8 sm:w-20 md:w-24 bg-gradient-to-b from-lay to-lay-deep text-center flex items-center justify-center text-[12px] sm:text-sm md:text-base font-bold text-gray-900 border-l border-white/30 leading-tight">
-            {draw.lay ?? "-"}
-          </div>
-        </div>
-
+        <OddsCell back={draw.back} lay={draw.lay} />
         <OddsCell back={team2.back} lay={team2.lay} />
       </div>
     </Link>
@@ -345,9 +343,9 @@ export function CricketMatchesList({
       {showHeader && (
         <div className="flex items-center bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)] text-[10px] sm:text-xs font-bold font-condensed tracking-wider">
           <div className="flex-1 py-2.5 px-3" />
-          <div className="w-16 sm:w-40 md:w-48 text-center py-2.5">1</div>
-          <div className="w-16 sm:w-40 md:w-48 text-center py-2.5">X</div>
-          <div className="w-16 sm:w-40 md:w-48 text-center py-2.5">2</div>
+          <div className={`${ODDS_COL} shrink-0 text-center py-2.5`}>1</div>
+          <div className={`${ODDS_COL} shrink-0 text-center py-2.5`}>X</div>
+          <div className={`${ODDS_COL} shrink-0 text-center py-2.5`}>2</div>
         </div>
       )}
 

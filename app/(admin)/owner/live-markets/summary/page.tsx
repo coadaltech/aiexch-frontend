@@ -183,7 +183,7 @@ function MatchCard({ group }: { group: MatchGroup }) {
       </div>
 
       {/* Sections row */}
-      <div className="flex divide-x divide-gray-200">
+      <div className="flex flex-col md:flex-row md:divide-x divide-gray-200">
         {hasNormal && <NormalSection markets={group.normal} />}
         {hasFancy && <FancySection markets={group.fancy} />}
         {hasBookmaker && <BookmakerSection markets={group.bookmaker} />}

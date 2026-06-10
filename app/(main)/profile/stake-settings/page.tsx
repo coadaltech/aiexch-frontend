@@ -3,12 +3,13 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, SlidersHorizontal, Plus, Minus, RotateCcw, Save } from "lucide-react";
 import { toast } from "sonner";
 import { useStakeSettings, useSaveStakeSettings, DEFAULT_STAKES, StakeButton } from "@/hooks/useUserQueries";
 import { useAuth } from "@/contexts/AuthContext";
+
+const CARD_CLS = "rounded-2xl border border-gray-200 bg-white shadow-sm";
 
 export default function StakeSettingsPage() {
   const router = useRouter();
@@ -75,14 +76,14 @@ export default function StakeSettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background p-4">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="h-8 w-8 bg-muted rounded animate-pulse" />
-          <div className="h-6 w-40 bg-muted rounded animate-pulse" />
+      <div className="w-full min-w-0 px-3 sm:px-4 py-4 sm:py-6">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="h-8 w-8 animate-pulse rounded bg-gray-200" />
+          <div className="h-6 w-40 animate-pulse rounded bg-gray-200" />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 9 }).map((_, i) => (
-            <div key={i} className="h-28 bg-muted rounded-xl animate-pulse" />
+            <div key={i} className="h-28 animate-pulse rounded-xl bg-gray-200" />
           ))}
         </div>
       </div>
@@ -90,72 +91,79 @@ export default function StakeSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 pb-8">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-2">
-        <Button onClick={() => router.back()} variant="ghost" size="sm" className="shrink-0">
-          <ArrowLeft className="w-4 h-4" />
+    <div className="w-full min-w-0 px-3 sm:px-4 py-4 sm:py-6">
+      {/* ── Header ── */}
+      <div className="mb-2 flex items-center gap-2 sm:gap-3">
+        <Button
+          onClick={() => router.back()}
+          variant="ghost"
+          size="sm"
+          className="shrink-0 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+        >
+          <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          <SlidersHorizontal className="w-5 h-5 text-primary shrink-0" />
-          <h1 className="text-foreground font-bold text-base sm:text-lg truncate">Stake Settings</h1>
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-900 sm:h-10 sm:w-10">
+          <SlidersHorizontal className="h-4 w-4 sm:h-5 sm:w-5" />
         </div>
+        <h1 className="min-w-0 flex-1 truncate text-base font-bold text-gray-900 sm:text-lg lg:text-2xl">
+          Stake Settings
+        </h1>
         <Button
           variant="outline"
           size="sm"
           onClick={handleReset}
-          className="shrink-0 gap-1.5"
+          className="shrink-0 gap-1.5 border-gray-300 text-gray-800 hover:bg-gray-100"
         >
-          <RotateCcw className="w-3.5 h-3.5" />
+          <RotateCcw className="h-3.5 w-3.5" />
           <span className="hidden sm:inline">Reset</span>
         </Button>
       </div>
 
-      <p className="text-muted-foreground text-sm mb-5 ml-11">
+      <p className="mb-5 ml-11 text-sm text-gray-500 sm:ml-14">
         Customise the quick-stake buttons shown in the bet panel.
       </p>
 
-      {/* 3×3 grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+      {/* ── 3×3 grid ── */}
+      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {stakes.map((stake, i) => (
-          <Card key={i} className="p-4 space-y-3">
+          <div key={i} className={`${CARD_CLS} space-y-3 p-4`}>
             {/* Label row */}
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground w-20 shrink-0">Button Label</span>
+              <span className="w-20 shrink-0 text-xs text-gray-500">Button Label</span>
               <Input
                 value={stake.label}
                 onChange={(e) => update(i, "label", e.target.value)}
                 placeholder={`Stake ${i + 1}`}
-                className="h-8 text-sm text-foreground"
+                className="h-8 text-sm text-gray-900 bg-white"
                 maxLength={20}
               />
             </div>
 
             {/* Value row */}
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground w-20 shrink-0">Input Value</span>
-              <div className="flex items-center flex-1 border border-border rounded-md overflow-hidden">
+              <span className="w-20 shrink-0 text-xs text-gray-500">Input Value</span>
+              <div className="flex flex-1 items-center overflow-hidden rounded-md border border-gray-300">
                 <button
                   type="button"
                   onClick={() => decrement(i)}
-                  className="w-8 h-8 flex items-center justify-center bg-muted hover:bg-muted/80 text-foreground shrink-0 transition-colors"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center bg-gray-100 text-gray-800 transition-colors hover:bg-gray-200"
                 >
-                  <Minus className="w-3.5 h-3.5" />
+                  <Minus className="h-3.5 w-3.5" />
                 </button>
                 <Input
                   type="number"
                   value={stake.value === 0 ? "" : stake.value}
                   onChange={(e) => update(i, "value", e.target.value)}
                   placeholder="0"
-                  className="flex-1 h-8 text-sm text-center text-foreground border-0 rounded-none focus-visible:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="h-8 flex-1 rounded-none border-0 bg-white text-center text-sm text-gray-900 focus-visible:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   min={0}
                 />
                 <button
                   type="button"
                   onClick={() => increment(i)}
-                  className="w-8 h-8 flex items-center justify-center bg-muted hover:bg-muted/80 text-foreground shrink-0 transition-colors"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center bg-gray-100 text-gray-800 transition-colors hover:bg-gray-200"
                 >
-                  <Plus className="w-3.5 h-3.5" />
+                  <Plus className="h-3.5 w-3.5" />
                 </button>
               </div>
             </div>
@@ -163,25 +171,25 @@ export default function StakeSettingsPage() {
             {/* Preview chip */}
             {stake.label && stake.value > 0 && (
               <div className="flex justify-end">
-                <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
+                <span className="rounded-full bg-[var(--header-primary)]/10 px-2 py-0.5 text-[10px] font-medium text-[var(--header-primary)]">
                   Preview: {stake.label}
                 </span>
               </div>
             )}
-          </Card>
+          </div>
         ))}
       </div>
 
-      {/* Save button */}
+      {/* ── Save button ── */}
       <Button
         onClick={handleSave}
         disabled={isSaving}
-        className="w-full h-11 text-sm font-semibold gap-2"
+        className="h-11 w-full gap-2 bg-[var(--header-primary)] text-sm font-semibold text-white hover:bg-[var(--header-primary)]/90"
       >
         {isSaving ? (
-          <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
         ) : (
-          <Save className="w-4 h-4" />
+          <Save className="h-4 w-4" />
         )}
         {isSaving ? "Saving..." : "Save Settings"}
       </Button>

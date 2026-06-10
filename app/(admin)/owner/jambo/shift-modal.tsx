@@ -108,7 +108,7 @@ export function JamboShiftModal({ open, onClose, shift }: Props) {
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
           {/* Row 1: name + date + end time */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <div className="md:col-span-2">
               <label className={L}>Shift Name *</label>
               <Input
@@ -139,7 +139,7 @@ export function JamboShiftModal({ open, onClose, shift }: Props) {
           </div>
 
           {/* Row 2: jantri time + capping + flags */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
             <div>
               <label className={L}>Main Jantri Time</label>
               <Input
@@ -196,7 +196,7 @@ export function JamboShiftModal({ open, onClose, shift }: Props) {
             <div className="text-sm font-semibold text-foreground mb-3 uppercase tracking-wide">
               Rates &amp; Commissions
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {/* Triple — number_type 0 */}
               <div className="space-y-2">
                 <div className="text-sm font-semibold text-primary">

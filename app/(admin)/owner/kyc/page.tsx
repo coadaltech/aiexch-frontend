@@ -101,7 +101,7 @@ export default function KYCPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">KYC Verification</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">KYC Verification</h1>
         <p className="text-muted-foreground">
           Review and manage user identity verification
         </p>
@@ -314,7 +314,7 @@ export default function KYCPage() {
           </div>
           {totalPages > 1 && (
             <div className="mt-4">
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-between items-center">
                 <p className="text-sm text-muted-foreground">
                   Showing {paginatedKyc.length} of {sortedData.length}{" "}
                   submissions

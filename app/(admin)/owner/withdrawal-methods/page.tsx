@@ -210,7 +210,7 @@ export default function WithdrawalMethodsPage() {
             </table>
           </div>
           {totalPages > 1 && (
-            <div className="mt-4 flex justify-center">
+            <div className="mt-4 flex flex-wrap justify-center gap-1 sm:gap-2">
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1}>
                   Previous

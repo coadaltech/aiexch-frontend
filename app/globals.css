@@ -38,6 +38,28 @@
   }
 }
 
+/* ── Radix popper positioning under html `zoom` ──────────────────────────────
+   Dropdowns / selects / popovers / tooltips / dropdown-menus are portaled to
+   <body>, which lives inside the zoomed <html>. CSS `zoom` then double-applies
+   to their fixed position, so the menu opens offset from its trigger (it lands
+   up-and-left of where it should). We counter the html zoom on the popper
+   wrapper (which fixes the position) and re-apply the same zoom on its inner
+   content (so the menu stays the same visual scale as the rest of the UI).
+   The inner content sits at the wrapper's top-left origin, so scaling it does
+   not move it. At ≥1680px the page isn't zoomed, so no correction is applied. */
+@media (max-width: 1680px) {
+  [data-radix-popper-content-wrapper] { zoom: 1.111111; }
+  [data-radix-popper-content-wrapper] > * { zoom: 0.9; }
+}
+@media (max-width: 1440px) {
+  [data-radix-popper-content-wrapper] { zoom: 1.176471; }
+  [data-radix-popper-content-wrapper] > * { zoom: 0.85; }
+}
+@media (max-width: 1366px) {
+  [data-radix-popper-content-wrapper] { zoom: 1.25; }
+  [data-radix-popper-content-wrapper] > * { zoom: 0.8; }
+}
+
 * {
   box-sizing: border-box;
   letter-spacing: 0.2px;

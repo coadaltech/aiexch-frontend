@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
 import { Copy, QrCode } from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
@@ -25,37 +24,37 @@ export function DepositDetails({
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="text-center">
-        <h3 className="text-base sm:text-lg font-semibold text-foreground mb-2">
+        <h3 className="mb-2 text-base font-semibold text-gray-900 sm:text-lg">
           Deposit {methodName}
         </h3>
       </div>
 
       {qrCode && (
-        <Card className="p-3 sm:p-4">
-          <div className="text-center mb-4">
+        <div className="rounded-xl border border-gray-200 bg-white p-3 sm:p-4">
+          <div className="mb-4 text-center">
             {qrCode.qrCodeUrl ? (
               <Image
                 src={qrCode.qrCodeUrl}
                 alt="QR Code"
                 height={256}
                 width={256}
-                className="w-48 h-48 sm:w-64 sm:h-64 mx-auto mb-3 rounded-lg"
+                className="mx-auto mb-3 h-48 w-48 rounded-lg sm:h-64 sm:w-64"
                 loading="eager"
               />
             ) : (
-              <div className="w-48 h-48 sm:w-64 sm:h-64 bg-white rounded-lg mx-auto mb-3 flex items-center justify-center">
-                <QrCode className="w-40 h-40 sm:w-56 sm:h-56 text-black" />
+              <div className="mx-auto mb-3 flex h-48 w-48 items-center justify-center rounded-lg bg-gray-100 sm:h-64 sm:w-64">
+                <QrCode className="h-40 w-40 text-gray-900 sm:h-56 sm:w-56" />
               </div>
             )}
-            <p className="text-xs sm:text-sm text-muted-foreground">
+            <p className="text-xs text-gray-500 sm:text-sm">
               Scan QR code or copy address below
             </p>
           </div>
 
           {qrCode.walletAddress && (
-            <Card className="p-2 sm:p-3">
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-2 sm:p-3">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-foreground font-mono text-xs sm:text-sm break-all">
+                <span className="break-all font-mono text-xs text-gray-900 sm:text-sm">
                   {qrCode.walletAddress}
                 </span>
                 <button
@@ -63,30 +62,28 @@ export function DepositDetails({
                     await navigator.clipboard.writeText(qrCode.walletAddress);
                     toast.success("Address copied to clipboard!");
                   }}
-                  className="p-2 text-primary hover:text-primary/80 shrink-0"
+                  className="shrink-0 p-2 text-[var(--header-primary)] hover:text-[var(--header-primary)]/80"
                 >
-                  <Copy className="w-4 h-4" />
+                  <Copy className="h-4 w-4" />
                 </button>
               </div>
-            </Card>
+            </div>
           )}
 
           {qrCode.instructions && (
-            <Card className="mt-3 sm:mt-4 p-2 sm:p-3 bg-primary/5">
-              <p className="text-xs text-muted-foreground">
-                {qrCode.instructions}
-              </p>
-            </Card>
+            <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-2 sm:mt-4 sm:p-3">
+              <p className="text-xs text-gray-500">{qrCode.instructions}</p>
+            </div>
           )}
 
-          <div className="mt-3 sm:mt-4 space-y-2">
-            <Label className="text-sm">Enter Amount</Label>
+          <div className="mt-3 space-y-2 sm:mt-4">
+            <Label className="text-sm text-gray-700">Enter Amount</Label>
             <Input
               type="number"
               placeholder="0.00"
               value={amount}
               onChange={(e) => onAmountChange(e.target.value)}
-              className="text-sm"
+              className="bg-white text-sm text-gray-900"
             />
             <div className="flex flex-wrap gap-2">
               {[100, 500, 1000, 5000, 10000].map((preset) => (
@@ -96,17 +93,21 @@ export function DepositDetails({
                   variant="outline"
                   size="sm"
                   onClick={() => onAmountChange(preset.toString())}
-                  className="flex-1 min-w-[60px] text-xs sm:text-sm"
+                  className="min-w-[60px] flex-1 border-gray-300 bg-white text-xs text-gray-800 hover:bg-gray-100 sm:text-sm"
                 >
                   ₹{preset}
                 </Button>
               ))}
             </div>
           </div>
-        </Card>
+        </div>
       )}
 
-      <Button onClick={onNext} disabled={!amount} className="w-full">
+      <Button
+        onClick={onNext}
+        disabled={!amount}
+        className="w-full bg-[var(--header-primary)] text-white hover:bg-[var(--header-primary)]/90"
+      >
         Confirm Deposit
       </Button>
     </div>

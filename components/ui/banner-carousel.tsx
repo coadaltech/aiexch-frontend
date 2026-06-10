@@ -112,10 +112,10 @@ export function BannerCarousel({
   if (!items.length) return null;
 
   return (
-    <div className={`relative w-full ${height} mb-2 px-4`}>
+    <div className={`relative w-full ${height} md:mb-2 md:px-4 `}>
       <div
         ref={scrollRef}
-        className="flex w-full h-full overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar rounded-2xl"
+        className="flex w-full h-full overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar rounded md:rounded-2xl"
         style={{ scrollbarWidth: "none" }}
       >
         {items.map((item, index) => {
@@ -124,7 +124,7 @@ export function BannerCarousel({
           const href = item.linkUrl;
           const isFirst = index === 0;
           const slide = (
-            <div className="relative w-full h-full overflow-hidden rounded-2xl shadow-2xl bg-gray-200">
+            <div className="relative w-full h-full overflow-hidden md:rounded-2xl shadow-2xl bg-gray-200">
               {src ? (
                 <Image
                   src={src}
@@ -134,7 +134,7 @@ export function BannerCarousel({
                   priority={isFirst}
                   fetchPriority={isFirst ? "high" : "low"}
                   loading={isFirst ? "eager" : "lazy"}
-                  className="object-cover object-center"
+                  className="object-contain md:object-cover object-center"
                   draggable={false}
                 />
               ) : null}

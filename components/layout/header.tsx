@@ -71,6 +71,19 @@ export default function Header() {
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const userDropdownCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Hover open/close only makes sense on devices with a real pointer. On touch
+  // a tap fires synthetic mouseenter+mouseleave, which would open then instantly
+  // close the menu — so there we rely on the click toggle + outside-click close.
+  const [canHover, setCanHover] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const update = () => setCanHover(mq.matches);
+    update();
+    mq.addEventListener?.("change", update);
+    return () => mq.removeEventListener?.("change", update);
+  }, []);
+
   // Hover open/close with a grace delay so the user can cross the gap between
   // the trigger and the menu without it snapping shut.
   const openUserDropdown = () => {
@@ -261,8 +274,8 @@ export default function Header() {
                     <div
                       ref={userDropdownRef}
                       className="relative"
-                      onMouseEnter={openUserDropdown}
-                      onMouseLeave={scheduleCloseUserDropdown}
+                      onMouseEnter={canHover ? openUserDropdown : undefined}
+                      onMouseLeave={canHover ? scheduleCloseUserDropdown : undefined}
                     >
                       <Button
                         size="sm"
@@ -285,8 +298,8 @@ export default function Header() {
                       {/* Dropdown Menu */}
                       {isUserDropdownOpen && (
                         <div
-                          onMouseEnter={openUserDropdown}
-                          onMouseLeave={scheduleCloseUserDropdown}
+                          onMouseEnter={canHover ? openUserDropdown : undefined}
+                          onMouseLeave={canHover ? scheduleCloseUserDropdown : undefined}
                           className="absolute right-0 top-full pt-1 w-48 sm:w-56 z-50"
                         >
                           <div className="bg-[var(--header-primary)] border border-[#1e4088] rounded-xl shadow-xl shadow-black/40 py-1.5 animate-in fade-in slide-in-from-top-2 duration-200">

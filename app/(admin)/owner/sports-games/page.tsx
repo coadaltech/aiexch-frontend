@@ -273,8 +273,8 @@ export default function SportsPage() {
                   : "border-gray-200 hover:border-blue-400 hover:shadow-md hover:bg-blue-50"
               }`}
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
                   {/* Drag handle */}
                   <span className="text-gray-400 cursor-grab active:cursor-grabbing select-none">
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -293,7 +293,7 @@ export default function SportsPage() {
                   </div>
                 </div>
                 <div
-                  className="flex items-center gap-5"
+                  className="flex items-center justify-end gap-4 shrink-0 self-end sm:self-auto"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <label

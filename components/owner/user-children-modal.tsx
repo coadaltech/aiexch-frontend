@@ -123,7 +123,8 @@ export function UserChildrenModal({
               No users created by this user.
             </p>
           ) : (
-            <table className="w-full text-[14px] border-collapse">
+            <>
+            <table className="hidden md:table w-full text-[14px] border-collapse">
               <thead>
                 <tr className="bg-gray-100 text-gray-700 text-[12px] font-bold uppercase tracking-wide border-b border-gray-200 sticky top-0">
                   <th className="px-3 py-2 text-left">User Name</th>
@@ -215,6 +216,65 @@ export function UserChildrenModal({
                 })}
               </tbody>
             </table>
+
+            {/* Cards — mobile (below md) */}
+            <div className="md:hidden p-3 space-y-3">
+              {children.map((u: any) => {
+                const fixLimit         = u.fixLimit         ?? "0";
+                const finalLimit       = u.finalLimit       ?? "0";
+                const limitConsumed    = u.limitConsumed    ?? "0";
+                const totalPnl         = u.totalpnl         ?? "0";
+                const transactionLimit = u.transactionLimit ?? "0";
+
+                const fixLimitNum = parseFloat(fixLimit);
+                const clientPnl = parseFloat(totalPnl);
+                const computedBalance = fixLimitNum + clientPnl;
+
+                const uActive = u.accountStatus !== false && u.parentAccountStatus !== false;
+                const bActive = u.betStatus     !== false && u.parentBetStatus     !== false;
+
+                return (
+                  <div key={u.id} className="bg-white border border-gray-200 rounded-lg shadow-sm p-3 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <button
+                          onClick={() => drillInto({ id: u.id, username: u.username })}
+                          className="font-semibold text-[var(--header-primary)] hover:underline text-left truncate block max-w-full"
+                          title="View this user's downline"
+                        >
+                          {u.username}
+                        </button>
+                        <span className="text-xs text-gray-500">{roleLabel(u.role)}</span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex flex-col items-center gap-0.5">
+                          <span className="text-[9px] text-gray-400 leading-none">U</span>
+                          <StatusDot active={uActive} title={uActive ? "User active" : "User disabled"} />
+                        </div>
+                        <div className="flex flex-col items-center gap-0.5">
+                          <span className="text-[9px] text-gray-400 leading-none">B</span>
+                          <StatusDot active={bActive} title={bActive ? "Betting active" : "Betting disabled"} />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
+                      <div className="flex justify-between gap-2"><span className="text-gray-500">Credit Ref</span><span className="font-semibold text-gray-800">{fmt(fixLimit)}</span></div>
+                      <div className="flex justify-between gap-2">
+                        <span className="text-gray-500">Client P/L</span>
+                        <span className={cn("font-semibold", clientPnl > 0 ? "text-emerald-600" : clientPnl < 0 ? "text-rose-600" : "text-gray-800")}>
+                          {clientPnl > 0 ? "+" : ""}{fmt(clientPnl)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between gap-2"><span className="text-gray-500">Balance</span><span className="font-semibold text-gray-800">{fmt(computedBalance)}</span></div>
+                      <div className="flex justify-between gap-2"><span className="text-gray-500">Exposure</span><span className="font-semibold text-gray-800">{fmt(limitConsumed)}</span></div>
+                      <div className="flex justify-between gap-2"><span className="text-gray-500">Avail. Bal</span><span className="font-semibold text-gray-800">{fmt(finalLimit)}</span></div>
+                      <div className="flex justify-between gap-2"><span className="text-gray-500">Txn Limit</span><span className="font-semibold text-gray-800">{fmt(transactionLimit)}</span></div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            </>
           )}
         </div>
       </DialogContent>

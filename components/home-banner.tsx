@@ -19,7 +19,7 @@ export default function HomeBanner() {
     <>
       <BannerCarousel
         banners={banners}
-        height="h-[220px] sm:h-[240px] md:h-[320px]"
+        height="h-[180px] sm:h-[240px] md:h-[320px]"
         autoPlay={true}
         interval={5000}
         />

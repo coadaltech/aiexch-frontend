@@ -13,6 +13,7 @@ import {
   Bell, ChevronRight, Flame, Trophy, Dices,
   Volleyball, Zap, Target, Star, Users, Tv,
   TrendingUp, Gift, Shield, Flag, Dog, Wind,
+  Spade, Disc3, MoreHorizontal,
 } from "lucide-react";
 
 /* ─── Lazy mount: defers child render + API calls until scrolled near viewport ─── */
@@ -88,16 +89,16 @@ function NoticeTickerBar() {
   return (
     <div className="flex items-center bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-secondary)] border-b border-[#1e4088]/60 h-8 overflow-hidden">
       {/* Label */}
-      <div className="flex items-center gap-1.5 text-black bg-[#ede105] px-3 h-full shrink-0 z-10">
+      {/* <div className="flex items-center gap-1.5 text-black bg-[#ede105] px-3 h-full shrink-0 z-10">
         <Bell className="h-3 w-3 text-black" />
         <span className="text-black text-[11px] font-bold tracking-wide whitespace-nowrap">
           NOTICE
         </span>
-      </div>
+      </div> */}
       {/* Scrolling text */}
       <div className="flex-1 overflow-hidden relative">
         <div className="ticker-track flex whitespace-nowrap">
-          <span className="text-[#ffffff] text-[11px] px-4 inline-block animate-ticker">
+          <span className="text-[#ffffff] text-[11px] mt-2 px-4 inline-block animate-ticker">
             {text}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{text}
           </span>
         </div>
@@ -236,34 +237,67 @@ function SectionHeader({
   );
 }
 
-/* ─── Quick sport links row ─── */
-const QUICK_SPORTS = [
-  { label: "Cricket", href: "/sports/cricket", emoji: "🏏", count: "Live" },
-  { label: "Football", href: "/sports/soccer", emoji: "⚽", count: "" },
-  { label: "Tennis", href: "/sports/tennis", emoji: "🎾", count: "" },
-  { label: "Horse Racing", href: "/sports/horse-racing", emoji: "🏇", count: "" },
-  { label: "Matka", href: "/matka", emoji: "🎯", count: "" },
-  { label: "Kabaddi", href: "/sports/kabaddi", emoji: "🤼", count: "" },
+/* ─── Mode tabs: Exchange | Casino | RV Casino ─── */
+function ModeTabs() {
+  const router = useRouter();
+  const tabBase =
+    "flex-1 rounded-lg py-2 px-3 text-xs sm:text-sm font-bold tracking-wide transition-colors text-center";
+  return (
+    <div className="px-4">
+      <div className="flex items-center gap-1 rounded-xl bg-white border border-gray-200 p-1 shadow-sm">
+        {/* Exchange is the current page → active */}
+        <button className={`${tabBase} bg-[var(--header-primary)] text-white`}>
+          EXCHANGE
+        </button>
+        <button
+          onClick={() => router.push("/qtech-casino")}
+          className={`${tabBase} text-gray-600 hover:bg-gray-100`}
+        >
+          CASINO
+        </button>
+        <button
+          onClick={() => router.push("/qtech-casino?cat=RVCASINO")}
+          className={`${tabBase} text-gray-600 hover:bg-gray-100`}
+        >
+          RV CASINO
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Quick access card grid ─── */
+const QUICK_ACCESS = [
+  { label: "Cricket", href: "/sports/cricket", icon: Trophy },
+  { label: "Soccer", href: "/sports/soccer", icon: Volleyball },
+  { label: "Tennis", href: "/sports/tennis", icon: Target },
+  { label: "Horse Racing", href: "/sports/horse-racing", icon: Dog },
+  { label: "Matka", href: "/matka", icon: Spade },
+  { label: "Election", href: "/sports/politics", icon: Flag },
+  { label: "Bombay Bazar", href: "/kalyan-new", icon: Disc3 },
+  { label: "More", href: "/qtech-casino", icon: MoreHorizontal },
 ];
 
-function QuickSportsRow() {
+function QuickAccessGrid() {
   return (
-    <div className="flex gap-2 overflow-x-auto scrollbar-hide px-4 pb-1">
-      {QUICK_SPORTS.map((s) => (
-        <Link
-          key={s.label}
-          href={s.href}
-          className="flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-lg bg-white hover:bg-gray-50 border border-gray-200 hover:border-[var(--header-primary)]/40 transition-all text-gray-700 text-xs font-medium"
-        >
-          <span>{s.emoji}</span>
-          <span>{s.label}</span>
-          {s.count && (
-            <span className="text-[9px] bg-[var(--header-secondary)] text-white px-1 rounded font-bold">
-              {s.count}
-            </span>
-          )}
-        </Link>
-      ))}
+    <div className="px-4">
+      <div className="grid grid-cols-4 gap-2 sm:gap-3 rounded-xl bg-gray-100 border border-gray-200 p-2 sm:p-3">
+        {QUICK_ACCESS.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.label}
+              href={item.href}
+              className="group flex flex-col items-center justify-center gap-1.5 rounded-lg bg-white border border-gray-200 py-3 px-1 transition-all hover:border-[var(--header-primary)]/40 hover:shadow-sm"
+            >
+              <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-gray-700 transition-colors group-hover:text-[var(--header-primary)]" />
+              <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wide text-center leading-tight text-gray-500 group-hover:text-gray-900">
+                {item.label}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -271,23 +305,26 @@ function QuickSportsRow() {
 /* ─── Main homepage ─── */
 const Homepage = () => {
   return (
-    <div className="w-full min-w-0 bg-[#efefef] min-h-full">
+    <div className="w-full min-w-0 bg-[#efefef] min-h-full mb-[-15px]">
       <Suspense fallback={null}>
         <ErrorHandler />
       </Suspense>
 
-      {/* 1. Notice ticker
-      <NoticeTickerBar /> */}
+      {/* 1. Notice ticker — mobile only, sits above the banners. On desktop the
+          global bottom ticker (in main-layout) is used instead. */}
+      <div className="lg:hidden">
+        <NoticeTickerBar />
+      </div>
 
       {/* 2. Hero banner */}
       <div className="">
         <HomeBanner />
       </div>
 
-        {/* 6. Quick sport pills */}
-      <div className="mt-4">
-        {/* <SectionHeader title="SPORTS" icon={Volleyball} href="/sports" /> */}
-        <QuickSportsRow />
+        {/* 6. Mode tabs + quick access grid — mobile only */}
+      <div className="mt-4 space-y-3 lg:hidden">
+        <ModeTabs />
+        <QuickAccessGrid />
       </div>
 
       {/* 3. Sport category pill tabs */}

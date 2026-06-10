@@ -67,7 +67,7 @@ export default function StaffMembersPage() {
             placeholder="Search by username or email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="max-w-sm"
+            className="w-full sm:max-w-sm"
           />
         </CardHeader>
         <CardContent>

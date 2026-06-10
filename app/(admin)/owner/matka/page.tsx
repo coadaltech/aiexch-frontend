@@ -244,7 +244,7 @@ export default function OwnerMatkaPage() {
                   </div>
 
                   {/* Row 2: Details in neat columns */}
-                  <div className="flex items-center gap-4 mt-2.5 ml-[60px] text-xs flex-wrap">
+                  <div className="flex items-center gap-4 mt-2.5 ml-4 sm:ml-[60px] text-xs flex-wrap">
                     <div className="flex items-center gap-4">
                       <div>
                         <span className="text-muted-foreground">Date</span>

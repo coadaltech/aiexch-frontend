@@ -137,7 +137,7 @@ export default function ManageCurrencyPage() {
           }
         }}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-w-[95vw] sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Add Currency</DialogTitle>
             <DialogDescription>
@@ -271,7 +271,7 @@ export default function ManageCurrencyPage() {
                         {editingId === row.id ? (
                           <div className="flex items-center gap-2">
                             <Input
-                              className="w-28 h-8"
+                              className="w-20 sm:w-28 h-8"
                               value={editValue}
                               onChange={(e) => setEditValue(e.target.value)}
                             />

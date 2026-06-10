@@ -309,8 +309,8 @@ export default function SportsResultPage() {
             {markets.length} undeclared market{markets.length !== 1 && "s"}
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="relative w-72">
+        <div className="flex w-full sm:w-auto items-center gap-3">
+          <div className="relative flex-1 sm:w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search by sport, event, market..."

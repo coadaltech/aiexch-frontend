@@ -102,7 +102,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
               ? "max-h-[var(--vh-full)]"
               : isCasinoRoute
                 ? "mt-14 max-h-[calc(var(--vh-full)-3.5rem)]"
-                : "mt-14 md:mt-30 max-h-[calc(var(--vh-full)-4rem)] md:max-h-[calc(var(--vh-full)-7.5rem)] gap-2 p-2"
+                : "mt-10 md:mt-30 max-h-[calc(var(--vh-full)-3.5rem)] md:max-h-[calc(var(--vh-full)-7.5rem)] md:gap-2 md:p-2"
           }`}
         >
           {/* Sidebar - Starts below header. Hidden on casino (full-width). */}
@@ -111,8 +111,8 @@ export default function MainLayout({ children }: { children: ReactNode }) {
           {/* Main Content - scrollable area; pb for mobile so content clears fixed bottom tab */}
           <main
             className={`min-h-0 flex-1 w-full overflow-y-auto overflow-x-hidden transition-all duration-300 ${
-              isCasinoRoute ? "" : "pb-20 lg:pb-0 bg-[#efefef] rounded-xl"
-            }`}
+              isCasinoRoute ? "" : "pb-20 lg:pb-0 bg-[#efefef] md:rounded-xl"
+            } ${isHomeOrRoot ? "scrollbar-hide" : ""}`}
             id="main-content"
           >
             {children}
@@ -120,8 +120,14 @@ export default function MainLayout({ children }: { children: ReactNode }) {
           </main>
         </div>
       {/* The QTech casino renders its own ticker at the top (under its custom
-          header), so skip the global bottom one there to avoid a duplicate. */}
-      {!hideHeader && <NoticeTickerBar />}
+          header), so skip the global bottom one there to avoid a duplicate.
+          On the home page the ticker moves above the banners on mobile, so the
+          global bottom bar is hidden there below lg (desktop keeps it). */}
+      {!hideHeader && (
+        <div className={isHomeOrRoot ? "hidden lg:block" : ""}>
+          <NoticeTickerBar />
+        </div>
+      )}
 
       </div>
     </SidebarProvider>

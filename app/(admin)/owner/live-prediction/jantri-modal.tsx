@@ -157,7 +157,7 @@ export function JantriGridModal({
               jantri…
             </div>
           ) : (
-            <table className="w-full border-collapse table-fixed">
+            <table className="w-full min-w-[680px] border-collapse table-fixed">
               {/* Column headers */}
               <thead>
                 <tr>

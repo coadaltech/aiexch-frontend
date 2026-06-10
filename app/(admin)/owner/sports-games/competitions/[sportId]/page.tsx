@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { ownerApi } from "@/lib/api";
 import { usePanelPrefix } from "@/hooks/usePanelPrefix";
+import { Ban } from "lucide-react";
 
 interface Competition {
   id: string;
@@ -255,7 +256,7 @@ export default function CompetitionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
       {/* Header */}
       <div className="mb-6">
         <button
@@ -277,9 +278,9 @@ export default function CompetitionsPage() {
           </svg>
           Back to Sports
         </button>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
               {sportName || "Sport"} Competitions
             </h1>
             <div className="flex items-center gap-3 mt-1">
@@ -334,7 +335,7 @@ export default function CompetitionsPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
           <p className="text-sm text-gray-600">Total Competitions</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">
@@ -365,7 +366,7 @@ export default function CompetitionsPage() {
 
       {/* Search and Select All */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-4">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="relative flex-1">
             <svg
               className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
@@ -412,9 +413,9 @@ export default function CompetitionsPage() {
           return (
             <div
               key={competition.id}
-              className="flex items-center justify-between p-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors"
+              className="flex items-center justify-between gap-3 p-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors"
             >
-              <div className="flex items-center gap-4 flex-1">
+              <div className="flex items-center gap-4 flex-1 min-w-0">
                 {canEdit ? (
                   <input
                     type="checkbox"
@@ -425,21 +426,20 @@ export default function CompetitionsPage() {
                   />
                 ) : (
                   <div
-                    className={`h-3 w-3 rounded-full ${
-                      original ? "bg-green-500" : "bg-gray-300"
-                    }`}
+                    className={`h-3 w-3 rounded-full ${original ? "bg-green-500" : "bg-gray-300"
+                      }`}
                   />
                 )}
                 <div
-                  className="flex-1 cursor-pointer"
+                  className="flex-1 min-w-0 cursor-pointer"
                   onClick={() =>
                     router.push(
                       `${panelPrefix}/sports-games/competitions/${sportId}/events/${competition.id}`,
                     )
                   }
                 >
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-medium text-gray-900 hover:text-blue-600 transition-colors">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <h3 className="font-medium text-gray-900 hover:text-blue-600 transition-colors truncate">
                       {competition.name}
                     </h3>
                     {isChanged && (
@@ -448,56 +448,61 @@ export default function CompetitionsPage() {
                       </span>
                     )}
                     {isOwner && !competition.isActive && (
-                      <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">
-                        Globally Inactive
+                      <span
+                        title="Globally Inactive"
+                        className="text-xs bg-red-100 text-red-600 rounded-full inline-flex items-center gap-1 px-1.5 py-0.5 sm:px-2 shrink-0"
+                      >
+                        <Ban className="h-3 w-3" />
+                        <span className="hidden sm:inline">Globally Inactive</span>
                       </span>
                     )}
                   </div>
                   <p className="text-sm text-gray-500">ID: {competition.id}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex  items-center gap-3 sm:gap-4 shrink-0">
                 <div className="text-center">
                   <p className="text-lg font-semibold text-gray-900">
                     {competition.eventCount}
                   </p>
                   <p className="text-xs text-gray-500">Events</p>
                 </div>
-                {isOwner && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleToggleTop(competition);
-                    }}
-                    disabled={togglingTopId === competition.id}
-                    title={
-                      competition.isTop
-                        ? "Remove from sidebar 'Top competitions'"
-                        : "Show in sidebar 'Top competitions'"
-                    }
-                    className={`px-3 py-1 rounded-md text-xs font-semibold border transition-colors disabled:opacity-60 disabled:cursor-wait whitespace-nowrap ${
-                      competition.isTop
-                        ? "bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100"
-                        : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
-                    }`}
+                <div className="flex flex-col items-center gap-2">
+
+                  {isOwner && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleTop(competition);
+                      }}
+                      disabled={togglingTopId === competition.id}
+                      title={
+                        competition.isTop
+                          ? "Remove from sidebar 'Top competitions'"
+                          : "Show in sidebar 'Top competitions'"
+                      }
+                      className={`px-3 py-1 rounded-md text-xs font-semibold border transition-colors disabled:opacity-60 disabled:cursor-wait whitespace-nowrap ${competition.isTop
+                          ? "bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100"
+                          : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
+                        }`}
+                    >
+                      {togglingTopId === competition.id
+                        ? "Saving…"
+                        : competition.isTop
+                          ? "★ Top"
+                          : "☆ Top"}
+                    </button>
+                  )}
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm font-medium ${isSelected
+                        ? "bg-green-100 text-green-700"
+                        : "bg-gray-100 text-gray-600"
+                      }`}
                   >
-                    {togglingTopId === competition.id
-                      ? "Saving…"
-                      : competition.isTop
-                        ? "★ Top"
-                        : "☆ Top"}
-                  </button>
-                )}
-                <span
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    isSelected
-                      ? "bg-green-100 text-green-700"
-                      : "bg-gray-100 text-gray-600"
-                  }`}
-                >
-                  {isSelected ? "Active" : "Inactive"}
-                </span>
+                    {isSelected ? "Active" : "Inactive"}
+                  </span>
+                </div>
               </div>
             </div>
           );
@@ -532,7 +537,7 @@ export default function CompetitionsPage() {
 
       {/* Pagination */}
       {totalCount > PAGE_SIZE && (
-        <div className="flex items-center justify-between mt-6 bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-3">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-6 bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-3">
           <p className="text-sm text-gray-600">
             {loading
               ? "Loading…"

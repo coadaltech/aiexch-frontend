@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
 import { Label } from "../ui/label";
 
 export function WithdrawalDetails({
@@ -59,16 +58,19 @@ export function WithdrawalDetails({
     return address;
   };
 
+  const inputCls = "bg-white text-gray-900";
+  const labelCls = "mb-2 text-gray-700";
+
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h3 className="text-lg font-semibold text-foreground mb-2">
+        <h3 className="mb-2 text-lg font-semibold text-gray-900">
           Withdraw {methodName}
         </h3>
       </div>
 
       <div>
-        <Label className="mb-2">
+        <Label className={labelCls}>
           Amount ({withdrawalMethod?.currency || "USD"})
         </Label>
         <Input
@@ -76,14 +78,15 @@ export function WithdrawalDetails({
           placeholder="0.00"
           value={amount}
           onChange={(e) => onAmountChange(e.target.value)}
+          className={inputCls}
         />
         {withdrawalMethod && amount && (
-          <div className="mt-1 text-xs text-muted-foreground">
+          <div className="mt-1 text-xs text-gray-500">
             Limits: {withdrawalMethod.minAmount} - {withdrawalMethod.maxAmount}{" "}
             {withdrawalMethod.currency}
             {(parseFloat(amount) < parseFloat(withdrawalMethod.minAmount) ||
               parseFloat(amount) > parseFloat(withdrawalMethod.maxAmount)) && (
-                <span className="text-destructive block">
+                <span className="block text-rose-600">
                   Amount must be between {withdrawalMethod.minAmount} and{" "}
                   {withdrawalMethod.maxAmount}
                 </span>
@@ -93,37 +96,37 @@ export function WithdrawalDetails({
         {amount && parseFloat(amount) > 0 && (
           <div className="mt-2 space-y-2">
             {withdrawalMethod?.currency !== "INR" && (
-              <Card className="p-3">
-                <p className="text-sm text-foreground">
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <p className="text-sm text-gray-900">
                   Equivalent: ₹{getConvertedAmount(amount)} INR
                 </p>
-              </Card>
+              </div>
             )}
             {withdrawalMethod &&
               parseFloat(amount) >= parseFloat(withdrawalMethod.minAmount) &&
               parseFloat(amount) <= parseFloat(withdrawalMethod.maxAmount) && (
-                <Card className="p-3">
-                  <div className="flex justify-between text-foreground">
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                  <div className="flex justify-between text-gray-900">
                     <span>Amount:</span>
                     <span>
                       {withdrawalMethod.currency} {amount}
                     </span>
                   </div>
                   {fee > 0 && (
-                    <div className="flex justify-between text-muted-foreground">
+                    <div className="flex justify-between text-gray-500">
                       <span>Fee:</span>
                       <span>
                         {withdrawalMethod.currency} {fee.toFixed(2)}
                       </span>
                     </div>
                   )}
-                  <div className="flex justify-between font-semibold text-primary border-t border-border pt-2 mt-2">
+                  <div className="mt-2 flex justify-between border-t border-gray-200 pt-2 font-semibold text-[var(--header-primary)]">
                     <span>You'll receive:</span>
                     <span>
                       {withdrawalMethod.currency} {netAmount.toFixed(2)}
                     </span>
                   </div>
-                </Card>
+                </div>
               )}
           </div>
         )}
@@ -133,7 +136,7 @@ export function WithdrawalDetails({
         {withdrawalMethod?.type === "bank" ? (
           <>
             <div>
-              <Label className="mb-2">Account Holder Name</Label>
+              <Label className={labelCls}>Account Holder Name</Label>
               <Input
                 type="text"
                 placeholder="Enter account holder name"
@@ -144,10 +147,11 @@ export function WithdrawalDetails({
                     accountName: e.target.value,
                   })
                 }
+                className={inputCls}
               />
             </div>
             <div>
-              <Label className="mb-2">Account Number</Label>
+              <Label className={labelCls}>Account Number</Label>
               <Input
                 type="text"
                 placeholder="Enter account number"
@@ -158,10 +162,11 @@ export function WithdrawalDetails({
                     accountNumber: e.target.value,
                   })
                 }
+                className={inputCls}
               />
             </div>
             <div>
-              <Label className="mb-2">IFSC Code</Label>
+              <Label className={labelCls}>IFSC Code</Label>
               <Input
                 type="text"
                 placeholder="Enter IFSC code"
@@ -172,10 +177,11 @@ export function WithdrawalDetails({
                     ifscCode: e.target.value,
                   })
                 }
+                className={inputCls}
               />
             </div>
             <div>
-              <Label className="mb-2">Bank Name</Label>
+              <Label className={labelCls}>Bank Name</Label>
               <Input
                 type="text"
                 placeholder="Enter bank name"
@@ -186,22 +192,24 @@ export function WithdrawalDetails({
                     bankName: e.target.value,
                   })
                 }
+                className={inputCls}
               />
             </div>
           </>
         ) : withdrawalMethod?.type === "ewallet" ? (
           <>
             <div>
-              <Label className="mb-2">{methodName} ID/Number</Label>
+              <Label className={labelCls}>{methodName} ID/Number</Label>
               <Input
                 type="text"
                 placeholder={`Enter your ${methodName} ID`}
                 value={address}
                 onChange={(e) => onAddressChange(e.target.value)}
+                className={inputCls}
               />
             </div>
             <div>
-              <Label className="mb-2">Registered Mobile Number</Label>
+              <Label className={labelCls}>Registered Mobile Number</Label>
               <Input
                 type="text"
                 placeholder="Enter registered mobile number"
@@ -212,26 +220,28 @@ export function WithdrawalDetails({
                     mobileNumber: e.target.value,
                   })
                 }
+                className={inputCls}
               />
             </div>
           </>
         ) : (
           <div>
-            <Label className="mb-2">{methodName} Address</Label>
+            <Label className={labelCls}>{methodName} Address</Label>
             <Input
               type="text"
               placeholder={`Enter your ${methodName} address`}
               value={address}
               onChange={(e) => onAddressChange(e.target.value)}
+              className={inputCls}
             />
           </div>
         )}
         {withdrawalMethod?.instructions && (
-          <Card className="mt-2 p-2">
-            <p className="text-xs text-muted-foreground">
+          <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50 p-2">
+            <p className="text-xs text-gray-500">
               {withdrawalMethod.instructions}
             </p>
-          </Card>
+          </div>
         )}
       </div>
 
@@ -244,12 +254,12 @@ export function WithdrawalDetails({
             (parseFloat(amount) < parseFloat(withdrawalMethod.minAmount) ||
               parseFloat(amount) > parseFloat(withdrawalMethod.maxAmount)))
         }
-        className="w-full"
+        className="w-full bg-[var(--header-primary)] text-white hover:bg-[var(--header-primary)]/90"
       >
         Continue
       </Button>
       {withdrawalMethod && (
-        <p className="text-xs mt-2 text-center text-muted-foreground">
+        <p className="mt-2 text-center text-xs text-gray-500">
           Processing time: {withdrawalMethod.processingTime}
         </p>
       )}

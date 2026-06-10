@@ -463,7 +463,7 @@ export function UserModal({
                 </div>
 
                 {user && currentUser?.id != null && user.addedBy != null && String(user.addedBy) === String(currentUser.id) && (
-                  <div className="grid grid-cols-2 gap-2.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     <div className="space-y-1">
                       <Label className="text-sm font-medium text-foreground">
                         Account status

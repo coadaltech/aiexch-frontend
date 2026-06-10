@@ -166,7 +166,7 @@ function SportAccordionItem({
   };
 
   return (
-    <div className="border-b border-gray-100">
+    <div className="border-b border-gray-100 ">
       <button
         onClick={() => setExpanded(!expanded)}
         className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors cursor-pointer ${
@@ -703,7 +703,7 @@ export function AppSidebar() {
   const isLoading = !mounted || loadingGames;
 
   const sidebarClassName = "rounded-xl bg-[#efefef] overflow-hidden border border-gray-200";
-  const contentClassName = "p-0 h-full bg-[#efefef] pb-6";
+  const contentClassName = "p-0 h-full bg-[#efefef] pb-6 scrollbar-hide";
 
   // ── All icon-only items for collapsed state ────────────────────────────
   const allIconItems = [

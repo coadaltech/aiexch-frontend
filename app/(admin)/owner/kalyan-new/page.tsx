@@ -221,7 +221,7 @@ export default function OwnerKalyanNewPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4 mt-2.5 ml-[60px] text-xs flex-wrap">
+                  <div className="flex items-center gap-4 mt-2.5 ml-4 sm:ml-[60px] text-xs flex-wrap">
                     <div className="flex items-center gap-4 flex-wrap">
                       <div>
                         <span className="text-muted-foreground">Date</span>

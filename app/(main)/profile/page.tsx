@@ -1,25 +1,16 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import {
   Banknote,
   Bell,
   CreditCard,
-  Gift,
   LogOut,
   Tag,
   User,
   History,
   Trophy,
-  Shield,
   ChevronRight,
   Wallet,
-  Info,
-  FileText,
-  UserCheck,
-  Briefcase,
-  Headphones,
-  BookOpen,
   SlidersHorizontal,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -61,186 +52,147 @@ export default function DashboardContent() {
     setIsTransactionModalOpen(true);
   };
 
+  const menuItems = [
+    {
+      icon: User,
+      title: "Personal Information",
+      description: "Manage your account details",
+      href: "/profile/personal-info",
+    },
+    {
+      icon: History,
+      title: "Transaction History",
+      description: "View all transactions",
+      href: "/profile/transaction-history",
+    },
+    {
+      icon: Trophy,
+      title: "Bet History",
+      description: "Track your gaming activity",
+      href: "/profile/bet-history",
+    },
+    {
+      icon: Tag,
+      title: "Promo Codes",
+      description: "Redeem promotional offers",
+      href: "/profile/promocode",
+    },
+    {
+      icon: Bell,
+      title: "Notifications",
+      description: "Manage your alerts",
+      href: "/profile/notifications",
+    },
+    {
+      icon: SlidersHorizontal,
+      title: "Stake Settings",
+      description: "Customise your quick-stake buttons",
+      href: "/profile/stake-settings",
+    },
+  ];
+
   return (
     <>
-      <div className="w-full max-w-7xl mx-auto">
-        {/* Profile Header */}
-        <Card className="p-4 sm:p-6 lg:p-8 mb-4 sm:mb-6 lg:mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 lg:gap-6">
-            {/* User Info */}
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="w-12 h-12 lg:w-20 lg:h-20 bg-primary rounded-xl lg:rounded-2xl flex items-center justify-center">
-                  <User className="w-6 h-6 lg:w-10 lg:h-10 text-primary-foreground" />
+      <div className="w-full px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
+        {/* ── Header card ── */}
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            {/* User */}
+            <div className="flex items-center gap-4">
+              <div className="relative shrink-0">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--header-primary)]/10 text-[var(--header-primary)] sm:h-20 sm:w-20">
+                  <User className="h-8 w-8 sm:h-10 sm:w-10" />
                 </div>
-                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 lg:w-6 lg:h-6 bg-live rounded-full border-2 border-background"></div>
+                <span className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-emerald-500 ring-2 ring-white" />
               </div>
-              <div>
-                <h1 className="text-lg lg:text-3xl font-bold text-foreground">
+              <div className="min-w-0">
+                <h1 className="truncate text-xl font-bold text-gray-900 sm:text-2xl">
                   {user?.username}
                 </h1>
-                <p className="text-muted-foreground text-xs lg:text-base">
-                  Premium Member
-                </p>
+                <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-[11px] font-medium text-gray-600 sm:text-xs">
+                  <Trophy className="h-3 w-3" />
+                  {user?.isDemo ? "Demo Account" : "Premium Member"}
+                </span>
               </div>
             </div>
 
-            {/* Balance Card */}
-            <Card className="bg-primary/10 border-primary/30 p-4 lg:p-6 lg:min-w-[280px]">
-              <div className="flex items-center gap-2 mb-1 lg:mb-2">
-                <Wallet className="w-4 h-4 lg:w-5 lg:h-5 text-primary" />
-                <span className="text-muted-foreground text-xs lg:text-sm">
-                  Available Balance
-                </span>
+            {/* Balance */}
+            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 sm:min-w-[240px]">
+              <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                <Wallet className="h-4 w-4" />
+                Available Balance
               </div>
               {isLoading || ledgerLoading ? (
-                <div className="animate-pulse space-y-2">
-                  <div className="h-6 lg:h-8 bg-primary/20 rounded w-24 lg:w-32"></div>
-                  <div className="h-4 bg-primary/10 rounded w-20 lg:w-24"></div>
+                <div className="mt-2 animate-pulse space-y-2">
+                  <div className="h-7 w-28 rounded bg-gray-200" />
+                  <div className="h-3 w-20 rounded bg-gray-200" />
                 </div>
               ) : (
                 <>
-                  <div className="text-2xl lg:text-4xl font-bold text-primary">
+                  <div className="mt-1 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
                     ₹{formattedBalance.inr}
                   </div>
                   {ledger && (
-                    <div className="flex items-center gap-1 mt-1 lg:mt-2">
-                      <span className="text-xs text-muted-foreground">Exposure:</span>
-                      <span className="text-xs font-semibold text-destructive">
+                    <div className="mt-1 flex items-center gap-1 text-xs text-gray-500">
+                      Exposure:
+                      <span className="font-semibold text-rose-500">
                         ₹{formattedExposure.inr}
                       </span>
                     </div>
                   )}
                 </>
               )}
-            </Card>
+            </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-3 lg:gap-4 mt-4 lg:mt-8">
-            {isB2C && (
+          {/* Actions */}
+          {isB2C && (
+            <div className="mt-5 flex gap-3">
               <Button
                 onClick={() => handleOpenTransactionModal("deposit")}
-                className="flex-1 h-11 lg:h-14 text-sm lg:text-lg font-semibold"
+                className="h-11 flex-1 bg-[var(--header-primary)] font-semibold text-white hover:bg-[var(--header-primary)]/90 sm:h-12 sm:text-base"
               >
-                <Banknote className="w-4 h-4 lg:w-5 lg:h-5 mr-2" />
+                <Banknote className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                 Deposit
               </Button>
-            )}
-            {isB2C && (
               <Button
                 onClick={() => handleOpenTransactionModal("withdraw")}
                 variant="outline"
-                className="flex-1 h-11 lg:h-14 text-sm lg:text-lg font-semibold"
+                className="h-11 flex-1 border-gray-300 font-semibold text-gray-800 bg-white hover:bg-gray-100 hover:cursor-pointer sm:h-12 sm:text-base"
               >
-                <CreditCard className="w-4 h-4 lg:w-5 lg:h-5 mr-2" />
+                <CreditCard className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                 Withdraw
               </Button>
-            )}
-          </div>
-        </Card>
+            </div>
+          )}
+        </div>
 
-        {/* Menu Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
-          <MenuCard
-            icon={User}
-            title="Personal Information"
-            description="Manage your account details"
-            onClick={() => router.push("/profile/personal-info")}
-          />
-          {/* <MenuCard
-              icon={Shield}
-              title="KYC Verification"
-              description="Verify your identity"
-              onClick={() => router.push("/kyc")}
+        {/* ── Account menu ── */}
+        <div>
+          <h2 className="mb-2.5 px-1 text-xs font-bold uppercase tracking-wider text-gray-500 sm:mb-3 sm:text-sm">
+            Account
+          </h2>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {menuItems.map((item) => (
+              <MenuCard
+                key={item.title}
+                icon={item.icon}
+                title={item.title}
+                description={item.description}
+                onClick={() => router.push(item.href)}
+              />
+            ))}
+            {/* <MenuCard
+              icon={LogOut}
+              title="Sign Out"
+              description="Logout from your account"
+              onClick={logout}
+              variant="danger"
             /> */}
-          <MenuCard
-            icon={History}
-            title="Transaction History"
-            description="View all transactions"
-            onClick={() => router.push("/profile/transaction-history")}
-          />
-          <MenuCard
-            icon={Trophy}
-            title="Bet History"
-            description="Track your gaming activity"
-            onClick={() => router.push("/profile/bet-history")}
-          />
-          {/* <MenuCard
-              icon={Gift}
-              title="Bonuses & Gifts"
-              description="Manage your rewards"
-              onClick={() => router.push("/profile/bonus")}
-            /> */}
-          <MenuCard
-            icon={Tag}
-            title="Promo Codes"
-            description="Redeem promotional offers"
-            onClick={() => router.push("/profile/promocode")}
-          />
-          <MenuCard
-            icon={Bell}
-            title="Notifications"
-            description="Manage your alerts"
-            onClick={() => router.push("/profile/notifications")}
-          />
-          {/* <MenuCard
-              icon={Info}
-              title="FAQs"
-              description="Frequently asked questions"
-              onClick={() => router.push("/faqs")}
-            />
-            <MenuCard
-              icon={BookOpen}
-              title="Game Rules"
-              description="Learn game rules"
-              onClick={() => router.push("/game-rules")}
-            />
-            <MenuCard
-              icon={FileText}
-              title="Terms & Conditions"
-              description="Read our terms"
-              onClick={() => router.push("/terms")}
-            />
-            <MenuCard
-              icon={Shield}
-              title="Privacy Policy"
-              description="Your privacy matters"
-              onClick={() => router.push("/privacy")}
-            />
-            <MenuCard
-              icon={UserCheck}
-              title="Responsible Gaming"
-              description="Play responsibly"
-              onClick={() => router.push("/responsible-gaming")}
-            />
-            <MenuCard
-              icon={Briefcase}
-              title="White Labeling"
-              description="Business solutions"
-              onClick={() => router.push("/white-labeling")}
-            />
-            <MenuCard
-              icon={Headphones}
-              title="Live Support"
-              description="Get help now"
-              onClick={() => router.push("/live-support")}
-            /> */}
-          <MenuCard
-            icon={SlidersHorizontal}
-            title="Stake Settings"
-            description="Customise your quick-stake buttons"
-            onClick={() => router.push("/profile/stake-settings")}
-          />
-          <MenuCard
-            icon={LogOut}
-            title="Sign Out"
-            description="Logout from your account"
-            onClick={logout}
-            variant="danger"
-          />
+          </div>
         </div>
       </div>
+
       {isTransactionModalOpen && (
         <Suspense fallback={<div />}>
           <TransactionModal
@@ -270,41 +222,45 @@ function MenuCard({
   const isDanger = variant === "danger";
 
   return (
-    <Card
+    <button
+      type="button"
       onClick={onClick}
-      className={`group w-full cursor-pointer p-4 lg:p-6 transition-all duration-300 hover:scale-[1.02] ${isDanger ? "hover:border-destructive/40" : "hover:border-primary/50"
-        }`}
+      className={`group flex w-full items-center gap-3 rounded-xl border bg-white p-3.5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md sm:gap-4 sm:p-4 ${
+        isDanger
+          ? "border-gray-200 hover:border-destructive/50"
+          : "border-gray-200 hover:border-[var(--header-primary)]/50"
+      }`}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3 lg:gap-4">
-          <div
-            className={`w-10 h-10 lg:w-12 lg:h-12 rounded-md flex items-center justify-center transition-colors ${isDanger
-              ? "bg-destructive/10 group-hover:bg-destructive/20"
-              : "bg-primary/10 group-hover:bg-primary/20"
-              }`}
-          >
-            <Icon
-              className={`w-5 h-5 lg:w-6 lg:h-6 ${isDanger ? "text-destructive" : "text-primary"
-                }`}
-            />
-          </div>
-          <div className="text-left">
-            <h3
-              className={`font-semibold text-base lg:text-lg mb-0.5 lg:mb-1 ${isDanger ? "text-destructive" : "text-foreground"
-                }`}
-            >
-              {title}
-            </h3>
-            <p className="text-muted-foreground text-xs lg:text-sm">
-              {description}
-            </p>
-          </div>
-        </div>
-        <ChevronRight
-          className={`w-4 h-4 lg:w-5 lg:h-5 transition-transform group-hover:translate-x-1 ${isDanger ? "text-destructive" : "text-muted-foreground"
-            }`}
-        />
+      <div
+        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors sm:h-12 sm:w-12 ${
+          isDanger
+            ? "bg-destructive/10 text-destructive"
+            : "bg-[var(--header-primary)]/10 text-[var(--header-primary)]"
+        }`}
+      >
+        <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
       </div>
-    </Card>
+      <div className="min-w-0 flex-1">
+        <h3
+          className={`truncate text-sm font-semibold transition-colors sm:text-base ${
+            isDanger
+              ? "text-destructive"
+              : "text-gray-900 group-hover:text-[var(--header-primary)]"
+          }`}
+        >
+          {title}
+        </h3>
+        <p className="truncate text-xs text-gray-500 sm:text-sm">
+          {description}
+        </p>
+      </div>
+      <ChevronRight
+        className={`h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1 sm:h-5 sm:w-5 ${
+          isDanger
+            ? "text-destructive"
+            : "text-gray-400 group-hover:text-[var(--header-primary)]"
+        }`}
+      />
+    </button>
   );
 }

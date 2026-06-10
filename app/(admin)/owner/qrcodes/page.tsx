@@ -124,7 +124,7 @@ export default function QrCodesPage() {
                           <QrCode className="w-12 h-12 text-muted-foreground" />
                         )}
                       </td>
-                      <td className="py-3 px-2 text-muted-foreground text-sm hidden md:table-cell truncate max-w-32">
+                      <td className="py-3 px-2 text-muted-foreground text-sm hidden md:table-cell truncate max-w-20 sm:max-w-32">
                         {qrCode.walletAddress || 'N/A'}
                       </td>
                       <td className="py-3 px-2">

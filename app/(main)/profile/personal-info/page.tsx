@@ -6,16 +6,12 @@ import {
   Edit,
   Save,
   X,
-  Camera,
   Shield,
-  CheckCircle,
-  AlertCircle,
   ArrowLeft,
   Eye,
   EyeOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -32,6 +28,9 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { PersonalInfoSkeleton } from "@/components/skeletons/profile-skeletons";
 import { UserData } from "@/types";
+
+const CARD_CLS =
+  "rounded-2xl border border-gray-200 bg-white p-4 sm:p-6 min-w-0 shadow-sm";
 
 export default function PersonalInfoScreen() {
   const { user } = useAuth();
@@ -52,7 +51,6 @@ export default function PersonalInfoScreen() {
   });
 
   const [editingFields, setEditingFields] = useState<Record<string, string>>({});
-  const [isVerified, setIsVerified] = useState(true);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
@@ -67,9 +65,6 @@ export default function PersonalInfoScreen() {
 
   // Update userData when profile data loads
   useEffect(() => {
-    console.log("Profile data:", profileData); // Debug log
-    console.log("User data:", user); // Debug log
-
     if (user && profileData?.success && profileData?.profile) {
       setUserData({
         username: user.username || "",
@@ -155,234 +150,218 @@ export default function PersonalInfoScreen() {
   const hasUnsavedChanges = Object.keys(editingFields).length > 0;
 
   return (
-    <div className="min-h-screen w-full min-w-0">
-      <div className="min-h-screen pb-6 sm:pb-8">
-        {/* Header */}
-        <div className="flex items-center justify-between gap-3 sm:gap-4 py-4 sm:py-6 lg:mb-6">
-          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-            <Button
-              onClick={() => router.back()}
-              variant="ghost"
-              size="sm"
-              className="text-gray-700 hover:text-gray-900 hover:bg-muted shrink-0"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <User className="w-5 h-5 sm:w-6 sm:h-6 text-primary shrink-0" />
-              <h1 className="text-gray-900 font-bold text-base sm:text-lg lg:text-2xl truncate">
-                Personal Information
-              </h1>
-            </div>
+    <div className="w-full min-w-0 px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
+      {/* ── Hero header ── */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <Button
+            onClick={() => router.back()}
+            variant="ghost"
+            size="sm"
+            className="shrink-0 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-900 sm:h-10 sm:w-10">
+            <User className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
-          {hasUnsavedChanges && (
-            <div className="flex items-center gap-2 shrink-0">
-              <Button
-                onClick={() => handleCancel()}
-                variant="outline"
-                size="sm"
-              >
-                Cancel All
-              </Button>
-              <Button
-                onClick={handleSaveAll}
-                size="sm"
-                disabled={updateProfileMutation.isPending}
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Save All ({Object.keys(editingFields).length})
-              </Button>
-            </div>
-          )}
+          <div className="min-w-0">
+            <h1 className="truncate text-base font-bold text-gray-900 sm:text-lg lg:text-2xl">
+              Personal Information
+            </h1>
+            <p className="hidden truncate text-xs text-gray-500 sm:block">
+              Manage your account details
+            </p>
+          </div>
         </div>
 
-        <div className="">
-          {/* Profile Overview Card */}
-          {/* <div className="lg:col-span-1"> */}
-          {/*   <Card className="p-4 sm:p-6 text-center"> */}
-          {/*     <h2 className="text-lg sm:text-xl font-bold text-foreground mb-1 truncate px-1"> */}
-          {/*       {userData.firstName || userData.lastName */}
-          {/*         ? `${userData.firstName} ${userData.lastName}`.trim() */}
-          {/*         : "—"} */}
-          {/*     </h2> */}
-          {/*     <p className="text-muted-foreground text-sm sm:text-base mb-4 truncate">@{userData.username}</p> */}
-          {/**/}
-          {/*     <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-border"> */}
-          {/*       <div> */}
-          {/*         <div className="text-xl sm:text-2xl font-bold text-primary">85%</div> */}
-          {/*         <div className="text-xs sm:text-sm text-muted-foreground"> */}
-          {/*           Profile Complete */}
-          {/*         </div> */}
-          {/*       </div> */}
-          {/*       <div> */}
-          {/*         <div className="text-xl sm:text-2xl font-bold text-accent">Level 2</div> */}
-          {/*         <div className="text-xs sm:text-sm text-muted-foreground"> */}
-          {/*           Account Level */}
-          {/*         </div> */}
-          {/*       </div> */}
-          {/*     </div> */}
-          {/*   </Card> */}
-          {/* </div> */}
+        {hasUnsavedChanges && (
+          <div className="flex shrink-0 items-center gap-2">
+            <Button
+              onClick={() => handleCancel()}
+              variant="outline"
+              size="sm"
+              className="border-gray-300 bg-transparent text-gray-800 hover:bg-gray-100"
+            >
+              Cancel<span className="hidden sm:inline"> All</span>
+            </Button>
+            <Button
+              onClick={handleSaveAll}
+              size="sm"
+              disabled={updateProfileMutation.isPending}
+              className="bg-[var(--header-primary)] text-white hover:bg-[var(--header-primary)]/90"
+            >
+              <Save className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">
+                Save All ({Object.keys(editingFields).length})
+              </span>
+              <span className="sm:hidden">{Object.keys(editingFields).length}</span>
+            </Button>
+          </div>
+        )}
+      </div>
 
-          {/* Profile Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:col-span-3">
-            {/* Account Information */}
-            <Card className="p-4 sm:p-6 min-w-0">
-              <h3 className="text-base sm:text-lg font-semibold text-foreground mb-4 sm:mb-6 flex items-center gap-2">
-                <Shield className="w-5 h-5 text-primary" />
-                Account Information
-              </h3>
+      {/* ── Details ── */}
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
+        {/* Account Information */}
+        <div className={CARD_CLS}>
+          <h3 className="mb-4 flex items-center gap-2 text-base font-semibold text-gray-900 sm:mb-6 sm:text-lg">
+            <Shield className="h-5 w-5 text-[var(--header-primary)]" />
+            Account Information
+          </h3>
 
-              <div className="space-y-4">
-                <ProfileField
-                  label="Username"
-                  value={userData.username}
-                  field="username"
-                  locked
-                  editingFields={editingFields}
-                  onEdit={handleEdit}
-                  onSave={handleSave}
-                  onCancel={handleCancel}
-                />
-                <ProfileField
-                  label="Email Address"
-                  value={userData.email}
-                  field="email"
-                  locked
-                  editingFields={editingFields}
-                  onEdit={handleEdit}
-                  onSave={handleSave}
-                  onCancel={handleCancel}
-                />
-              </div>
-            </Card>
+          <div className="space-y-4">
+            <ProfileField
+              label="Username"
+              value={userData.username}
+              field="username"
+              locked
+              editingFields={editingFields}
+              onEdit={handleEdit}
+              onSave={handleSave}
+              onCancel={handleCancel}
+            />
+            <ProfileField
+              label="Email Address"
+              value={userData.email}
+              field="email"
+              locked
+              editingFields={editingFields}
+              onEdit={handleEdit}
+              onSave={handleSave}
+              onCancel={handleCancel}
+            />
+          </div>
+        </div>
 
-            {/* Personal Details */}
-            <Card className="p-4 sm:p-6 min-w-0">
-              <h3 className="text-base sm:text-lg font-semibold text-foreground mb-4 sm:mb-6 flex items-center gap-2">
-                <User className="w-5 h-5 text-primary" />
-                Personal Details
-              </h3>
+        {/* Personal Details */}
+        <div className={CARD_CLS}>
+          <h3 className="mb-4 flex items-center gap-2 text-base font-semibold text-gray-900 sm:mb-6 sm:text-lg">
+            <User className="h-5 w-5 text-[var(--header-primary)]" />
+            Personal Details
+          </h3>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <ProfileField
-                  label="First Name"
-                  value={userData.firstName}
-                  field="firstName"
-                  editingFields={editingFields}
-                  onEdit={handleEdit}
-                  onSave={handleSave}
-                  onCancel={handleCancel}
-                />
-                <ProfileField
-                  label="Last Name"
-                  value={userData.lastName}
-                  field="lastName"
-                  editingFields={editingFields}
-                  onEdit={handleEdit}
-                  onSave={handleSave}
-                  onCancel={handleCancel}
-                />
-                <ProfileField
-                  label="Birth Date"
-                  value={userData.birthDate}
-                  field="birthDate"
-                  type="date"
-                  editingFields={editingFields}
-                  onEdit={handleEdit}
-                  onSave={handleSave}
-                  onCancel={handleCancel}
-                />
-                <ProfileField
-                  label="Phone Number"
-                  value={userData.phone}
-                  field="phone"
-                  editingFields={editingFields}
-                  onEdit={handleEdit}
-                  onSave={handleSave}
-                  onCancel={handleCancel}
-                />
-              </div>
-            </Card>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <ProfileField
+              label="First Name"
+              value={userData.firstName}
+              field="firstName"
+              editingFields={editingFields}
+              onEdit={handleEdit}
+              onSave={handleSave}
+              onCancel={handleCancel}
+            />
+            <ProfileField
+              label="Last Name"
+              value={userData.lastName}
+              field="lastName"
+              editingFields={editingFields}
+              onEdit={handleEdit}
+              onSave={handleSave}
+              onCancel={handleCancel}
+            />
+            <ProfileField
+              label="Birth Date"
+              value={userData.birthDate}
+              field="birthDate"
+              type="date"
+              editingFields={editingFields}
+              onEdit={handleEdit}
+              onSave={handleSave}
+              onCancel={handleCancel}
+            />
+            <ProfileField
+              label="Phone Number"
+              value={userData.phone}
+              field="phone"
+              editingFields={editingFields}
+              onEdit={handleEdit}
+              onSave={handleSave}
+              onCancel={handleCancel}
+            />
+          </div>
+        </div>
 
-            {/* Address Information (full width) */}
-            <Card className="p-4 sm:p-6 md:col-span-2 min-w-0">
-              <h3 className="text-base sm:text-lg font-semibold text-foreground mb-4 sm:mb-6">
-                Address Information
-              </h3>
+        {/* Address Information (full width) */}
+        <div className={`${CARD_CLS} md:col-span-2`}>
+          <h3 className="mb-4 text-base font-semibold text-gray-900 sm:mb-6 sm:text-lg">
+            Address Information
+          </h3>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <ProfileField
-                  label="Country"
-                  value={userData.country}
-                  field="country"
-                  editingFields={editingFields}
-                  onEdit={handleEdit}
-                  onSave={handleSave}
-                  onCancel={handleCancel}
-                />
-                <ProfileField
-                  label="City"
-                  value={userData.city}
-                  field="city"
-                  editingFields={editingFields}
-                  onEdit={handleEdit}
-                  onSave={handleSave}
-                  onCancel={handleCancel}
-                />
-                <div className="sm:col-span-2">
-                  <ProfileField
-                    label="Home Address"
-                    value={userData.address}
-                    field="address"
-                    editingFields={editingFields}
-                    onEdit={handleEdit}
-                    onSave={handleSave}
-                    onCancel={handleCancel}
-                  />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <ProfileField
+              label="Country"
+              value={userData.country}
+              field="country"
+              editingFields={editingFields}
+              onEdit={handleEdit}
+              onSave={handleSave}
+              onCancel={handleCancel}
+            />
+            <ProfileField
+              label="City"
+              value={userData.city}
+              field="city"
+              editingFields={editingFields}
+              onEdit={handleEdit}
+              onSave={handleSave}
+              onCancel={handleCancel}
+            />
+            <div className="sm:col-span-2">
+              <ProfileField
+                label="Home Address"
+                value={userData.address}
+                field="address"
+                editingFields={editingFields}
+                onEdit={handleEdit}
+                onSave={handleSave}
+                onCancel={handleCancel}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Security Settings (full width) */}
+        <div className={`${CARD_CLS} md:col-span-2`}>
+          <h3 className="mb-4 text-base font-semibold text-gray-900 sm:mb-6 sm:text-lg">
+            Security Settings
+          </h3>
+
+          <div className="space-y-3 sm:space-y-4">
+            <div className="flex flex-col gap-3 rounded-lg bg-gray-50 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+              <div className="min-w-0">
+                <div className="font-medium text-gray-900">Password</div>
+                <div className="text-sm text-gray-500">
+                  Last changed 30 days ago
                 </div>
               </div>
-            </Card>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowPasswordModal(true)}
+                className="w-full shrink-0 border-gray-300 bg-transparent text-gray-800 hover:bg-gray-100 sm:w-auto"
+              >
+                Change Password
+              </Button>
+            </div>
 
-            {/* Security Settings (full width) */}
-            <Card className="p-4 sm:p-6 md:col-span-2 min-w-0">
-              <h3 className="text-base sm:text-lg font-semibold text-foreground mb-4 sm:mb-6">
-                Security Settings
-              </h3>
-
-              <div className="space-y-3 sm:space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 sm:p-4 bg-card rounded-lg">
-                  <div className="min-w-0">
-                    <div className="text-foreground font-medium">Password</div>
-                    <div className="text-muted-foreground text-sm">
-                      Last changed 30 days ago
-                    </div>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowPasswordModal(true)}
-                    className="w-full sm:w-auto shrink-0"
-                  >
-                    Change Password
-                  </Button>
+            <div className="flex flex-col gap-3 rounded-lg bg-gray-50 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+              <div className="min-w-0">
+                <div className="font-medium text-gray-900">
+                  Two-Factor Authentication
                 </div>
-
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 sm:p-4 bg-card rounded-lg">
-                  <div className="min-w-0">
-                    <div className="text-foreground font-medium">
-                      Two-Factor Authentication
-                    </div>
-                    <div className="text-muted-foreground text-sm">
-                      Add an extra layer of security
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm" className="w-full sm:w-auto shrink-0">
-                    Enable 2FA
-                  </Button>
+                <div className="text-sm text-gray-500">
+                  Add an extra layer of security
                 </div>
               </div>
-            </Card>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full shrink-0 border-gray-300 bg-transparent text-gray-800 hover:bg-gray-100 sm:w-auto"
+              >
+                Enable 2FA
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -399,6 +378,7 @@ export default function PersonalInfoScreen() {
               <div className="relative">
                 <Input
                   id="current-password"
+                  className="bg-white"
                   type={showPasswords.current ? "text" : "password"}
                   value={passwordData.currentPassword}
                   onChange={(e) =>
@@ -433,6 +413,7 @@ export default function PersonalInfoScreen() {
               <div className="relative">
                 <Input
                   id="new-password"
+                  className="bg-white"
                   type={showPasswords.new ? "text" : "password"}
                   value={passwordData.newPassword}
                   onChange={(e) =>
@@ -467,6 +448,7 @@ export default function PersonalInfoScreen() {
               <div className="relative">
                 <Input
                   id="confirm-password"
+                  className="bg-white"
                   type={showPasswords.confirm ? "text" : "password"}
                   value={passwordData.confirmPassword}
                   onChange={(e) =>
@@ -497,7 +479,7 @@ export default function PersonalInfoScreen() {
               </div>
             </div>
           </div>
-          <div className="flex gap-3 mt-6">
+          <div className="mt-6 flex gap-3">
             <Button
               onClick={async () => {
                 if (passwordData.newPassword !== passwordData.confirmPassword) {
@@ -582,7 +564,7 @@ function ProfileField({
 
   return (
     <div className="space-y-2">
-      <Label className="text-sm font-medium">{label}</Label>
+      <Label className="text-sm font-medium text-gray-600">{label}</Label>
 
       {isEditing ? (
         <div className="space-y-2">
@@ -591,31 +573,42 @@ function ProfileField({
             value={tempValue}
             onChange={(e) => handleChange(e.target.value)}
             autoFocus
+            className="border-gray-300 bg-white text-gray-900"
           />
-          <div className="flex gap-2 justify-end">
-            <Button onClick={() => onSave(field)} size="sm">
-              <Save className="w-4 h-4" />
+          <div className="flex justify-end gap-2">
+            <Button
+              onClick={() => onSave(field)}
+              size="sm"
+              className="bg-[var(--header-primary)] text-white hover:bg-[var(--header-primary)]/90"
+            >
+              <Save className="h-4 w-4" />
             </Button>
-            <Button onClick={() => onCancel(field)} variant="outline" size="sm">
-              <X className="w-4 h-4" />
+            <Button
+              onClick={() => onCancel(field)}
+              variant="outline"
+              size="sm"
+              className="border-gray-300 bg-transparent text-gray-800 hover:bg-gray-100"
+            >
+              <X className="h-4 w-4" />
             </Button>
           </div>
         </div>
       ) : (
-        <div className="flex items-center justify-between p-3 bg-muted rounded-md border">
-          <span className="text-foreground flex-1 min-w-0 truncate pr-2">
+        <div className="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 p-3">
+          <span className="min-w-0 flex-1 truncate pr-2 text-gray-900">
             {value || "—"}
           </span>
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex flex-shrink-0 items-center gap-2">
             {locked ? (
-              <Lock className="w-4 h-4 text-muted-foreground" />
+              <Lock className="h-4 w-4 text-gray-400" />
             ) : (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => onEdit(field, value)}
+                className="text-gray-700 hover:bg-gray-100 hover:text-gray-900"
               >
-                <Edit className="w-4 h-4" />
+                <Edit className="h-4 w-4" />
               </Button>
             )}
           </div>

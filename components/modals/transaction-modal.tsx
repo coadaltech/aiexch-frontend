@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -90,21 +89,24 @@ export default function TransactionModal({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent
-        className="max-w-md max-h-[90vh] overflow-y-auto"
+        className="max-w-md max-h-[90vh] overflow-y-auto bg-white"
         showCloseButton={false}
       >
         <DialogHeader>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {step !== "method" && (
               <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 shrink-0 p-0 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                 onClick={() =>
                   setStep(step === "confirmation" ? "details" : "method")
                 }
               >
-                <ArrowLeft className="w-5 h-5" />
+                <ArrowLeft className="h-5 w-5" />
               </Button>
             )}
-            <DialogTitle className="text-xl font-bold text-foreground">
+            <DialogTitle className="text-xl font-bold text-gray-900">
               {title}
             </DialogTitle>
           </div>
@@ -238,8 +240,8 @@ function MethodSelection({
   if (loading) {
     return (
       <div className="text-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-        <p className="text-muted-foreground mt-2">Loading payment methods...</p>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--header-primary)] mx-auto"></div>
+        <p className="text-gray-500 mt-2">Loading payment methods...</p>
       </div>
     );
   }
@@ -247,47 +249,47 @@ function MethodSelection({
   return (
     <div className="space-y-4">
       <div className="text-center mb-6">
-        <h3 className="text-lg font-semibold text-foreground mb-2">
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">
           Choose {isDeposit ? "Deposit" : "Withdrawal"} Method
         </h3>
-        <p className="text-muted-foreground text-sm">
+        <p className="text-gray-500 text-sm">
           Select your preferred {isDeposit ? "deposit" : "withdrawal"} method
         </p>
       </div>
 
       <div className="space-y-3">
         {methods.map((method) => (
-          <Card
+          <div
             key={method.id}
             onClick={() => onMethodSelect(method)}
-            className="w-full p-4 cursor-pointer hover:bg-card/80 hover:border-primary transition-colors"
+            className="w-full cursor-pointer rounded-xl border border-gray-200 bg-white p-4 transition-colors hover:border-[var(--header-primary)] hover:bg-gray-50"
           >
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-primary/10 border border-primary/30 rounded-lg flex items-center justify-center text-primary font-bold text-lg">
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[var(--header-primary)]/10 text-lg font-bold text-[var(--header-primary)]">
                 {typeof method.icon === "string" ? method.icon : method.icon}
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <div className="font-semibold text-foreground">
+                  <div className="font-semibold text-gray-900">
                     {method.name}
                   </div>
                   {"qrCode" in method && method.qrCode?.currency && (
-                    <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded">
+                    <span className="rounded bg-[var(--header-primary)]/10 px-2 py-1 text-xs text-[var(--header-primary)]">
                       {method.qrCode.currency}
                     </span>
                   )}
                   {"method" in method && method.method?.currency && (
-                    <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded">
+                    <span className="rounded bg-[var(--header-primary)]/10 px-2 py-1 text-xs text-[var(--header-primary)]">
                       {method.method.currency}
                     </span>
                   )}
                 </div>
-                <div className="text-sm text-muted-foreground">
+                <div className="text-sm text-gray-500">
                   {method.description}
                 </div>
               </div>
             </div>
-          </Card>
+          </div>
         ))}
       </div>
     </div>

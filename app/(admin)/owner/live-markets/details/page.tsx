@@ -359,7 +359,7 @@ function BetDetailModal({
         {/* ── Event & Market ── */}
         <section>
           <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1.5">Event & Market</p>
-          <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm">
             <Row label="Event"       value={bet.event_name       ?? "—"} />
             <Row label="Competition" value={bet.competition_name ?? "—"} />
             <Row label="Market"      value={bet.market_name      ?? "—"} />
@@ -374,7 +374,7 @@ function BetDetailModal({
         {/* ── Bet Info ── */}
         <section>
           <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1.5">Bet Info</p>
-          <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm">
             <Row label="Stake"             value={`₹ ${fmtNum(bet.stake)}`} />
             <Row label="Odds"              value={fmtNum(bet.odds)} />
             <Row label="Potential Return"  value={`₹ ${fmtNum(bet.potential_return)}`} />
@@ -392,7 +392,7 @@ function BetDetailModal({
         {/* ── User & Whitelabel ── */}
         <section>
           <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1.5">User & Whitelabel</p>
-          <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm">
             <Row label="Username"   value={bet.user_name      ?? "—"} />
             <Row label="Whitelabel" value={bet.whitelabel_name ?? "—"} />
             {bet.ip_address && <Row label="IP Address" value={bet.ip_address} />}

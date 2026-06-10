@@ -63,7 +63,7 @@ export default function WhitelabelsPage() {
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto -mx-6 px-6 sm:mx-0 sm:px-0">
-            <table className="w-full min-w-[600px]">
+            <table className="w-full sm:min-w-[600px]">
               <thead>
                 <tr className="border-b border-border">
                   <th className="text-left py-3 px-2 text-muted-foreground text-sm">
@@ -114,7 +114,7 @@ export default function WhitelabelsPage() {
                           Type: {whitelabel.whitelabelType || "N/A"}
                         </div>
                       </td>
-                      <td className="py-3 px-2 text-muted-foreground text-sm hidden sm:table-cell truncate max-w-32">
+                      <td className="py-3 px-2 text-muted-foreground text-sm hidden sm:table-cell truncate max-w-20 sm:max-w-32">
                         {whitelabel.domain}
                       </td>
                       <td className="py-3 px-2 text-muted-foreground text-sm hidden md:table-cell">

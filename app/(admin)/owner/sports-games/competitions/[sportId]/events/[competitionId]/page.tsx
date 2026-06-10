@@ -9,6 +9,7 @@ import { usePanelPrefix } from "@/hooks/usePanelPrefix";
 import { ownerApi } from "@/lib/api";
 import { formatLocal } from "@/lib/date-utils";
 import { usePermissions } from "@/contexts/PermissionContext";
+import { Ban } from "lucide-react";
 
 // usePermissions kept above — we use `has("custom_markets.view")` here only
 // to decide whether the per-event "manage markets" link is clickable.
@@ -216,7 +217,7 @@ export default function EventsPage() {
   const competitionName = response?.competitionName || "Competition";
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
       {/* Header */}
       <div className="mb-6">
         <button
@@ -228,9 +229,9 @@ export default function EventsPage() {
           </svg>
           Back to Competitions
         </button>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
               {competitionName} Events
             </h1>
             <div className="flex items-center gap-3 mt-1">
@@ -285,7 +286,7 @@ export default function EventsPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
           <p className="text-sm text-gray-600">Total Events</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">{stats.totalAll}</p>
@@ -310,7 +311,7 @@ export default function EventsPage() {
 
       {/* Search and Select All */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-4">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="relative flex-1">
             <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -345,9 +346,9 @@ export default function EventsPage() {
           return (
             <div
               key={evt.id}
-              className="flex items-center justify-between p-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors"
+              className="flex items-center justify-between gap-3 p-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors"
             >
-              <div className="flex items-center gap-4 flex-1">
+              <div className="flex items-center gap-4 flex-1 min-w-0">
                 {canEdit ? (
                   <input
                     type="checkbox"
@@ -385,8 +386,12 @@ export default function EventsPage() {
                       </span>
                     )}
                     {isOwner && !evt.isActive && (
-                      <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">
-                        Globally Inactive
+                      <span
+                        title="Globally Inactive"
+                        className="text-xs bg-red-100 text-red-600 rounded-full inline-flex items-center gap-1 px-1.5 py-0.5 sm:px-2 shrink-0"
+                      >
+                        <Ban className="h-3 w-3" />
+                        <span className="hidden sm:inline">Globally Inactive</span>
                       </span>
                     )}
                   </div>
@@ -396,7 +401,7 @@ export default function EventsPage() {
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col items-center gap-3 sm:gap-4 shrink-0">
                 {isOwner && (
                   <button
                     type="button"
@@ -416,11 +421,16 @@ export default function EventsPage() {
                         : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
                     }`}
                   >
-                    {togglingRecommendedId === evt.id
-                      ? "Saving…"
-                      : evt.isRecommended
-                        ? "★ Recommended"
-                        : "☆ Recommend"}
+                    {togglingRecommendedId === evt.id ? (
+                      "Saving…"
+                    ) : (
+                      <>
+                        <span>{evt.isRecommended ? "★" : "☆"}</span>
+                        <span className="hidden sm:inline">
+                          {evt.isRecommended ? " Recommended" : " Recommend"}
+                        </span>
+                      </>
+                    )}
                   </button>
                 )}
                 <span
@@ -454,7 +464,7 @@ export default function EventsPage() {
 
       {/* Pagination */}
       {totalCount > PAGE_SIZE && (
-        <div className="flex items-center justify-between mt-6 bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-3">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-6 bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-3">
           <p className="text-sm text-gray-600">
             {loading
               ? "Loading…"

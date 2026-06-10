@@ -118,7 +118,7 @@ export default function SettingsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
             <div>
               <Label className="text-foreground">Enable Maintenance Mode</Label>
               <p className="text-sm text-muted-foreground">

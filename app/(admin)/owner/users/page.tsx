@@ -344,8 +344,8 @@ export default function UsersPage() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+      {/* Table — desktop / tablet (md and up) */}
+      <div className="hidden md:block bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-[16px] border-collapse">
             <thead>
@@ -553,6 +553,130 @@ export default function UsersPage() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Cards — mobile (below md) */}
+      <div className="md:hidden space-y-3">
+        {isLoading && (
+          <div className="py-10 text-center bg-white border border-gray-200 rounded-lg">
+            <Loader2 className="h-5 w-5 animate-spin text-gray-400 mx-auto" />
+          </div>
+        )}
+
+        {!isLoading && filteredUsers.length === 0 && (
+          <div className="py-10 text-center text-gray-400 bg-white border border-gray-200 rounded-lg">
+            No users found.
+          </div>
+        )}
+
+        {!isLoading && filteredUsers.length > 0 && (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+            <div className="text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">Total</div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
+              <div className="flex justify-between"><span className="text-gray-500">Credit Ref</span><span className="font-semibold text-gray-900">{fmt(totals.fixLimit)}</span></div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Client P/L</span>
+                <span className={cn("font-semibold", totals.clientPnl > 0 ? "text-emerald-600" : totals.clientPnl < 0 ? "text-rose-600" : "text-gray-900")}>
+                  {totals.clientPnl > 0 ? "+" : ""}{fmt(totals.clientPnl)}
+                </span>
+              </div>
+              <div className="flex justify-between"><span className="text-gray-500">Balance</span><span className="font-semibold text-gray-900">{fmt(totals.balance)}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Exposure</span><span className="font-semibold text-gray-900">{fmt(totals.limitConsumed)}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Avail. Bal</span><span className="font-semibold text-gray-900">{fmt(totals.finalLimit)}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Txn Limit</span><span className="font-semibold text-gray-900">{fmt(totals.transactionLimit)}</span></div>
+            </div>
+          </div>
+        )}
+
+        {!isLoading && filteredUsers.map((u: any) => {
+          const fixLimit         = u.fixLimit         ?? "0";
+          const finalLimit       = u.finalLimit       ?? "0";
+          const limitConsumed    = u.limitConsumed    ?? "0";
+          const totalPnl         = u.totalpnl         ?? "0";
+          const transactionLimit = u.transactionLimit ?? "0";
+
+          const fixLimitNum = parseFloat(fixLimit);
+          const clientPnl = parseFloat(totalPnl);
+          const computedBalance = fixLimitNum + clientPnl;
+
+          const uActive = u.accountStatus !== false && u.parentAccountStatus !== false;
+          const bActive = u.betStatus     !== false && u.parentBetStatus     !== false;
+          const isLeafUser = String(u.role ?? "").toLowerCase() === "user";
+          const quickUser = { id: u.id, username: u.username, email: u.email };
+          const hasAnyAction = canDeposit || canWithdraw || canLimit || canSetTxLimit || canEditUser || canToggleStatus;
+
+          return (
+            <div key={u.id} className="bg-white border border-gray-200 rounded-lg shadow-sm p-3 space-y-3">
+              {/* Header: username + role + status */}
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <button
+                    onClick={() => setChildrenUser({ id: u.id, username: u.username || u.name })}
+                    className="font-semibold text-[var(--header-primary)] hover:underline text-left truncate block max-w-full"
+                    title="View this user's downline"
+                  >
+                    {u.username}
+                  </button>
+                  <span className="text-xs text-gray-500">{roleLabel(u.role)}</span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex flex-col items-center gap-0.5">
+                    <span className="text-[9px] text-gray-400 leading-none">U</span>
+                    <StatusDot active={uActive} title={uActive ? "User active" : "User disabled"} />
+                  </div>
+                  <div className="flex flex-col items-center gap-0.5">
+                    <span className="text-[9px] text-gray-400 leading-none">B</span>
+                    <StatusDot active={bActive} title={bActive ? "Betting active" : "Betting disabled"} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Values */}
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
+                <div className="flex justify-between gap-2"><span className="text-gray-500">Credit Ref</span><span className="font-semibold text-gray-800">{fmt(fixLimit)}</span></div>
+                <div className="flex justify-between gap-2">
+                  <span className="text-gray-500">Client P/L</span>
+                  <span className={cn("font-semibold", clientPnl > 0 ? "text-emerald-600" : clientPnl < 0 ? "text-rose-600" : "text-gray-800")}>
+                    {clientPnl > 0 ? "+" : ""}{fmt(clientPnl)}
+                  </span>
+                </div>
+                <div className="flex justify-between gap-2"><span className="text-gray-500">Balance</span><span className="font-semibold text-gray-800">{fmt(computedBalance)}</span></div>
+                <div className="flex justify-between gap-2"><span className="text-gray-500">Exposure</span><span className="font-semibold text-gray-800">{fmt(limitConsumed)}</span></div>
+                <div className="flex justify-between gap-2"><span className="text-gray-500">Avail. Bal</span><span className="font-semibold text-gray-800">{fmt(finalLimit)}</span></div>
+                <div className="flex justify-between gap-2"><span className="text-gray-500">Txn Limit</span><span className="font-semibold text-gray-800">{fmt(transactionLimit)}</span></div>
+              </div>
+
+              {/* Actions */}
+              {hasAnyAction && (
+                <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-gray-100">
+                  {canDeposit && (
+                    <ActionBtn letter="D" title="Deposit voucher" onClick={() => setVoucherState({ user: quickUser, type: "deposit" })} />
+                  )}
+                  {canWithdraw && (
+                    <ActionBtn letter="W" title="Withdraw voucher" onClick={() => setVoucherState({ user: quickUser, type: "withdraw" })} />
+                  )}
+                  {canLimit && (
+                    <ActionBtn letter="L" title="Limit voucher" onClick={() => setVoucherState({ user: quickUser, type: "limit" })} />
+                  )}
+                  {canSetTxLimit && (
+                    <ActionBtn
+                      letter="TL"
+                      title={isLeafUser ? "Update transaction limit" : "Transaction limit only applies to user accounts"}
+                      disabled={!isLeafUser}
+                      onClick={() => setTxLimitUser({ id: u.id, username: u.username, transactionLimit: u.transactionLimit ?? "0" })}
+                    />
+                  )}
+                  {canEditUser && (
+                    <ActionBtn letter="P" title="Password & profile" onClick={() => setProfileEditUser(u)} />
+                  )}
+                  {canToggleStatus && (
+                    <ActionBtn letter="S" title="Change status (account / betting)" onClick={() => handleOpenChangeStatus(u)} />
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <UserModal

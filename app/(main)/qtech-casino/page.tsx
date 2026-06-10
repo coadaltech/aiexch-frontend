@@ -73,6 +73,13 @@ export default function LiveCasinoPage() {
   const [activeCat, setActiveCat] = useState<string>("ALL");
   const [search, setSearch] = useState("");
 
+  // Allow deep-linking into a category (e.g. the home page "RV Casino" button
+  // navigates here with ?cat=RVCASINO).
+  useEffect(() => {
+    const cat = new URLSearchParams(window.location.search).get("cat");
+    if (cat) setActiveCat(cat);
+  }, []);
+
   const qt = useQtechGames();
   const ace = useAceGames();
 
@@ -446,12 +453,11 @@ function CategoryCard({
 function GameTile({ game }: { game: CasinoGame }) {
   const [loaded, setLoaded] = useState(false);
   return (
-    <Link
-      href={game.href}
+    <div
       // content-visibility lets the browser skip layout/paint for tiles far
       // off-screen — keeps scrolling a large grid smooth.
       style={{ contentVisibility: "auto", containIntrinsicSize: "180px" }}
-      className="group block overflow-hidden rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ede105]"
+      className="group block overflow-hidden rounded-md"
     >
       <div className="overflow-hidden rounded-md bg-[#1a212b] shadow-sm transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-xl">
         <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-900">
@@ -473,11 +479,17 @@ function GameTile({ game }: { game: CasinoGame }) {
               {game.name}
             </div>
           )}
-          <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-200 group-hover:bg-black/50 group-hover:opacity-100">
-            <span className="flex items-center gap-1.5 rounded-full bg-[#ede105] px-3.5 py-1.5 text-xs font-bold text-black shadow-lg">
-              <Play className="h-3.5 w-3.5 fill-black" />
+          {/* Hover overlay. The card itself isn't clickable — only the Play Now
+              button navigates. pointer-events-none on the backdrop keeps clicks
+              elsewhere on the tile inert; the button re-enables them. */}
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-200 group-hover:bg-black/50 group-hover:opacity-100">
+            <Link
+              href={game.href}
+              className="pointer-events-auto flex items-center gap-1.5 rounded-md bg-black/80 hover:border-white border-2 border-black  text-white px-4.5 py-2.5 text-sm font-bold text-black shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            >
+              <Play className="h-4.5 w-4.5 fill-black" />
               Play Now
-            </span>
+            </Link>
           </div>
         </div>
 
@@ -499,6 +511,6 @@ function GameTile({ game }: { game: CasinoGame }) {
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }

@@ -95,11 +95,14 @@ export default function BottomNavigation() {
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 w-full z-40 bg-[#1a3578] border-t border-[#1e4088] lg:hidden body-modal-open:hidden">
+      <div className="fixed bottom-0 left-0 right-0 w-full z-40 bg-[var(--header-primary)] border-t border-[color-mix(in_srgb,var(--header-text)_15%,transparent)] lg:hidden body-modal-open:hidden">
         <div className="flex items-center justify-around  px-2 py-2">
           {visibleNavItems.map((item) => {
             const Icon = item.icon;
-            const isActive = activeTab === item.id;
+            const isActive =
+              item.link === "/"
+                ? pathname === "/" || pathname === "/home"
+                : !!pathname && (pathname === item.link || pathname.startsWith(item.link + "/"));
 
             return (
               <button
@@ -126,29 +129,19 @@ export default function BottomNavigation() {
                 flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-300 min-w-0 flex-1
                 ${
                   isActive
-                    ? "text-primary"
-                    : "text-nav-text-muted hover:text-primary hover:bg-nav-btn/50"
+                    ? "text-[var(--header-secondary)]"
+                    : "text-[color-mix(in_srgb,var(--header-text)_70%,transparent)] hover:text-[var(--header-text)]"
                 }
               `}
               >
                 <div
-                  className={`
-                p-1.5 rounded-lg transition-all duration-300
-                ${
-                  isActive
-                    ? "text-primary scale-110 "
-                    : "text-white  group-hover:bg-muted/80 bg-gradient-to-r from-nav-dark via-nav-surface to-nav-dark"
-                }
-              `}
+                  className={`p-1.5 rounded-lg transition-all duration-300 ${
+                    isActive ? "scale-110" : ""
+                  }`}
                 >
                   <Icon size={18} className="stroke-2" />
                 </div>
-                <span
-                  className={`
-                text-xs font-medium mt-1 transition-all duration-300 truncate
-                ${isActive ? "text-primary" : "text-white"}
-              `}
-                >
+                <span className="text-xs font-medium mt-1 transition-all duration-300 truncate">
                   {item.label}
                 </span>
               </button>
