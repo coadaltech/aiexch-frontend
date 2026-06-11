@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, X } from "lucide-react";
 import {
-  useCreateKalyanNewShift,
-  useUpdateKalyanNewShift,
+  useCreateBombayBazarShift,
+  useUpdateBombayBazarShift,
 } from "@/hooks/useOwner";
 
 interface Props {
@@ -15,18 +15,18 @@ interface Props {
   shift?: any;
 }
 
-// Kalyan-New rate buckets:
+// Bombay Bazar rate buckets:
 //   Single Pana → singlePanaRate    (NEW column)
 //   Double Pana → doublePanaRate    (NEW column)
 //   Triple Pana → tripleRate        (existing, shared with Jambo)
 //   Jodi        → daraRate          (existing)
 //   Akhar       → akharRate         (existing)
 //   Sangam      → sangamRate        (NEW column)
-// Plus closingTime: second result time of the day (Kalyan-New only).
-export function KalyanNewShiftModal({ open, onClose, shift }: Props) {
+// Plus closingTime: second result time of the day (Bombay Bazar only).
+export function BombayBazarShiftModal({ open, onClose, shift }: Props) {
   const isEdit = !!shift;
-  const createMutation = useCreateKalyanNewShift();
-  const updateMutation = useUpdateKalyanNewShift();
+  const createMutation = useCreateBombayBazarShift();
+  const updateMutation = useUpdateBombayBazarShift();
 
   const empty = {
     name: "",

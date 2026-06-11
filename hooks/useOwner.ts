@@ -1377,59 +1377,59 @@ export const useReorderJamboShifts = () => {
   });
 };
 
-// ── Kalyan-New Shifts (owner) ───────────────────────────────────────────────
-export const useOwnerKalyanNewShifts = (date?: string) => {
+// ── Bombay Bazar Shifts (owner) ───────────────────────────────────────────────
+export const useOwnerBombayBazarShifts = (date?: string) => {
   return useQuery({
-    queryKey: ["owner-kalyan-new-shifts", date],
+    queryKey: ["owner-bombay-bazar-shifts", date],
     queryFn: () =>
-      ownerApi.getKalyanNewShifts(date).then((res) => res.data.data),
+      ownerApi.getBombayBazarShifts(date).then((res) => res.data.data),
   });
 };
 
-export const useCreateKalyanNewShift = () => {
+export const useCreateBombayBazarShift = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: any) => ownerApi.createKalyanNewShift(data),
+    mutationFn: (data: any) => ownerApi.createBombayBazarShift(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["owner-kalyan-new-shifts"] });
+      queryClient.invalidateQueries({ queryKey: ["owner-bombay-bazar-shifts"] });
       toast.success("Shift created successfully");
     },
     onError: () => toast.error("Failed to create shift"),
   });
 };
 
-export const useUpdateKalyanNewShift = () => {
+export const useUpdateBombayBazarShift = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, ...data }: any) =>
-      ownerApi.updateKalyanNewShift(id, data),
+      ownerApi.updateBombayBazarShift(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["owner-kalyan-new-shifts"] });
+      queryClient.invalidateQueries({ queryKey: ["owner-bombay-bazar-shifts"] });
       toast.success("Shift updated successfully");
     },
     onError: () => toast.error("Failed to update shift"),
   });
 };
 
-export const useDeleteKalyanNewShift = () => {
+export const useDeleteBombayBazarShift = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => ownerApi.deleteKalyanNewShift(id),
+    mutationFn: (id: string) => ownerApi.deleteBombayBazarShift(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["owner-kalyan-new-shifts"] });
+      queryClient.invalidateQueries({ queryKey: ["owner-bombay-bazar-shifts"] });
       toast.success("Shift deleted successfully");
     },
     onError: () => toast.error("Failed to delete shift"),
   });
 };
 
-export const useReorderKalyanNewShifts = () => {
+export const useReorderBombayBazarShifts = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (orders: { id: string; shiftOrder: number }[]) =>
-      ownerApi.reorderKalyanNewShifts(orders),
+      ownerApi.reorderBombayBazarShifts(orders),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["owner-kalyan-new-shifts"] });
+      queryClient.invalidateQueries({ queryKey: ["owner-bombay-bazar-shifts"] });
     },
     onError: () => toast.error("Failed to reorder shifts"),
   });

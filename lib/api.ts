@@ -512,19 +512,19 @@ export const ownerApi = {
   reorderJamboShifts: (orders: { id: string; shiftOrder: number }[]) =>
     api.put("/owner/jambo/shifts/reorder", { orders }),
 
-  // Kalyan-New Shifts (sport_type=1005, 6 rate buckets + closing time)
-  getKalyanNewShifts: (date?: string) =>
-    api.get(`/owner/kalyan-new/shifts${date ? `?date=${date}` : ""}`),
-  createKalyanNewShift: (data: any) =>
-    api.post("/owner/kalyan-new/shifts", data),
-  updateKalyanNewShift: (id: string, data: any) =>
-    api.put(`/owner/kalyan-new/shifts/${id}`, data),
-  deleteKalyanNewShift: (id: string) =>
-    api.delete(`/owner/kalyan-new/shifts/${id}`),
-  getKalyanNewJantri: (shiftId: string) =>
-    api.get(`/owner/kalyan-new/shifts/${shiftId}/jantri`),
-  reorderKalyanNewShifts: (orders: { id: string; shiftOrder: number }[]) =>
-    api.put("/owner/kalyan-new/shifts/reorder", { orders }),
+  // Bombay Bazar Shifts (sport_type=1005, 6 rate buckets + closing time)
+  getBombayBazarShifts: (date?: string) =>
+    api.get(`/owner/bombay-bazar/shifts${date ? `?date=${date}` : ""}`),
+  createBombayBazarShift: (data: any) =>
+    api.post("/owner/bombay-bazar/shifts", data),
+  updateBombayBazarShift: (id: string, data: any) =>
+    api.put(`/owner/bombay-bazar/shifts/${id}`, data),
+  deleteBombayBazarShift: (id: string) =>
+    api.delete(`/owner/bombay-bazar/shifts/${id}`),
+  getBombayBazarJantri: (shiftId: string) =>
+    api.get(`/owner/bombay-bazar/shifts/${shiftId}/jantri`),
+  reorderBombayBazarShifts: (orders: { id: string; shiftOrder: number }[]) =>
+    api.put("/owner/bombay-bazar/shifts/reorder", { orders }),
 
   // Matka Live Prediction
   getMatkaLivePrediction: (shiftId: string) =>
@@ -828,28 +828,28 @@ export const sportsApi = {
     api.get(`/sports/new-result/${eventId}`),
 };
 
-export const kalyanNewApi = {
+export const bombayBazarApi = {
   getShifts: (date?: string) =>
-    api.get(`/kalyan-new/shifts${date ? `?date=${date}` : ""}`),
-  getShift: (id: string) => api.get(`/kalyan-new/shifts/${id}`),
+    api.get(`/bombay-bazar/shifts${date ? `?date=${date}` : ""}`),
+  getShift: (id: string) => api.get(`/bombay-bazar/shifts/${id}`),
   getJantri: (shiftId: string) =>
-    api.get(`/kalyan-new/shifts/${shiftId}/jantri`),
+    api.get(`/bombay-bazar/shifts/${shiftId}/jantri`),
   placeBet: (data: {
     shiftId: string;
     bets: { number: string; numberType: number; amount: number }[];
     copyReferenceShiftId?: string;
     whitelabelId?: string;
-  }) => api.post("/kalyan-new/place", data),
+  }) => api.post("/bombay-bazar/place", data),
   getMyBets: (params?: { shiftId?: string; status?: "active" | "inactive" }) => {
     const qs = new URLSearchParams();
     if (params?.shiftId) qs.set("shiftId", params.shiftId);
     if (params?.status) qs.set("status", params.status);
     const query = qs.toString();
-    return api.get(`/kalyan-new/my-bets${query ? `?${query}` : ""}`);
+    return api.get(`/bombay-bazar/my-bets${query ? `?${query}` : ""}`);
   },
-  getTransaction: (id: string) => api.get(`/kalyan-new/transactions/${id}`),
+  getTransaction: (id: string) => api.get(`/bombay-bazar/transactions/${id}`),
   deleteTransaction: (id: string) =>
-    api.delete(`/kalyan-new/transactions/${id}`),
+    api.delete(`/bombay-bazar/transactions/${id}`),
 };
 
 export const jamboApi = {

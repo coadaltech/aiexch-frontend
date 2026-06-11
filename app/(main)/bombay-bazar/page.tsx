@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { kalyanNewApi } from "@/lib/api";
+import { bombayBazarApi } from "@/lib/api";
 import { Calendar, Clock, Trophy } from "lucide-react";
 import { formatLocalDate } from "@/lib/date-utils";
 
-// Kalyan-New shifts share the matka_shifts table shape; sport_type=1005.
-// Fields specific to Kalyan-New: closingTime, singlePana*, doublePana*, sangam*.
-interface KalyanNewShift {
+// Bombay Bazar shifts share the matka_shifts table shape; sport_type=1005.
+// Fields specific to Bombay Bazar: closingTime, singlePana*, doublePana*, sangam*.
+interface BombayBazarShift {
   id: string;
   name: string;
   sportType: number;
@@ -36,12 +36,12 @@ interface KalyanNewShift {
   capping: string;
 }
 
-function useKalyanNewShifts(date?: string) {
+function useBombayBazarShifts(date?: string) {
   return useQuery({
-    queryKey: ["kalyan-new-shifts", date],
+    queryKey: ["bombay-bazar-shifts", date],
     queryFn: async () => {
-      const res = await kalyanNewApi.getShifts(date);
-      return (res.data?.data ?? []) as KalyanNewShift[];
+      const res = await bombayBazarApi.getShifts(date);
+      return (res.data?.data ?? []) as BombayBazarShift[];
     },
     staleTime: 30 * 1000,
     refetchInterval: 60 * 1000,
@@ -104,7 +104,7 @@ function useCountdown(shiftDate: string, endTime: string, nextDayAllow: boolean)
   return { timeLeft, isExpired };
 }
 
-function ShiftCard({ shift }: { shift: KalyanNewShift }) {
+function ShiftCard({ shift }: { shift: BombayBazarShift }) {
   const isDeclared = shift.shiftDate === "1970-01-01";
   const hasResult = shift.result !== null && shift.result !== undefined;
   const { timeLeft, isExpired } = useCountdown(
@@ -114,7 +114,7 @@ function ShiftCard({ shift }: { shift: KalyanNewShift }) {
   );
 
   return (
-    <Link href={`/kalyan-new/${shift.id}`} className="block group">
+    <Link href={`/bombay-bazar/${shift.id}`} className="block group">
       <div className="bg-white border border-gray-200 hover:border-[var(--header-primary)]/40 rounded-xl px-4 py-4 transition-all duration-200 hover:shadow-md shadow-sm">
         <h3 className="font-bold text-gray-900 text-sm font-condensed uppercase truncate text-center tracking-wide">
           {shift.name}
@@ -158,10 +158,10 @@ function ShiftCard({ shift }: { shift: KalyanNewShift }) {
   );
 }
 
-export default function KalyanNewPage() {
+export default function BombayBazarPage() {
   const today = new Date().toISOString().split("T")[0];
   const [date, setDate] = useState(today);
-  const { data: shifts = [], isLoading } = useKalyanNewShifts(date);
+  const { data: shifts = [], isLoading } = useBombayBazarShifts(date);
 
   return (
     <div className="bg-gray-100 min-h-full">

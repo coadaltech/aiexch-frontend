@@ -13,23 +13,23 @@ import {
 } from "lucide-react";
 import { formatLocalDate } from "@/lib/date-utils";
 import {
-  useOwnerKalyanNewShifts,
-  useDeleteKalyanNewShift,
-  useReorderKalyanNewShifts,
+  useOwnerBombayBazarShifts,
+  useDeleteBombayBazarShift,
+  useReorderBombayBazarShifts,
 } from "@/hooks/useOwner";
 import { useConfirm } from "@/hooks/useConfirm";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { KalyanNewShiftModal } from "./shift-modal";
+import { BombayBazarShiftModal } from "./shift-modal";
 import { Can } from "@/contexts/PermissionContext";
 
-export default function OwnerKalyanNewPage() {
+export default function OwnerBombayBazarPage() {
   const [dateFilter, setDateFilter] = useState<string>("");
 
-  const { data: shifts = [], isLoading } = useOwnerKalyanNewShifts(
+  const { data: shifts = [], isLoading } = useOwnerBombayBazarShifts(
     dateFilter || undefined
   );
-  const deleteMutation = useDeleteKalyanNewShift();
-  const reorderMutation = useReorderKalyanNewShifts();
+  const deleteMutation = useDeleteBombayBazarShift();
+  const reorderMutation = useReorderBombayBazarShifts();
   const confirmDialog = useConfirm();
 
   const [shiftModalOpen, setShiftModalOpen] = useState(false);
@@ -122,7 +122,7 @@ export default function OwnerKalyanNewPage() {
             className="border border-border bg-card text-foreground rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             placeholder="Filter by date"
           />
-          <Can perm="kalyan.create">
+          <Can perm="bombay-bazar.create">
             <Button
               onClick={handleCreate}
               className="bg-primary hover:bg-primary/90 text-primary-foreground"
@@ -191,7 +191,7 @@ export default function OwnerKalyanNewPage() {
                     </div>
                     <div className="flex-1" />
                     <div className="flex gap-1 shrink-0">
-                      <Can perm="kalyan.edit">
+                      <Can perm="bombay-bazar.edit">
                         <Button
                           size="sm"
                           variant="ghost"
@@ -202,7 +202,7 @@ export default function OwnerKalyanNewPage() {
                           <Edit className="h-4 w-4" />
                         </Button>
                       </Can>
-                      <Can perm="kalyan.delete">
+                      <Can perm="bombay-bazar.delete">
                         <Button
                           size="sm"
                           variant="ghost"
@@ -298,7 +298,7 @@ export default function OwnerKalyanNewPage() {
         </CardContent>
       </Card>
 
-      <KalyanNewShiftModal
+      <BombayBazarShiftModal
         open={shiftModalOpen}
         onClose={() => {
           setShiftModalOpen(false);

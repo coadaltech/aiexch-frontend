@@ -274,7 +274,7 @@ const QUICK_ACCESS = [
   { label: "Horse Racing", href: "/sports/horse-racing", icon: Dog },
   { label: "Matka", href: "/matka", icon: Spade },
   { label: "Election", href: "/sports/politics", icon: Flag },
-  { label: "Bombay Bazar", href: "/kalyan-new", icon: Disc3 },
+  { label: "Bombay Bazar", href: "/bombay-bazar", icon: Disc3 },
   { label: "More", href: "/qtech-casino", icon: MoreHorizontal },
 ];
 

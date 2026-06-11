@@ -56,12 +56,12 @@ export const SPORT_ROUTES = {
 
 /**
  * User-facing display-name overrides keyed by eventTypeId. The backend may
- * still send a legacy name (e.g. "Politics", "Kalyan New"); these take
+ * still send a legacy name (e.g. "Politics", "Bombay Bazar"); these take
  * precedence for any label shown to users so a rename needs no data migration.
  */
 export const SPORT_DISPLAY_NAME_OVERRIDES: Record<string, string> = {
   "500": "Election", // was "Politics"
-  "1005": "Bombay Bazar", // was "Kalyan New"
+  "1005": "Bombay Bazar", // was "Bombay Bazar"
 };
 
 /** Resolve the display name for a sport, applying any override. */

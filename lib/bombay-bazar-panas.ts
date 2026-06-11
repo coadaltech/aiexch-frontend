@@ -1,8 +1,8 @@
-// Master pana list mirrored from the backend (src/utils/kalyan-panas.ts).
+// Master pana list mirrored from the backend (src/utils/bombay-bazar-panas.ts).
 // Keep these two files in sync — server is authoritative; client list is for
 // rendering the grid only.
 
-export const KALYAN_SINGLE_PANAS: string[] = [
+export const BOMBAY_BAZAR_SINGLE_PANAS: string[] = [
   "128","129","120","130","140","123","124","125","126","127",
   "137","138","139","149","159","150","160","134","135","136",
   "146","147","148","158","168","169","179","170","180","145",
@@ -19,7 +19,7 @@ export const KALYAN_SINGLE_PANAS: string[] = [
 
 // 90 double panas — restored to canonical count. Source list was missing
 // "044" (v=4 group) and "388" (v=8 group); added at the end of their rows.
-export const KALYAN_DOUBLE_PANAS: string[] = [
+export const BOMBAY_BAZAR_DOUBLE_PANAS: string[] = [
   "100","200","300","400","500","600","700","800","900","550",
   "119","110","166","112","113","114","115","116","117","118",
   "155","228","229","220","122","277","133","224","144","226",
@@ -31,12 +31,12 @@ export const KALYAN_DOUBLE_PANAS: string[] = [
   "669","778","788","770","889","899","566","990","667","388",
 ];
 
-export const KALYAN_TRIPLE_PANAS: string[] = [
+export const BOMBAY_BAZAR_TRIPLE_PANAS: string[] = [
   "000","111","222","333","444","555","666","777","888","999",
 ];
 
-export const KALYAN_ALL_PANAS: string[] = [
-  ...KALYAN_SINGLE_PANAS,
-  ...KALYAN_DOUBLE_PANAS,
-  ...KALYAN_TRIPLE_PANAS,
+export const BOMBAY_BAZAR_ALL_PANAS: string[] = [
+  ...BOMBAY_BAZAR_SINGLE_PANAS,
+  ...BOMBAY_BAZAR_DOUBLE_PANAS,
+  ...BOMBAY_BAZAR_TRIPLE_PANAS,
 ];

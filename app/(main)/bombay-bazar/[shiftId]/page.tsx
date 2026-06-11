@@ -3,17 +3,17 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
-  useKalyanNewShift,
-  useKalyanNewShifts,
-  useKalyanNewJantri,
-  usePlaceKalyanNew,
-} from "@/hooks/useKalyanNewApi";
+  useBombayBazarShift,
+  useBombayBazarShifts,
+  useBombayBazarJantri,
+  usePlaceBombayBazar,
+} from "@/hooks/useBombayBazarApi";
 import {
-  KALYAN_SINGLE_PANAS,
-  KALYAN_DOUBLE_PANAS,
-  KALYAN_TRIPLE_PANAS,
-  KALYAN_ALL_PANAS,
-} from "@/lib/kalyan-panas";
+  BOMBAY_BAZAR_SINGLE_PANAS,
+  BOMBAY_BAZAR_DOUBLE_PANAS,
+  BOMBAY_BAZAR_TRIPLE_PANAS,
+  BOMBAY_BAZAR_ALL_PANAS,
+} from "@/lib/bombay-bazar-panas";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatLocalDate } from "@/lib/date-utils";
 import {
@@ -26,7 +26,7 @@ import {
 import { toast } from "sonner";
 
 /*
- * Kalyan-New number types (must match backend validateKalyanNewNumber):
+ * Bombay Bazar number types (must match backend validateBombayBazarNumber):
  *   0 single pana   — 3 different digits, picked from grid
  *   1 double pana   — 2 same + 1 different, picked from grid
  *   2 triple pana   — 3 same digits, picked from grid (000-999)
@@ -55,13 +55,13 @@ const BET_TYPES: {
 ];
 
 const GRID_FOR: Record<BetType, string[]> = {
-  0: KALYAN_SINGLE_PANAS,
-  1: KALYAN_DOUBLE_PANAS,
-  2: KALYAN_TRIPLE_PANAS,
+  0: BOMBAY_BAZAR_SINGLE_PANAS,
+  1: BOMBAY_BAZAR_DOUBLE_PANAS,
+  2: BOMBAY_BAZAR_TRIPLE_PANAS,
   3: [],
   4: [],
   5: [],
-  6: KALYAN_ALL_PANAS,
+  6: BOMBAY_BAZAR_ALL_PANAS,
 };
 
 interface Entry {
@@ -130,18 +130,18 @@ function useShiftCountdown(
   return { timeLeft, isExpired };
 }
 
-export default function KalyanNewShiftPage() {
+export default function BombayBazarShiftPage() {
   const params = useParams();
   const router = useRouter();
   const shiftId = params.shiftId as string;
   const { isLoggedIn } = useAuth();
 
-  const { data: shift, isLoading: shiftLoading } = useKalyanNewShift(shiftId);
-  useKalyanNewJantri(shiftId);
-  const placeMutation = usePlaceKalyanNew();
+  const { data: shift, isLoading: shiftLoading } = useBombayBazarShift(shiftId);
+  useBombayBazarJantri(shiftId);
+  const placeMutation = usePlaceBombayBazar();
 
   const today = new Date().toISOString().split("T")[0];
-  const { data: allShifts = [] } = useKalyanNewShifts(shift?.shiftDate || today);
+  const { data: allShifts = [] } = useBombayBazarShifts(shift?.shiftDate || today);
 
   const [selectedShifts, setSelectedShifts] = useState<Set<string>>(new Set());
   useEffect(() => {
@@ -175,7 +175,7 @@ export default function KalyanNewShiftPage() {
   const [submitting, setSubmitting] = useState(false);
   const [mobileSlipOpen, setMobileSlipOpen] = useState(false);
 
-  const storageKey = `kalyan_new_draft_${shiftId}`;
+  const storageKey = `bombay_bazar_draft_${shiftId}`;
 
   useEffect(() => {
     if (!shiftId) return;
@@ -210,7 +210,7 @@ export default function KalyanNewShiftPage() {
   useEffect(() => {
     if (shiftEnded && shift) {
       toast.error("Shift has ended. Redirecting...");
-      const t = setTimeout(() => router.push("/kalyan-new"), 1500);
+      const t = setTimeout(() => router.push("/bombay-bazar"), 1500);
       return () => clearTimeout(t);
     }
   }, [shiftEnded, shift, router]);
@@ -472,7 +472,7 @@ export default function KalyanNewShiftPage() {
       {/* Top Header */}
       <div className="flex items-center gap-2 sm:gap-3 bg-gradient-to-r from-[var(--header-primary)] via-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)] px-2 sm:px-4 py-1.5 text-sm flex-wrap border-b border-[#1e4088]/60">
         <button
-          onClick={() => router.push("/kalyan-new")}
+          onClick={() => router.push("/bombay-bazar")}
           className="hover:bg-white/20 rounded-lg p-1 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
