@@ -12,7 +12,7 @@ const EVENT_TYPE_CRICKET = "4";
 // Shared width for one odds column (a back+lay pair, i.e. "1", "X" or "2").
 // Header and rows BOTH use this token, so the column labels always line up with
 // the price boxes beneath them at every breakpoint.
-const ODDS_COL = "w-[4.25rem] sm:w-32 md:w-40";
+const ODDS_COL = "w-[4.75rem] sm:w-32 md:w-40";
 // Width of the leading status/time column.
 const TIME_COL = "w-14 sm:w-28 md:w-32";
 
@@ -76,11 +76,11 @@ const formatMatchTime = (dateString: string | null): { day: string; time: string
 
 function OddsCell({ back, lay }: { back: number | null; lay: number | null }) {
   return (
-    <div className={`${ODDS_COL} shrink-0 flex gap-0.5 p-0.5`}>
-      <div className="flex-1 rounded-sm bg-gradient-to-b from-back to-back-deep flex items-center justify-center text-[13px] sm:text-sm md:text-base font-bold text-gray-900 leading-tight">
+    <div className={`${ODDS_COL} shrink-0 flex items-center gap-0.5 px-0.5 py-1 sm:gap-1.5 sm:px-1`}>
+      <div className="flex-1 min-w-0 h-9 rounded bg-gradient-to-b from-back to-back-deep flex items-center justify-center text-[13px] sm:text-lg md:text-xl font-bold tabular-nums text-gray-900 leading-none">
         {back ?? "-"}
       </div>
-      <div className="flex-1 rounded-sm bg-gradient-to-b from-lay to-lay-deep flex items-center justify-center text-[13px] sm:text-sm md:text-base font-bold text-gray-900 leading-tight">
+      <div className="flex-1 min-w-0 h-9 rounded bg-gradient-to-b from-lay to-lay-deep flex items-center justify-center text-[13px] sm:text-lg md:text-xl font-bold tabular-nums text-gray-900 leading-none">
         {lay ?? "-"}
       </div>
     </div>
@@ -143,12 +143,12 @@ function MatchRow({
 
         {/* Event name — wraps cleanly on small screens */}
         <div className="flex-1 min-w-0 flex items-center gap-1.5 px-2 py-1.5">
-          <h4 className="text-sm sm:text-sm md:text-base font-bold text-[var(--header-primary)] break-words min-w-0 leading-snug">
+          <h4 className="text-base sm:text-lg md:text-xl font-bold text-[var(--header-primary)] break-words min-w-0 leading-snug">
             {match.name?.length > 50 ? match.name.slice(0, 50) + "..." : match.name || "Untitled Match"}
             </h4>
           {betCount != null && betCount > 0 && (
             <span className="relative shrink-0 group ml-auto">
-              <span className="text-[10px] sm:text-xs text-black bg-yellow-400 px-1.5 py-0.5 rounded font-bold whitespace-nowrap cursor-default">
+              <span className="text-[12px] sm:text-xs text-black bg-yellow-400 px-1.5 py-0.5 rounded font-bold whitespace-nowrap cursor-default">
                 {betCount}
               </span>
               <span className="pointer-events-none absolute bottom-full right-0 mb-1.5 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-[11px] text-white opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">
