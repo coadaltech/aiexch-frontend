@@ -77,10 +77,10 @@ const formatMatchTime = (dateString: string | null): { day: string; time: string
 function OddsCell({ back, lay }: { back: number | null; lay: number | null }) {
   return (
     <div className={`${ODDS_COL} shrink-0 flex gap-0.5 p-0.5`}>
-      <div className="flex-1 rounded-sm bg-gradient-to-b from-back to-back-deep flex items-center justify-center text-[11px] sm:text-sm md:text-base font-bold text-gray-900 leading-tight">
+      <div className="flex-1 rounded-sm bg-gradient-to-b from-back to-back-deep flex items-center justify-center text-[13px] sm:text-sm md:text-base font-bold text-gray-900 leading-tight">
         {back ?? "-"}
       </div>
-      <div className="flex-1 rounded-sm bg-gradient-to-b from-lay to-lay-deep flex items-center justify-center text-[11px] sm:text-sm md:text-base font-bold text-gray-900 leading-tight">
+      <div className="flex-1 rounded-sm bg-gradient-to-b from-lay to-lay-deep flex items-center justify-center text-[13px] sm:text-sm md:text-base font-bold text-gray-900 leading-tight">
         {lay ?? "-"}
       </div>
     </div>
@@ -121,18 +121,18 @@ function MatchRow({
       href={`/sports/${sport}/${match.seriesId}/${match.id}`}
       className="block bg-white hover:bg-gray-50 transition-colors m-0.5"
     >
-      <div className="flex items-stretch min-h-[2.75rem]">
+      <div className="flex items-stretch min-h-[2.75rem] max-h-16">
         {/* Status / time badge — In-Play for live, stacked day+time otherwise */}
         {(() => {
           const t = formatMatchTime(match.openDate);
           return (
             <div className={`${TIME_COL} shrink-0 flex flex-col items-center justify-center text-center`}>
               {match.inPlay ? (
-                <span className="bg-[#1f7a47] text-white px-1.5 py-1 rounded text-[10px] sm:text-xs font-bold leading-none">
+                <span className="bg-[#1f7a47] text-white px-1.5 py-1 rounded text-xs sm:text-xs font-bold leading-none">
                   In-Play
                 </span>
               ) : (
-                <div className="flex flex-col sm:flex-row sm:gap-1 leading-tight text-[10px] sm:text-xs md:text-sm font-bold text-black whitespace-nowrap">
+                <div className="flex flex-col sm:flex-row sm:gap-1 leading-tight text-xs sm:text-xs md:text-sm font-bold text-black whitespace-nowrap">
                   <span>{t.day}</span>
                   {t.time && <span className="text-black mt-0.5 sm:mt-0">{t.time}</span>}
                 </div>
@@ -143,9 +143,9 @@ function MatchRow({
 
         {/* Event name — wraps cleanly on small screens */}
         <div className="flex-1 min-w-0 flex items-center gap-1.5 px-2 py-1.5">
-          <h4 className="text-xs sm:text-sm md:text-base font-bold text-[var(--header-primary)] break-words min-w-0 leading-snug">
-            {match.name}
-          </h4>
+          <h4 className="text-sm sm:text-sm md:text-base font-bold text-[var(--header-primary)] break-words min-w-0 leading-snug">
+            {match.name?.length > 50 ? match.name.slice(0, 50) + "..." : match.name || "Untitled Match"}
+            </h4>
           {betCount != null && betCount > 0 && (
             <span className="relative shrink-0 group ml-auto">
               <span className="text-[10px] sm:text-xs text-black bg-yellow-400 px-1.5 py-0.5 rounded font-bold whitespace-nowrap cursor-default">
@@ -349,7 +349,7 @@ export function CricketMatchesList({
         </div>
       )}
 
-      <div className="divide-y divide-gray-100 border border-gray-200 border-t-0 rounded-b-lg overflow-hidden">
+      <div className="divide-y divide-gray-100 bg-white border border-gray-200 border-t-0 rounded-b-lg overflow-hidden">
         {visibleMatches.map((match) => (
           <MatchRow
             key={match.id}
