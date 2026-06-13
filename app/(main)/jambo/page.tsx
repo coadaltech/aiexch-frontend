@@ -94,7 +94,7 @@ function ShiftCard({ shift }: { shift: JamboShift }) {
               className={`flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-lg ${
                 isExpired
                   ? "bg-red-500/15 text-red-400 border border-red-500/20"
-                  : "bg-[var(--header-primary)]/10 text-[var(--header-primary)] border border-[var(--header-primary)]/20"
+                  : "bg-[var(--header-primary)]/10 text-[var(--header-text)] border border-[var(--header-primary)]/20"
               }`}
             >
               <Clock className="w-3 h-3" />

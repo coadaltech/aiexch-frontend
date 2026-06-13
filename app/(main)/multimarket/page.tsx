@@ -712,7 +712,7 @@ export default function MultimarketPage() {
         title="Unpin market"
         className="inline-flex items-center justify-center h-5 w-5 rounded shrink-0"
       >
-        <Pin className="h-3.5 w-3.5 text-white" fill="#ffffff" strokeWidth={0} />
+        <Pin className="h-3.5 w-3.5 text-[var(--header-text)]" fill="currentColor" strokeWidth={0} />
       </button>
     ),
     [remove],

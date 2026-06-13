@@ -27,7 +27,7 @@ export function NoticeTickerBar() {
       {/* Scrolling text */}
       <div className="flex-1 overflow-hidden relative">
         <div className="ticker-track flex whitespace-nowrap">
-          <span className="text-[#ffffff] text-[15px] px-4 inline-block font-bold animate-ticker">
+          <span className="text-[var(--header-text)] text-[15px] px-4 inline-block font-bold animate-ticker">
             {text}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{text}
           </span>
         </div>

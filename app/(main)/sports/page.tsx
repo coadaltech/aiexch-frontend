@@ -154,7 +154,7 @@ export default function SportsPage() {
                 {live && (
                   <div className="flex items-center gap-1 mt-0.5">
                     <span className="w-1.5 h-1.5 bg-[var(--header-secondary)] rounded-full animate-pulse" />
-                    <span className="text-[10px] text-[var(--header-primary)] font-bold">LIVE</span>
+                    <span className="text-[10px] text-[var(--header-text)] font-bold">LIVE</span>
                   </div>
                 )}
               </div>
@@ -162,8 +162,8 @@ export default function SportsPage() {
               {/* Live events badge */}
               {live && (
                 <div className="flex items-center gap-1 shrink-0 bg-[var(--header-secondary)]/10 border border-[var(--header-secondary)]/30 rounded-lg px-2 py-0.5">
-                  <Zap className="w-3 h-3 text-[var(--header-primary)]" />
-                  <span className="text-[10px] text-[var(--header-primary)] font-bold">LIVE</span>
+                  <Zap className="w-3 h-3 text-[var(--header-text)]" />
+                  <span className="text-[10px] text-[var(--header-text)] font-bold">LIVE</span>
                 </div>
               )}
 

@@ -114,7 +114,7 @@ export default function PromoCodePage() {
       {/* ── Redeem Section ── */}
       <div className={`${CARD_CLS} p-4 sm:p-6`}>
         <div className="mb-4 flex items-center gap-3">
-          <Tag className="h-6 w-6 text-[var(--header-primary)]" />
+          <Tag className="h-6 w-6 text-[var(--header-text)]" />
           <h2 className="text-lg font-semibold text-gray-900">Redeem Promo Code</h2>
         </div>
 
@@ -205,7 +205,7 @@ export default function PromoCodePage() {
                         <div className="mb-1 text-xs uppercase tracking-wide text-gray-500">
                           Promo Code
                         </div>
-                        <div className="font-mono text-lg font-bold tracking-wider text-[var(--header-primary)]">
+                        <div className="font-mono text-lg font-bold tracking-wider text-[var(--header-text)]">
                           {promo.code}
                         </div>
                       </div>
@@ -213,7 +213,7 @@ export default function PromoCodePage() {
                         onClick={() => handleCopyCode(promo.code)}
                         variant="ghost"
                         size="sm"
-                        className="rounded-xl border border-gray-300 p-3 text-[var(--header-primary)] hover:bg-[var(--header-primary)]/10 hover:text-[var(--header-primary)]"
+                        className="rounded-xl border border-gray-300 p-3 text-[var(--header-text)] hover:bg-[var(--header-primary)]/10 hover:text-[var(--header-text)]"
                       >
                         {copiedCode === promo.code ? (
                           <CheckCircle className="h-5 w-5" />
@@ -246,7 +246,7 @@ export default function PromoCodePage() {
                   {/* Right Content */}
                   <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end sm:justify-start">
                     <div className="text-center">
-                      <div className="mb-1 text-3xl font-bold text-[var(--header-primary)]">
+                      <div className="mb-1 text-3xl font-bold text-[var(--header-text)]">
                         ₹{promo.value}
                       </div>
                       <div className="text-xs uppercase tracking-wide text-gray-500">

@@ -281,7 +281,7 @@ export default function Header() {
                         size="sm"
                         variant="ghost"
                         onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-                        className="flex h-7 sm:h-8 text-black/80 hover:text-white  hover:bg-red-600 rounded-lg px-2 sm:px-3 text-xs sm:text-sm touch-manipulation items-center gap-1"
+                        className="flex h-7 sm:h-8 text-black hover:text-[var(--header-text)] hover:bg-red-600 rounded-lg px-2 sm:px-3 text-xs sm:text-sm touch-manipulation items-center gap-1"
                       >
                         <User className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                         <span className="hidden sm:inline truncate max-w-[80px] lg:max-w-none ">
@@ -305,7 +305,7 @@ export default function Header() {
                           <div className="bg-[var(--header-primary)] border border-[#1e4088] rounded-xl shadow-xl shadow-black/40 py-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
                           {/* User info header */}
                           <div className="px-3 py-2 border-b border-nav-btn/50">
-                            <p className="text-sm font-semibold text-white truncate">
+                            <p className="text-sm font-semibold text-[var(--header-text)] truncate">
                               {user?.username}
                             </p>
                             {user?.isDemo && (
@@ -319,21 +319,21 @@ export default function Header() {
                           <div className="py-1">
                             <button
                               onClick={() => { router.push("/profile"); setIsUserDropdownOpen(false); }}
-                              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white/75 hover:text-white hover:bg-[var(--header-secondary)] transition-colors cursor-pointer"
+                              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--header-text)]/75 hover:text-[var(--header-text)] hover:bg-[var(--header-secondary)] transition-colors cursor-pointer"
                             >
                               <User className="h-4 w-4 flex-shrink-0" />
                               Profile
                             </button>
                             <button
                               onClick={() => { router.push("/profile/bet-history"); setIsUserDropdownOpen(false); }}
-                              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white/75 hover:text-white hover:bg-[var(--header-secondary)] transition-colors cursor-pointer"
+                              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--header-text)]/75 hover:text-[var(--header-text)] hover:bg-[var(--header-secondary)] transition-colors cursor-pointer"
                             >
                               <History className="h-4 w-4 flex-shrink-0" />
                               Bet History
                             </button>
                             <button
                               onClick={() => { router.push("/profile/account-statement"); setIsUserDropdownOpen(false); }}
-                              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white/75 hover:text-white hover:bg-[var(--header-secondary)] transition-colors cursor-pointer"
+                              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--header-text)]/75 hover:text-[var(--header-text)] hover:bg-[var(--header-secondary)] transition-colors cursor-pointer"
                             >
                               <FileText className="h-4 w-4 flex-shrink-0" />
                               Account Statement

@@ -62,7 +62,7 @@ export function DepositDetails({
                     await navigator.clipboard.writeText(qrCode.walletAddress);
                     toast.success("Address copied to clipboard!");
                   }}
-                  className="shrink-0 p-2 text-[var(--header-primary)] hover:text-[var(--header-primary)]/80"
+                  className="shrink-0 p-2 text-[var(--header-text)] hover:text-[var(--header-text)]/80"
                 >
                   <Copy className="h-4 w-4" />
                 </button>

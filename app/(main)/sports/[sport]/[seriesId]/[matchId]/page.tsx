@@ -1523,7 +1523,7 @@ export default function MatchPage() {
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
                 {series?.name && (
-                  <p className="text-[var(--header-secondary)] font-semibold text-xs sm:text-sm truncate leading-tight mb-0.5 uppercase tracking-wide font-condensed">
+                  <p className="text-[var(--header-text)] font-semibold text-xs sm:text-sm truncate leading-tight mb-0.5 uppercase tracking-wide font-condensed">
                     {series.name}
                   </p>
                 )}
@@ -1601,7 +1601,7 @@ export default function MatchPage() {
                 {/* Mobile header */}
                 <div className="grid grid-cols-[1fr_auto] gap-1 px-2 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)] items-center sm:hidden">
                   <div className="min-w-0">
-                    <h3 className="font-semibold text-white text-sm truncate leading-tight flex items-center gap-1.5">
+                    <h3 className="font-semibold text-[var(--header-text)] text-sm truncate leading-tight flex items-center gap-1.5">
                       <PinMarketButton parent={pinParent} market={market} />
                       <span className="truncate">{market.marketName}</span>
                     </h3>
@@ -1618,7 +1618,7 @@ export default function MatchPage() {
                 {/* Desktop header */}
                 <div className="hidden sm:grid grid-cols-3 gap-2 px-3 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)] items-center">
                   <div className="min-w-0 flex flex-col gap-0.5">
-                    <h3 className="font-semibold text-white text-base truncate leading-tight flex items-center gap-1.5">
+                    <h3 className="font-semibold text-[var(--header-text)] text-base truncate leading-tight flex items-center gap-1.5">
                       <PinMarketButton parent={pinParent} market={market} />
                       <span className="truncate">{market.marketName}</span>
                     </h3>
@@ -1630,7 +1630,7 @@ export default function MatchPage() {
                     <div className="font-semibold uppercase bg-lay text-black text-sm py-0.5 px-1.5 rounded w-fit">
                       Lay
                     </div>
-                    <div className="text-white/70 text-sm hidden md:flex items-center flex-wrap gap-x-1 leading-tight min-w-0">
+                    <div className="text-[var(--header-text)]/70 text-sm hidden md:flex items-center flex-wrap gap-x-1 leading-tight min-w-0">
                       <span className="truncate">
                         Min: {market.marketCondition?.["minBet"] ?? "-"} / Max:{" "}
                         {market.marketCondition?.["maxBet"] ?? "-"}
@@ -1755,7 +1755,7 @@ export default function MatchPage() {
                   {/* Mobile header */}
                   <div className="grid grid-cols-[1fr_auto] gap-1 px-2 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)] items-center sm:hidden">
                     <div className="min-w-0">
-                      <h3 className="font-semibold text-white text-sm truncate leading-tight flex items-center gap-1.5">
+                      <h3 className="font-semibold text-[var(--header-text)] text-sm truncate leading-tight flex items-center gap-1.5">
                         <PinMarketButton parent={pinParent} market={market} />
                         <span className="truncate">{market.marketName}</span>
                       </h3>
@@ -1772,7 +1772,7 @@ export default function MatchPage() {
                   {/* Desktop header */}
                   <div className="hidden sm:grid grid-cols-3 gap-2 px-3 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)] items-center">
                     <div className="min-w-0 flex flex-col gap-0.5">
-                      <h3 className="font-semibold text-white text-base truncate leading-tight flex items-center gap-1.5">
+                      <h3 className="font-semibold text-[var(--header-text)] text-base truncate leading-tight flex items-center gap-1.5">
                         <PinMarketButton parent={pinParent} market={market} />
                         <span className="truncate">{market.marketName}</span>
                       </h3>
@@ -1780,7 +1780,7 @@ export default function MatchPage() {
                     <div className="justify-self-end font-semibold uppercase bg-back text-black text-sm py-0.5 px-1.5 rounded">Back</div>
                     <div className="flex justify-between">
                       <div className="font-semibold uppercase bg-lay text-black text-sm py-0.5 px-1.5 rounded w-fit">Lay</div>
-                      <p className="text-white/70 text-sm truncate leading-tight hidden md:block">Min: {minBet} / Max: {maxBet}</p>
+                      <p className="text-[var(--header-text)]/70 text-sm truncate leading-tight hidden md:block">Min: {minBet} / Max: {maxBet}</p>
                     </div>
                   </div>
                   <div className="divide-y divide-gray-100">
@@ -1830,11 +1830,11 @@ export default function MatchPage() {
             // Shared ADV market header
             const advHeader = (
               <div className="px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)] flex items-center justify-between gap-2">
-                <span className="font-semibold text-white text-sm sm:text-base truncate flex items-center gap-1.5">
+                <span className="font-semibold text-[var(--header-text)] text-sm sm:text-base truncate flex items-center gap-1.5">
                   <PinMarketButton parent={pinParent} market={market} />
                   <span className="truncate">{market.marketName}</span>
                 </span>
-                <span className="text-white/70 text-xs sm:text-sm whitespace-nowrap shrink-0">
+                <span className="text-[var(--header-text)]/70 text-xs sm:text-sm whitespace-nowrap shrink-0">
                   Min: {minBet} | Max: {maxBet}
                 </span>
               </div>
@@ -2047,7 +2047,7 @@ export default function MatchPage() {
           const renderColumn = (markets: any[], colIdx: number) => (
             <div key={colIdx} className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
               <div className="grid grid-cols-[1fr_auto] gap-1 px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)] items-center">
-                <h3 className="font-semibold text-white text-sm sm:text-base truncate leading-tight">Fancy</h3>
+                <h3 className="font-semibold text-[var(--header-text)] text-sm sm:text-base truncate leading-tight">Fancy</h3>
                 <div className="flex items-center gap-1">
                   <div className="w-16 sm:w-20 flex justify-center">
                     <span className="font-semibold uppercase bg-lay text-black text-xs sm:text-sm py-0.5 px-1.5 rounded">NO</span>
@@ -2083,11 +2083,11 @@ export default function MatchPage() {
 
             const advHeader = (
               <div className="px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)] flex items-center justify-between gap-2">
-                <span className="font-semibold text-white text-sm sm:text-base truncate flex items-center gap-1.5">
+                <span className="font-semibold text-[var(--header-text)] text-sm sm:text-base truncate flex items-center gap-1.5">
                   <PinMarketButton parent={pinParent} market={market} />
                   <span className="truncate">{market.marketName}</span>
                 </span>
-                <span className="text-white/70 text-xs sm:text-sm whitespace-nowrap shrink-0">
+                <span className="text-[var(--header-text)]/70 text-xs sm:text-sm whitespace-nowrap shrink-0">
                   Min: {minBet} | Max: {maxBet}
                 </span>
               </div>
@@ -2245,9 +2245,9 @@ export default function MatchPage() {
             <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)]">
               <div>
                 <h3 className="font-semibold text-sm">Exposure</h3>
-                <p className="text-xs text-white/80">{exposureChartMarket.name}</p>
+                <p className="text-xs text-[var(--header-text)]/80">{exposureChartMarket.name}</p>
               </div>
-              <button onClick={() => setExposureChartMarket(null)} className="text-white hover:text-white/70 text-xl leading-none">&times;</button>
+              <button onClick={() => setExposureChartMarket(null)} className="text-[var(--header-text)] hover:text-[var(--header-text)]/70 text-xl leading-none">&times;</button>
             </div>
             {isExposureChartLoading ? (
               <div className="flex items-center justify-center py-10">

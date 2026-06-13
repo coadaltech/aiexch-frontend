@@ -42,7 +42,7 @@ function CarouselSection({
         </div>
         <div className="flex items-center gap-2">
           {link && (
-            <a href={link} className="text-[var(--header-primary)] text-xs font-medium hover:text-[var(--header-secondary)] transition-colors mr-1">
+            <a href={link} className="text-[var(--header-text)] text-xs font-medium hover:text-[var(--header-secondary)] transition-colors mr-1">
               View All
             </a>
           )}

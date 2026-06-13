@@ -99,7 +99,7 @@ export default function Dropheader({ leftMenu, rightMenu }: HeaderProps) {
                   handleNavigation(item.link, item.label, item.isLive)
                 }
                 className={cn(`group relative px-3 sm:px-4 py-1.5 sm:py-2 text-xs md:text-[17px] font-medium transition-all duration-150 flex items-center gap-1 touch-manipulation flex-shrink-0 cursor-pointer border-b-2 rounded-t-lg ${active
-                  ? "text-[var(--header-secondary)] border-[var(--header-secondary)]"
+                  ? "text-[var(--header-text)] border-[var(--header-secondary)]"
                   : "text-[var(--header-text)] border-transparent hover:text-[var(--header-text)] hover:border-[color-mix(in_srgb,var(--header-text)_30%,transparent)]"
                   }`, item.label == "Cricket" && "text-[#9dd0f5] border-[var(--header-secondary)]/60", item.label == "Sports" && "", (item.label == "Sports" && active) && "text-[var(--header-secondary)] border-[var(--header-secondary)]", (item.label == "Cricket" && active) && "text-[#9dd0f5] border-[#9dd0f5]")}
               >

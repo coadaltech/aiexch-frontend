@@ -32,7 +32,7 @@ function ComingSoonContent() {
             </p>
             <Link
               href="/sports"
-              className="mt-6 inline-flex items-center gap-1 text-sm font-medium text-[var(--header-primary)] hover:text-[var(--header-secondary)] transition-colors"
+              className="mt-6 inline-flex items-center gap-1 text-sm font-medium text-[var(--header-text)] hover:text-[var(--header-secondary)] transition-colors"
             >
               <ChevronLeft className="w-4 h-4" /> Browse other sports
             </Link>

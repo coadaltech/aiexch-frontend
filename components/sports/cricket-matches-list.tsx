@@ -143,7 +143,7 @@ function MatchRow({
 
         {/* Event name — wraps cleanly on small screens */}
         <div className="flex-1 min-w-0 flex items-center gap-1.5 px-2 py-1">
-          <h4 className="text-base sm:text-lg md:text-[16px] font-bold text-[var(--header-primary)] break-words min-w-0 leading-snug">
+          <h4 className="text-base sm:text-lg md:text-[16px] font-bold text-black break-words min-w-0 leading-snug">
             {match.name?.length > 50 ? match.name.slice(0, 50) + "..." : match.name || "Untitled Match"}
             </h4>
           {betCount != null && betCount > 0 && (

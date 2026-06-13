@@ -49,7 +49,7 @@ export default function RootLayout({
         <ThemeScript />
       </head>
       <body
-        className={`${roboto.variable} ${robotoCondensed.variable} font-roboto min-h-screen`}
+        className={`${roboto.variable} ${robotoCondensed.variable} min-h-screen`}
         suppressHydrationWarning={true}
       >
         <Toaster

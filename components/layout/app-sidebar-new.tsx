@@ -174,7 +174,7 @@ function SportAccordionItem({
         }`}
       >
         <Trophy className="h-4 w-4 flex-shrink-0" />
-        <span className={`flex-1 text-left font-bold text-base ${isSportActive ? "text-white" : "text-black"}`}>{sport.title}</span>
+        <span className={`flex-1 text-left font-bold text-base ${isSportActive ? "text-[var(--header-text)]" : "text-black"}`}>{sport.title}</span>
         {expanded ? (
           <ChevronDown className="h-3.5 w-3.5 opacity-60" />
         ) : (
@@ -376,14 +376,14 @@ function SimpleSportButton({
         isActive
           ? rounded
             ? "bg-[var(--header-primary)] hover:bg-[var(--header-secondary)] text-[var(--header-text)] shadow-md"
-            : "bg-[#1a3578] text-white"
+            : "bg-[#1a3578] text-[var(--header-text)]"
           : rounded
             ? "text-black hover:bg-gray-100"
             : "text-black hover:bg-gray-50"
       }`}
     >
       <Trophy className="h-4 w-4 flex-shrink-0" />
-      <span className="flex-1 text-left">{title}</span>
+      <span className="flex-1 text-left ">{title}</span>
     </button>
   );
 }

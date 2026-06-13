@@ -794,7 +794,7 @@ export default function JantriPage() {
                           </td>
                         );
                       })}
-                      <td className="border border-gray-300 bg-[#e8edf5] text-[var(--header-primary)] text-center text-sm font-bold px-1 py-1.5">
+                      <td className="border border-gray-300 bg-[#e8edf5] text-[var(--header-text)] text-center text-sm font-bold px-1 py-1.5">
                         {rowTotals[rowIdx] || 0}
                       </td>
                     </tr>
@@ -805,7 +805,7 @@ export default function JantriPage() {
                     {colTotals.map((t, i) => (
                       <td
                         key={i}
-                        className="border border-gray-300 bg-[#e8edf5] text-[var(--header-primary)] text-center font-bold py-1"
+                        className="border border-gray-300 bg-[#e8edf5] text-[var(--header-text)] text-center font-bold py-1"
                       >
                         {t}
                       </td>
@@ -852,7 +852,7 @@ export default function JantriPage() {
                         </td>
                       );
                     })}
-                    <td className="border border-gray-300 bg-[#e8edf5] text-[var(--header-primary)] text-center text-sm font-bold px-1 py-1.5">
+                    <td className="border border-gray-300 bg-[#e8edf5] text-[var(--header-text)] text-center text-sm font-bold px-1 py-1.5">
                       {B_LABELS.reduce((s, d) => {
                         const n = bLabelToNum(d);
                         return s + (n ? amounts[`2:${n}`] || 0 : 0);
@@ -897,7 +897,7 @@ export default function JantriPage() {
                         </td>
                       );
                     })}
-                    <td className="border border-gray-300 bg-[#e8edf5] text-[var(--header-primary)] text-center text-sm font-bold px-1 py-1.5">
+                    <td className="border border-gray-300 bg-[#e8edf5] text-[var(--header-text)] text-center text-sm font-bold px-1 py-1.5">
                       {A_LABELS.reduce((s, d) => {
                         const n = aLabelToNum(d);
                         return s + (n ? amounts[`3:${n}`] || 0 : 0);
@@ -1009,7 +1009,7 @@ export default function JantriPage() {
                               <td className="py-1.5 px-2 text-gray-900 font-bold text-center">
                                 {entry.numberInput}
                               </td>
-                              <td className="py-1.5 px-2 text-[var(--header-primary)] font-bold text-right">
+                              <td className="py-1.5 px-2 text-[var(--header-text)] font-bold text-right">
                                 {entry.amount}
                               </td>
                               <td className="py-1 px-1 w-8 text-center">
@@ -1040,9 +1040,9 @@ export default function JantriPage() {
                   UTAR MODE — INSTRUCTIONS
                 </div>
                 <div className="p-4 space-y-2.5 text-gray-700 text-xs overflow-auto">
-                  <p className="flex gap-2"><span className="text-[var(--header-primary)] font-bold">1.</span> Dara Number: <span className="font-semibold">1 to 100</span></p>
-                  <p className="flex gap-2"><span className="text-[var(--header-primary)] font-bold">2.</span> Bahar Akhar: <span className="font-semibold">111 to 999</span> (repeated digit: 111, 222…999)</p>
-                  <p className="flex gap-2"><span className="text-[var(--header-primary)] font-bold">3.</span> Andar Akhar: <span className="font-semibold">1111 to 9999</span> (repeated digit: 1111, 2222…9999)</p>
+                  <p className="flex gap-2"><span className="text-[var(--header-text)] font-bold">1.</span> Dara Number: <span className="font-semibold">1 to 100</span></p>
+                  <p className="flex gap-2"><span className="text-[var(--header-text)] font-bold">2.</span> Bahar Akhar: <span className="font-semibold">111 to 999</span> (repeated digit: 111, 222…999)</p>
+                  <p className="flex gap-2"><span className="text-[var(--header-text)] font-bold">3.</span> Andar Akhar: <span className="font-semibold">1111 to 9999</span> (repeated digit: 1111, 2222…9999)</p>
                   <div className="border-t border-gray-100 pt-2 space-y-1.5">
                     <p>Press <kbd className="bg-gray-100 border border-gray-300 px-1.5 py-0.5 rounded text-gray-800 font-mono text-[11px]">F12</kbd> to switch Jantri / Utar view</p>
                     <p>Press <kbd className="bg-gray-100 border border-gray-300 px-1.5 py-0.5 rounded text-gray-800 font-mono text-[11px]">Enter</kbd> after amount to add entry</p>
@@ -1110,7 +1110,7 @@ export default function JantriPage() {
 
       {/* ── Bottom Bar: action buttons ─────────────────────────────────── */}
       <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2 bg-white border-t border-gray-300 shadow-[0_-2px_8px_rgba(0,0,0,0.08)] text-xs flex-wrap">
-        <span className="text-[var(--header-primary)] text-[11px] mr-1 sm:mr-2 hidden sm:inline">
+        <span className="text-[var(--header-text)] text-[11px] mr-1 sm:mr-2 hidden sm:inline">
           [ F12 = Switch View ]
         </span>
         <div className="flex-1 min-w-0" />

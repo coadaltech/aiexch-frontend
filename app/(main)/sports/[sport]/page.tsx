@@ -24,7 +24,7 @@ export default function SportPage({
           <p className="text-gray-500 text-sm mt-1">
             The sport &quot;{sport}&quot; is not available.
           </p>
-          <Link href="/sports" className="mt-4 inline-flex items-center gap-1 text-[var(--header-primary)] text-sm hover:text-[var(--header-secondary)] transition-colors">
+          <Link href="/sports" className="mt-4 inline-flex items-center gap-1 text-[var(--header-text)] text-sm hover:text-[var(--header-secondary)] transition-colors">
             <ChevronLeft className="w-4 h-4" /> Back to Sports
           </Link>
         </div>
@@ -84,7 +84,7 @@ export default function SportPage({
               </p>
               <Link
                 href="/sports"
-                className="mt-6 inline-flex items-center gap-1 text-sm font-medium text-[var(--header-primary)] hover:text-[var(--header-secondary)] transition-colors"
+                className="mt-6 inline-flex items-center gap-1 text-sm font-medium text-[var(--header-text)] hover:text-[var(--header-secondary)] transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" /> Browse other sports
               </Link>

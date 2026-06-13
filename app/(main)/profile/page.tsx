@@ -100,7 +100,7 @@ export default function DashboardContent() {
             {/* User */}
             <div className="flex items-center gap-4">
               <div className="relative shrink-0">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--header-primary)]/10 text-[var(--header-primary)] sm:h-20 sm:w-20">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--header-primary)]/10 text-[var(--header-text)] sm:h-20 sm:w-20">
                   <User className="h-8 w-8 sm:h-10 sm:w-10" />
                 </div>
                 <span className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-emerald-500 ring-2 ring-white" />
@@ -235,7 +235,7 @@ function MenuCard({
         className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors sm:h-12 sm:w-12 ${
           isDanger
             ? "bg-destructive/10 text-destructive"
-            : "bg-[var(--header-primary)]/10 text-[var(--header-primary)]"
+            : "bg-[var(--header-primary)]/10 text-[var(--header-text)]"
         }`}
       >
         <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -245,7 +245,7 @@ function MenuCard({
           className={`truncate text-sm font-semibold transition-colors sm:text-base ${
             isDanger
               ? "text-destructive"
-              : "text-gray-900 group-hover:text-[var(--header-primary)]"
+              : "text-gray-900 group-hover:text-[var(--header-text)]"
           }`}
         >
           {title}
@@ -258,7 +258,7 @@ function MenuCard({
         className={`h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1 sm:h-5 sm:w-5 ${
           isDanger
             ? "text-destructive"
-            : "text-gray-400 group-hover:text-[var(--header-primary)]"
+            : "text-gray-400 group-hover:text-[var(--header-text)]"
         }`}
       />
     </button>

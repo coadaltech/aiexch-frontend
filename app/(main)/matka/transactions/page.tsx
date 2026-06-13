@@ -89,7 +89,7 @@ function BetSlipPanel({
       </div>
 
       {/* Column headers */}
-      <div className="flex bg-[#e8edf5] text-[var(--header-primary)] text-[10px] font-bold border-b border-gray-300">
+      <div className="flex bg-[#e8edf5] text-[var(--header-text)] text-[10px] font-bold border-b border-gray-300">
         <span className="flex-1 px-2 py-1 text-center">NUMBER</span>
         <span className="w-20 px-2 py-1 text-right">AMOUNT</span>
       </div>
@@ -111,7 +111,7 @@ function BetSlipPanel({
                   className={`border-b border-gray-100 ${idx % 2 === 0 ? "bg-white" : "bg-gray-50"}`}
                 >
                   <td className="px-2 py-1.5 font-bold text-gray-900 text-center">{d.number}</td>
-                  <td className="px-2 py-1.5 text-[var(--header-primary)] font-semibold text-right">
+                  <td className="px-2 py-1.5 text-[var(--header-text)] font-semibold text-right">
                     ₹{Number(d.amount).toFixed(0)}
                   </td>
                 </tr>

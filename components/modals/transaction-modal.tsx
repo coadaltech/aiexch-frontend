@@ -265,7 +265,7 @@ function MethodSelection({
             className="w-full cursor-pointer rounded-xl border border-gray-200 bg-white p-4 transition-colors hover:border-[var(--header-primary)] hover:bg-gray-50"
           >
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[var(--header-primary)]/10 text-lg font-bold text-[var(--header-primary)]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[var(--header-primary)]/10 text-lg font-bold text-[var(--header-text)]">
                 {typeof method.icon === "string" ? method.icon : method.icon}
               </div>
               <div className="flex-1">
@@ -274,12 +274,12 @@ function MethodSelection({
                     {method.name}
                   </div>
                   {"qrCode" in method && method.qrCode?.currency && (
-                    <span className="rounded bg-[var(--header-primary)]/10 px-2 py-1 text-xs text-[var(--header-primary)]">
+                    <span className="rounded bg-[var(--header-primary)]/10 px-2 py-1 text-xs text-[var(--header-text)]">
                       {method.qrCode.currency}
                     </span>
                   )}
                   {"method" in method && method.method?.currency && (
-                    <span className="rounded bg-[var(--header-primary)]/10 px-2 py-1 text-xs text-[var(--header-primary)]">
+                    <span className="rounded bg-[var(--header-primary)]/10 px-2 py-1 text-xs text-[var(--header-text)]">
                       {method.method.currency}
                     </span>
                   )}

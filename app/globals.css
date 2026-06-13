@@ -97,21 +97,25 @@ button, [role="button"], input[type="submit"], input[type="button"], input[type=
   border-radius: 0.5rem;
 }
 
-/* ===== Base Typography ===== */
+/* ===== Base Typography =====
+   Site-wide Tahoma look — same stack as the .tahoma-scope rule above. Roboto is
+   intentionally NOT in the fallback: until the self-hosted Tahoma files exist it
+   falls back to Helvetica Neue / Arial / sans-serif, which is the exact look the
+   match page already had via .tahoma-scope. */
 body {
-  font-family: var(--font-roboto), "Roboto", "Helvetica Neue", Arial, sans-serif;
+  font-family: "Tahoma", "Helvetica Neue", Arial, sans-serif;
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Roboto Condensed for headings, odds numbers, badges */
+/* Headings, odds numbers, badges — same Tahoma stack so they match too */
 h1, h2, h3, h4, h5, h6,
 .font-condensed,
 [class*="text-odds"],
 th {
-  font-family: var(--font-roboto-condensed), "Roboto Condensed", "Helvetica Neue", Arial, sans-serif;
+  font-family: "Tahoma", "Helvetica Neue", Arial, sans-serif;
   letter-spacing: 0.3px;
 }
 

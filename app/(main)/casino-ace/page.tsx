@@ -156,7 +156,7 @@ export default function CasinoAceLobbyPage() {
             </p>
             <button
               onClick={() => setSearch("")}
-              className="mt-2 text-sm font-medium text-[var(--header-primary)] hover:underline"
+              className="mt-2 text-sm font-medium text-[var(--header-text)] hover:underline"
             >
               Clear search
             </button>

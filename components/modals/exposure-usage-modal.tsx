@@ -699,7 +699,7 @@ function MatkaJantriGrid({
                     </td>
                   );
                 })}
-                <td className="border border-gray-300 bg-[#e8edf5] text-[var(--header-primary)] text-center text-xs font-bold px-1 py-1.5">
+                <td className="border border-gray-300 bg-[#e8edf5] text-[var(--header-text)] text-center text-xs font-bold px-1 py-1.5">
                   {rowTotals[rowIdx] || 0}
                 </td>
               </tr>
@@ -709,7 +709,7 @@ function MatkaJantriGrid({
               {colTotals.map((t, i) => (
                 <td
                   key={i}
-                  className="border border-gray-300 bg-[#e8edf5] text-[var(--header-primary)] text-center font-bold py-1 text-xs"
+                  className="border border-gray-300 bg-[#e8edf5] text-[var(--header-text)] text-center font-bold py-1 text-xs"
                 >
                   {t}
                 </td>
@@ -744,7 +744,7 @@ function MatkaJantriGrid({
                   </td>
                 );
               })}
-              <td className="border border-gray-300 bg-[#e8edf5] text-[var(--header-primary)] text-center text-xs font-bold px-1 py-1.5">
+              <td className="border border-gray-300 bg-[#e8edf5] text-[var(--header-text)] text-center text-xs font-bold px-1 py-1.5">
                 {B_LABELS.reduce((s, d) => {
                   const n = bLabelToNum(d);
                   return s + (n ? displayMap[`2:${n}`] ?? 0 : 0);
@@ -777,7 +777,7 @@ function MatkaJantriGrid({
                   </td>
                 );
               })}
-              <td className="border border-gray-300 bg-[#e8edf5] text-[var(--header-primary)] text-center text-xs font-bold px-1 py-1.5">
+              <td className="border border-gray-300 bg-[#e8edf5] text-[var(--header-text)] text-center text-xs font-bold px-1 py-1.5">
                 {A_LABELS.reduce((s, d) => {
                   const n = aLabelToNum(d);
                   return s + (n ? displayMap[`3:${n}`] ?? 0 : 0);

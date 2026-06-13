@@ -579,7 +579,7 @@ export default function JamboShiftPage() {
                               <td className="py-1.5 px-2 text-gray-900 font-bold text-center">
                                 {entry.numberInput}
                               </td>
-                              <td className="py-1.5 px-2 text-[var(--header-primary)] font-bold text-right">
+                              <td className="py-1.5 px-2 text-[var(--header-text)] font-bold text-right">
                                 {entry.amount}
                               </td>
                               <td className="py-1 px-1 w-8 text-center">
@@ -615,27 +615,27 @@ export default function JamboShiftPage() {
                 </p>
                 <div className="border-t border-gray-100 pt-2 space-y-1.5">
                   <p className="flex gap-2">
-                    <span className="text-[var(--header-primary)] font-bold w-4">0.</span>
+                    <span className="text-[var(--header-text)] font-bold w-4">0.</span>
                     Triple — full 3-digit number, 1-1000 (786 wins on 786)
                   </p>
                   <p className="flex gap-2">
-                    <span className="text-[var(--header-primary)] font-bold w-4">1.</span>
+                    <span className="text-[var(--header-text)] font-bold w-4">1.</span>
                     Bhar Ki Jodi — last 2 digits, 00-99 (86 wins from 786)
                   </p>
                   <p className="flex gap-2">
-                    <span className="text-[var(--header-primary)] font-bold w-4">2.</span>
+                    <span className="text-[var(--header-text)] font-bold w-4">2.</span>
                     Andar Ki Jodi — first 2 digits, 00-99 (78 wins from 786)
                   </p>
                   <p className="flex gap-2">
-                    <span className="text-[var(--header-primary)] font-bold w-4">3.</span>
+                    <span className="text-[var(--header-text)] font-bold w-4">3.</span>
                     Akhar Bahar — last single digit, 0-9 (6 wins from 786)
                   </p>
                   <p className="flex gap-2">
-                    <span className="text-[var(--header-primary)] font-bold w-4">4.</span>
+                    <span className="text-[var(--header-text)] font-bold w-4">4.</span>
                     Akhar Andar — first single digit, 0-9 (7 wins from 786)
                   </p>
                   <p className="flex gap-2">
-                    <span className="text-[var(--header-primary)] font-bold w-4">5.</span>
+                    <span className="text-[var(--header-text)] font-bold w-4">5.</span>
                     Middle Akhar — middle single digit, 0-9 (8 wins from 786)
                   </p>
                 </div>

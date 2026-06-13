@@ -442,7 +442,7 @@ export default function BombayBazarShiftPage() {
                     <td className="py-1 px-1 text-gray-900 font-bold text-center">
                       {display}
                     </td>
-                    <td className="py-1 px-1 w-16 text-[var(--header-primary)] font-bold text-right pr-2">
+                    <td className="py-1 px-1 w-16 text-[var(--header-text)] font-bold text-right pr-2">
                       ₹{e.amount}
                     </td>
                     <td className="py-1 px-0.5 w-7 text-center">

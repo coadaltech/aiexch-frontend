@@ -59,7 +59,7 @@ export default function Notifications() {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case "bonus":
-        return <Gift className="h-5 w-5 text-[var(--header-primary)]" />;
+        return <Gift className="h-5 w-5 text-[var(--header-text)]" />;
       case "transaction":
         return <CreditCard className="h-5 w-5 text-emerald-600" />;
       case "security":
@@ -224,7 +224,7 @@ export default function Notifications() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-auto p-0 text-xs text-[var(--header-primary)] hover:bg-[var(--header-primary)]/10"
+                            className="h-auto p-0 text-xs text-[var(--header-text)] hover:bg-[var(--header-primary)]/10"
                           >
                             View Details
                           </Button>

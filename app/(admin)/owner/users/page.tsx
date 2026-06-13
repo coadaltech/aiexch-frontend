@@ -438,7 +438,7 @@ export default function UsersPage() {
                         onClick={() =>
                           setChildrenUser({ id: u.id, username: u.username || u.name })
                         }
-                        className="font-semibold text-[var(--header-primary)] hover:underline text-left"
+                        className="font-semibold text-[var(--header-text)] hover:underline text-left"
                         title="View this user's downline"
                       >
                         {u.username}
@@ -612,7 +612,7 @@ export default function UsersPage() {
                 <div className="min-w-0">
                   <button
                     onClick={() => setChildrenUser({ id: u.id, username: u.username || u.name })}
-                    className="font-semibold text-[var(--header-primary)] hover:underline text-left truncate block max-w-full"
+                    className="font-semibold text-[var(--header-text)] hover:underline text-left truncate block max-w-full"
                     title="View this user's downline"
                   >
                     {u.username}

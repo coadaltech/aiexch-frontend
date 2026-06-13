@@ -120,7 +120,7 @@ export function WithdrawalDetails({
                       </span>
                     </div>
                   )}
-                  <div className="mt-2 flex justify-between border-t border-gray-200 pt-2 font-semibold text-[var(--header-primary)]">
+                  <div className="mt-2 flex justify-between border-t border-gray-200 pt-2 font-semibold text-[var(--header-text)]">
                     <span>You'll receive:</span>
                     <span>
                       {withdrawalMethod.currency} {netAmount.toFixed(2)}

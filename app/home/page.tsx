@@ -228,7 +228,7 @@ function SectionHeader({
       ) : href ? (
         <Link
           href={href}
-          className="flex items-center gap-1 text-[var(--header-primary)] text-xs font-medium hover:text-[var(--header-secondary)] transition-colors"
+          className="flex items-center gap-1 text-[var(--header-text)] text-xs font-medium hover:text-[var(--header-secondary)] transition-colors"
         >
           View All <ChevronRight className="h-3.5 w-3.5" />
         </Link>
@@ -290,7 +290,7 @@ function QuickAccessGrid() {
               href={item.href}
               className="group flex flex-col items-center justify-center gap-1.5 rounded-lg bg-white border border-gray-200 py-3 px-1 transition-all hover:border-[var(--header-primary)]/40 hover:shadow-sm"
             >
-              <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-gray-700 transition-colors group-hover:text-[var(--header-primary)]" />
+              <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-gray-700 transition-colors group-hover:text-[var(--header-text)]" />
               <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wide text-center leading-tight text-gray-500 group-hover:text-gray-900">
                 {item.label}
               </span>

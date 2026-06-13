@@ -86,7 +86,7 @@ export default function Footer() {
         <div className="px-4 sm:px-6 py-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
           {FOOTER_COLS.map((col) => (
             <div key={col.title}>
-              <h4 className="text-white font-bold text-[11px] tracking-widest mb-3 font-condensed">
+              <h4 className="text-[var(--header-text)] font-bold text-[11px] tracking-widest mb-3 font-condensed">
                 {col.title}
               </h4>
               <ul className="space-y-1.5">
@@ -96,7 +96,7 @@ export default function Footer() {
                     <li key={link.label}>
                       <Link
                         href={link.href}
-                        className="flex items-center gap-1.5 text-[13px] text-white hover:text-white transition-colors leading-snug"
+                        className="flex items-center gap-1.5 text-[13px] text-[var(--header-text)] hover:text-[var(--header-text)] transition-colors leading-snug"
                       >
                         {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
                         {link.label}

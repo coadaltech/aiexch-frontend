@@ -206,7 +206,7 @@ export default function PersonalInfoScreen() {
         {/* Account Information */}
         <div className={CARD_CLS}>
           <h3 className="mb-4 flex items-center gap-2 text-base font-semibold text-gray-900 sm:mb-6 sm:text-lg">
-            <Shield className="h-5 w-5 text-[var(--header-primary)]" />
+            <Shield className="h-5 w-5 text-[var(--header-text)]" />
             Account Information
           </h3>
 
@@ -237,7 +237,7 @@ export default function PersonalInfoScreen() {
         {/* Personal Details */}
         <div className={CARD_CLS}>
           <h3 className="mb-4 flex items-center gap-2 text-base font-semibold text-gray-900 sm:mb-6 sm:text-lg">
-            <User className="h-5 w-5 text-[var(--header-primary)]" />
+            <User className="h-5 w-5 text-[var(--header-text)]" />
             Personal Details
           </h3>
 

@@ -171,7 +171,7 @@ export default function StakeSettingsPage() {
             {/* Preview chip */}
             {stake.label && stake.value > 0 && (
               <div className="flex justify-end">
-                <span className="rounded-full bg-[var(--header-primary)]/10 px-2 py-0.5 text-[10px] font-medium text-[var(--header-primary)]">
+                <span className="rounded-full bg-[var(--header-primary)]/10 px-2 py-0.5 text-[10px] font-medium text-[var(--header-text)]">
                   Preview: {stake.label}
                 </span>
               </div>
