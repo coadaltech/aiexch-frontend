@@ -76,7 +76,7 @@ const formatMatchTime = (dateString: string | null): { day: string; time: string
 
 function OddsCell({ back, lay }: { back: number | null; lay: number | null }) {
   return (
-    <div className={`${ODDS_COL} shrink-0 flex items-center gap-0.5 px-0.5 py-1 sm:gap-1.5 sm:px-1`}>
+    <div className={`${ODDS_COL} shrink-0 flex items-center gap-0.5 px-0.5 py-0.5 sm:gap-1.5 sm:px-1`}>
       <div className="flex-1 min-w-0 h-9 rounded bg-gradient-to-b from-back to-back-deep flex items-center justify-center text-[13px] sm:text-lg md:text-[16px] font-bold tabular-nums text-gray-900 leading-none">
         {back ?? "-"}
       </div>
@@ -119,9 +119,9 @@ function MatchRow({
   return (
     <Link
       href={`/sports/${sport}/${match.seriesId}/${match.id}`}
-      className="block bg-white hover:bg-gray-50 transition-colors m-0.5"
+      className="block bg-white hover:bg-gray-50 transition-colors "
     >
-      <div className="flex items-stretch min-h-[2.75rem] max-h-16">
+      <div className="flex items-stretch min-h-[2.25rem] max-h-14">
         {/* Status / time badge — In-Play for live, stacked day+time otherwise */}
         {(() => {
           const t = formatMatchTime(match.openDate);
@@ -142,7 +142,7 @@ function MatchRow({
         })()}
 
         {/* Event name — wraps cleanly on small screens */}
-        <div className="flex-1 min-w-0 flex items-center gap-1.5 px-2 py-1.5">
+        <div className="flex-1 min-w-0 flex items-center gap-1.5 px-2 py-1">
           <h4 className="text-base sm:text-lg md:text-[16px] font-bold text-[var(--header-primary)] break-words min-w-0 leading-snug">
             {match.name?.length > 50 ? match.name.slice(0, 50) + "..." : match.name || "Untitled Match"}
             </h4>
