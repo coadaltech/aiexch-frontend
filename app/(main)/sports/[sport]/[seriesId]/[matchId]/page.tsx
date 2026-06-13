@@ -118,7 +118,7 @@ const SuspendedCell = ({ className = "" }: { className?: string }) => (
     className={`relative overflow-hidden rounded flex items-center justify-center ${className}`}
     style={{ background: "repeating-linear-gradient(45deg,#374151 0,#374151 4px,#4B5563 4px,#4B5563 8px)" }}
   >
-    <span className="text-red-400 font-bold text-xs relative z-10">Suspended</span>
+    <span className="text-red-400 font-semibold text-xs relative z-10">Suspended</span>
   </div>
 );
 
@@ -214,7 +214,7 @@ const RunnerNameCell = memo(
         <div className="flex items-center gap-4">
         {(displayName !== "" || !isFancy) && (
           <span
-            className={`text-gray-900 font-bold text-sm sm:text-base block leading-tight ${isFancy ? "cursor-pointer" : "truncate"}`}
+            className={`text-gray-900 font-semibold text-sm sm:text-base block leading-tight ${isFancy ? "cursor-pointer" : "truncate"}`}
             onClick={handleNameClick}
           >
             {displayName || runner.name}
@@ -227,7 +227,7 @@ const RunnerNameCell = memo(
           (() => {
             const diff = pnl - prevPnl;
             return (
-              <span className="text-[10px] sm:text-xs font-bold leading-tight flex items-center gap-1 flex-wrap">
+              <span className="text-[10px] sm:text-xs font-semibold leading-tight flex items-center gap-1 flex-wrap">
                 <span className={prevPnl >= 0 ? "text-live-text" : "text-danger"}>{fmtPnl(prevPnl)}</span>
                 <span className="text-gray-400">=&gt;</span>
                 <span className={pnl >= 0 ? "text-live-text" : "text-danger"}>{fmtPnl(pnl)}</span>
@@ -239,7 +239,7 @@ const RunnerNameCell = memo(
           })()
         ) : pnl !== null ? (
           <span
-            className={`text-[10px] sm:text-xs font-bold leading-tight ${
+            className={`text-[10px] sm:text-xs font-semibold leading-tight ${
               pnl >= 0 ? "text-live-text" : "text-danger"
             }`}
           >
@@ -1361,6 +1361,11 @@ export default function MatchPage() {
     // when there is no minimum.
     const minBet = parseFloat(liveMarket?.marketCondition?.minBet) || 0;
     const maxBet = parseFloat(liveMarket?.marketCondition?.maxBet) || 0;
+    // Both limits zero means the market has no valid stake range at all —
+    // betting is disabled, not "unlimited".
+    if (minBet <= 0 && maxBet <= 0) {
+      return { blocked: true, reason: "Betting is not available on this market" };
+    }
     if (minBet > 0 && minBet > maxBet) {
       return { blocked: true, reason: "Betting is not available on this market" };
     }
@@ -1413,7 +1418,7 @@ export default function MatchPage() {
           <div className="bg-gradient-to-r from-[var(--header-primary)] via-[var(--header-primary)] to-[var(--header-secondary)] rounded-lg px-3 sm:px-4 py-3 mb-2 shadow-md border border-[#1e4088]/30">
             <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
               <div className="min-w-0 flex-1">
-                <h1 className="text-[var(--header-text)] font-bold text-base sm:text-lg truncate">
+                <h1 className="text-[var(--header-text)] font-semibold text-base sm:text-lg truncate">
                   {[series?.name, matchFromSeries?.name || matchInfo?.eventName || "Match"]
                     .filter(Boolean)
                     .join(" - ")}
@@ -1487,7 +1492,7 @@ export default function MatchPage() {
         className="absolute inset-0 flex items-center justify-center z-10 cursor-not-allowed bg-white/70 backdrop-blur-[1px]"
         onClick={(e) => e.stopPropagation()}
       >
-        <span className="text-danger-strong font-bold text-xs sm:text-sm bg-red-50 px-3 py-1 rounded-full border border-red-200/50 shadow-sm">
+        <span className="text-danger-strong font-semibold text-xs sm:text-sm bg-red-50 px-3 py-1 rounded-full border border-red-200/50 shadow-sm">
           {label}
         </span>
       </div>
@@ -1496,12 +1501,12 @@ export default function MatchPage() {
 
   const oddsBtnClass =
     "flex-1 min-w-0 px-1 py-0.5 flex flex-col items-center justify-center rounded-md cursor-pointer leading-tight transition-all duration-150";
-  const oddsPriceClass = "text-gray-900 font-bold text-base sm:text-lg";
-  const oddsSizeClass = "text-gray-900 font-bold text-[12px] sm:text-[14px]";
+  const oddsPriceClass = "text-gray-900 font-semibold text-base sm:text-lg";
+  const oddsSizeClass = "text-gray-900 font-semibold text-[12px] sm:text-[14px]";
 
   return (
     <RunnerNameContext.Provider value={runnerNameCtx}>
-    <div className="px-2 bg-[#efefef] sm:px-3 py-2 w-full max-w-full min-w-0 min-h-full overflow-x-hidden">
+    <div className="tahoma-scope px-2 bg-[#efefef] sm:px-3 py-2 w-full max-w-full min-w-0 min-h-full overflow-x-hidden">
       {/* Match header */}
       {(matchInfo || series || matchFromSeries) && (() => {
         const matchOddsMarket = visibleMarkets.find((m: any) => m.marketType === "MATCH_ODDS" || m.marketType === "WINNING_ODDS");
@@ -1518,11 +1523,11 @@ export default function MatchPage() {
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
                 {series?.name && (
-                  <p className="text-[var(--header-secondary)] font-bold text-xs sm:text-sm truncate leading-tight mb-0.5 uppercase tracking-wide font-condensed">
+                  <p className="text-[var(--header-secondary)] font-semibold text-xs sm:text-sm truncate leading-tight mb-0.5 uppercase tracking-wide font-condensed">
                     {series.name}
                   </p>
                 )}
-                <h1 className="text-[var(--header-text)] font-bold text-base sm:text-lg truncate leading-tight">
+                <h1 className="text-[var(--header-text)] font-semibold text-base sm:text-lg truncate leading-tight">
                   {matchFromSeries?.name || matchInfo?.eventName || "Match"}
                 </h1>
               </div>
@@ -1596,33 +1601,33 @@ export default function MatchPage() {
                 {/* Mobile header */}
                 <div className="grid grid-cols-[1fr_auto] gap-1 px-2 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)] items-center sm:hidden">
                   <div className="min-w-0">
-                    <h3 className="font-bold text-white text-sm truncate leading-tight flex items-center gap-1.5">
+                    <h3 className="font-semibold text-white text-sm truncate leading-tight flex items-center gap-1.5">
                       <PinMarketButton parent={pinParent} market={market} />
                       <span className="truncate">{market.marketName}</span>
                     </h3>
                   </div>
                   <div className="flex items-center gap-1">
                     <div className="w-20 flex justify-center">
-                      <span className="font-bold uppercase bg-back text-black text-xs py-0.5 px-1.5 rounded">Back</span>
+                      <span className="font-semibold uppercase bg-back text-black text-xs py-0.5 px-1.5 rounded">Back</span>
                     </div>
                     <div className="w-20 flex justify-center">
-                      <span className="font-bold uppercase bg-lay text-black text-xs py-0.5 px-1.5 rounded">Lay</span>
+                      <span className="font-semibold uppercase bg-lay text-black text-xs py-0.5 px-1.5 rounded">Lay</span>
                     </div>
                   </div>
                 </div>
                 {/* Desktop header */}
                 <div className="hidden sm:grid grid-cols-3 gap-2 px-3 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)] items-center">
                   <div className="min-w-0 flex flex-col gap-0.5">
-                    <h3 className="font-bold text-white text-base truncate leading-tight flex items-center gap-1.5">
+                    <h3 className="font-semibold text-white text-base truncate leading-tight flex items-center gap-1.5">
                       <PinMarketButton parent={pinParent} market={market} />
                       <span className="truncate">{market.marketName}</span>
                     </h3>
                   </div>
-                  <div className="justify-self-end font-bold uppercase bg-back text-black text-sm py-0.5 px-1.5 rounded">
+                  <div className="justify-self-end font-semibold uppercase bg-back text-black text-sm py-0.5 px-1.5 rounded">
                     Back
                   </div>
                   <div className="flex justify-between">
-                    <div className="font-bold uppercase bg-lay text-black text-sm py-0.5 px-1.5 rounded w-fit">
+                    <div className="font-semibold uppercase bg-lay text-black text-sm py-0.5 px-1.5 rounded w-fit">
                       Lay
                     </div>
                     <div className="text-white/70 text-sm hidden md:flex items-center flex-wrap gap-x-1 leading-tight min-w-0">
@@ -1750,31 +1755,31 @@ export default function MatchPage() {
                   {/* Mobile header */}
                   <div className="grid grid-cols-[1fr_auto] gap-1 px-2 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)] items-center sm:hidden">
                     <div className="min-w-0">
-                      <h3 className="font-bold text-white text-sm truncate leading-tight flex items-center gap-1.5">
+                      <h3 className="font-semibold text-white text-sm truncate leading-tight flex items-center gap-1.5">
                         <PinMarketButton parent={pinParent} market={market} />
                         <span className="truncate">{market.marketName}</span>
                       </h3>
                     </div>
                     <div className="flex items-center gap-1">
                       <div className="w-20 flex justify-center">
-                        <span className="font-bold uppercase bg-back text-black text-xs py-0.5 px-1.5 rounded">Back</span>
+                        <span className="font-semibold uppercase bg-back text-black text-xs py-0.5 px-1.5 rounded">Back</span>
                       </div>
                       <div className="w-20 flex justify-center">
-                        <span className="font-bold uppercase bg-lay text-black text-xs py-0.5 px-1.5 rounded">Lay</span>
+                        <span className="font-semibold uppercase bg-lay text-black text-xs py-0.5 px-1.5 rounded">Lay</span>
                       </div>
                     </div>
                   </div>
                   {/* Desktop header */}
                   <div className="hidden sm:grid grid-cols-3 gap-2 px-3 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)] items-center">
                     <div className="min-w-0 flex flex-col gap-0.5">
-                      <h3 className="font-bold text-white text-base truncate leading-tight flex items-center gap-1.5">
+                      <h3 className="font-semibold text-white text-base truncate leading-tight flex items-center gap-1.5">
                         <PinMarketButton parent={pinParent} market={market} />
                         <span className="truncate">{market.marketName}</span>
                       </h3>
                     </div>
-                    <div className="justify-self-end font-bold uppercase bg-back text-black text-sm py-0.5 px-1.5 rounded">Back</div>
+                    <div className="justify-self-end font-semibold uppercase bg-back text-black text-sm py-0.5 px-1.5 rounded">Back</div>
                     <div className="flex justify-between">
-                      <div className="font-bold uppercase bg-lay text-black text-sm py-0.5 px-1.5 rounded w-fit">Lay</div>
+                      <div className="font-semibold uppercase bg-lay text-black text-sm py-0.5 px-1.5 rounded w-fit">Lay</div>
                       <p className="text-white/70 text-sm truncate leading-tight hidden md:block">Min: {minBet} / Max: {maxBet}</p>
                     </div>
                   </div>
@@ -1825,7 +1830,7 @@ export default function MatchPage() {
             // Shared ADV market header
             const advHeader = (
               <div className="px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)] flex items-center justify-between gap-2">
-                <span className="font-bold text-white text-sm sm:text-base truncate flex items-center gap-1.5">
+                <span className="font-semibold text-white text-sm sm:text-base truncate flex items-center gap-1.5">
                   <PinMarketButton parent={pinParent} market={market} />
                   <span className="truncate">{market.marketName}</span>
                 </span>
@@ -1849,9 +1854,9 @@ export default function MatchPage() {
                 return (
                   <button
                     onClick={() => rawPrice != null && handleBackClick(market, runner, rawPrice, null, 0, true)}
-                    className={`min-h-[2.75rem]  flex flex-col items-center justify-center font-bold text-base text-gray-900 transition-all ${side === "back" ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back" : "bg-gradient-to-b from-lay to-lay-deep hover:from-lay-hover hover:to-lay"}`}
+                    className={`min-h-[2.75rem]  flex flex-col items-center justify-center font-semibold text-base text-gray-900 transition-all ${side === "back" ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back" : "bg-gradient-to-b from-lay to-lay-deep hover:from-lay-hover hover:to-lay"}`}
                   >
-                    <span className="text-lg font-bold">{rawPrice != null ? formatOddsPrice(rawPrice) : "-"}</span>
+                    <span className="text-lg font-semibold">{rawPrice != null ? formatOddsPrice(rawPrice) : "-"}</span>
                     {backItem?.size && <span className="text-[12px]">{formatAmount(parseFloat(String(backItem.size)))}</span>}
                   </button>
                 );
@@ -1886,14 +1891,14 @@ export default function MatchPage() {
                       const backItem = runner.back?.[0];
                       const rawPrice = backItem ? parseFloat(String(backItem.price)) : null;
                       return [
-                        <span key={`lbl-${runner.selectionId}`} className="text-gray-800 font-bold text-sm px-3 flex items-center">
+                        <span key={`lbl-${runner.selectionId}`} className="text-gray-800 font-semibold text-sm px-3 flex items-center">
                           {runner.name}
                         </span>,
                         isRunnerSusp
                           ? <SuspendedCell key={`susp-${runner.selectionId}`} className="min-h-[2.75rem]" />
                           : <button key={`btn-${runner.selectionId}`}
                               onClick={() => rawPrice != null && handleBackClick(market, runner, rawPrice, null, 0, true)}
-                              className="min-h-[2.75rem] flex items-center justify-center font-bold text-base text-gray-900 bg-back hover:bg-back-hover transition-all">
+                              className="min-h-[2.75rem] flex items-center justify-center font-semibold text-base text-gray-900 bg-back hover:bg-back-hover transition-all">
                               {rawPrice != null ? formatOddsPrice(rawPrice) : "-"}
                             </button>,
                       ];
@@ -1922,7 +1927,7 @@ export default function MatchPage() {
                               <button key={runner.selectionId}
                                 disabled={isRunnerSusp || rawPrice == null}
                                 onClick={() => rawPrice != null && handleBackClick(market, runner, rawPrice, null, 0, true)}
-                                className="w-9 h-9 rounded-full bg-[var(--header-primary)] hover:bg-[var(--header-primary)] text-[var(--header-text)] font-bold text-sm flex items-center justify-center shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                                className="w-9 h-9 rounded-full bg-[var(--header-primary)] hover:bg-[var(--header-primary)] text-[var(--header-text)] font-semibold text-sm flex items-center justify-center shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                                 {runner.name}
                               </button>
                             );
@@ -1957,7 +1962,7 @@ export default function MatchPage() {
                           {isRunnerSusp
                             ? <SuspendedCell className="w-16 min-h-[2.25rem] shrink-0" />
                             : <button onClick={() => odds != null && handleBackClick(market, runner, odds, null, 0)}
-                                className="w-16 min-h-[2.25rem] flex items-center justify-center font-bold text-sm text-gray-900 bg-back hover:bg-back-hover transition-all shrink-0">
+                                className="w-16 min-h-[2.25rem] flex items-center justify-center font-semibold text-sm text-gray-900 bg-back hover:bg-back-hover transition-all shrink-0">
                                 {odds != null ? formatOddsPrice(odds) : "-"}
                               </button>
                           }
@@ -2042,13 +2047,13 @@ export default function MatchPage() {
           const renderColumn = (markets: any[], colIdx: number) => (
             <div key={colIdx} className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
               <div className="grid grid-cols-[1fr_auto] gap-1 px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)] items-center">
-                <h3 className="font-bold text-white text-sm sm:text-base truncate leading-tight">Fancy</h3>
+                <h3 className="font-semibold text-white text-sm sm:text-base truncate leading-tight">Fancy</h3>
                 <div className="flex items-center gap-1">
                   <div className="w-16 sm:w-20 flex justify-center">
-                    <span className="font-bold uppercase bg-lay text-black text-xs sm:text-sm py-0.5 px-1.5 rounded">NO</span>
+                    <span className="font-semibold uppercase bg-lay text-black text-xs sm:text-sm py-0.5 px-1.5 rounded">NO</span>
                   </div>
                   <div className="w-16 sm:w-20 flex justify-center">
-                    <span className="font-bold uppercase bg-back text-black text-xs sm:text-sm py-0.5 px-1.5 rounded">YES</span>
+                    <span className="font-semibold uppercase bg-back text-black text-xs sm:text-sm py-0.5 px-1.5 rounded">YES</span>
                   </div>
                 </div>
               </div>
@@ -2078,7 +2083,7 @@ export default function MatchPage() {
 
             const advHeader = (
               <div className="px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)] flex items-center justify-between gap-2">
-                <span className="font-bold text-white text-sm sm:text-base truncate flex items-center gap-1.5">
+                <span className="font-semibold text-white text-sm sm:text-base truncate flex items-center gap-1.5">
                   <PinMarketButton parent={pinParent} market={market} />
                   <span className="truncate">{market.marketName}</span>
                 </span>
@@ -2101,9 +2106,9 @@ export default function MatchPage() {
                 return (
                   <button
                     onClick={() => rawPrice != null && handleBackClick(market, runner, rawPrice, null, 0, true)}
-                    className={`min-h-[2.75rem] mb-1 flex flex-col items-center justify-center font-bold text-sm text-gray-900 transition-all ${side === "back" ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back" : "bg-gradient-to-b from-lay to-lay-deep hover:from-lay-hover hover:to-lay"}`}
+                    className={`min-h-[2.75rem] mb-1 flex flex-col items-center justify-center font-semibold text-sm text-gray-900 transition-all ${side === "back" ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back" : "bg-gradient-to-b from-lay to-lay-deep hover:from-lay-hover hover:to-lay"}`}
                   >
-                    <span className="text-base font-bold">{rawPrice != null ? formatOddsPrice(rawPrice) : "-"}</span>
+                    <span className="text-base font-semibold">{rawPrice != null ? formatOddsPrice(rawPrice) : "-"}</span>
                     {backItem?.size && <span className="text-[11px]">{formatAmount(parseFloat(String(backItem.size)))}</span>}
                   </button>
                 );
@@ -2143,7 +2148,7 @@ export default function MatchPage() {
                           ? <SuspendedCell key={`susp-${runner.selectionId}`} className="min-h-[2.75rem]" />
                           : <button key={`btn-${runner.selectionId}`}
                               onClick={() => rawPrice != null && handleBackClick(market, runner, rawPrice, null, 0, true)}
-                              className="min-h-[2.75rem] mb-1 flex items-center justify-center font-bold text-base text-gray-900 bg-back hover:bg-back-hover transition-all">
+                              className="min-h-[2.75rem] mb-1 flex items-center justify-center font-semibold text-base text-gray-900 bg-back hover:bg-back-hover transition-all">
                               {rawPrice != null ? formatOddsPrice(rawPrice) : "-"}
                             </button>,
                       ];
@@ -2179,11 +2184,11 @@ export default function MatchPage() {
                                 <button
                                   disabled={isRunnerSusp || rawPrice == null}
                                   onClick={() => rawPrice != null && handleBackClick(market, runner, rawPrice, null, 0, true)}
-                                  className="w-9 h-9 rounded-full bg-[var(--header-primary)] hover:bg-[var(--header-primary)] text-[var(--header-text)] font-bold text-sm flex items-center justify-center shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                                  className="w-9 h-9 rounded-full bg-[var(--header-primary)] hover:bg-[var(--header-primary)] text-[var(--header-text)] font-semibold text-sm flex items-center justify-center shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                                   {runner.name}
                                 </button>
                                 {runnerPnl !== null && (
-                                  <span className={`text-[9px] font-bold leading-none ${runnerPnl >= 0 ? "text-live-text" : "text-danger"}`}>
+                                  <span className={`text-[9px] font-semibold leading-none ${runnerPnl >= 0 ? "text-live-text" : "text-danger"}`}>
                                     {runnerPnl >= 0 ? "+" : ""}{runnerPnl.toFixed(0)}
                                   </span>
                                 )}
@@ -2219,7 +2224,7 @@ export default function MatchPage() {
                           {isRunnerSusp
                             ? <SuspendedCell className="w-16 min-h-[2.25rem] shrink-0" />
                             : <button onClick={() => rawPrice != null && handleBackClick(market, runner, rawPrice, null, 0, true)}
-                                className="w-16 min-h-[2.25rem] flex items-center justify-center font-bold text-sm text-gray-900 bg-back hover:bg-back-hover transition-all shrink-0">
+                                className="w-16 min-h-[2.25rem] flex items-center justify-center font-semibold text-sm text-gray-900 bg-back hover:bg-back-hover transition-all shrink-0">
                                 {rawPrice != null ? formatOddsPrice(rawPrice) : "-"}
                               </button>
                           }

@@ -3,6 +3,33 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ===== Self-hosted Tahoma =====
+   Drop the font files into /public/fonts/ (tahoma.* for regular/semibold,
+   tahomabd.* for bold). woff2 is preferred; ttf is a fallback for whatever
+   you copy from a Windows machine (C:\Windows\Fonts\tahoma.ttf / tahomabd.ttf). */
+@font-face {
+  font-family: "Tahoma";
+  src: url("/fonts/tahoma.woff2") format("woff2"),
+       url("/fonts/tahoma.ttf") format("truetype");
+  font-weight: 400 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Tahoma";
+  src: url("/fonts/tahomabd.woff2") format("woff2"),
+       url("/fonts/tahomabd.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Page-scoped Tahoma override. The global h1–h6 rule forces Roboto Condensed,
+   so without this the headings on a .tahoma-scope page would ignore Tahoma. */
+.tahoma-scope, .tahoma-scope * {
+  font-family: "Tahoma", "Helvetica Neue", Arial, sans-serif;
+}
+
 /* Zoom-adjusted full viewport height: use var(--vh-full) instead of 100vh */
 :root {
   --zoom: 1;

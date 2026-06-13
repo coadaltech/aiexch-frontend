@@ -544,6 +544,24 @@ export const ownerApi = {
   getMatkaDeclaredHistory: (limit = 50) =>
     api.get(`/owner/matka/live-prediction/declared-history?limit=${limit}`),
 
+  // Jambo Live Prediction (same shape as matka, numbers span 1..1000)
+  getJamboLivePrediction: (shiftId: string) =>
+    api.get(`/owner/jambo/live-prediction/${shiftId}`),
+  getJamboLivePredictionWhitelabels: (shiftId: string, nums: number) =>
+    api.get(`/owner/jambo/live-prediction/${shiftId}/whitelabels?nums=${nums}`),
+  getJamboLivePredictionJantri: (shiftId: string, partyId: string) =>
+    api.get(
+      `/owner/jambo/live-prediction/${shiftId}/jantri?partyId=${encodeURIComponent(
+        partyId
+      )}`
+    ),
+  getJamboAgentSale: (shiftId: string, nums: number) =>
+    api.get(`/owner/jambo/live-prediction/${shiftId}/agent-sale?nums=${nums}`),
+  declareJamboResult: (shiftId: string, result: number) =>
+    api.post(`/owner/jambo/live-prediction/${shiftId}/declare`, { result }),
+  getJamboDeclaredHistory: (limit = 50) =>
+    api.get(`/owner/jambo/live-prediction/declared-history?limit=${limit}`),
+
   // ── Staff Management ─────────────────────────────────────────────────────
   getPermissionsCatalog: () => api.get("/owner/permissions"),
   /** List MY staff (non-Owner) or all staff (Owner). */

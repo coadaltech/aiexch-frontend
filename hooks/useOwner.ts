@@ -1230,6 +1230,132 @@ export const useMatkaDeclaredHistory = (limit = 50) => {
   });
 };
 
+/* ───────────────────────── Jambo Live Prediction ─────────────────────────
+ * Mirrors the matka hooks above, swapping in the get_zambo_* functions /
+ * declare_process_zambo. Jambo numbers span 1..1000; the party breakdown
+ * (per-user sale, owner P&L and win/lose streak) and the agent-group breakdown
+ * reuse the same row shapes as matka (LivePredictionWhitelabelRow / AgentSaleRow).
+ */
+export interface JamboLivePredictionRow {
+  nums: number;
+  sale: string;
+  profit: string;
+  declared_count: number;
+}
+
+export interface JamboLivePredictionResponse {
+  shift: {
+    id: string;
+    name: string;
+    shiftDate: string;
+    endTime: string;
+    tripleRate: string;
+    daraRate: string;
+    akharRate: string;
+    mainJantriTime: string | null;
+    nextDayAllow: boolean;
+  };
+  numbers: JamboLivePredictionRow[];
+}
+
+export const useJamboLivePrediction = (shiftId: string | null) => {
+  return useQuery({
+    queryKey: ["jambo-live-prediction", shiftId],
+    queryFn: async () => {
+      const res = await ownerApi.getJamboLivePrediction(shiftId!);
+      return res.data?.data as JamboLivePredictionResponse;
+    },
+    enabled: !!shiftId,
+    staleTime: 10 * 1000,
+    refetchInterval: 15 * 1000,
+  });
+};
+
+export const useJamboLivePredictionWhitelabels = (
+  shiftId: string | null,
+  nums: number | null
+) => {
+  return useQuery({
+    queryKey: ["jambo-live-prediction-whitelabels", shiftId, nums],
+    queryFn: async () => {
+      const res = await ownerApi.getJamboLivePredictionWhitelabels(
+        shiftId!,
+        nums!
+      );
+      return (res.data?.data ?? []) as LivePredictionWhitelabelRow[];
+    },
+    enabled: !!shiftId && !!nums,
+    staleTime: 10 * 1000,
+  });
+};
+
+export const useJamboAgentSale = (
+  shiftId: string | null,
+  nums: number | null
+) => {
+  return useQuery({
+    queryKey: ["jambo-agent-sale", shiftId, nums],
+    queryFn: async () => {
+      const res = await ownerApi.getJamboAgentSale(shiftId!, nums!);
+      return (res.data?.data ?? []) as AgentSaleRow[];
+    },
+    enabled: !!shiftId && !!nums,
+    staleTime: 10 * 1000,
+  });
+};
+
+export const useJamboLivePredictionJantri = (
+  shiftId: string | null,
+  partyId: string | null,
+  enabled: boolean
+) => {
+  return useQuery({
+    queryKey: ["jambo-live-prediction-jantri", shiftId, partyId],
+    queryFn: async () => {
+      const res = await ownerApi.getJamboLivePredictionJantri(
+        shiftId!,
+        partyId!
+      );
+      return (res.data?.data ?? []) as {
+        nums: number;
+        sale: string;
+      }[];
+    },
+    enabled: !!shiftId && !!partyId && enabled,
+    staleTime: 10 * 1000,
+  });
+};
+
+export const useDeclareJamboResult = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ shiftId, result }: { shiftId: string; result: number }) =>
+      ownerApi.declareJamboResult(shiftId, result),
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["jambo-live-prediction"] });
+      queryClient.invalidateQueries({ queryKey: ["jambo-declared-history"] });
+      queryClient.invalidateQueries({
+        queryKey: ["jambo-live-prediction-whitelabels", vars.shiftId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["owner-jambo-shifts"] });
+      toast.success("Result declared");
+    },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.error ?? "Failed to declare result"),
+  });
+};
+
+export const useJamboDeclaredHistory = (limit = 50) => {
+  return useQuery({
+    queryKey: ["jambo-declared-history", limit],
+    queryFn: async () => {
+      const res = await ownerApi.getJamboDeclaredHistory(limit);
+      return (res.data?.data ?? []) as DeclaredHistoryRow[];
+    },
+    staleTime: 30 * 1000,
+  });
+};
+
 export const useLiveMarketsDetails = () => {
   return useQuery({
     queryKey: ["live-markets-details"],

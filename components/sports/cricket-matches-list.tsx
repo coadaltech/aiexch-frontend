@@ -77,10 +77,10 @@ const formatMatchTime = (dateString: string | null): { day: string; time: string
 function OddsCell({ back, lay }: { back: number | null; lay: number | null }) {
   return (
     <div className={`${ODDS_COL} shrink-0 flex items-center gap-0.5 px-0.5 py-1 sm:gap-1.5 sm:px-1`}>
-      <div className="flex-1 min-w-0 h-9 rounded bg-gradient-to-b from-back to-back-deep flex items-center justify-center text-[13px] sm:text-lg md:text-xl font-bold tabular-nums text-gray-900 leading-none">
+      <div className="flex-1 min-w-0 h-9 rounded bg-gradient-to-b from-back to-back-deep flex items-center justify-center text-[13px] sm:text-lg md:text-[16px] font-bold tabular-nums text-gray-900 leading-none">
         {back ?? "-"}
       </div>
-      <div className="flex-1 min-w-0 h-9 rounded bg-gradient-to-b from-lay to-lay-deep flex items-center justify-center text-[13px] sm:text-lg md:text-xl font-bold tabular-nums text-gray-900 leading-none">
+      <div className="flex-1 min-w-0 h-9 rounded bg-gradient-to-b from-lay to-lay-deep flex items-center justify-center text-[13px] sm:text-lg md:text-[16px] font-bold tabular-nums text-gray-900 leading-none">
         {lay ?? "-"}
       </div>
     </div>
@@ -143,7 +143,7 @@ function MatchRow({
 
         {/* Event name — wraps cleanly on small screens */}
         <div className="flex-1 min-w-0 flex items-center gap-1.5 px-2 py-1.5">
-          <h4 className="text-base sm:text-lg md:text-xl font-bold text-[var(--header-primary)] break-words min-w-0 leading-snug">
+          <h4 className="text-base sm:text-lg md:text-[16px] font-bold text-[var(--header-primary)] break-words min-w-0 leading-snug">
             {match.name?.length > 50 ? match.name.slice(0, 50) + "..." : match.name || "Untitled Match"}
             </h4>
           {betCount != null && betCount > 0 && (

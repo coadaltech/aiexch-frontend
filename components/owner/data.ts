@@ -63,6 +63,7 @@ export function getNavigation(prefix: string): NavItem[] {
       icon: CheckCircle,
       subItems: [
         { name: "Live Prediction", href: `${prefix}/live-prediction`, icon: Target, requires: ["live_prediction.view", "live_prediction.declare"] },
+        { name: "Jambo Prediction", href: `${prefix}/jambo/live-prediction`, icon: Target, requires: ["live_prediction.view", "live_prediction.declare"] },
         { name: "Sports Result", href: `${prefix}/sports-result`, icon: ClipboardList, requires: ["sports_result.view", "sports_result.declare"] },
       ],
     },
