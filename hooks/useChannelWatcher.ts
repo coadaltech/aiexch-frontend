@@ -16,7 +16,11 @@ type Channel =
   // User-balance change. The payload carries `userId` so subscribers can
   // ignore changes not meant for them (channel is global, filter is client-
   // side — fan-out is tiny so this is fine).
-  | "ledger";
+  | "ledger"
+  // Single-device session enforcement. Subscribing keeps the socket alive
+  // while logged in; the server pushes `{ type: "force-logout", userId,
+  // sessionToken }` here when the account logs in elsewhere.
+  | "session";
 
 let ws: WebSocket | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -60,6 +64,12 @@ const connect = () => {
   socket.onmessage = (event) => {
     try {
       const data = JSON.parse(event.data);
+      if (data?.type === "force-logout") {
+        // Immediate single-device kick. Fan out on the bus; useSessionWatcher
+        // does the userId/sessionToken filtering before logging the user out.
+        bus.dispatchEvent(new CustomEvent("force-logout", { detail: data }));
+        return;
+      }
       if (typeof data?.type === "string" && data.type.endsWith("-changed")) {
         // CustomEvent so payload (e.g. { userId } on ledger-changed) can
         // reach subscribers via detail; existing handlers that ignore the
@@ -137,4 +147,51 @@ export function useChannelWatcher<T extends Record<string, unknown> = Record<str
       disconnectIfIdle();
     };
   }, [channel, onChange]);
+}
+
+/**
+ * Keeps the shared socket connected while the user is logged in and listens for
+ * the backend's single-device `force-logout` push. When the account logs in on
+ * another device the server broadcasts `{ userId, sessionToken }`; this device
+ * logs out immediately if the broadcast targets it (`userId` matches) but
+ * carries a different session token (i.e. a newer login than its own).
+ *
+ * @param enabled         only watch while logged in (skip for demo/guest)
+ * @param userId          this device's logged-in user id
+ * @param sessionToken    this device's own session token (so it ignores its own login)
+ * @param onForceLogout   invoked once when this device should be kicked
+ */
+export function useSessionWatcher(
+  enabled: boolean,
+  userId: string | undefined,
+  sessionToken: string | undefined,
+  onForceLogout: () => void,
+) {
+  useEffect(() => {
+    if (!enabled || !userId) return;
+
+    const channel: Channel = "session";
+    const prev = subscriptionCounts.get(channel) ?? 0;
+    subscriptionCounts.set(channel, prev + 1);
+    connect();
+    if (prev === 0) subscribeServer(channel);
+
+    const handler = (e: Event) => {
+      const msg = (e as CustomEvent<{ userId?: string; sessionToken?: string }>).detail ?? {};
+      if (msg.userId !== userId) return; // someone else's login — ignore
+      // A force-logout that carries *our own* session token is our own login
+      // echoed back; only react when the token differs (a newer session).
+      if (sessionToken && msg.sessionToken === sessionToken) return;
+      onForceLogout();
+    };
+    bus.addEventListener("force-logout", handler);
+
+    return () => {
+      bus.removeEventListener("force-logout", handler);
+      const next = (subscriptionCounts.get(channel) ?? 1) - 1;
+      subscriptionCounts.set(channel, Math.max(0, next));
+      if (next <= 0) sendIfOpen({ action: "unsubscribe-channel", channel });
+      disconnectIfIdle();
+    };
+  }, [enabled, userId, sessionToken, onForceLogout]);
 }

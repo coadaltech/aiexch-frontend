@@ -34,17 +34,19 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   const isHomeOrRoot = pathname === "/" || pathname === "/home";
   // Casino runs as a full-width "system" page: header + dropheader + content,
   // but NO sidebar. The dropheader shows an Exchange button to return.
+  // The unified casino is exactly /casino (and /casino/...). Match it precisely
+  // so the separate /casino-ace routes don't get caught by a loose prefix.
+  const isUnifiedCasino =
+    pathname === "/casino" || (pathname?.startsWith("/casino/") ?? false);
   const isCasinoRoute =
-    (pathname?.startsWith("/casino-ace") || pathname?.startsWith("/qtech-casino")) ?? false;
-  // The unified casino (/qtech-casino) renders its own full-width header bar
+    (pathname?.startsWith("/casino-ace") || isUnifiedCasino) ?? false;
+  // The unified casino (/casino) renders its own full-width header bar
   // (logo + category nav + BAL/LIAB + settings), so the normal white header is
   // dropped there entirely. The RV Casino (Ace) game launcher likewise renders
   // its own toolbar, so drop the global header on its play route too — otherwise
   // two headers stack. The /casino-ace lobby keeps the global header.
   const hideHeader =
-    (pathname?.startsWith("/qtech-casino") ||
-      pathname?.startsWith("/casino-ace/play")) ??
-    false;
+    (isUnifiedCasino || pathname?.startsWith("/casino-ace/play")) ?? false;
   const whitelabelNotFound =
     !whitelabelLoading && whitelabelInfo?.whitelabelType == null;
 

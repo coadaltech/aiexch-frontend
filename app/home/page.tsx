@@ -250,13 +250,13 @@ function ModeTabs() {
           EXCHANGE
         </button>
         <button
-          onClick={() => router.push("/qtech-casino")}
+          onClick={() => router.push("/casino")}
           className={`${tabBase} text-gray-600 hover:bg-gray-100`}
         >
           CASINO
         </button>
         <button
-          onClick={() => router.push("/qtech-casino?cat=RVCASINO")}
+          onClick={() => router.push("/casino/category/rvcasino")}
           className={`${tabBase} text-gray-600 hover:bg-gray-100`}
         >
           RV CASINO
@@ -275,7 +275,7 @@ const QUICK_ACCESS = [
   { label: "Matka", href: "/matka", icon: Spade },
   { label: "Election", href: "/sports/politics", icon: Flag },
   { label: "Bombay Bazar", href: "/bombay-bazar", icon: Disc3 },
-  { label: "More", href: "/qtech-casino", icon: MoreHorizontal },
+  { label: "More", href: "/casino", icon: MoreHorizontal },
 ];
 
 function QuickAccessGrid() {

@@ -148,7 +148,7 @@ export default function Header() {
     () => [
       { label: "Home", link: "/home" },
       ...sports,
-      { label: "Casino", link: "/qtech-casino" },
+      { label: "Casino", link: "/casino" },
       { label: "Promotions", link: "/promotions" },
     ],
     [sports]
@@ -452,7 +452,7 @@ export default function Header() {
             own casino category bar instead. */}
         {!(
           pathname?.startsWith("/casino-ace") ||
-          pathname?.startsWith("/qtech-casino")
+          pathname?.startsWith("/casino")
         ) && <Dropheader leftMenu={leftMenu} rightMenu={rightMenu} />}
       </header>
 

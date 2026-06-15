@@ -44,7 +44,7 @@ export default function CasinoAcePlayPage({
       try {
         const returnUrl =
           typeof window !== "undefined"
-            ? `${window.location.origin}/qtech-casino`
+            ? `${window.location.origin}/casino`
             : undefined;
         const res = await casinoAceApi.launch(numericId, returnUrl);
         if (cancelled) return;
@@ -88,7 +88,7 @@ export default function CasinoAcePlayPage({
         <Button
           size="sm"
           variant="ghost"
-          onClick={() => router.push("/qtech-casino")}
+          onClick={() => router.push("/casino")}
           className="h-8 gap-1 text-white hover:bg-white/10 hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -150,7 +150,7 @@ export default function CasinoAcePlayPage({
               )}
               <Button
                 variant="outline"
-                onClick={() => router.push("/qtech-casino")}
+                onClick={() => router.push("/casino")}
                 className="mt-4 gap-2"
               >
                 <ArrowLeft className="h-4 w-4" />

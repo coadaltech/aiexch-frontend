@@ -12,7 +12,7 @@ import { qtechCasinoApi } from "@/lib/api";
 /**
  * QTech Game Launcher
  *
- * Requests a real-money launch URL from the backend (/qtech-casino/launch)
+ * Requests a real-money launch URL from the backend (qtech launch endpoint)
  * and renders it full-bleed in an iframe. The backend wires the user's
  * playerId and a fresh wallet session; QT calls back into our Common Wallet
  * endpoints for balance and bets. The game id is a QT string id
@@ -44,7 +44,7 @@ export default function QtechPlayPage({
     (async () => {
       try {
         const returnUrl =
-          typeof window !== "undefined" ? `${window.location.origin}/qtech-casino` : undefined;
+          typeof window !== "undefined" ? `${window.location.origin}/casino` : undefined;
         const res = await qtechCasinoApi.launch(gameId, { returnUrl });
         if (cancelled) return;
         if (!res.data?.success || !res.data?.url) {
@@ -74,7 +74,7 @@ export default function QtechPlayPage({
         <Button
           size="sm"
           variant="ghost"
-          onClick={() => router.push("/qtech-casino")}
+          onClick={() => router.push("/casino")}
           className="h-8 gap-1 text-white hover:bg-white/10 hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -131,7 +131,7 @@ export default function QtechPlayPage({
               )}
               <Button
                 variant="outline"
-                onClick={() => router.push("/qtech-casino")}
+                onClick={() => router.push("/casino")}
                 className="mt-4 gap-2"
               >
                 <ArrowLeft className="h-4 w-4" />

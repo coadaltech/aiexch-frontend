@@ -17,7 +17,7 @@ const FOOTER_COLS = [
       { label: "IPL Betting App",       href: "/sports/cricket" },
       { label: "Cricket World Cup",      href: "/sports/cricket" },
       { label: "Cricket App",            href: "/sports/cricket" },
-      { label: "Casino App",             href: "/qtech-casino" },
+      { label: "Casino App",             href: "/casino" },
       { label: "About us",               href: "" },
       { label: "Terms and Conditions",   href: "/terms" },
       { label: "Affiliate Program",      href: "" },
@@ -36,7 +36,7 @@ const FOOTER_COLS = [
   {
     title: "GAMES",
     links: [
-      { label: "Casino",      href: "/qtech-casino" },
+      { label: "Casino",      href: "/casino" },
       { label: "Skill Games", href: "/skil-games" },
       { label: "Jambo",       href: "/jambo" },
     ],

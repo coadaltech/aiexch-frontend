@@ -55,6 +55,7 @@ export default function LoginPage() {
               permissions?: string[];
               isStaff?: boolean;
               parentUserId?: string | null;
+              sessionToken?: string;
             };
             const roleStr = normalizeRole(user.role);
             login({
@@ -71,6 +72,9 @@ export default function LoginPage() {
               permissions: user.permissions ?? [],
               isStaff: user.isStaff ?? false,
               parentUserId: user.parentUserId ?? null,
+              // Needed so this device's session socket ignores its own login
+              // and only logs out on a newer login elsewhere.
+              sessionToken: user.sessionToken,
             });
             // Check panel access: support both numeric and string role from API
             const isPanelRole = typeof user.role === "number"

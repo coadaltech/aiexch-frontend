@@ -36,11 +36,16 @@ import { useSettings } from "@/hooks/usePublic";
 import { useAceGames, useQtechGames, type CasinoGame } from "@/hooks/useCasinoGames";
 
 /**
- * Casino lobby (QTech).
+ * Casino lobby.
  *
  * Shows the QTech catalogue (live data from QT Platform, cached server-side).
  * Tiles render in batches and images lazy-load, so a 500-game catalogue still
  * feels instant. Each tile launches the provider's real-money game page.
+ *
+ * The active category is reflected in the URL: the lobby lives at `/casino`,
+ * and picking a category swaps the URL to `/casino/category/<key>` (without a
+ * full navigation, via the History API). `initialCat` lets the
+ * `/casino/category/[category]` route render this same lobby pre-filtered.
  */
 
 // How many tiles to render initially / per scroll batch. Keeps the first paint
@@ -67,17 +72,41 @@ const CATS: { key: string; label: string; icon: LucideIcon }[] = [
 ];
 const CAT_LABEL = Object.fromEntries(CATS.map((c) => [c.key, c.label]));
 
-export default function LiveCasinoPage() {
+// Build the URL that represents a given category selection. "ALL" is the bare
+// lobby; everything else is a lowercased category path.
+function catToPath(key: string) {
+  return key === "ALL" ? "/casino" : `/casino/category/${key.toLowerCase()}`;
+}
+
+// Reverse of catToPath: read the active category back out of a pathname.
+function pathToCat(pathname: string) {
+  const m = pathname.match(/^\/casino\/category\/([^/]+)/);
+  return m ? m[1].toUpperCase() : "ALL";
+}
+
+export default function CasinoLobby({ initialCat }: { initialCat?: string }) {
   const router = useRouter();
   const { data: settings } = useSettings();
-  const [activeCat, setActiveCat] = useState<string>("ALL");
+  const [activeCat, setActiveCat] = useState<string>(initialCat ?? "ALL");
   const [search, setSearch] = useState("");
 
-  // Allow deep-linking into a category (e.g. the home page "RV Casino" button
-  // navigates here with ?cat=RVCASINO).
+  // Selecting a category updates both the view and the URL. We use the History
+  // API directly (rather than router.push) so switching categories never
+  // remounts the lobby or refetches — it's an instant, in-place filter change
+  // that still produces a real, shareable, back-button-able URL.
+  const selectCat = useCallback((key: string) => {
+    setActiveCat(key);
+    if (typeof window !== "undefined") {
+      window.history.pushState(null, "", catToPath(key));
+    }
+  }, []);
+
+  // Keep the view in sync when the user navigates with the browser back/forward
+  // buttons (which fire popstate without remounting this component).
   useEffect(() => {
-    const cat = new URLSearchParams(window.location.search).get("cat");
-    if (cat) setActiveCat(cat);
+    const sync = () => setActiveCat(pathToCat(window.location.pathname));
+    window.addEventListener("popstate", sync);
+    return () => window.removeEventListener("popstate", sync);
   }, []);
 
   const qt = useQtechGames();
@@ -214,7 +243,7 @@ export default function LiveCasinoPage() {
             return (
               <button
                 key={t.key}
-                onClick={() => setActiveCat(t.key)}
+                onClick={() => selectCat(t.key)}
                 className={`flex shrink-0 flex-col items-center justify-center gap-1 rounded-md px-4 py-2 transition-colors ${
                   active
                     ? "bg-white/10 text-[#ede105]"
@@ -275,7 +304,7 @@ export default function LiveCasinoPage() {
             Exchange
           </button>
           <button
-            onClick={() => setActiveCat("ALL")}
+            onClick={() => selectCat("ALL")}
             className={`flex flex-1 items-center justify-center rounded-md px-3 py-2 text-xs font-bold transition-colors ${
               activeCat !== "RVCASINO"
                 ? "bg-[#ede105] text-black"
@@ -285,7 +314,7 @@ export default function LiveCasinoPage() {
             Casino
           </button>
           <button
-            onClick={() => setActiveCat("RVCASINO")}
+            onClick={() => selectCat("RVCASINO")}
             className={`flex flex-1 items-center justify-center rounded-md px-3 py-2 text-xs font-bold transition-colors ${
               activeCat === "RVCASINO"
                 ? "bg-[#ede105] text-black"
@@ -303,7 +332,7 @@ export default function LiveCasinoPage() {
         {activeCat !== "ALL" && activeCat !== "RVCASINO" && (
           <div className="sticky top-0 z-10 -mx-3 mb-3 flex items-center gap-2 border-b border-white/10 bg-[#0d1117]/95 px-3 py-2 backdrop-blur lg:hidden">
             <button
-              onClick={() => setActiveCat("ALL")}
+              onClick={() => selectCat("ALL")}
               className="flex items-center gap-1 text-sm font-semibold text-[#ede105]"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -366,7 +395,7 @@ export default function LiveCasinoPage() {
                 count={c.count}
                 icon={c.icon}
                 thumb={catThumbs.get(c.key) ?? null}
-                onClick={() => setActiveCat(c.key)}
+                onClick={() => selectCat(c.key)}
               />
             ))}
           </div>

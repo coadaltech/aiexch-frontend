@@ -222,14 +222,11 @@ export function UserModal({
   const validateForm = () => {
     if (!formData.username?.trim()) return "Username is required";
     if (!user && usernameStatus === "taken") return "Username is already taken";
-    if (!formData.email?.trim()) return "Email is required";
     if (!formData.role?.trim()) return "Role is required";
     if (!formData.membership?.trim()) return "Membership is required";
     if (!user && !formData.password?.trim()) return "Password is required";
     if (!user && formData.password && formData.password.length < 6)
       return "Password must be at least 6 characters";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
-      return "Invalid email format";
     // Downline must always be ≤ upline (upline comes from parent)
     const uplineVal = parseFloat(String(formData.upline ?? "0")) || 0;
     const downlineVal = parseFloat(String(formData.downline ?? "0")) || 0;
@@ -380,7 +377,6 @@ export function UserModal({
                     }
                     className="bg-background border-input text-foreground h-9 focus:ring-2 focus:ring-primary/20"
                     placeholder="user@example.com"
-                    required
                     disabled={!!user}
                   />
                 </div>

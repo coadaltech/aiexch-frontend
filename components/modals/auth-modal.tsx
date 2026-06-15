@@ -85,6 +85,9 @@ export function AuthModal({
                 downline: u.downline,
                 groupId: u.groupId,
                 currencyId: u.currencyId,
+                // Lets this device's session socket ignore its own login and
+                // log out only on a newer login elsewhere.
+                sessionToken: u.sessionToken,
               });
               onClose();
               resetForm();

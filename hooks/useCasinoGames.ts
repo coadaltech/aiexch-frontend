@@ -65,7 +65,7 @@ async function fetchQtechGames(): Promise<CasinoGame[]> {
   return (res.data.games ?? []).map((g) => ({
     key: `qtech:${g.id}`,
     source: "qtech" as const,
-    href: `/qtech-casino/play/${encodeURIComponent(g.id)}`,
+    href: `/casino/play/${encodeURIComponent(g.id)}`,
     name: g.name,
     provider: g.provider || "QTech",
     thumbnailUrl: g.thumbnailUrl,

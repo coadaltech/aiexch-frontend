@@ -29,7 +29,7 @@ import { isPanelPath } from "@/lib/panel-utils";
 const navItems = [
   { id: "home", label: "Home", icon: Home, link: "/" },
   { id: "sports", label: "Sports", icon: Volleyball, link: "/sports" },
-  { id: "casino", label: "Casino", icon: Dices, link: "/qtech-casino" },
+  { id: "casino", label: "Casino", icon: Dices, link: "/casino" },
   { id: "promotions", label: "Promotions", icon: Gift, link: "/promotions" },
   { id: "profile", label: "Profile", icon: User, link: "/profile" },
 ];
@@ -83,8 +83,9 @@ export default function BottomNavigation() {
   };
 
   const hiddenRoutes = ["/login", "/signup", "/forgot-password"];
-  const isCasinoGame =
-    pathname?.startsWith("/casino/") && pathname !== "/casino";
+  // Hide the bottom nav only inside a launched casino game (full-bleed iframe);
+  // the lobby (/casino) and category views (/casino/category/...) keep it.
+  const isCasinoGame = pathname?.startsWith("/casino/play/") ?? false;
 
   if (hiddenRoutes.some((route) => pathname?.includes(route)) || isPanelPath(pathname) || isCasinoGame)
     return null;

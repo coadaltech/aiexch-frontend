@@ -5,8 +5,16 @@ import { clearDemoBets } from "@/lib/demo-bets";
 import { setUserCountry, setUserTimezone } from "@/lib/date-utils";
 import { normalizeRole, normalizeMembership } from "@/types/enums";
 import { useRouter } from "next/navigation";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useSessionWatcher } from "@/hooks/useChannelWatcher";
+import {
+  resolveOnLoad,
+  startGuard,
+  clearSessionMarks,
+  isIdleExpired,
+  isClearlyLive,
+} from "@/lib/session-guard";
 
 export const DEMO_BALANCE = "5000";
 
@@ -42,6 +50,12 @@ export interface User {
   isStaff?: boolean;
   /** The tier user this staff works under. Null for non-staff. */
   parentUserId?: string | null;
+  /**
+   * Opaque per-login session id (also embedded in the httpOnly JWT). Used by
+   * the session socket to recognise this device's own login and ignore the
+   * matching `force-logout` broadcast while reacting to newer ones.
+   */
+  sessionToken?: string;
 }
 
 const applyUserTimezone = (u: { country?: string | null; timezone?: string | null } | null | undefined) => {
@@ -88,6 +102,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // Tracks the session key this tab set so we can detect another tab logging in
   const sessionKeyRef = useRef<string | null>(null);
+  // Cleanup fn for the active session guard (idle timer + close detection).
+  const guardStopRef = useRef<(() => void) | null>(null);
   // Last time we hit /profile/me (epoch ms). Used to throttle the on-focus
   // session re-validation so rapid tab toggling doesn't hammer the endpoint.
   const lastMeCheckRef = useRef(0);
@@ -107,6 +123,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (refreshTimerRef.current) clearInterval(refreshTimerRef.current);
     refreshTimerRef.current = setInterval(async () => {
       if (!getAuthCookie("refreshToken")) return; // nothing to refresh
+      // Don't silently keep an idle session alive — let it expire so the idle
+      // guard's logout (and the server-side token expiry) take effect.
+      if (isIdleExpired()) return;
       await proactiveRefresh();
     }, PROACTIVE_REFRESH_INTERVAL);
   };
@@ -118,10 +137,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // ── Session lifecycle (refresh timer + idle/close guard) ───────────────────
+  // beginSession arms everything for a freshly-validated, non-demo login;
+  // endSession tears it down and wipes the local session marks. The idle guard
+  // fires handleIdleLogout after 1h of inactivity — see handleIdleLogout below.
+  const beginSession = (onIdle: () => void) => {
+    startRefreshTimer();
+    if (!guardStopRef.current) guardStopRef.current = startGuard(onIdle);
+  };
+
+  const endSession = () => {
+    stopRefreshTimer();
+    guardStopRef.current?.();
+    guardStopRef.current = null;
+    clearSessionMarks();
+  };
+
+  // Fired by the session guard after 1h of inactivity (in any tab). Mirrors a
+  // manual logout but routes to /login so the user knows the session ended.
+  const handleIdleLogout = useCallback(() => {
+    endSession();
+    clearTokens();
+    sessionStorage.removeItem("user");
+    localStorage.removeItem("loginSessionKey");
+    sessionKeyRef.current = null;
+    resetAppCache();
+    setUser(null);
+    setIsLoggedIn(false);
+    router.push("/login");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router]);
+
   // Restore from sessionStorage immediately, then validate with backend
   useEffect(() => {
-    // 1. Hydrate from sessionStorage (optimistic UI)
-    const cachedUser = sessionStorage.getItem("user");
+    // 1. Hydrate from sessionStorage (optimistic UI) — but ONLY when the guard
+    //    is sure the session is live (recent heartbeat + not idle-expired). On a
+    //    browser-restore-after-close the heartbeat is stale, so we skip the
+    //    optimistic paint and let initAuth's resolveOnLoad reject the session,
+    //    avoiding a logged-in flash before the forced logout.
+    const cachedUser = isClearlyLive() ? sessionStorage.getItem("user") : null;
     if (cachedUser) {
       try {
         const parsed = JSON.parse(cachedUser) as User;
@@ -153,6 +207,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
+      // Reject a session the browser silently restored after being closed, or
+      // one left idle past the 1h limit — BEFORE trusting the cookies. No
+      // backend call: this is decided from local marks + a peer-tab handshake.
+      const loadState = await resolveOnLoad();
+      if (loadState !== "ok") {
+        clearTokens();
+        sessionStorage.removeItem("user");
+        clearSessionMarks();
+        setUser(null);
+        setIsLoggedIn(false);
+        setIsLoading(false);
+        return;
+      }
+
       try {
         lastMeCheckRef.current = Date.now();
         const { data } = await api.get("/profile/me", { withCredentials: true });
@@ -166,7 +234,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setIsLoggedIn(true);
           applyUserTimezone(u);
           sessionStorage.setItem("user", JSON.stringify(u));
-          startRefreshTimer();
+          beginSession(handleIdleLogout);
         } else {
           // Only clear if login() wasn't called while we were awaiting /profile/me
           if (sessionStorage.getItem("user") === cachedAtStart) {
@@ -265,11 +333,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       stopRefreshTimer();
+      // Tear down guard listeners/timers (but keep the localStorage marks so a
+      // remount doesn't lose the idle/heartbeat state).
+      guardStopRef.current?.();
+      guardStopRef.current = null;
       window.removeEventListener("storage", handleStorage);
       window.removeEventListener("auth-session-expired", handleSessionExpired);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
+
+  // ── Single-device session enforcement (socket push) ───────────────────────
+  // The backend pushes a `force-logout` over the shared socket the instant this
+  // account logs in elsewhere, so the previous device is kicked immediately —
+  // no polling, no refresh, no tab switch needed. useSessionWatcher filters the
+  // broadcast by userId/sessionToken; this runs only for the targeted device.
+  const handleForceLogout = useCallback(() => {
+    endSession();
+    clearTokens();
+    sessionStorage.removeItem("user");
+    localStorage.removeItem("loginSessionKey");
+    sessionKeyRef.current = null;
+    resetAppCache();
+    setUser(null);
+    setIsLoggedIn(false);
+    router.push("/login");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router]);
+
+  useSessionWatcher(
+    isLoggedIn && !user?.isDemo,
+    user?.id,
+    user?.sessionToken,
+    handleForceLogout,
+  );
 
   const login = (userData: User) => {
     if (!userData?.id || !userData?.email) {
@@ -281,7 +378,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoggedIn(true);
     applyUserTimezone(userData);
     if (!userData.isDemo) {
-      startRefreshTimer();
+      beginSession(handleIdleLogout);
       // Write a unique key so other browser tabs detect this login and log out.
       const sessionKey = crypto.randomUUID();
       sessionKeyRef.current = sessionKey;
@@ -290,7 +387,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
-    stopRefreshTimer();
+    endSession();
     const isDemo = user?.isDemo;
     if (!isDemo) {
       try {

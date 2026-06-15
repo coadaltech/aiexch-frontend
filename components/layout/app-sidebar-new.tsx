@@ -76,7 +76,7 @@ const getMenuGroups = (isLoggedIn: boolean): MenuGroup[] => {
       title: "",
       items: [
         { title: "Home", icon: Home, link: "/" },
-        { title: "Casino", icon: Dice6, link: "/qtech-casino" },
+        { title: "Casino", icon: Dice6, link: "/casino" },
         { title: "Promotions", icon: Gift, link: "/promotions" },
       ],
     },
@@ -708,7 +708,7 @@ export function AppSidebar() {
   // ── All icon-only items for collapsed state ────────────────────────────
   const allIconItems = [
     { icon: Home, link: "/", title: "Home" },
-    { icon: Dice6, link: "/qtech-casino", title: "Casino" },
+    { icon: Dice6, link: "/casino", title: "Casino" },
     { icon: Gift, link: "/promotions", title: "Promotions" },
     { icon: Trophy, link: "/sports", title: "Sports" },
     ...(isLoggedIn ? [
