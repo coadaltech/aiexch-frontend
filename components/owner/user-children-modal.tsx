@@ -162,7 +162,7 @@ export function UserChildrenModal({
                       <td className="px-3 py-2">
                         <button
                           onClick={() => drillInto({ id: u.id, username: u.username })}
-                          className="font-semibold text-[var(--header-text)] hover:underline text-left"
+                          className="font-semibold text-black hover:underline text-left"
                           title="View this user's downline"
                         >
                           {u.username}
