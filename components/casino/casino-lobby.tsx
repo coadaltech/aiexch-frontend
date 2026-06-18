@@ -225,14 +225,14 @@ export default function CasinoLobby({ initialCat }: { initialCat?: string }) {
           <Logo onClick={() => router.push("/home")} settings={settings} />
         </div>
 
-        <div className="flex min-w-0 flex-1 items-stretch gap-1 overflow-x-auto px-2 py-2 scrollbar-hide sm:gap-2 sm:px-3">
+        <div className="flex min-w-0 flex-1 items-stretch gap-0.5 px-1 py-2.5 sm:gap-1 sm:px-2">
           <button
             onClick={() => router.push("/home")}
-            className="flex shrink-0 flex-col items-center justify-center gap-1 rounded-md px-4 py-2 text-gray-300 transition-colors hover:bg-white/5 hover:text-white"
+            className="flex min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-1 rounded-md px-1 py-2 text-gray-300 transition-colors hover:bg-white/5 hover:text-white"
             title="Back to Exchange"
           >
-            <ArrowLeftRight className="h-5 w-5" />
-            <span className="whitespace-nowrap text-[11px] font-semibold leading-none sm:text-xs">
+            <ArrowLeftRight className="h-5 w-5 shrink-0" />
+            <span className="w-full truncate text-center text-[11px] font-semibold leading-none sm:text-xs">
               Exchange
             </span>
           </button>
@@ -244,15 +244,15 @@ export default function CasinoLobby({ initialCat }: { initialCat?: string }) {
               <button
                 key={t.key}
                 onClick={() => selectCat(t.key)}
-                className={`flex shrink-0 flex-col items-center justify-center gap-1 rounded-md px-4 py-2 transition-colors ${
+                className={`flex min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-1 rounded-md px-1 py-2 transition-colors ${
                   active
                     ? "bg-white/10 text-[#ede105]"
                     : "text-gray-300 hover:bg-white/5 hover:text-white"
                 }`}
                 title={`${t.label} (${t.count})`}
               >
-                <Icon className="h-5 w-5" />
-                <span className="whitespace-nowrap text-[11px] font-semibold leading-none sm:text-xs">
+                <Icon className="h-5 w-5 shrink-0" />
+                <span className="w-full truncate text-center text-[11px] font-semibold leading-none sm:text-xs">
                   {t.label}
                 </span>
               </button>
