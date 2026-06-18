@@ -252,7 +252,7 @@ export default function CasinoLobby({ initialCat }: { initialCat?: string }) {
                 title={`${t.label} (${t.count})`}
               >
                 <Icon className="h-5 w-5 shrink-0" />
-                <span className="font-roboto whitespace-nowrap text-center text-[13px] font-semibold leading-none xl:text-sm">
+                <span className="font-roboto whitespace-nowrap text-[var(--header-text)] text-center text-[13px] font-semibold leading-none xl:text-[15px]">
                   {t.label}
                 </span>
               </button>
