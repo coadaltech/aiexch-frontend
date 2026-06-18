@@ -130,6 +130,16 @@ export default async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(`/${userPrefix}`, request.url));
   }
 
+  // First-time / logged-out visitors land on /login immediately, with no /home
+  // flash. Decided here from the refreshToken cookie so it happens server-side
+  // before anything renders. main-layout.tsx keeps a client-side guard for
+  // sessions that exist but get rejected later (idle timeout, browser restore).
+  if (pathname === "/" || pathname === "/home") {
+    if (!hasRefreshToken) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+  }
+
   // Redirect / → /home
   if (pathname === "/") {
     return NextResponse.redirect(new URL("/home", request.url));
