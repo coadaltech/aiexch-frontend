@@ -221,18 +221,18 @@ export default function CasinoLobby({ initialCat }: { initialCat?: string }) {
       {/* ── Casino header bar — DESKTOP only (full custom header) ── */}
       <div className="hidden lg:flex shrink-0 items-stretch border-b border-white/10 bg-[#0e1218]">
         {/* Brand */}
-        <div className="flex shrink-0 items-center border-r border-white/10 pl-3 pr-3 sm:pl-4">
+        <div className="flex shrink-0 items-center border-r border-white/10 px-2 sm:px-3">
           <Logo onClick={() => router.push("/home")} settings={settings} />
         </div>
 
-        <div className="flex min-w-0 flex-1 items-stretch gap-0.5 px-1 py-2.5 sm:gap-1 sm:px-2">
+        <div className="flex min-w-0 flex-1 items-stretch justify-between gap-0.5 px-1 py-5.5">
           <button
             onClick={() => router.push("/home")}
-            className="flex min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-1 rounded-md px-1 py-2 text-gray-300 transition-colors hover:bg-white/5 hover:text-white"
+            className="flex shrink-0 flex-col items-center justify-center gap-1 rounded-md px-1.5 py-1 text-gray-300 transition-colors hover:bg-white/5 hover:text-white xl:px-2.5"
             title="Back to Exchange"
           >
             <ArrowLeftRight className="h-5 w-5 shrink-0" />
-            <span className="w-full truncate text-center text-[11px] font-semibold leading-none sm:text-xs">
+            <span className="font-roboto whitespace-nowrap text-center text-[10px] font-semibold leading-none xl:text-xs">
               Exchange
             </span>
           </button>
@@ -244,7 +244,7 @@ export default function CasinoLobby({ initialCat }: { initialCat?: string }) {
               <button
                 key={t.key}
                 onClick={() => selectCat(t.key)}
-                className={`flex min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-1 rounded-md px-1 py-2 transition-colors ${
+                className={`flex shrink-0 flex-col items-center justify-center gap-1 rounded-md px-1.5 py-1 transition-colors xl:px-2.5 ${
                   active
                     ? "bg-white/10 text-[#ede105]"
                     : "text-gray-300 hover:bg-white/5 hover:text-white"
@@ -252,7 +252,7 @@ export default function CasinoLobby({ initialCat }: { initialCat?: string }) {
                 title={`${t.label} (${t.count})`}
               >
                 <Icon className="h-5 w-5 shrink-0" />
-                <span className="w-full truncate text-center text-[11px] font-semibold leading-none sm:text-xs">
+                <span className="font-roboto whitespace-nowrap text-center text-[13px] font-semibold leading-none xl:text-sm">
                   {t.label}
                 </span>
               </button>
@@ -298,14 +298,14 @@ export default function CasinoLobby({ initialCat }: { initialCat?: string }) {
         <div className="flex items-stretch gap-1.5 px-3 pb-2">
           <button
             onClick={() => router.push("/home")}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-md bg-white/5 px-3 py-2 text-xs font-bold text-gray-200 transition-colors hover:bg-white/10"
+            className="font-roboto flex flex-1 items-center justify-center gap-1.5 rounded-md bg-white/5 px-3 py-2 text-xs font-bold text-gray-200 transition-colors hover:bg-white/10"
           >
             <ArrowLeftRight className="h-4 w-4" />
             Exchange
           </button>
           <button
             onClick={() => selectCat("ALL")}
-            className={`flex flex-1 items-center justify-center rounded-md px-3 py-2 text-xs font-bold transition-colors ${
+            className={`font-roboto flex flex-1 items-center justify-center rounded-md px-3 py-2 text-xs font-bold transition-colors ${
               activeCat !== "RVCASINO"
                 ? "bg-[#ede105] text-black"
                 : "bg-white/5 text-gray-200 hover:bg-white/10"
@@ -315,7 +315,7 @@ export default function CasinoLobby({ initialCat }: { initialCat?: string }) {
           </button>
           <button
             onClick={() => selectCat("RVCASINO")}
-            className={`flex flex-1 items-center justify-center rounded-md px-3 py-2 text-xs font-bold transition-colors ${
+            className={`font-roboto flex flex-1 items-center justify-center rounded-md px-3 py-2 text-xs font-bold transition-colors ${
               activeCat === "RVCASINO"
                 ? "bg-[#ede105] text-black"
                 : "bg-white/5 text-gray-200 hover:bg-white/10"
