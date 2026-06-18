@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ChevronDown, ArrowLeftRight } from "lucide-react";
+import { ChevronDown, ArrowLeftRight, Pin } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,9 @@ interface MenuItem {
   // When explicitly false, clicking this menu item routes to the
   // shared "coming soon" page instead of the sport's normal target.
   isLive?: boolean;
+  // Owner-pinned events render with a highlighted "pill" treatment so they
+  // stand out from the regular sport tabs.
+  highlight?: boolean;
 }
 
 interface HeaderProps {
@@ -92,6 +95,30 @@ export default function Dropheader({ leftMenu, rightMenu }: HeaderProps) {
           )}
           {leftMenu.map((item, index) => {
             const active = isActive(item.link, item.label);
+
+            // Owner-pinned events: animated multi-color gradient text so they
+            // continuously shimmer and stand out from the regular sport tabs.
+            if (item.highlight) {
+              return (
+                <button
+                  key={index}
+                  onClick={() =>
+                    handleNavigation(item.link, item.label, item.isLive)
+                  }
+                  title={item.label}
+                  className={cn(
+                    "group relative flex flex-shrink-0 cursor-pointer items-center gap-1 px-3 sm:px-4 py-1.5 sm:py-2 text-xs md:text-[17px] font-extrabold touch-manipulation rounded-t-lg border-b-2 transition-all duration-150",
+                    active ? "border-[var(--header-secondary)]" : "border-transparent",
+                  )}
+                >
+                  {/* <Pin className="h-3.5 w-3.5 flex-shrink-0 text-[#ffd93d] fill-current" /> */}
+                  <span className="pin-shine-text whitespace-nowrap max-w-[12rem] truncate">
+                    {item.label}
+                  </span>
+                </button>
+              );
+            }
+
             return (
               <button
                 key={index}

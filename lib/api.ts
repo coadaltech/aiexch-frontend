@@ -366,6 +366,13 @@ export const ownerApi = {
   // Mark/unmark an event as a sidebar "Recommended" match (owner only)
   toggleRecommendedEvent: (eventId: string | number, isRecommended: boolean) =>
     api.post(`/owner/sports-games/toggle-recommended-event/${eventId}`, { isRecommended }),
+  // Pin/unpin an event to the site drop-header under a custom label (owner only)
+  pinEvent: (
+    eventId: string | number,
+    data: { isPinned: boolean; pinLabel?: string },
+  ) => api.post(`/owner/sports-games/pin-event/${eventId}`, data),
+  // Which events are currently pinned (owner panel state)
+  getPinnedEvents: () => api.get("/owner/sports-games/pinned-events"),
 
   // Home Sections
   getHomeSections: () => api.get("/owner/home-sections"),
@@ -792,7 +799,10 @@ export const qtechCasinoApi = {
     currencies?: string;
     gameTypes?: string;
     size?: number;
-  }) => api.get<QtechGamesResponse>("/qtech-casino/games", { params }),
+  }) =>
+    // The backend pages through QT's full ~13k-game catalogue on a cache miss,
+    // which can take well past the default 30s. Give this one call more room.
+    api.get<QtechGamesResponse>("/qtech-casino/games", { params, timeout: 90000 }),
 
   /**
    * Authed — generates a real-money launch URL for the logged-in user.
@@ -948,4 +958,5 @@ export const multimarketsApi = {
 export const sidebarApi = {
   topCompetitions: () => api.get("/api/dashboard/sidebar/top-competitions"),
   recommendedEvents: () => api.get("/api/dashboard/sidebar/recommended-events"),
+  pinnedEvents: () => api.get("/api/dashboard/sidebar/pinned-events"),
 };

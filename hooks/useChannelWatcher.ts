@@ -13,6 +13,7 @@ type Channel =
   | "sports-list"
   | "top-competitions"
   | "recommended-events"
+  | "pinned-events"
   // User-balance change. The payload carries `userId` so subscribers can
   // ignore changes not meant for them (channel is global, filter is client-
   // side — fan-out is tiny so this is fine).

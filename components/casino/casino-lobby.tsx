@@ -12,15 +12,12 @@ import {
   Dices,
   Diamond,
   Flame,
-  Gamepad2,
-  Gem,
-  LayoutGrid,
   Layers,
   Play,
   RefreshCw,
-  Rocket,
   Search,
   Spade,
+  Sparkles,
   Star,
   Ticket,
   X,
@@ -53,24 +50,29 @@ import { useAceGames, useQtechGames, type CasinoGame } from "@/hooks/useCasinoGa
 const PAGE_SIZE = 48;
 
 // Ordered category catalogue. Only buckets that actually have games are shown.
+// Crash games are folded into Instant Win; Slots/Other have no tab (those games
+// surface only in the Lobby view).
 const CATS: { key: string; label: string; icon: LucideIcon }[] = [
-  { key: "LIVECASINO", label: "Live Casino", icon: Spade },
   { key: "ROULETTE", label: "Roulette", icon: CircleDot },
+  { key: "LIGHTNING", label: "Lightning", icon: Zap },
+  { key: "LIVECASINO", label: "Live Casino", icon: Spade },
   { key: "TEENPATTI", label: "Teen Patti", icon: Layers },
   { key: "ANDARBAHAR", label: "Andar Bahar", icon: Layers },
   { key: "DRAGONTIGER", label: "Dragon Tiger", icon: Flame },
   { key: "BACCARAT", label: "Baccarat", icon: Diamond },
   { key: "BLACKJACK", label: "Black Jack", icon: Club },
-  { key: "POKER", label: "Poker", icon: Club },
   { key: "TABLE", label: "Table Games", icon: Dices },
-  { key: "SLOTS", label: "Slots", icon: Gem },
-  { key: "INSTANTWIN", label: "Instant Win", icon: Zap },
-  { key: "CRASH", label: "Crash", icon: Rocket },
-  { key: "LOTTERY", label: "Lottery", icon: Ticket },
-  { key: "OTHER", label: "Other", icon: Gamepad2 },
+  { key: "POKER", label: "Poker", icon: Club },
+  { key: "HOLDEM", label: "Hold'em", icon: Club },
+  { key: "INSTANTWIN", label: "Instant Win", icon: Sparkles },
+  { key: "LOTTERY", label: "Lottery Games", icon: Ticket },
   { key: "RVCASINO", label: "RV Casino", icon: Diamond },
 ];
 const CAT_LABEL = Object.fromEntries(CATS.map((c) => [c.key, c.label]));
+
+// There's no "Lobby" landing anymore — the bare /casino URL defaults to (and
+// redirects to) the first category below.
+const DEFAULT_CAT = CATS[0].key;
 
 // Build the URL that represents a given category selection. "ALL" is the bare
 // lobby; everything else is a lowercased category path.
@@ -87,7 +89,7 @@ function pathToCat(pathname: string) {
 export default function CasinoLobby({ initialCat }: { initialCat?: string }) {
   const router = useRouter();
   const { data: settings } = useSettings();
-  const [activeCat, setActiveCat] = useState<string>(initialCat ?? "ALL");
+  const [activeCat, setActiveCat] = useState<string>(initialCat ?? DEFAULT_CAT);
   const [search, setSearch] = useState("");
 
   // Selecting a category updates both the view and the URL. We use the History
@@ -109,13 +111,30 @@ export default function CasinoLobby({ initialCat }: { initialCat?: string }) {
     return () => window.removeEventListener("popstate", sync);
   }, []);
 
+  // Landing on the bare /casino URL: there's no lobby, so redirect to the first
+  // category (e.g. /casino/category/roulette) without adding a history entry.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!/^\/casino\/category\//.test(window.location.pathname)) {
+      window.history.replaceState(null, "", catToPath(DEFAULT_CAT));
+    }
+  }, []);
+
   const qt = useQtechGames();
   const ace = useAceGames();
 
   const games = useMemo<CasinoGame[]>(
-    () => [...(qt.data ?? []), ...(ace.data ?? [])],
+    () => [...(qt.data?.games ?? []), ...(ace.data ?? [])],
     [qt.data, ace.data],
   );
+
+  // Diagnostic counts: how many QTech games we actually received vs how many
+  // QT says exist in the catalogue. A gap means the provider fetch is capped
+  // (size=500, no pagination) — i.e. the missing games are dropped at fetch
+  // time, NOT by category filtering in the lobby.
+  const qtLoaded = qt.data?.games.length ?? 0;
+  const qtTotal = qt.data?.totalCount ?? 0;
+  const aceLoaded = ace.data?.length ?? 0;
 
   const isLoading = games.length === 0 && (qt.isLoading || ace.isLoading);
   const isError = qt.isError;
@@ -127,16 +146,14 @@ export default function CasinoLobby({ initialCat }: { initialCat?: string }) {
   }, [qt, ace]);
 
   // Category tabs that actually have games, in catalogue order, with counts.
+  // No "Lobby" tab — the casino opens straight into the first category.
   const tabs = useMemo(() => {
     const counts = new Map<string, number>();
     for (const g of games) counts.set(g.cat, (counts.get(g.cat) ?? 0) + 1);
-    const present = CATS.filter((c) => counts.has(c.key)).map((c) => ({
+    return CATS.filter((c) => counts.has(c.key)).map((c) => ({
       ...c,
       count: counts.get(c.key)!,
     }));
-    // The Lobby shows everything except RV Casino, so its count excludes it too.
-    const lobbyCount = games.length - (counts.get("RVCASINO") ?? 0);
-    return [{ key: "ALL", label: "Lobby", icon: LayoutGrid, count: lobbyCount }, ...present];
   }, [games]);
 
   const filtered = useMemo(() => {
@@ -252,7 +269,7 @@ export default function CasinoLobby({ initialCat }: { initialCat?: string }) {
                 title={`${t.label} (${t.count})`}
               >
                 <Icon className="h-5 w-5 shrink-0" />
-                <span className="font-roboto whitespace-nowrap text-[var(--header-text)] text-center text-[13px] font-semibold leading-none xl:text-[15px]">
+                <span className="font-roboto whitespace-nowrap text-[var(--header-text)] text-center text-[13px] font-semibold leading-none xl:text-[14px]">
                   {t.label}
                 </span>
               </button>
@@ -328,6 +345,26 @@ export default function CasinoLobby({ initialCat }: { initialCat?: string }) {
 
       {/* ── Grid (scrolls) ── */}
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-6">
+        {/* DIAGNOSTIC — confirms whether all provider games arrive. Remove once
+            the catalogue size is verified. "loaded" = games we received;
+            "catalogue" = what QT reports exists. If loaded < catalogue, the
+            backend size=500 fetch is dropping games (provider-fetch cap), not
+            the category filter. */}
+        {/* {games.length > 0 && (
+          <div
+            className={`my-2 rounded-md border px-3 py-2 text-xs ${
+              qtTotal > qtLoaded
+                ? "border-amber-500/40 bg-amber-950/30 text-amber-200"
+                : "border-white/10 bg-white/5 text-gray-300"
+            }`}
+          >
+            QTech: loaded <b>{qtLoaded}</b> of <b>{qtTotal}</b> in catalogue
+            {qtTotal > qtLoaded && " — provider fetch is capped, extra games are dropped at fetch time"}
+            {" · "}RV/Ace: <b>{aceLoaded}</b>
+            {" · "}Lobby showing: <b>{filtered.length}</b>
+          </div>
+        )} */}
+
         {/* Mobile: back-to-categories bar when browsing a single category */}
         {activeCat !== "ALL" && activeCat !== "RVCASINO" && (
           <div className="sticky top-0 z-10 -mx-3 mb-3 flex items-center gap-2 border-b border-white/10 bg-[#0d1117]/95 px-3 py-2 backdrop-blur lg:hidden">

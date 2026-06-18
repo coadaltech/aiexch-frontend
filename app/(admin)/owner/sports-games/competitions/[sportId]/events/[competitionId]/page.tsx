@@ -3,13 +3,14 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompetitionEvents, useUpdateEventStatus } from "@/hooks/useOwner";
 import { usePanelPrefix } from "@/hooks/usePanelPrefix";
 import { ownerApi } from "@/lib/api";
 import { formatLocal } from "@/lib/date-utils";
 import { usePermissions } from "@/contexts/PermissionContext";
-import { Ban } from "lucide-react";
+import { Ban, Pin } from "lucide-react";
 
 // usePermissions kept above — we use `has("custom_markets.view")` here only
 // to decide whether the per-event "manage markets" link is clickable.
@@ -81,6 +82,76 @@ export default function EventsPage() {
   // Optimistic overrides for the "Recommended" toggle — keyed by eventId.
   const [recommendedOverrides, setRecommendedOverrides] = useState<Record<string, boolean>>({});
   const [togglingRecommendedId, setTogglingRecommendedId] = useState<string | null>(null);
+
+  // ── Pinned events (drop-header nav, owner only) ──────────────────────────
+  const queryClient = useQueryClient();
+  // Map of eventId -> the custom label it's pinned under. Lets each row show
+  // whether it's already pinned and prefill the rename modal.
+  const { data: pinnedData } = useQuery({
+    queryKey: ["owner", "pinned-events"],
+    queryFn: async () => {
+      const res = await ownerApi.getPinnedEvents();
+      return Array.isArray(res.data?.data) ? res.data.data : [];
+    },
+    enabled: isOwner,
+    staleTime: 60_000,
+  });
+  const pinnedLabels = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const p of pinnedData ?? []) {
+      map.set(String(p.eventId), p.pinLabel || p.name || "");
+    }
+    return map;
+  }, [pinnedData]);
+
+  // The event currently being pinned (modal open) and the name being typed.
+  const [pinModalEvent, setPinModalEvent] = useState<EventItem | null>(null);
+  const [pinName, setPinName] = useState("");
+  const [pinSaving, setPinSaving] = useState(false);
+  const [unpinningId, setUnpinningId] = useState<string | null>(null);
+
+  const refreshPinned = useCallback(
+    () => queryClient.invalidateQueries({ queryKey: ["owner", "pinned-events"] }),
+    [queryClient],
+  );
+
+  const openPinModal = useCallback((evt: EventItem) => {
+    setPinModalEvent(evt);
+    setPinName(evt.name);
+  }, []);
+
+  const submitPin = useCallback(async () => {
+    if (!pinModalEvent) return;
+    const label = pinName.trim();
+    if (!label) return;
+    setPinSaving(true);
+    try {
+      await ownerApi.pinEvent(pinModalEvent.eventId, { isPinned: true, pinLabel: label });
+      await refreshPinned();
+      setPinModalEvent(null);
+      setPinName("");
+    } catch (err) {
+      console.error("Failed to pin event:", err);
+    } finally {
+      setPinSaving(false);
+    }
+  }, [pinModalEvent, pinName, refreshPinned]);
+
+  const handleUnpin = useCallback(
+    async (evt: EventItem) => {
+      if (unpinningId) return;
+      setUnpinningId(evt.id);
+      try {
+        await ownerApi.pinEvent(evt.eventId, { isPinned: false });
+        await refreshPinned();
+      } catch (err) {
+        console.error("Failed to unpin event:", err);
+      } finally {
+        setUnpinningId(null);
+      }
+    },
+    [unpinningId, refreshPinned],
+  );
 
   const eventsData: EventItem[] = useMemo(() => {
     if (!response?.success || !Array.isArray(response.data)) return [];
@@ -342,6 +413,7 @@ export default function EventsPage() {
           const original = originalActiveOf(evt);
           const isSelected = effectiveActiveOf(evt);
           const isChanged = canEdit && original !== isSelected;
+          const isPinned = pinnedLabels.has(evt.id);
 
           return (
             <div
@@ -385,6 +457,15 @@ export default function EventsPage() {
                         Suspended
                       </span>
                     )}
+                    {isPinned && (
+                      <span
+                        title={`Pinned to header as "${pinnedLabels.get(evt.id)}"`}
+                        className="text-xs bg-blue-100 text-blue-700 rounded-full inline-flex items-center gap-1 px-2 py-0.5 shrink-0"
+                      >
+                        <Pin className="h-3 w-3" />
+                        Pinned
+                      </span>
+                    )}
                     {isOwner && !evt.isActive && (
                       <span
                         title="Globally Inactive"
@@ -401,6 +482,38 @@ export default function EventsPage() {
                   </div>
                 </div>
               </div>
+              {isOwner && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (isPinned) handleUnpin(evt);
+                      else openPinModal(evt);
+                    }}
+                    disabled={unpinningId === evt.id}
+                    title={
+                      isPinned
+                        ? "Unpin from site header"
+                        : "Pin to site header (drop-down nav)"
+                    }
+                    className={`px-3 py-1 rounded-md text-xs font-semibold border transition-colors disabled:opacity-60 disabled:cursor-wait whitespace-nowrap inline-flex items-center gap-1 ${
+                      isPinned
+                        ? "bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100"
+                        : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    {unpinningId === evt.id ? (
+                      "Saving…"
+                    ) : (
+                      <>
+                        <Pin className="h-3 w-3" />
+                        <span className="hidden sm:inline">
+                          {isPinned ? "Unpin" : "Pin"}
+                        </span>
+                      </>
+                    )}
+                  </button>
+                )}
               <div className="flex flex-col items-center gap-3 sm:gap-4 shrink-0">
                 {isOwner && (
                   <button
@@ -433,6 +546,7 @@ export default function EventsPage() {
                     )}
                   </button>
                 )}
+                
                 <span
                   className={`px-3 py-1 rounded-full text-sm font-medium ${
                     isSelected
@@ -443,6 +557,7 @@ export default function EventsPage() {
                   {isSelected ? "Active" : "Inactive"}
                 </span>
               </div>
+              
             </div>
           );
         })}
@@ -488,6 +603,67 @@ export default function EventsPage() {
             >
               Next
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Pin naming modal */}
+      {pinModalEvent && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => !pinSaving && setPinModalEvent(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <Pin className="h-5 w-5 text-blue-600" />
+              <h2 className="text-lg font-bold text-gray-900">Pin event to header</h2>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">
+              Choose the name to show in the site&apos;s top navigation for{" "}
+              <span className="font-medium text-gray-700">{pinModalEvent.name}</span>.
+            </p>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Header label
+            </label>
+            <input
+              autoFocus
+              type="text"
+              maxLength={120}
+              value={pinName}
+              onChange={(e) => setPinName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") submitPin();
+                if (e.key === "Escape" && !pinSaving) setPinModalEvent(null);
+              }}
+              placeholder="e.g. WWC 2026 Final"
+              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+            />
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setPinModalEvent(null)}
+                disabled={pinSaving}
+                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitPin}
+                disabled={pinSaving || pinName.trim().length === 0}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+              >
+                {pinSaving ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Pinning…
+                  </>
+                ) : (
+                  "Pin event"
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -27,20 +27,26 @@ export interface CasinoGame {
 
 export function bucketOf(name: string, category: string | null): string {
   const s = `${category ?? ""} ${name}`.toLowerCase();
+  // Lightning-branded titles (Lightning Roulette/Dice/…) get their own tab, so
+  // this must run before the roulette/table checks below.
+  if (/lightning/.test(s)) return "LIGHTNING";
   if (/roulette/.test(s)) return "ROULETTE";
   if (/baccarat/.test(s)) return "BACCARAT";
   if (/black\s*jack/.test(s)) return "BLACKJACK";
   if (/dragon/.test(s)) return "DRAGONTIGER";
   if (/teen\s*patti/.test(s)) return "TEENPATTI";
   if (/andar|bahar/.test(s)) return "ANDARBAHAR";
-  if (/poker|hold.?em/.test(s)) return "POKER";
+  // Hold'em is split out from the general Poker bucket.
+  if (/hold.?em/.test(s)) return "HOLDEM";
+  if (/poker/.test(s)) return "POKER";
   if (/lottery|lotto|keno/.test(s)) return "LOTTERY";
-  if (/crash/.test(s)) return "CRASH";
+  // Crash games are folded into the Instant Win bucket.
+  if (/crash/.test(s)) return "INSTANTWIN";
   const parts = (category ?? "").toUpperCase().split("/");
   if (parts.some((p) => p.includes("LIVE"))) return "LIVECASINO";
   if (parts.some((p) => p.includes("SLOT"))) return "SLOTS";
   if (parts.some((p) => p.includes("TABLE"))) return "TABLE";
-  if (parts.some((p) => p.includes("INSTANT"))) return "INSTANTWIN";
+  if (parts.some((p) => p.includes("INSTANT") || p.includes("CRASH"))) return "INSTANTWIN";
   return "OTHER";
 }
 
@@ -60,9 +66,11 @@ async function fetchAceGames(): Promise<CasinoGame[]> {
   }));
 }
 
-async function fetchQtechGames(): Promise<CasinoGame[]> {
+// Returns the normalized games plus QT's reported catalogue size, so callers
+// can tell whether we received the full catalogue or hit the page-size cap.
+async function fetchQtechGames(): Promise<{ games: CasinoGame[]; totalCount: number }> {
   const res = await qtechCasinoApi.listGames();
-  return (res.data.games ?? []).map((g) => ({
+  const games = (res.data.games ?? []).map((g) => ({
     key: `qtech:${g.id}`,
     source: "qtech" as const,
     href: `/casino/play/${encodeURIComponent(g.id)}`,
@@ -71,6 +79,7 @@ async function fetchQtechGames(): Promise<CasinoGame[]> {
     thumbnailUrl: g.thumbnailUrl,
     cat: bucketOf(g.name, g.category),
   }));
+  return { games, totalCount: res.data.totalCount ?? games.length };
 }
 
 const SHARED_OPTS = {

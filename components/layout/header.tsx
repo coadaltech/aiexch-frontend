@@ -30,7 +30,9 @@ import { useLedger } from "@/hooks/useUserQueries";
 import { formatBalance } from "@/lib/format-balance";
 import Logo from "./logo";
 import { useSettings } from "@/hooks/usePublic";
-import { publicApi } from "@/lib/api";
+import { publicApi, sidebarApi } from "@/lib/api";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useChannelWatcher } from "@/hooks/useChannelWatcher";
 import Dropheader from "./dropheader";
 import { isPanelPath } from "@/lib/panel-utils";
 import { SPORT_ROUTES } from "@/lib/sports-config";
@@ -144,14 +146,47 @@ export default function Header() {
     });
   }, [sportsListData]);
 
+  // ── Owner-pinned events surfaced in the drop-header ──────────────────────
+  // The backend already filters out events the current whitelabel disabled, so
+  // we render whatever it returns. Live-refreshed via the websocket channel.
+  const queryClient = useQueryClient();
+  const { data: pinnedEvents } = useQuery({
+    queryKey: ["header", "pinned-events"],
+    queryFn: async () => {
+      const { data } = await sidebarApi.pinnedEvents();
+      return Array.isArray(data?.data) ? data.data : [];
+    },
+    staleTime: 60_000,
+  });
+  const invalidatePinned = React.useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["header", "pinned-events"] });
+  }, [queryClient]);
+  useChannelWatcher("pinned-events", invalidatePinned);
+
+  const pinnedMenu = useMemo(
+    () =>
+      (pinnedEvents ?? []).map((evt: any) => {
+        const basePath =
+          SPORT_LINK_MAPPING[String(evt.sportId)]?.basePath || String(evt.sportId);
+        return {
+          label: evt.label || evt.pinLabel || evt.name,
+          link: `/sports/${basePath}/${evt.competitionId}/${evt.eventId}`,
+          // Renders with the highlighted "pinned" treatment in the drop-header.
+          highlight: true,
+        };
+      }),
+    [pinnedEvents]
+  );
+
   const leftMenu = useMemo(
     () => [
       { label: "Home", link: "/home" },
+      ...pinnedMenu,
       ...sports,
       { label: "Casino", link: "/casino" },
       { label: "Promotions", link: "/promotions" },
     ],
-    [sports]
+    [sports, pinnedMenu]
   );
 
   // Listen for custom event to open auth modal

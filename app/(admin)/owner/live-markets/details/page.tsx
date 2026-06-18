@@ -112,21 +112,37 @@ function normalizeSessions(sessions: any[]): any[] {
     });
 }
 
+// ─── Shared odds-cell styling — mirrors components/sports/market-card.tsx ─────
+// so the owner monitoring view shows the exact same odds cells as the public
+// match page (just read-only — no click / quick-bet).
+
+const oddsBtnBase =
+  "flex-1 min-w-0 px-1 py-1 flex flex-col items-center justify-center rounded-md leading-tight transition-all duration-150";
+const oddsPriceClass = "text-gray-900 font-bold text-base sm:text-lg";
+const oddsSizeClass = "text-gray-900 font-bold text-[12px] sm:text-[14px]";
+
+function formatOddsPrice(price: number | string | null | undefined): string {
+  if (price == null) return "0";
+  const num = parseFloat(String(price));
+  if (isNaN(num)) return "0";
+  const dp = num < 0.1 ? 3 : 2;
+  return parseFloat(num.toFixed(dp)).toString();
+}
+
 // ─── Suspended overlay ───────────────────────────────────────────────────────
 
-function MarketOverlay({ market }: { market: any }) {
+function backLayOverlay(market: any) {
   const show = market?.sportingEvent || market?.status === "SUSPENDED";
   if (!show) return null;
+  const label = market?.status === "SUSPENDED" ? "Suspended" : "Ball Running";
   return (
-    <div className="absolute inset-0 flex items-center justify-center z-10 bg-white/60 cursor-not-allowed">
-      <span className="text-red-600 font-bold text-xs">
-        {market.status === "SUSPENDED" ? "Suspended" : "Ball Running"}
+    <div className="absolute inset-0 flex items-center justify-center z-10 cursor-not-allowed bg-white/70 backdrop-blur-[1px]">
+      <span className="text-danger-strong font-bold text-xs sm:text-sm bg-red-50 px-3 py-1 rounded-full border border-red-200/50 shadow-sm">
+        {label}
       </span>
     </div>
   );
 }
-
-const oddsBtnBase = "flex-1 min-w-0 px-1 py-1 flex flex-col items-center justify-center rounded leading-tight";
 
 // ─── Odds / Bookmaker market ─────────────────────────────────────────────────
 
@@ -138,73 +154,136 @@ function OddsMarket({
   oddsExposureMap: Map<string, Map<string, number>>;
 }) {
   const runnerPnlMap = oddsExposureMap.get(String(market.marketId));
+  const isMarketSusp = market.status === "SUSPENDED" || !!market.sportingEvent;
+  const minBet = market.marketCondition?.minBet ?? "-";
+  const maxBet = market.marketCondition?.maxBet ?? "-";
 
   return (
-    <div className="rounded overflow-hidden border border-gray-200">
-      <div className="grid grid-cols-3 gap-1 px-2 py-1 border-b border-gray-200 bg-[#174b73] items-center">
-        <div className="min-w-0 flex flex-col gap-0.5">
-          <h3 className="font-semibold text-white text-[11px] truncate leading-tight">{market.marketName}</h3>
-          <p className="text-white/70 text-[9px] truncate">
-            Min: {market.marketCondition?.minBet ?? "-"} / Max: {market.marketCondition?.maxBet ?? "-"}
-          </p>
-        </div>
-        <div className="justify-self-end font-semibold bg-[#72bbef] text-black text-[10px] py-0.5 px-1.5 rounded">Back</div>
-        <div className="font-semibold bg-[#faa9ba] text-black text-[10px] py-0.5 px-1.5 rounded w-fit">Lay</div>
+    <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+      <div className="flex items-center justify-between gap-2 px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)]">
+        <h3 className="min-w-0 font-bold text-[var(--header-text)] text-sm sm:text-base leading-tight flex-1 break-words">
+          {market.marketName}
+        </h3>
+        <span className="shrink-0 text-[var(--header-text)]/70 text-xs sm:text-sm whitespace-nowrap hidden md:block">
+          Min: {minBet} / Max: {maxBet}
+        </span>
       </div>
       <div className="divide-y divide-gray-100">
         {market.runners.map((runner: any) => {
           const runnerId = String(runner.selectionId);
           const pnl = runnerPnlMap?.get(runnerId) ?? null;
+          const isRunnerSuspended =
+            runner.status === "SUSPENDED" || runner.status === "REMOVED" || isMarketSusp;
           return (
-            <div key={runner.selectionId} className="px-2 py-1 grid grid-cols-3 gap-1 items-center bg-white">
-              <div className="min-w-0 flex flex-col gap-0.5">
-                <span className="text-gray-900 font-semibold text-[11px] truncate">{runner.name}</span>
+            <div
+              key={runner.selectionId}
+              className="px-2 sm:px-3 grid grid-cols-3 gap-1 sm:gap-2 items-center bg-white"
+            >
+              <div className="min-w-0 pr-1 flex flex-col gap-0.5">
+                <span className="text-gray-900 font-bold text-sm sm:text-base block leading-tight truncate">
+                  {runner.name}
+                </span>
                 {pnl !== null && (
-                  <span className={`text-[9px] font-semibold leading-tight ${pnlColor(pnl)}`}>
+                  <span className={`text-[10px] sm:text-xs font-bold leading-tight ${pnlColor(pnl)}`}>
                     {fmt(pnl)}
                   </span>
                 )}
               </div>
-              <div className="col-span-2 flex relative min-h-[2.25rem]">
-                <div className="flex-1 flex justify-end items-center gap-1">
-                  {(() => {
-                    const backs = runner.back || [];
-                    const positions = Array(3).fill(null);
-                    backs.forEach((item: any, i: number) => { if (i < 3) positions[2 - i] = item; });
-                    return positions.map((item, idx) =>
-                      item ? (
-                        <div key={idx} className={`${oddsBtnBase} bg-[#72bbef] w-16`}>
-                          <span className="text-black font-bold text-[10px]">{item.price}</span>
-                          <span className="text-black text-[8px]">{formatAmount(item.size)}</span>
-                        </div>
-                      ) : (
-                        <div key={idx} className={`${oddsBtnBase} bg-[#c7dff7] opacity-50 w-16`}>
-                          <span className="text-[10px]">-</span>
-                        </div>
-                      )
-                    );
-                  })()}
+              <div className="col-span-2 gap-2 relative flex min-h-[2.25rem]">
+                {/* Back */}
+                <div className="flex-1 flex flex-col items-end min-w-0">
+                  <div className="gap-1 flex justify-end items-center flex-wrap">
+                    {(() => {
+                      if (isRunnerSuspended) {
+                        return Array(3).fill(null).map((_, posIdx) => (
+                          <div
+                            key={`bs-${posIdx}`}
+                            className={`${oddsBtnBase} bg-back-disabled w-24 ${posIdx !== 2 ? "hidden sm:flex" : ""}`}
+                          >
+                            <span className={oddsPriceClass}>0</span>
+                            <span className={oddsSizeClass}>0</span>
+                          </div>
+                        ));
+                      }
+                      const backItems = runner.back || [];
+                      const positions = Array(3).fill(null);
+                      backItems.forEach((item: any, idx: number) => { if (idx < 3) positions[2 - idx] = item; });
+                      return positions.map((item, posIdx) =>
+                        item ? (
+                          <div
+                            key={`b-${posIdx}`}
+                            className={`${oddsBtnBase} w-24 ${
+                              posIdx === 2
+                                ? "bg-gradient-to-b from-back to-back-deep shadow-sm"
+                                : "bg-white border border-back/50 hidden sm:flex"
+                            }`}
+                          >
+                            <span className={oddsPriceClass}>{formatOddsPrice(item.price)}</span>
+                            <span className={oddsSizeClass}>{formatAmount(item.size)}</span>
+                          </div>
+                        ) : (
+                          <div
+                            key={`be-${posIdx}`}
+                            className={`${oddsBtnBase} bg-back-disabled w-24 ${posIdx !== 2 ? "hidden sm:flex" : ""}`}
+                          >
+                            <span className={oddsPriceClass}>-</span>
+                            <span className={oddsSizeClass}>-</span>
+                          </div>
+                        )
+                      );
+                    })()}
+                  </div>
                 </div>
-                <div className="flex-1 flex justify-start items-center gap-1">
-                  {(() => {
-                    const lays = runner.lay || [];
-                    const positions = Array(3).fill(null);
-                    lays.forEach((item: any, i: number) => { if (i < 3) positions[i] = item; });
-                    return positions.map((item, idx) =>
-                      item ? (
-                        <div key={idx} className={`${oddsBtnBase} bg-[#faa9ba] w-16`}>
-                          <span className="text-black font-bold text-[10px]">{item.price}</span>
-                          <span className="text-black text-[8px]">{formatAmount(item.size)}</span>
+                {/* Lay */}
+                <div className="flex-1 flex flex-col items-start min-w-0">
+                  <div className="gap-1 flex justify-start items-center flex-wrap">
+                    {isRunnerSuspended ? (
+                      Array(3).fill(null).map((_, idx) => (
+                        <div
+                          key={`ls-${idx}`}
+                          className={`${oddsBtnBase} bg-lay-disabled w-24 ${idx !== 0 ? "hidden sm:flex" : ""}`}
+                        >
+                          <span className={oddsPriceClass}>0</span>
+                          <span className={oddsSizeClass}>0</span>
                         </div>
-                      ) : (
-                        <div key={idx} className={`${oddsBtnBase} bg-[#f6d0d8] opacity-50 w-16`}>
-                          <span className="text-[10px]">-</span>
-                        </div>
-                      )
-                    );
-                  })()}
+                      ))
+                    ) : (
+                      <>
+                        {runner.lay && runner.lay.length > 0
+                          ? runner.lay.map((layItem: any, layIdx: number) => (
+                              <div
+                                key={`l-${layIdx}`}
+                                className={`${oddsBtnBase} w-24 ${
+                                  layIdx === 0
+                                    ? "bg-gradient-to-b from-lay to-lay-deep shadow-sm"
+                                    : "bg-white border border-lay/50 hidden sm:flex"
+                                }`}
+                              >
+                                <span className={oddsPriceClass}>
+                                  {layItem.price ? formatOddsPrice(layItem.price) : "0"}
+                                </span>
+                                <span className={oddsSizeClass}>{formatAmount(layItem.size)}</span>
+                              </div>
+                            ))
+                          : null}
+                        {Array.from({ length: Math.max(0, 3 - (runner.lay?.length || 0)) }).map((_, emptyIdx) => {
+                          const hasLay = (runner.lay?.length || 0) > 0;
+                          const hideOnMobile = hasLay || emptyIdx > 0;
+                          return (
+                            <div
+                              key={`le-${emptyIdx}`}
+                              className={`${oddsBtnBase} bg-lay-disabled w-24 ${hideOnMobile ? "hidden sm:flex" : ""}`}
+                            >
+                              <span className={oddsPriceClass}>-</span>
+                              <span className={oddsSizeClass}>-</span>
+                            </div>
+                          );
+                        })}
+                      </>
+                    )}
+                  </div>
                 </div>
-                <MarketOverlay market={market} />
+                {backLayOverlay(market)}
               </div>
             </div>
           );
@@ -216,65 +295,120 @@ function OddsMarket({
 
 // ─── Fancy markets ───────────────────────────────────────────────────────────
 
-function FancyMarkets({
-  markets,
+function FancyMarket({
+  market,
   fancyExposureMap,
 }: {
-  markets: any[];
+  market: any;
   fancyExposureMap: Map<string, number>;
 }) {
-  if (!markets.length) return null;
+  const pnl = fancyExposureMap.get(String(market.marketId)) ?? null;
+  const isMarketSusp = market.status === "SUSPENDED" || !!market.sportingEvent;
+  const runners: any[] = market.runners || [];
+  const visibleRunners = isMarketSusp
+    ? runners
+    : runners.filter((r: any) => r.status !== "SUSPENDED" && r.status !== "REMOVED");
+  if (!visibleRunners.length) return null;
+
+  const midIdx = Math.floor((visibleRunners.length - 1) / 2);
+
   return (
-    <div className="rounded overflow-hidden border border-gray-200">
-      <div className="grid grid-cols-3 gap-1 px-2 py-1 border-b bg-[#174b73]">
-        <h3 className="font-semibold text-white text-[11px]">Fancy</h3>
-        <div className="justify-self-end font-semibold bg-[#72bbef] text-black text-[10px] py-0.5 px-1.5 rounded">NO</div>
-        <div className="font-semibold bg-[#faa9ba] text-black text-[10px] py-0.5 px-1.5 rounded w-fit">YES</div>
+    <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+      <div className="flex items-center justify-between gap-2 px-2 sm:px-3 py-1 border-b border-[#1e4088]/40 bg-[var(--header-primary)]">
+        <h3 className="min-w-0 font-bold text-[var(--header-text)] text-sm sm:text-base leading-tight flex-1 break-words">
+          {market.marketName}
+        </h3>
       </div>
-      {markets.map((market) =>
-        market.runners.filter((a) => a.status != "SUSPENDED").map((runner: any) => {
-          const pnl = fancyExposureMap.get(String(market.marketId)) ?? null;
+      <div className="border-b border-gray-100 last:border-b-0 bg-white">
+        {visibleRunners.map((runner: any, runnerIdx: number) => {
+          const showLabel = runnerIdx === midIdx;
           return (
-            <div key={market.marketId} className="px-2 py-1 grid grid-cols-3 gap-1 items-center bg-white border-b border-gray-100 last:border-b-0">
-              <div className="min-w-0 flex flex-col gap-0.5">
-                <span className="text-gray-900 font-semibold text-[11px] truncate">{market.marketName}</span>
-                {pnl !== null && (
-                  <span className={`text-[9px] font-semibold leading-tight ${pnlColor(pnl)}`}>
-                    {fmt(pnl)}
+            <div
+              key={runner.selectionId}
+              className={`px-2 sm:px-3 grid grid-cols-3 gap-1 sm:gap-2 items-center bg-white${visibleRunners.length > 1 ? " py-0.5" : ""}`}
+            >
+              {showLabel ? (
+                <div className="min-w-0 pr-1 flex flex-col gap-0.5">
+                  <span className="text-gray-900 font-bold text-sm sm:text-base block leading-tight">
+                    {market.marketName}
                   </span>
-                )}
-              </div>
-              <div className="col-span-2 flex relative min-h-[2.25rem]">
-                <div className="flex-1 flex justify-end items-center gap-1">
-                  {runner.lay?.length ? (
-                    runner.lay.map((item: any, i: number) => (
-                      <div key={i} className={`${oddsBtnBase} bg-[#72bbef] w-16`}>
-                        <span className="text-black font-bold text-[10px]">{item.line}</span>
-                        <span className="text-black text-[8px]">{formatAmount(item.price)}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <div className={`${oddsBtnBase} bg-[#c7dff7] opacity-50 w-16`}><span className="text-[10px]">-</span></div>
+                  {pnl !== null && (
+                    <span className={`text-[10px] sm:text-xs font-bold leading-tight ${pnlColor(pnl)}`}>
+                      {fmt(pnl)}
+                    </span>
                   )}
                 </div>
-                <div className="flex-1 flex justify-start items-center gap-1">
-                  {runner.back?.length ? (
-                    runner.back.map((item: any, i: number) => (
-                      <div key={i} className={`${oddsBtnBase} bg-[#faa9ba] w-16`}>
-                        <span className="text-black font-bold text-[10px]">{item.line}</span>
-                        <span className="text-black text-[8px]">{formatAmount(item.price)}</span>
+              ) : (
+                <div />
+              )}
+              <div className="col-span-2 gap-2 relative flex min-h-[2.25rem]">
+                {/* No (lay) */}
+                <div className="flex-1 flex flex-col items-end min-w-0">
+                  <div className="gap-1 flex justify-end items-center flex-wrap">
+                    {isMarketSusp ? (
+                      <div className={`${oddsBtnBase} bg-back-disabled w-24`}>
+                        <span className={oddsPriceClass}>0</span>
+                        <span className={oddsSizeClass}>0</span>
                       </div>
-                    ))
-                  ) : (
-                    <div className={`${oddsBtnBase} bg-[#f6d0d8] opacity-50 w-16`}><span className="text-[10px]">-</span></div>
+                    ) : runner.lay?.length > 0 ? (
+                      runner.lay.map((layItem: any, layIdx: number) => (
+                        <div
+                          key={layIdx}
+                          className={`${oddsBtnBase} bg-gradient-to-b from-lay to-lay-deep shadow-sm w-24`}
+                        >
+                          <span className={oddsPriceClass}>{layItem.line}</span>
+                          <span className={oddsSizeClass}>{formatAmount(layItem.price)}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className={`${oddsBtnBase} bg-lay-disabled w-24`}>
+                        <span className={oddsPriceClass}>-</span>
+                        <span className={oddsSizeClass}>-</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {/* Yes (back) + limits */}
+                <div className="flex-1 flex items-center justify-between gap-1 min-w-0">
+                  <div className="gap-1 flex justify-start items-center flex-wrap min-w-0">
+                    {isMarketSusp ? (
+                      <div className={`${oddsBtnBase} bg-back-disabled w-24`}>
+                        <span className={oddsPriceClass}>0</span>
+                        <span className={oddsSizeClass}>0</span>
+                      </div>
+                    ) : runner.back?.length > 0 ? (
+                      runner.back.map((backItem: any, backIdx: number) => (
+                        <div
+                          key={backIdx}
+                          className={`${oddsBtnBase} w-24 ${
+                            backIdx === 0
+                              ? "bg-gradient-to-b from-back to-back-deep shadow-sm"
+                              : "bg-white border border-back/50"
+                          }`}
+                        >
+                          <span className={oddsPriceClass}>{backItem.line}</span>
+                          <span className={oddsSizeClass}>{formatAmount(backItem.price)}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className={`${oddsBtnBase} bg-lay-disabled w-24`}>
+                        <span className={oddsPriceClass}>-</span>
+                        <span className={oddsSizeClass}>-</span>
+                      </div>
+                    )}
+                  </div>
+                  {showLabel && (
+                    <div className="hidden sm:flex flex-col text-xs text-black font-bold leading-tight text-right shrink-0">
+                      <span>Max:{market.marketCondition?.maxBet ?? "-"}</span>
+                    </div>
                   )}
                 </div>
-                <MarketOverlay market={market} />
+                {backLayOverlay(market)}
               </div>
             </div>
           );
-        })
-      )}
+        })}
+      </div>
     </div>
   );
 }
@@ -648,7 +782,9 @@ function MatchDetailView({
               {oddsMarkets.map((market) => (
                 <OddsMarket key={market.marketId} market={market} oddsExposureMap={oddsExposureMap} />
               ))}
-              <FancyMarkets markets={fancyMarkets} fancyExposureMap={fancyExposureMap} />
+              {fancyMarkets.map((market) => (
+                <FancyMarket key={market.marketId} market={market} fancyExposureMap={fancyExposureMap} />
+              ))}
               {oddsMarkets.length === 0 && fancyMarkets.length === 0 && (
                 <p className="text-center text-sm text-gray-400 py-4">No open markets at this time</p>
               )}
