@@ -42,9 +42,7 @@ export function CasinoWallet({
 
   return (
     <div
-      className={`flex flex-col shrink-0 items-center gap-1.5 ${
-        inline ? "flex-row" : "flex-row gap-2 p-2"
-      } ${className}`}
+      className={`flex items-start shrink-0 items-center gap-1.5 flex-col gap-2  ${className}`}
     >
       <div className="flex items-center gap-1.5 rounded-md bg-[#1a212b] px-2.5 py-1 ring-1 ring-emerald-500/30">
         <Wallet className="h-3.5 w-3.5 text-emerald-400" />
