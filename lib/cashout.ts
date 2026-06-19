@@ -143,13 +143,21 @@ export function computeMatchOddsCashout(
     // We deliberately do NOT gate on the top-rung ladder size: a hedge stake
     // larger than the best price's available size still places fine (it matches
     // deeper / against the book), and the locked value is already a live-odds
-    // estimate. Gating on top-rung size wrongly disabled cashout for any stake
-    // bigger than the thin top rung.
+    // estimate.
+    //
+    // Hardening: minBet/maxBet can arrive as 0 or undefined from a partial live
+    // market snapshot. Never let that turn into a degenerate cashout:
+    //  - DUST is an absolute floor so a residual stake that rounds toward 0
+    //    (e.g. "Lay 0 @ 9") is never offered, even when minBet reads as 0.
+    //  - maxBet/limit of 0 means "unset", not "max 0", so treat as no ceiling.
+    const DUST = 1;
+    const effectiveMin = Math.max(c.minBet || 0, DUST);
+    const maxCeil = c.maxBet && c.maxBet > 0 ? c.maxBet : Infinity;
     const limitCeil =
       c.transactionLimit && c.transactionLimit > 0 ? c.transactionLimit : Infinity;
     let blocked: string | null = null;
-    if (stake < c.minBet) blocked = `Hedge stake ${stake} below min bet ${c.minBet}`;
-    else if (stake > c.maxBet) blocked = `Hedge stake ${stake} exceeds max bet ${c.maxBet}`;
+    if (stake < effectiveMin) blocked = `Hedge stake ${stake} below min bet ${effectiveMin}`;
+    else if (stake > maxCeil) blocked = `Hedge stake ${stake} exceeds max bet ${maxCeil}`;
     else if (stake > limitCeil) blocked = `Hedge stake ${stake} exceeds your limit`;
 
     return { bet, lockedValue, resultingExposure, availableSize, blocked };

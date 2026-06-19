@@ -27,7 +27,7 @@ import {
   type RunnerSummary,
   type QuickBetData,
 } from "@/components/sports/quick-bet-panel";
-import { computeMatchOddsCashout, type RunnerPrice } from "@/lib/cashout";
+import { computeMatchOddsCashout, type RunnerPrice, type CashoutResult } from "@/lib/cashout";
 
 
 type QuickBetHostProps = React.ComponentProps<typeof QuickBetPanel>;
@@ -132,6 +132,113 @@ function MarketNotice({ notice }: { notice?: string | null }) {
       <span className="font-semibold shrink-0">Notice:</span>
       <span className="break-words font-bold text-md">{String(notice).trim()}</span>
     </div>
+  );
+}
+
+// Match Odds cashout button (gold, styled like the notice bar).
+// Behaviour:
+//  - 1st tap arms a confirm step ("Confirm cashout"); 2nd tap places.
+//  - while placing, a green background fills the button left→right.
+//  - after a successful cashout the button is LOCKED (disabled) until either
+//    the hedge odds change or a strictly better cashout value appears.
+function CashoutButton({
+  result,
+  place,
+}: {
+  result: CashoutResult;
+  place: () => Promise<void>;
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const [placing, setPlacing] = useState(false);
+  // The exposure/value we locked in at the last successful cashout.
+  const [lock, setLock] = useState<{ sig: string; value: number } | null>(null);
+
+  const curValue = result.lockedValue ?? null;
+  // Signature of the current position. Changes only when exposure actually
+  // changes (a new bet, or the hedge settling into the exposure map) — NOT on
+  // every live odds tick. This is what the post-cashout lock keys off.
+  const exposureSig = result.currentExposure
+    ? Object.entries(result.currentExposure)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([k, val]) => `${k}:${val.toFixed(2)}`)
+        .join("|")
+    : "";
+
+  // Release the lock once the position changes (new bet placed / hedge
+  // settled) or a strictly better cashout value appears. Live odds ticks alone
+  // must NOT release it, or the button would re-enable instantly after a
+  // cashout and allow re-hedging the residual.
+  useEffect(() => {
+    if (!lock) return;
+    const positionChanged = exposureSig !== lock.sig;
+    const better = curValue != null && curValue > lock.value + 0.5;
+    if (positionChanged || better) setLock(null);
+  }, [lock, exposureSig, curValue]);
+
+  // Auto-cancel the confirm step if the user doesn't follow through.
+  useEffect(() => {
+    if (!confirming) return;
+    const t = setTimeout(() => setConfirming(false), 3000);
+    return () => clearTimeout(t);
+  }, [confirming]);
+
+  const locked = lock !== null;
+  const disabled = placing || locked || !result.available;
+
+  const onClick = async () => {
+    if (placing || locked) return;
+    if (!result.available || !result.bet) return;
+    if (!confirming) {
+      setConfirming(true);
+      return;
+    }
+    setConfirming(false);
+    setPlacing(true);
+    const placedSig = exposureSig;
+    const placedValue = result.lockedValue ?? 0;
+    try {
+      await place();
+      setLock({ sig: placedSig, value: placedValue });
+    } finally {
+      setPlacing(false);
+    }
+  };
+
+  const v = curValue ?? 0;
+  const label = placing
+    ? "Cashing out…"
+    : locked
+      ? "Cashed out"
+      : confirming
+        ? "Confirm cashout"
+        : `Cashout ${v >= 0 ? "+" : ""}${v.toFixed(2)}`;
+
+  const title = result.available && result.bet
+    ? `${result.bet.side.toUpperCase()} ${result.bet.stake} @ ${result.bet.odds} → locks ${v.toFixed(2)} on both outcomes`
+    : result.reason || "Cashout unavailable";
+
+  // Green fill: animate to full while placing, stay full once locked.
+  const fillClass = placing
+    ? "w-full duration-[1200ms]"
+    : locked
+      ? "w-full duration-0"
+      : "w-0 duration-200";
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className={`notice-shine relative overflow-hidden shrink-0 rounded-md px-4 py-1.5 text-sm sm:text-base font-bold text-white border shadow-sm bg-gradient-to-r from-yellow-500 via-yellow-700 to-gray-300 transition-opacity disabled:cursor-not-allowed ${
+        confirming ? "border-white ring-2 ring-white/70" : "border-yellow-900"
+      } ${locked ? "opacity-100" : disabled ? "opacity-40" : ""}`}
+    >
+      <span
+        className={`pointer-events-none absolute inset-y-0 left-0 bg-green-600 transition-[width] ease-out ${fillClass}`}
+      />
+      <span className="relative z-10">{label}</span>
+    </button>
   );
 }
 
@@ -1011,34 +1118,18 @@ export default function MatchPage() {
     return { result, place };
   };
 
-  // Small gold header button (styled like the market notice bar). Renders only
-  // when there's an open position worth cashing out on this market.
+  // Renders the gold cashout button only when there is an actually-placeable
+  // cashout for this market. Anything not actionable (flat / dust residual /
+  // below min / above max) hides the button entirely rather than showing a
+  // disabled stub. The button's own state (confirm / fill / lock) lives in
+  // CashoutButton.
   const renderCashoutButton = (market: any) => {
     const co = buildCashoutForMarket(market);
     if (!co) return null;
     const { result, place } = co;
-    const exposures = result.currentExposure ? Object.values(result.currentExposure) : [];
-    const hasPosition = exposures.some((v) => Math.abs(v) > 0.01);
-    if (!hasPosition) return null; // nothing to cash out
-    if (result.reason === "Position already balanced") return null; // already flat
+    if (!result.available || !result.bet) return null;
 
-    const v = result.lockedValue ?? 0;
-    const label = result.available ? `Cashout ${v >= 0 ? "+" : ""}${v.toFixed(2)}` : "Cashout";
-    const title = result.available
-      ? `${result.bet!.side.toUpperCase()} ${result.bet!.stake} @ ${result.bet!.odds} → locks ${v.toFixed(2)} on both outcomes`
-      : result.reason || "Cashout unavailable";
-
-    return (
-      <button
-        type="button"
-        onClick={place}
-        disabled={!result.available}
-        title={title}
-        className="notice-shine relative overflow-hidden shrink-0 rounded-md px-4 py-1.5 text-sm sm:text-base font-bold text-white border border-yellow-900 shadow-sm bg-gradient-to-r from-yellow-500 via-yellow-700 to-gray-300 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
-      >
-        {label}
-      </button>
-    );
+    return <CashoutButton result={result} place={place} />;
   };
 
   // Helper: get current live price for a specific runner's back/lay slot
