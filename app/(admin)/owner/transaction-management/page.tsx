@@ -65,6 +65,8 @@ function TransactionManagementContent() {
 
   // ── Market filter (client-side, applied to the loaded transactions) ──
   const [marketFilter, setMarketFilter] = useState(""); // "" = all markets
+  // ── Back/Lay filter (client-side) ──
+  const [betTypeFilter, setBetTypeFilter] = useState<"all" | "back" | "lay">("all");
 
   // ── Filters ──
   const [fromDate, setFromDate] = useState("");
@@ -126,6 +128,7 @@ function TransactionManagementContent() {
     setLoading(true);
     setSelected(new Set());
     setMarketFilter("");
+    setBetTypeFilter("all");
     try {
       const res = await ownerApi.getManagedTransactions({
         matchId: selectedEvent.eventId,
@@ -153,11 +156,15 @@ function TransactionManagementContent() {
     return [...map.entries()].map(([marketId, marketName]) => ({ marketId, marketName }));
   }, [txns]);
 
-  // Transactions after applying the market filter.
+  // Transactions after applying the market + back/lay filters.
   const filteredTxns = useMemo(() => {
-    if (!marketFilter) return txns;
-    return txns.filter((t) => String(t.market_id) === marketFilter);
-  }, [txns, marketFilter]);
+    return txns.filter((t) => {
+      if (marketFilter && String(t.market_id) !== marketFilter) return false;
+      if (betTypeFilter === "back" && t.bet_type !== 0) return false;
+      if (betTypeFilter === "lay" && t.bet_type !== 1) return false;
+      return true;
+    });
+  }, [txns, marketFilter, betTypeFilter]);
 
   const allSelected =
     filteredTxns.length > 0 && filteredTxns.every((t) => selected.has(t.id));
@@ -334,7 +341,7 @@ function TransactionManagementContent() {
             <div className="flex flex-wrap items-center gap-3">
               <div className="text-base text-gray-700">
                 <span className="font-semibold">{filteredTxns.length}</span> transaction(s)
-                {marketFilter && (
+                {(marketFilter || betTypeFilter !== "all") && (
                   <span className="text-gray-400"> of {txns.length}</span>
                 )}
                 {selected.size > 0 && (
@@ -358,6 +365,33 @@ function TransactionManagementContent() {
                     </option>
                   ))}
                 </select>
+              </div>
+              {/* Filter by Back / Lay */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-semibold text-gray-600">Type:</span>
+                <div className="inline-flex rounded overflow-hidden border border-gray-300">
+                  {([
+                    { key: "all", label: "All" },
+                    { key: "back", label: "Back" },
+                    { key: "lay", label: "Lay" },
+                  ] as const).map((opt) => (
+                    <button
+                      key={opt.key}
+                      onClick={() => setBetTypeFilter(opt.key)}
+                      className={`px-3 py-1 text-sm border-l first:border-l-0 border-gray-300 ${
+                        betTypeFilter === opt.key
+                          ? opt.key === "lay"
+                            ? "bg-pink-500 text-white"
+                            : opt.key === "back"
+                              ? "bg-sky-500 text-white"
+                              : "bg-blue-600 text-white"
+                          : "bg-white text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
             {canDelete && (

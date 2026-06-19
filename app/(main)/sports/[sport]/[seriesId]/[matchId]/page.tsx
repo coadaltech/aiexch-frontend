@@ -27,6 +27,7 @@ import {
   type RunnerSummary,
   type QuickBetData,
 } from "@/components/sports/quick-bet-panel";
+import { computeMatchOddsCashout, type RunnerPrice } from "@/lib/cashout";
 
 
 type QuickBetHostProps = React.ComponentProps<typeof QuickBetPanel>;
@@ -936,6 +937,110 @@ export default function MatchPage() {
     });
   };
 
+  // ── Cashout (Match Odds only) ──────────────────────────────────────────
+  // Compute the single best-placeable full-flatten hedge for a 2-runner
+  // Match Odds market, recomputed every render so it tracks live odds. Returns
+  // null when cashout doesn't apply (wrong market type / not 2 runners).
+  const buildCashoutForMarket = (market: any) => {
+    const mt = String(market?.marketType || "").toUpperCase();
+    if (mt !== "MATCH_ODDS" && mt !== "WINNING_ODDS") return null;
+    const runners = market?.runners || [];
+    if (runners.length !== 2) return null;
+
+    const expMap = marketExposureMap?.get(String(market.marketId));
+    const priced: RunnerPrice[] = runners.map((r: any) => {
+      const sid = String(r.selectionId);
+      const backTop = r.back?.[0];
+      const layTop = r.lay?.[0];
+      return {
+        selectionId: sid,
+        bestBack: backTop
+          ? {
+              price: toDecimalOdds(parseFloat(String(backTop.price)), market.provider, market.marketType),
+              size: parseFloat(String(backTop.size)) || 0,
+            }
+          : null,
+        bestLay: layTop
+          ? {
+              price: toDecimalOdds(parseFloat(String(layTop.price)), market.provider, market.marketType),
+              size: parseFloat(String(layTop.size)) || 0,
+            }
+          : null,
+        exposure: expMap?.get(sid) ?? 0,
+      };
+    });
+
+    const result = computeMatchOddsCashout(priced, {
+      minBet: parseFloat(String(market?.marketCondition?.minBet)) || 0,
+      maxBet: parseFloat(String(market?.marketCondition?.maxBet)) || 0,
+      transactionLimit: parseFloat(String(user?.transactionLimit ?? "0")) || 0,
+    });
+
+    // Place the computed hedge directly — no bet slip / quick-bet panel.
+    const place = async () => {
+      if (!result.available || !result.bet) return;
+      const runner = runners.find((r: any) => String(r.selectionId) === result.bet!.selectionId);
+      if (!runner) return;
+      const blocked = isMarketBlocked(market.marketId);
+      if (blocked.blocked) {
+        toast.error(`Cannot cash out — ${blocked.reason}`);
+        return;
+      }
+      if (placeInFlightRef.current) return;
+      placeInFlightRef.current = true;
+      try {
+        const qb: QuickBetData = {
+          marketId: market.marketId,
+          bettingType: market.bettingType,
+          market,
+          runner,
+          allRunners: buildAllRunners(market, runner, result.bet.odds),
+          eventName: matchInfo?.eventName || "Match",
+          odds: String(result.bet.odds),
+          run: null,
+          isLay: result.bet.side === "lay",
+          priceIndex: 0,
+          isRawOdds: false,
+        };
+        await executeBetPlacement(qb, String(result.bet.stake), String(result.bet.odds));
+      } finally {
+        placeInFlightRef.current = false;
+      }
+    };
+
+    return { result, place };
+  };
+
+  // Small gold header button (styled like the market notice bar). Renders only
+  // when there's an open position worth cashing out on this market.
+  const renderCashoutButton = (market: any) => {
+    const co = buildCashoutForMarket(market);
+    if (!co) return null;
+    const { result, place } = co;
+    const exposures = result.currentExposure ? Object.values(result.currentExposure) : [];
+    const hasPosition = exposures.some((v) => Math.abs(v) > 0.01);
+    if (!hasPosition) return null; // nothing to cash out
+    if (result.reason === "Position already balanced") return null; // already flat
+
+    const v = result.lockedValue ?? 0;
+    const label = result.available ? `Cashout ${v >= 0 ? "+" : ""}${v.toFixed(2)}` : "Cashout";
+    const title = result.available
+      ? `${result.bet!.side.toUpperCase()} ${result.bet!.stake} @ ${result.bet!.odds} → locks ${v.toFixed(2)} on both outcomes`
+      : result.reason || "Cashout unavailable";
+
+    return (
+      <button
+        type="button"
+        onClick={place}
+        disabled={!result.available}
+        title={title}
+        className="notice-shine relative overflow-hidden shrink-0 rounded-md px-4 py-1.5 text-sm sm:text-base font-bold text-white border border-yellow-900 shadow-sm bg-gradient-to-r from-yellow-500 via-yellow-700 to-gray-300 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        {label}
+      </button>
+    );
+  };
+
   // Helper: get current live price for a specific runner's back/lay slot
   // isRaw=true: return raw price as-is (for ADV markets that store raw odds)
   const getLivePrice = useCallback(
@@ -1532,7 +1637,7 @@ export default function MatchPage() {
 
         return (
           <div className="bg-[var(--header-primary)]  rounded-lg px-3 sm:px-4 py-3 mb-2 shadow-md border border-[#1e4088]/30">
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center justify-between gap-4">
               <div className="min-w-0 flex-1">
                 {series?.name && (
                   <p className="text-[var(--header-text)] font-semibold text-xs sm:text-sm truncate leading-tight mb-0.5 uppercase tracking-wide font-condensed">
@@ -1543,7 +1648,12 @@ export default function MatchPage() {
                   {matchFromSeries?.name || matchInfo?.eventName || "Match"}
                 </h1>
               </div>
-              <div className="shrink-0 text-right flex flex-col items-end gap-1">
+
+              <div className="shrink-0 flex justify-center items-center">
+                {renderCashoutButton(matchOddsMarket)}
+              </div>
+
+              <div className="flex-1 text-right flex flex-col items-end gap-1">
 
                 {openDate && (
                   <span className="text-[var(--header-text)]/70 text-xs sm:text-sm flex items-center gap-2 sm:gap-6 flex-wrap justify-end">
