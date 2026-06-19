@@ -139,13 +139,18 @@ export function computeMatchOddsCashout(
     const resultingExposure = applyHedge(exposure, runners, bet);
     const lockedValue = round2(Math.min(...Object.values(resultingExposure)));
 
+    // Placeability is gated on min/max bet and the user's per-bet limit only.
+    // We deliberately do NOT gate on the top-rung ladder size: a hedge stake
+    // larger than the best price's available size still places fine (it matches
+    // deeper / against the book), and the locked value is already a live-odds
+    // estimate. Gating on top-rung size wrongly disabled cashout for any stake
+    // bigger than the thin top rung.
     const limitCeil =
       c.transactionLimit && c.transactionLimit > 0 ? c.transactionLimit : Infinity;
     let blocked: string | null = null;
     if (stake < c.minBet) blocked = `Hedge stake ${stake} below min bet ${c.minBet}`;
     else if (stake > c.maxBet) blocked = `Hedge stake ${stake} exceeds max bet ${c.maxBet}`;
     else if (stake > limitCeil) blocked = `Hedge stake ${stake} exceeds your limit`;
-    else if (stake > availableSize) blocked = `Not enough liquidity (${availableSize} available)`;
 
     return { bet, lockedValue, resultingExposure, availableSize, blocked };
   };
