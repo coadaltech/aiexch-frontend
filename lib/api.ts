@@ -285,6 +285,30 @@ export const ownerApi = {
   getLiveMarketsBetLog: (transactionId: string) =>
     api.get(`/owner/live-markets/bets/log?transactionId=${encodeURIComponent(transactionId)}`),
 
+  // Transaction Management (soft-delete transactions to revert a market)
+  getManagedTransactions: (params: {
+    matchId: string | number;
+    marketId?: string;
+    from?: string;
+    to?: string;
+    source?: "live" | "declare";
+  }) => {
+    const query = new URLSearchParams();
+    query.append("matchId", String(params.matchId));
+    if (params.marketId) query.append("marketId", params.marketId);
+    if (params.from) query.append("from", params.from);
+    if (params.to) query.append("to", params.to);
+    if (params.source) query.append("source", params.source);
+    return api.get(`/owner/transaction-management/transactions?${query}`);
+  },
+  deleteManagedTransactions: (data: {
+    transactionIds: string[];
+    remark: string;
+    source?: "live" | "declare";
+  }) => api.post(`/owner/transaction-management/delete`, data),
+  getRedeclareMarkets: () =>
+    api.get(`/owner/transaction-management/redeclare-markets`),
+
   // Notifications
   getNotifications: () => api.get("/owner/notifications"),
   createNotification: (data: any) => api.post("/owner/notifications", data),
@@ -326,6 +350,11 @@ export const ownerApi = {
   // visible in nav but its page shows a "Coming Soon" banner.
   toggleSportLive: (sportId: number | string, isLive: boolean) =>
     api.post(`/owner/sports-games/toggle-live/${sportId}`, { isLive }),
+
+  // Toggle a sport's highlight state (owner only). When true, the sport tab
+  // renders with the highlighted "pinned" shimmer treatment in the drop-header.
+  toggleSportHighlight: (sportId: number | string, isHighlight: boolean) =>
+    api.post(`/owner/sports-games/toggle-highlight/${sportId}`, { isHighlight }),
 
   // Competitions (per-sport, role + whitelabel aware) — server-paginated
   getCompetitions: (
@@ -437,6 +466,8 @@ export const ownerApi = {
     api.get(`/owner/market-management/markets/${marketId}`),
   updateMarketSettings: (marketId: string, data: any) =>
     api.put(`/owner/market-management/markets/${marketId}`, data),
+  updateMarketNotice: (marketId: string, data: { notice: string; eventId?: string }) =>
+    api.put(`/owner/market-management/markets/${marketId}/notice`, data),
   listCustomMarkets: (params?: { search?: string; status?: string; limit?: number; offset?: number }) => {
     const query = new URLSearchParams();
     if (params?.search) query.append("search", params.search);

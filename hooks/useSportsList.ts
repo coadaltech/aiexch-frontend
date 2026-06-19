@@ -7,6 +7,7 @@ export interface PublicSport {
   name: string;
   isActive: boolean;
   isLive: boolean;
+  isHighlight: boolean;
   sort_order?: number;
 }
 
@@ -26,6 +27,8 @@ const fetchSportsList = async (): Promise<PublicSport[]> => {
       isActive: s.isActive ?? s.is_active ?? true,
       // Default to live=true so older payloads (pre-migration) keep working.
       isLive: s.isLive ?? s.is_live ?? true,
+      // Default to false so un-highlighted sports render as normal tabs.
+      isHighlight: s.isHighlight ?? s.is_highlight ?? false,
       sort_order: s.sort_order,
     };
   });

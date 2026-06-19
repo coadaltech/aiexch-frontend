@@ -107,7 +107,14 @@ export default function BetHistoryPage() {
                       ?? { label: bet.status, style: "text-gray-700 bg-white/70 border-gray-300" };
                     const isBack = bet.betType === 0 || bet.betType === "back";
                     const teamLabel =  bet.selectionName || bet.eventName || "—";
-                    const rowBg = isBack ? "bg-blue-300" : "bg-pink-300";
+                    // Soft-deleted (reverted via Transaction Management).
+                    const isDeleted = bet.isDeleted === true || bet.recordStatus === 1;
+                    const deleteRemark =
+                      bet.deleteRemark ||
+                      (bet.details || []).find((d: any) => d.remark)?.remark ||
+                      "This bet was deleted";
+                    const rowBg = isDeleted ? "bg-gray-200" : isBack ? "bg-blue-300" : "bg-pink-300";
+                    const strike = isDeleted ? "line-through" : "";
                     const isFancy = bet.marketType === "fancy";
                     const userDetail = isFancy
                       ? (bet.details || []).find((d: any) => d.isUserSelection) || (bet.details || [])[0]
@@ -120,29 +127,40 @@ export default function BetHistoryPage() {
                       : `@ ${Number(bet.odds)}`;
 
                     return (
-                      <tr key={bet.id} className={`${rowBg} text-gray-800 border-t border-white/40`}>
-                        <td className="px-3 py-2.5 text-[13px] font-semibold whitespace-nowrap">
+                      <tr key={bet.id} className={`${rowBg} ${isDeleted ? "text-gray-500" : "text-gray-800"} border-t border-white/40`}>
+                        <td className={`px-3 py-2.5 text-[13px] font-semibold whitespace-nowrap ${strike}`}>
                           {formatDate(bet.addedDate)}
                         </td>
-                        <td className="px-3 py-2.5 text-[13px] font-semibold whitespace-nowrap">
+                        <td className={`px-3 py-2.5 text-[13px] font-semibold whitespace-nowrap ${strike}`}>
                           {bet.sportName || "—"}
                         </td>
                         <td className="px-3 py-2.5 text-[14px] font-bold whitespace-nowrap">
-                          {teamLabel}
+                          <span className={strike}>{teamLabel}</span>
+                          {isDeleted && (
+                            <span className="block text-[11px] italic font-normal text-red-600 whitespace-normal max-w-[260px]">
+                              Reason: {deleteRemark}
+                            </span>
+                          )}
                         </td>
-                        <td className="px-3 py-2.5 text-[14px] font-medium whitespace-nowrap">
+                        <td className={`px-3 py-2.5 text-[14px] font-medium whitespace-nowrap ${strike}`}>
                           {marketLabel}
                         </td>
-                        <td className="px-3 py-2.5 text-[14px] font-bold whitespace-nowrap text-right">
+                        <td className={`px-3 py-2.5 text-[14px] font-bold whitespace-nowrap text-right ${strike}`}>
                           {oddsLabel}
                         </td>
-                        <td className="px-3 py-2.5 text-[14px] font-bold whitespace-nowrap text-right">
+                        <td className={`px-3 py-2.5 text-[14px] font-bold whitespace-nowrap text-right ${strike}`}>
                           ₹{Number(bet.stake).toLocaleString()}
                         </td>
                         <td className="px-3 py-2.5 text-center">
-                          <Badge variant="outline" className={`text-[11px] px-2 py-0.5 border ${statusCfg.style}`}>
-                            {statusCfg.label}
-                          </Badge>
+                          {isDeleted ? (
+                            <Badge variant="outline" className="text-[11px] px-2 py-0.5 border text-white bg-red-600 border-red-700">
+                              Deleted
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className={`text-[11px] px-2 py-0.5 border ${statusCfg.style}`}>
+                              {statusCfg.label}
+                            </Badge>
+                          )}
                         </td>
                       </tr>
                     );

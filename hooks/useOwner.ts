@@ -906,6 +906,31 @@ export const useUpdateMarketSettings = () => {
   });
 };
 
+// Markets whose transactions were deleted AFTER the result was declared.
+// Used by the Redeclare sub-tab (badge count) and the Redeclare page.
+export const useRedeclareMarkets = (enabled = true) => {
+  return useQuery({
+    queryKey: ["redeclare-markets"],
+    queryFn: () => ownerApi.getRedeclareMarkets().then((res) => res.data),
+    enabled,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+};
+
+export const useUpdateMarketNotice = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ marketId, notice, eventId }: { marketId: string; notice: string; eventId?: string }) =>
+      ownerApi.updateMarketNotice(marketId, { notice, eventId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["market-settings"] });
+      toast.success("Market notice saved");
+    },
+    onError: () => toast.error("Failed to save market notice"),
+  });
+};
+
 export const useListCustomMarkets = (params?: { search?: string; status?: string; limit?: number; offset?: number }) => {
   return useQuery({
     queryKey: ["custom-markets-list", params],

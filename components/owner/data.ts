@@ -31,6 +31,8 @@ import {
   ShieldCheck,
   KeyRound,
   UserCog,
+  Trash2,
+  RotateCcw,
 } from "lucide-react";
 
 /**
@@ -50,6 +52,8 @@ export type NavItem = {
     href: string;
     icon: React.ComponentType<any>;
     requires?: readonly string[];
+    /** Marker for a dynamic count badge rendered by the sidebar. */
+    badge?: "redeclare";
   }[];
 };
 
@@ -73,6 +77,8 @@ export function getNavigation(prefix: string): NavItem[] {
       subItems: [
         { name: "Summary", href: `${prefix}/live-markets/summary`, icon: LayoutList, requires: ["live_markets.view_summary"] },
         { name: "Details", href: `${prefix}/live-markets/details`, icon: FileText, requires: ["live_markets.view_details"] },
+        { name: "Transaction Management", href: `${prefix}/transaction-management`, icon: Trash2, requires: ["transaction_management.view", "transaction_management.delete"] },
+        { name: "Redeclare", href: `${prefix}/redeclare`, icon: RotateCcw, requires: ["transaction_management.view", "transaction_management.delete"], badge: "redeclare" },
       ],
     },
     { name: "Users", href: `${prefix}/users`, icon: Users, requires: ["users.view"] },

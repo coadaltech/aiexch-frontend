@@ -122,6 +122,18 @@ const SuspendedCell = ({ className = "" }: { className?: string }) => (
   </div>
 );
 
+// Small owner-authored notice banner shown on an individual market card.
+// Renders nothing when there is no (non-blank) notice.
+function MarketNotice({ notice }: { notice?: string | null }) {
+  if (!notice || !String(notice).trim()) return null;
+  return (
+    <div className="notice-shine relative overflow-hidden flex items-start gap-1.5 px-2 py-1 bg-gradient-to-r from-yellow-500  via-yellow-700 to-gray-300 border-t border-yellow-900 rounded-b text-white text-[16px] sm:text-md leading-snug">
+      <span className="font-semibold shrink-0">Notice:</span>
+      <span className="break-words font-bold text-md">{String(notice).trim()}</span>
+    </div>
+  );
+}
+
 // Exposure / quick-bet data the runner-name cell needs. Supplying it via context
 // (instead of closures) lets RunnerNameCell live at module scope and be memoized,
 // so it only re-renders when its own displayed values change — not on every
@@ -1744,6 +1756,7 @@ export default function MatchPage() {
                     );
                   })}
                 </div>
+                <MarketNotice notice={market.notice} />
               </div>
             ); // end standard layout
             } // end if layout === "standard"
@@ -1823,6 +1836,7 @@ export default function MatchPage() {
                       );
                     })}
                   </div>
+                  <MarketNotice notice={market.notice} />
                 </div>
               );
             }
@@ -1874,6 +1888,7 @@ export default function MatchPage() {
                     </div>
                     {renderBinaryCell(noRunner, "lay")}
                   </div>
+                  <MarketNotice notice={market.notice} />
                 </div>
               );
             }
@@ -1904,6 +1919,7 @@ export default function MatchPage() {
                       ];
                     })}
                   </div>
+                  <MarketNotice notice={market.notice} />
                 </div>
               );
             }
@@ -1936,6 +1952,7 @@ export default function MatchPage() {
                       )
                     }
                   </div>
+                  <MarketNotice notice={market.notice} />
                 </div>
               );
             }
@@ -1970,6 +1987,7 @@ export default function MatchPage() {
                       );
                     })}
                   </div>
+                  <MarketNotice notice={market.notice} />
                 </div>
               );
             }
@@ -2041,6 +2059,7 @@ export default function MatchPage() {
                   );
                 });
               })()}
+              <MarketNotice notice={market.notice} />
             </div>
           );
 
@@ -2126,6 +2145,7 @@ export default function MatchPage() {
                     </div>
                     {renderBinaryCell(noRunner, "lay")}
                   </div>
+                  <MarketNotice notice={market.notice} />
                 </div>
               );
             }
@@ -2154,6 +2174,7 @@ export default function MatchPage() {
                       ];
                     })}
                   </div>
+                  <MarketNotice notice={market.notice} />
                 </div>
               );
             }
@@ -2199,6 +2220,7 @@ export default function MatchPage() {
                       )
                     }
                   </div>
+                  <MarketNotice notice={market.notice} />
                 </div>
               );
             }
@@ -2232,6 +2254,7 @@ export default function MatchPage() {
                       );
                     })}
                   </div>
+                  <MarketNotice notice={market.notice} />
                 </div>
               );
             }

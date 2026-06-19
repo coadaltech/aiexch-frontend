@@ -8,6 +8,7 @@ import { useMyBets } from "@/hooks/useBetting";
 export function BetSlip({ matchId, allBetsOnly = false }: { matchId: string; allBetsOnly?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"match" | "all">(allBetsOnly ? "all" : "match");
+  const [averageBets, setAverageBets] = useState(false);
   const { data: currentBetsData } = useMyBets("all");
 
   const allBets = (currentBetsData?.data || []).filter(
@@ -18,7 +19,39 @@ export function BetSlip({ matchId, allBetsOnly = false }: { matchId: string; all
     (bet: any) => String(bet.matchId) === String(matchId)
   );
 
-  const displayedBets = activeTab === "match" ? matchBets : allBets;
+  const baseBets = activeTab === "match" ? matchBets : allBets;
+  // When "Average Bets" is on, fold bets on the SAME runner + SAME type
+  // (back/lay) into one row: stake is summed and the price is the
+  // stake-weighted average. Deleted bets are never folded (kept individual).
+  const displayedBets = averageBets ? combineBets(baseBets) : baseBets;
+
+  const AverageToggle = () => (
+    <div className="flex items-center justify-end gap-2 mb-2 flex-shrink-0">
+      <span className="text-sm font-semibold text-gray-600">Average Bets?</span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={averageBets}
+        onClick={() => setAverageBets((v) => !v)}
+        className={`relative inline-flex h-6 w-14 items-center rounded-full transition-colors ${
+          averageBets ? "bg-blue-500" : "bg-gray-300"
+        }`}
+      >
+        <span
+          className={`absolute text-[10px] font-bold text-white ${
+            averageBets ? "left-1.5" : "right-1.5"
+          }`}
+        >
+          {averageBets ? "ON" : "OFF"}
+        </span>
+        <span
+          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+            averageBets ? "translate-x-8" : "translate-x-0.5"
+          }`}
+        />
+      </button>
+    </div>
+  );
 
   const TabBar = () => {
     if (allBetsOnly) {
@@ -77,7 +110,7 @@ export function BetSlip({ matchId, allBetsOnly = false }: { matchId: string; all
           <thead className="sticky top-0 z-10">
             <tr className="bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)] font-bold">
               <th className="text-left py-2.5 px-3 w-auto text-base">Matched Bet</th>
-              <th className="text-center py-2.5 px-1 w-16 text-base">Odds</th>
+              <th className={`text-center py-2.5 px-1 text-base whitespace-nowrap ${averageBets ? "w-24" : "w-16"}`}>{averageBets ? "Avg Price" : "Odds"}</th>
               <th className="text-right py-2.5 px-3 w-20 text-base">Stake</th>
             </tr>
           </thead>
@@ -126,6 +159,7 @@ export function BetSlip({ matchId, allBetsOnly = false }: { matchId: string; all
                 </Button>
               </div>
               <TabBar />
+              <AverageToggle />
               <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
                 <BetsTable />
               </div>
@@ -138,6 +172,7 @@ export function BetSlip({ matchId, allBetsOnly = false }: { matchId: string; all
       <div className="hidden bg-[#efefef] lg:block h-full w-full z-40 p-2">
         <div className="h-full flex flex-col">
           <TabBar />
+          <AverageToggle />
           <div className="flex-1 z flex flex-col min-h-0 overflow-hidden">
             <BetsTable />
           </div>
@@ -145,6 +180,46 @@ export function BetSlip({ matchId, allBetsOnly = false }: { matchId: string; all
       </div>
     </>
   );
+}
+
+/**
+ * Fold bets on the SAME runner + SAME bet type (back/lay) within the same
+ * market into a single row: stake is summed and the price is the
+ * stake-weighted average (sum(price*stake)/sum(stake)). Deleted bets are left
+ * as individual rows so their delete reason stays visible.
+ */
+function combineBets(bets: any[]): any[] {
+  const groups = new Map<string, any>();
+  const passthrough: any[] = [];
+
+  for (const bet of bets) {
+    const isDeleted = bet.isDeleted === true || bet.recordStatus === 1;
+    if (isDeleted) {
+      passthrough.push(bet);
+      continue;
+    }
+    const key = `${bet.marketId ?? bet.marketName ?? ""}|${bet.selectionName ?? ""}|${bet.betType}`;
+    const stake = Number(bet.stake) || 0;
+    const price = Number(bet.odds) || 0;
+    const existing = groups.get(key);
+    if (!existing) {
+      groups.set(key, { ...bet, _stakeSum: stake, _weighted: price * stake, _count: 1 });
+    } else {
+      existing._stakeSum += stake;
+      existing._weighted += price * stake;
+      existing._count += 1;
+    }
+  }
+
+  const combined = [...groups.values()].map((g) => ({
+    ...g,
+    id: `avg-${g.marketId ?? g.marketName}-${g.selectionName ?? ""}-${g.betType}`,
+    stake: g._stakeSum,
+    // Stake-weighted average price; falls back to the raw odds for a single bet.
+    odds: g._stakeSum > 0 ? g._weighted / g._stakeSum : g.odds,
+  }));
+
+  return [...combined, ...passthrough];
 }
 
 /** Table row for current (placed) bets: Matched Bet (left), Odds (center), Stake (right); Back = green, Lay = maroon */
@@ -178,15 +253,38 @@ function CurrentBetTableRow({ bet }: { bet: any }) {
   const userDetail = isFancy ? (bet.details || []).find((d: any) => d.isUserSelection) || (bet.details || [])[0] : null;
   const lineFormatted = userDetail?.run != null ? capDecimals(Number(userDetail.run)) : "-";
   const isLay = bet.betType === 1 || bet.betType === "lay";
-  const rowBg = isLay
-    ? "bg-pink-300 text-gray-800"
-    : "bg-blue-300 text-gray-800";
+
+  // Soft-deleted (reverted via Transaction Management): show muted/struck row
+  // with the owner's reason so the user knows why the bet no longer counts.
+  const isDeleted = bet.isDeleted === true || bet.recordStatus === 1;
+  const deleteRemark =
+    bet.deleteRemark ||
+    (bet.details || []).find((d: any) => d.remark)?.remark ||
+    "This bet was deleted";
+
+  const rowBg = isDeleted
+    ? "bg-gray-200 text-gray-500"
+    : isLay
+      ? "bg-pink-300 text-gray-800"
+      : "bg-blue-300 text-gray-800";
 
   return (
     <tr className={rowBg + " border-b border-gray-200"} >
-      <td className="py-2 px-2 text-left text-sm truncate max-w-0" title={matchedBetLabel}>{matchedBetLabel}</td>
-      <td className="py-2 px-1 text-center text-sm font-medium">{isFancy ? lineFormatted : oddsFormatted}</td>
-      <td className="py-2 px-2 text-right text-sm font-medium">{stakeFormatted}</td>
+      <td className="py-2 px-2 text-left text-sm truncate max-w-0" title={isDeleted ? `Deleted: ${deleteRemark}` : matchedBetLabel}>
+        <span className={isDeleted ? "line-through" : ""}>{matchedBetLabel}</span>
+        {isDeleted && (
+          <span className="ml-1.5 inline-block align-middle rounded bg-red-600 px-1 py-0.5 text-[9px] font-bold text-white no-underline">
+            DELETED
+          </span>
+        )}
+        {isDeleted && (
+          <span className="block text-[10px] italic text-red-600 truncate no-underline" title={deleteRemark}>
+            {deleteRemark}
+          </span>
+        )}
+      </td>
+      <td className={"py-2 px-1 text-center text-sm font-medium whitespace-nowrap" + (isDeleted ? " line-through" : "")}>{isFancy ? lineFormatted : oddsFormatted}</td>
+      <td className={"py-2 px-2 text-right text-sm font-medium" + (isDeleted ? " line-through" : "")}>{stakeFormatted}</td>
     </tr>
   );
 }

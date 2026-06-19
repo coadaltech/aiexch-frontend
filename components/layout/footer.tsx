@@ -62,9 +62,9 @@ const FOOTER_COLS = [
   {
     title: "APPS",
     links: [
-      { label: "iOS",        href: "#", icon: Apple },
+      // { label: "iOS",        href: "#", icon: Apple },
       { label: "Android",    href: "#", icon: Smartphone },
-      { label: "Other apps", href: "#", icon: Gamepad2 },
+      // { label: "Other apps", href: "#", icon: Gamepad2 },
     ],
   },
 ];

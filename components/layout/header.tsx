@@ -36,7 +36,7 @@ import { useChannelWatcher } from "@/hooks/useChannelWatcher";
 import Dropheader from "./dropheader";
 import { isPanelPath } from "@/lib/panel-utils";
 import { SPORT_ROUTES } from "@/lib/sports-config";
-import { useSportsList } from "@/hooks/useSportsList";
+import { useSportsList, SPORTS_LIST_QUERY_KEY } from "@/hooks/useSportsList";
 
 // Sport link mapping derived from shared config
 const SPORT_LINK_MAPPING: Record<string, { basePath: string; eventTypeId: string }> =
@@ -132,6 +132,8 @@ export default function Header() {
           label: sportName,
           link: specialHref,
           isLive: sport.isLive,
+          // Owner-set "highlight" flag → shimmer pill in the drop-header.
+          highlight: sport.isHighlight,
           eventTypeId,
         };
       }
@@ -141,6 +143,8 @@ export default function Header() {
         label: sportName,
         link: `/sports/${basePath}`,
         isLive: sport.isLive,
+        // Owner-set "highlight" flag → shimmer pill in the drop-header.
+        highlight: sport.isHighlight,
         eventTypeId,
       };
     });
@@ -162,6 +166,13 @@ export default function Header() {
     queryClient.invalidateQueries({ queryKey: ["header", "pinned-events"] });
   }, [queryClient]);
   useChannelWatcher("pinned-events", invalidatePinned);
+
+  // Owner toggles (highlight/visible/live) broadcast on "sports-list"; refresh
+  // the public sports list so the drop-header updates without a page reload.
+  const invalidateSportsList = React.useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: SPORTS_LIST_QUERY_KEY });
+  }, [queryClient]);
+  useChannelWatcher("sports-list", invalidateSportsList);
 
   const pinnedMenu = useMemo(
     () =>

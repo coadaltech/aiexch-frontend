@@ -18,6 +18,8 @@ interface Sport {
   is_active?: boolean;
   isLive: boolean;
   is_live?: boolean;
+  isHighlight: boolean;
+  is_highlight?: boolean;
   sort_order: number;
 }
 
@@ -32,6 +34,9 @@ export default function SportsPage() {
   const [saving, setSaving] = useState(false);
   const [togglingId, setTogglingId] = useState<number | null>(null);
   const [togglingLiveId, setTogglingLiveId] = useState<number | null>(null);
+  const [togglingHighlightId, setTogglingHighlightId] = useState<number | null>(
+    null,
+  );
 
   // Drag state
   const dragIndexRef = useRef<number | null>(null);
@@ -61,6 +66,7 @@ export default function SportsPage() {
           ...s,
           isActive: s.isActive ?? s.is_active ?? false,
           isLive: s.isLive ?? s.is_live ?? true,
+          isHighlight: s.isHighlight ?? s.is_highlight ?? false,
         }));
         // Already sorted by sort_order from backend; ensure stable display
         setSports(list);
@@ -193,6 +199,37 @@ export default function SportsPage() {
     }
   };
 
+  const handleToggleHighlight = async (
+    e: React.MouseEvent,
+    sport: Sport,
+  ) => {
+    e.stopPropagation();
+    if (togglingHighlightId !== null) return;
+    const nextHighlight = !sport.isHighlight;
+    setTogglingHighlightId(sport.id);
+    setSports((prev) =>
+      prev.map((s) =>
+        s.id === sport.id
+          ? { ...s, isHighlight: nextHighlight, is_highlight: nextHighlight }
+          : s,
+      ),
+    );
+    try {
+      await ownerApi.toggleSportHighlight(sport.id, nextHighlight);
+    } catch (err) {
+      console.error("Failed to toggle sport highlight state:", err);
+      setSports((prev) =>
+        prev.map((s) =>
+          s.id === sport.id
+            ? { ...s, isHighlight: sport.isHighlight, is_highlight: sport.isHighlight }
+            : s,
+        ),
+      );
+    } finally {
+      setTogglingHighlightId(null);
+    }
+  };
+
   const saveOrder = async (ordered: Sport[]) => {
     setSaving(true);
     try {
@@ -235,6 +272,9 @@ export default function SportsPage() {
               <span className="mx-2">·</span>
               <span className="font-medium text-gray-700">Live</span>: when off,
               the sport stays in nav but its page shows a Coming Soon banner.
+              <span className="mx-2">·</span>
+              <span className="font-medium text-gray-700">Highlight</span>: when
+              on, the sport is highlighted in the header like a pinned event.
             </p>
           </div>
           {saving && (
@@ -340,6 +380,31 @@ export default function SportsPage() {
                         )
                       }
                       className="data-[state=checked]:bg-blue-500"
+                    />
+                  </label>
+                  <label
+                    title={
+                      sport.isHighlight
+                        ? "Highlighted in the header. Toggle off to show as a normal tab."
+                        : "Normal tab. Toggle on to highlight it in the header like a pinned event."
+                    }
+                    className="flex items-center gap-2 cursor-pointer select-none"
+                  >
+                    <span className="text-xs font-medium text-gray-700 w-14 text-right whitespace-nowrap">
+                      Highlight
+                    </span>
+                    <Switch
+                      checked={sport.isHighlight}
+                      disabled={
+                        togglingHighlightId === sport.id || !canToggleSport
+                      }
+                      onCheckedChange={() =>
+                        handleToggleHighlight(
+                          { stopPropagation: () => {} } as React.MouseEvent,
+                          sport,
+                        )
+                      }
+                      className="data-[state=checked]:bg-yellow-500"
                     />
                   </label>
                   <svg

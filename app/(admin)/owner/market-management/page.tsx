@@ -7,6 +7,7 @@ import {
   useEventSettings,
   useUpdateEventSettings,
   useUpdateMarketSettings,
+  useUpdateMarketNotice,
   useMarketsByEvent,
   useDeleteCustomMarket,
   useUpdateCustomOdds,
@@ -583,12 +584,39 @@ function RunnerOddsRow({
 // ─── Market Card ───
 function MarketCard({ market }: { market: any }) {
   const updateMarket = useUpdateMarketSettings();
+  const updateNotice = useUpdateMarketNotice();
   const deleteCustom = useDeleteCustomMarket();
+  const { has } = usePermissions();
+  const canManageNotice = has("market_notice.manage");
   const [showSettings, setShowSettings] = useState(false);
   const [pendingField, setPendingField] = useState<string | null>(null);
   const [minBet, setMinBet] = useState("");
   const [maxBet, setMaxBet] = useState("");
   const [betDelay, setBetDelay] = useState("");
+  const [notice, setNotice] = useState<string>(market.notice ?? "");
+
+  // Keep the editable notice in sync when the live feed pushes a new value
+  // (but don't clobber an in-progress edit on every websocket frame).
+  const lastSyncedNotice = useRef<string>(market.notice ?? "");
+  useEffect(() => {
+    const incoming = market.notice ?? "";
+    if (incoming !== lastSyncedNotice.current) {
+      lastSyncedNotice.current = incoming;
+      setNotice(incoming);
+    }
+  }, [market.notice]);
+
+  const handleSaveNotice = () => {
+    setPendingField("notice");
+    updateNotice.mutate(
+      {
+        marketId: market.marketId,
+        notice,
+        eventId: String(market.eventId || ""),
+      },
+      { onSettled: () => setPendingField(null) }
+    );
+  };
 
   // Optimistic local overrides — applied immediately on toggle, cleared when
   // the next WebSocket push arrives with the confirmed state.
@@ -1056,6 +1084,50 @@ function MarketCard({ market }: { market: any }) {
               {pendingField === "overrides" && <Spinner size={12} />}
               Save Settings
             </button>
+
+            {/* ── Market Notice / Remark (permission-gated) ── */}
+            {canManageNotice && (
+              <div className="mt-3 pt-3 border-t border-gray-200">
+                <label className="text-[10px] font-semibold text-gray-700 block mb-0.5">
+                  Market Notice / Remark
+                  <span className="font-normal text-gray-400"> (shown to users on this market)</span>
+                </label>
+                <textarea
+                  value={notice}
+                  onChange={(e) => setNotice(e.target.value)}
+                  maxLength={500}
+                  rows={2}
+                  placeholder="e.g. 'Market under review', 'Ball running', 'Result awaited'"
+                  className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:outline-none resize-y"
+                />
+                <div className="mt-1.5 flex items-center gap-2">
+                  <button
+                    onClick={handleSaveNotice}
+                    disabled={pendingField === "notice" || notice === (market.notice ?? "")}
+                    className="px-3 py-1 text-xs bg-amber-600 text-white rounded hover:bg-amber-700 disabled:opacity-50 transition-colors flex items-center gap-1.5"
+                  >
+                    {pendingField === "notice" && <Spinner size={12} />}
+                    Save Notice
+                  </button>
+                  {(market.notice ?? "") && (
+                    <button
+                      onClick={() => {
+                        setNotice("");
+                        setPendingField("notice");
+                        updateNotice.mutate(
+                          { marketId: market.marketId, notice: "", eventId: String(market.eventId || "") },
+                          { onSettled: () => setPendingField(null) }
+                        );
+                      }}
+                      disabled={pendingField === "notice"}
+                      className="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:opacity-50 transition-colors"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -1938,7 +2010,10 @@ function MarketManagementContent() {
                     return (
                       <div className="space-y-1.5">
                         {standardMarkets.map((market: any) => (
-                          <MarketCard key={market.marketId} market={market} />
+                          <MarketCard
+                            key={market.marketId}
+                            market={{ ...market, eventId: market.eventId ?? activeEventId }}
+                          />
                         ))}
                         <FancyGroupCard markets={fancyMarkets} />
                       </div>

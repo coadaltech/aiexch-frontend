@@ -12,6 +12,7 @@ import { usePanelPrefix } from "@/hooks/usePanelPrefix";
 import { getNavigation, type NavItem } from "./data";
 import { useState, useMemo } from "react";
 import { useSettings } from "@/hooks/usePublic";
+import { useRedeclareMarkets } from "@/hooks/useOwner";
 
 interface OwnerSidebarProps {
   open: boolean;
@@ -65,6 +66,9 @@ function SidebarContent({
 }) {
   const { logout, user: currentUser } = useAuth();
   const { hasAny } = usePermissions();
+  const canSeeRedeclare = hasAny(["transaction_management.view", "transaction_management.delete"]);
+  const { data: redeclareData } = useRedeclareMarkets(canSeeRedeclare);
+  const redeclareCount = redeclareData?.count ?? 0;
   const { data: whitelabelInfo } = useWhitelabelInfo();
   const panelPrefix = usePanelPrefix();
   const [openGroups, setOpenGroups] = useState<string[]>([]);
@@ -161,7 +165,12 @@ function SidebarContent({
                         onClick={() => setOpen?.(false)}
                       >
                         <subItem.icon className="h-4 w-4 flex-shrink-0" />
-                        {subItem.name}
+                        <span className="flex-1 truncate">{subItem.name}</span>
+                        {subItem.badge === "redeclare" && redeclareCount > 0 && (
+                          <span className="ml-auto inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                            {redeclareCount}
+                          </span>
+                        )}
                       </Link>
                     ))}
                   </div>

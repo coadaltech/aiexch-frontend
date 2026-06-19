@@ -607,10 +607,10 @@ function BetsPanel({ matchId }: { matchId: string }) {
       <div className="flex flex-col bg-white rounded-lg border border-gray-200 overflow-hidden h-full">
         {/* Header */}
         <div className="flex items-center justify-between px-3 py-2 bg-[#174b73] shrink-0">
-          <span className="text-white font-semibold text-sm">
+          <span className="text-white font-semibold text-base">
             All Bets
             {betList.length > 0 && (
-              <span className="ml-1.5 bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+              <span className="ml-1.5 bg-white/20 text-white text-[11px] px-1.5 py-0.5 rounded-full">
                 {betList.length}
               </span>
             )}
@@ -618,7 +618,7 @@ function BetsPanel({ matchId }: { matchId: string }) {
           <div className="flex items-center gap-2">
             <Link
               href={`/owner/live-markets/details/all-bets?matchId=${encodeURIComponent(matchId)}`}
-              className="flex items-center gap-1 text-[11px] text-white/90 hover:text-white bg-white/10 hover:bg-white/20 px-2 py-0.5 rounded transition-colors"
+              className="flex items-center gap-1 text-xs text-white/90 hover:text-white bg-white/10 hover:bg-white/20 px-2 py-0.5 rounded transition-colors"
             >
               <ExternalLink className="h-3 w-3" />
               Show All
@@ -635,7 +635,7 @@ function BetsPanel({ matchId }: { matchId: string }) {
 
         {/* Column Headers */}
         {!isLoading && !isError && betList.length > 0 && (
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 border-b border-gray-200 text-[11px] font-semibold uppercase tracking-wide text-gray-600 shrink-0">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 border-b border-gray-200 text-xs font-semibold uppercase tracking-wide text-gray-600 shrink-0">
             <span className="flex-1 min-w-0">Username</span>
             <span className="flex-1 min-w-0">Market</span>
             <span className="shrink-0 w-14 text-right">Odds</span>
@@ -673,7 +673,7 @@ function BetsPanel({ matchId }: { matchId: string }) {
                 key={bet.id}
                 onClick={() => setSelectedBet(bet)}
                 className={cn(
-                  "w-full flex items-center gap-2 border-b border-gray-100 last:border-b-0 px-3 py-2 transition-colors text-left text-[13px] hover:brightness-95",
+                  "w-full flex items-center gap-2 border-b border-gray-100 last:border-b-0 px-3 py-2 transition-colors text-left text-sm hover:brightness-95",
                   isBack ? "bg-blue-300 text-gray-800" : "bg-pink-300 text-gray-800"
                 )}
               >
