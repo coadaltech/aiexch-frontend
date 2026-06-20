@@ -15,6 +15,8 @@ type Channel =
   | "recommended-events"
   | "pinned-events"
   | "pinned-competitions"
+  // Owner-pinned casino lobby categories surfaced in the top drop-header.
+  | "casino-categories"
   // User-balance change. The payload carries `userId` so subscribers can
   // ignore changes not meant for them (channel is global, filter is client-
   // side — fan-out is tiny so this is fine).

@@ -230,7 +230,7 @@ function CashoutButton({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`notice-shine relative overflow-hidden shrink-0 rounded-md px-4 py-1.5 text-sm sm:text-base font-bold text-white border shadow-sm bg-gradient-to-r from-yellow-500 via-yellow-700 to-gray-300 transition-opacity disabled:cursor-not-allowed ${
+      className={`notice-shine relative overflow-hidden shrink-0 rounded px-2 py-0.5 text-[11px] sm:text-xs font-bold text-white border shadow-sm bg-gradient-to-r from-yellow-500 via-yellow-700 to-gray-300 transition-opacity disabled:cursor-not-allowed ${
         confirming ? "border-white ring-2 ring-white/70" : "border-yellow-900"
       } ${locked ? "opacity-100" : disabled ? "opacity-40" : ""}`}
     >
@@ -1045,14 +1045,17 @@ export default function MatchPage() {
   };
 
   // ── Cashout (Match Odds only) ──────────────────────────────────────────
-  // Compute the single best-placeable full-flatten hedge for a 2-runner
-  // Match Odds market, recomputed every render so it tracks live odds. Returns
-  // null when cashout doesn't apply (wrong market type / not 2 runners).
+  // Compute the single best-placeable full-flatten hedge for a Match Odds
+  // market (2-way, or 3-way with The Draw), recomputed every render so it
+  // tracks live odds. Returns null when cashout doesn't apply (wrong market
+  // type / not enough runners).
   const buildCashoutForMarket = (market: any) => {
-    const mt = String(market?.marketType || "").toUpperCase();
-    if (mt !== "MATCH_ODDS" && mt !== "WINNING_ODDS") return null;
+    // Cashout applies to "odds"-type markets only (match/winning/tied odds,
+    // etc.) — i.e. decimal back/lay win-lose markets. Bookmaker and fancy
+    // (LINE) use different P&L conventions and are excluded.
+    if (toBettingType(market?.bettingType) !== "odds") return null;
     const runners = market?.runners || [];
-    if (runners.length !== 2) return null;
+    if (runners.length < 2) return null;
 
     const expMap = marketExposureMap?.get(String(market.marketId));
     const priced: RunnerPrice[] = runners.map((r: any) => {
@@ -1730,7 +1733,7 @@ export default function MatchPage() {
 
         return (
           <div className="bg-[var(--header-primary)]  rounded-lg px-3 sm:px-4 py-3 mb-2 shadow-md border border-[#1e4088]/30">
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
                 {series?.name && (
                   <p className="text-[var(--header-text)] font-semibold text-xs sm:text-sm truncate leading-tight mb-0.5 uppercase tracking-wide font-condensed">
@@ -1742,11 +1745,7 @@ export default function MatchPage() {
                 </h1>
               </div>
 
-              <div className="shrink-0 flex justify-center items-center">
-                {renderCashoutButton(matchOddsMarket)}
-              </div>
-
-              <div className="flex-1 text-right flex flex-col items-end gap-1">
+              <div className="shrink-0 text-right flex flex-col items-end gap-1">
 
                 {openDate && (
                   <span className="text-[var(--header-text)]/70 text-xs sm:text-sm flex items-center gap-2 sm:gap-6 flex-wrap justify-end">
@@ -1819,6 +1818,7 @@ export default function MatchPage() {
                     <h3 className="font-semibold text-[var(--header-text)] text-sm truncate leading-tight flex items-center gap-1.5">
                       <PinMarketButton parent={pinParent} market={market} />
                       <span className="truncate">{market.marketName}</span>
+                      {renderCashoutButton(market)}
                     </h3>
                   </div>
                   <div className="flex items-center gap-1">
@@ -1836,6 +1836,7 @@ export default function MatchPage() {
                     <h3 className="font-semibold text-[var(--header-text)] text-base truncate leading-tight flex items-center gap-1.5">
                       <PinMarketButton parent={pinParent} market={market} />
                       <span className="truncate">{market.marketName}</span>
+                      {renderCashoutButton(market)}
                     </h3>
                   </div>
                   <div className="justify-self-end font-semibold uppercase bg-back text-black text-sm py-0.5 px-1.5 rounded">

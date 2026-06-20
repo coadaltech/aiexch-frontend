@@ -7,21 +7,11 @@ import {
   AlertCircle,
   ArrowLeftRight,
   ChevronLeft,
-  CircleDot,
-  Club,
-  Dices,
-  Diamond,
-  Flame,
-  Layers,
   Play,
   RefreshCw,
   Search,
-  Spade,
-  Sparkles,
   Star,
-  Ticket,
   X,
-  Zap,
   type LucideIcon,
 } from "lucide-react";
 
@@ -31,6 +21,10 @@ import { CasinoWallet } from "@/components/casino/casino-wallet";
 import { CasinoUserMenu } from "@/components/casino/casino-user-menu";
 import { useSettings } from "@/hooks/usePublic";
 import { useAceGames, useQtechGames, type CasinoGame } from "@/hooks/useCasinoGames";
+import {
+  CASINO_CATEGORIES as CATS,
+  CASINO_CATEGORY_LABEL as CAT_LABEL,
+} from "@/lib/casino-categories";
 
 /**
  * Casino lobby.
@@ -49,26 +43,9 @@ import { useAceGames, useQtechGames, type CasinoGame } from "@/hooks/useCasinoGa
 // cheap even when the full catalogue is hundreds of games.
 const PAGE_SIZE = 48;
 
-// Ordered category catalogue. Only buckets that actually have games are shown.
-// Crash games are folded into Instant Win; Slots/Other have no tab (those games
-// surface only in the Lobby view).
-const CATS: { key: string; label: string; icon: LucideIcon }[] = [
-  { key: "ROULETTE", label: "Roulette", icon: CircleDot },
-  { key: "LIGHTNING", label: "Lightning", icon: Zap },
-  { key: "LIVECASINO", label: "Live Casino", icon: Spade },
-  { key: "TEENPATTI", label: "Teen Patti", icon: Layers },
-  { key: "ANDARBAHAR", label: "Andar Bahar", icon: Layers },
-  { key: "DRAGONTIGER", label: "Dragon Tiger", icon: Flame },
-  { key: "BACCARAT", label: "Baccarat", icon: Diamond },
-  { key: "BLACKJACK", label: "Black Jack", icon: Club },
-  { key: "TABLE", label: "Table Games", icon: Dices },
-  { key: "POKER", label: "Poker", icon: Club },
-  { key: "HOLDEM", label: "Hold'em", icon: Club },
-  { key: "INSTANTWIN", label: "Instant Win", icon: Sparkles },
-  { key: "LOTTERY", label: "Lottery Games", icon: Ticket },
-  { key: "RVCASINO", label: "RV Casino", icon: Diamond },
-];
-const CAT_LABEL = Object.fromEntries(CATS.map((c) => [c.key, c.label]));
+// The category catalogue (CATS) + key→label map (CAT_LABEL) are shared with the
+// owner pinning panel and the site drop-header — see lib/casino-categories.ts.
+// Only buckets that actually have games are shown as tabs.
 
 // There's no "Lobby" landing anymore — the bare /casino URL defaults to (and
 // redirects to) the first category below.
@@ -123,17 +100,22 @@ export default function CasinoLobby({ initialCat }: { initialCat?: string }) {
   const qt = useQtechGames();
   const ace = useAceGames();
 
+  // QT games arrive one cursor page at a time; flatten the loaded pages.
+  const qtGames = useMemo<CasinoGame[]>(
+    () => qt.data?.pages.flatMap((p) => p.games) ?? [],
+    [qt.data],
+  );
+  const { fetchNextPage, hasNextPage, isFetchingNextPage } = qt;
+
   const games = useMemo<CasinoGame[]>(
-    () => [...(qt.data?.games ?? []), ...(ace.data ?? [])],
-    [qt.data, ace.data],
+    () => [...qtGames, ...(ace.data ?? [])],
+    [qtGames, ace.data],
   );
 
-  // Diagnostic counts: how many QTech games we actually received vs how many
-  // QT says exist in the catalogue. A gap means the provider fetch is capped
-  // (size=500, no pagination) — i.e. the missing games are dropped at fetch
-  // time, NOT by category filtering in the lobby.
-  const qtLoaded = qt.data?.games.length ?? 0;
-  const qtTotal = qt.data?.totalCount ?? 0;
+  // Diagnostic counts: how many QTech games we've loaded so far vs how many QT
+  // says exist in the catalogue. The gap closes as more pages stream in.
+  const qtLoaded = qtGames.length;
+  const qtTotal = qt.data?.pages[0]?.totalCount ?? 0;
   const aceLoaded = ace.data?.length ?? 0;
 
   const isLoading = games.length === 0 && (qt.isLoading || ace.isLoading);
@@ -213,17 +195,45 @@ export default function CasinoLobby({ initialCat }: { initialCat?: string }) {
     [filtered, visibleCount],
   );
 
+  // Keep the QT buffer filled AHEAD of the viewport. Whenever fewer than a few
+  // batches of loaded games remain beyond what's on screen, pull the next page
+  // in advance — so the next games are already in memory by the time the user
+  // scrolls to them and no "loading more" spinner is ever shown. This also
+  // covers a just-switched category that isn't fully loaded yet (its filtered
+  // set starts small, so the buffer is "short" and we keep pulling pages until
+  // it fills or the catalogue is exhausted).
+  const BUFFER_AHEAD = PAGE_SIZE * 4;
+  useEffect(() => {
+    const remainingLoaded = filtered.length - visibleCount;
+    if (remainingLoaded < BUFFER_AHEAD && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [
+    activeCat,
+    search,
+    filtered.length,
+    visibleCount,
+    BUFFER_AHEAD,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  ]);
+
   const sentinelRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = sentinelRef.current;
-    if (!el || visibleCount >= filtered.length) return;
+    if (!el) return;
     const io = new IntersectionObserver(
       (entries) => {
-        if (entries[0]?.isIntersecting) {
+        if (!entries[0]?.isIntersecting) return;
+        // Reveal the next already-loaded batch — instant, since the buffer-ahead
+        // effect above has kept these games in memory. (If the user ever outruns
+        // the buffer, the same effect is already fetching the next page.)
+        if (visibleCount < filtered.length) {
           setVisibleCount((c) => Math.min(c + PAGE_SIZE, filtered.length));
         }
       },
-      { rootMargin: "600px" }, // start loading the next batch before it's on screen
+      { rootMargin: "1200px" }, // reveal the next batch well before it's on screen
     );
     io.observe(el);
     return () => io.disconnect();
@@ -279,15 +289,18 @@ export default function CasinoLobby({ initialCat }: { initialCat?: string }) {
 
         {/* BAL / LIAB — replaces the header's balance+exposure on casino pages */}
         <div className="flex shrink-0 items-center gap-1.5 border-l border-white/10 px-2 sm:px-3">
+          <CasinoWallet />
+          <div>
+
+          <CasinoUserMenu />
           <button
             onClick={() => refetch()}
             title="Refresh"
             className="flex h-8 w-8 items-center justify-center rounded-md text-gray-300 transition hover:bg-white/5 hover:text-white"
-          >
+            >
             <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
           </button>
-          <CasinoWallet />
-          <CasinoUserMenu />
+            </div>
         </div>
       </div>
 
@@ -416,7 +429,16 @@ export default function CasinoLobby({ initialCat }: { initialCat?: string }) {
           </div>
         )}
 
-        {games.length > 0 && filtered.length === 0 && (
+        {/* Filtered set empty while QT still has pages → we're just waiting on a
+            page that contains this category, not actually out of matches. */}
+        {games.length > 0 && filtered.length === 0 && (hasNextPage || isFetchingNextPage) && (
+          <div className="flex items-center justify-center gap-2 p-12 text-sm font-medium text-gray-400">
+            <RefreshCw className="h-4 w-4 animate-spin" />
+            Loading games…
+          </div>
+        )}
+
+        {games.length > 0 && filtered.length === 0 && !hasNextPage && !isFetchingNextPage && (
           <div className="rounded-xl border border-dashed border-white/15 p-12 text-center text-gray-400">
             No games match your filters.
           </div>
@@ -452,9 +474,18 @@ export default function CasinoLobby({ initialCat }: { initialCat?: string }) {
                 <GameTile key={g.key} game={g} />
               ))}
             </div>
-            {/* Reveals the next batch as it nears the viewport */}
-            {visibleCount < filtered.length && (
+            {/* Reveals the next local batch — and pulls the next QT page — as
+                it nears the viewport. Stays mounted while QT still has pages. */}
+            {(visibleCount < filtered.length || hasNextPage) && (
               <div ref={sentinelRef} className="h-10" aria-hidden />
+            )}
+            {/* Only shown if the user scrolls past the prefetched buffer — with
+                buffer-ahead in place this normally stays hidden. */}
+            {isFetchingNextPage && visibleCount >= filtered.length && (
+              <div className="flex items-center justify-center gap-2 py-4 text-xs font-medium text-gray-400">
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                Loading more games…
+              </div>
             )}
           </>
         )}

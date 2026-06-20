@@ -7,6 +7,7 @@ import {
   useEventSettings,
   useUpdateEventSettings,
   useUpdateMarketSettings,
+  useBulkUpdateMarketSettings,
   useUpdateMarketNotice,
   useMarketsByEvent,
   useDeleteCustomMarket,
@@ -1759,6 +1760,189 @@ function OddsHistoryPanel({ eventId }: { eventId: string }) {
   );
 }
 
+// ─── Bulk settings panel ───
+// Apply the same Min Bet / Max Bet / Bet Delay to every market of a chosen
+// type (Odds, Bookmaker, Fancy/Line, or all) for the event in one shot.
+const BULK_TYPE_OPTIONS: { value: string; label: string }[] = [
+  { value: "ALL", label: "All Markets" },
+  { value: "ODDS", label: "Odds (Match Odds)" },
+  { value: "BOOKMAKER", label: "Bookmaker" },
+  { value: "LINE", label: "Fancy / Line" },
+];
+
+function BulkSettingsPanel({
+  eventId,
+  markets,
+}: {
+  eventId: string;
+  markets: any[];
+}) {
+  const bulkUpdate = useBulkUpdateMarketSettings();
+  const [open, setOpen] = useState(false);
+  const [marketTypeSel, setMarketTypeSel] = useState("ALL");
+  const [minBet, setMinBet] = useState("");
+  const [maxBet, setMaxBet] = useState("");
+  const [betDelay, setBetDelay] = useState("");
+
+  // Count markets per betting type so each option shows how many it will hit.
+  const typeCounts = useMemo(() => {
+    const counts: Record<string, number> = { ALL: markets.length };
+    for (const m of markets) {
+      const bt = (m.bettingType || "ODDS").toUpperCase();
+      counts[bt] = (counts[bt] || 0) + 1;
+    }
+    return counts;
+  }, [markets]);
+
+  const targetMarkets = useMemo(
+    () =>
+      marketTypeSel === "ALL"
+        ? markets
+        : markets.filter(
+            (m) => (m.bettingType || "ODDS").toUpperCase() === marketTypeSel
+          ),
+    [markets, marketTypeSel]
+  );
+
+  const hasValue =
+    minBet.trim() !== "" || maxBet.trim() !== "" || betDelay.trim() !== "";
+
+  const handleApply = () => {
+    if (targetMarkets.length === 0) return;
+    const payload: any = {
+      eventId,
+      markets: targetMarkets.map((m) => ({
+        marketId: m.marketId,
+        marketName: m.marketName,
+        marketType: m.marketType || "MATCH_ODDS",
+        bettingType: m.bettingType || "ODDS",
+      })),
+    };
+    if (minBet.trim() !== "") payload.minBet = parseFloat(minBet);
+    if (maxBet.trim() !== "") payload.maxBet = parseFloat(maxBet);
+    if (betDelay.trim() !== "") payload.betDelay = parseInt(betDelay);
+
+    const label =
+      BULK_TYPE_OPTIONS.find((o) => o.value === marketTypeSel)?.label ||
+      marketTypeSel;
+    if (
+      !confirm(
+        `Apply these settings to ${targetMarkets.length} "${label}" market(s)?`
+      )
+    )
+      return;
+
+    bulkUpdate.mutate(payload, {
+      onSuccess: () => {
+        setMinBet("");
+        setMaxBet("");
+        setBetDelay("");
+      },
+    });
+  };
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg mb-2">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-3 py-2 text-left"
+      >
+        <span className="text-sm font-semibold text-gray-800">
+          Bulk Apply — Min / Max / Delay by Market Type
+        </span>
+        <svg
+          className={`w-4 h-4 text-gray-500 transition-transform ${open ? "rotate-180" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 9l-7 7-7-7"
+          />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="px-3 pb-3 border-t border-gray-100 pt-3">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 items-end">
+            <div className="col-span-2 sm:col-span-1">
+              <label className="block text-[11px] font-medium text-gray-600 mb-1">
+                Market Type
+              </label>
+              <select
+                value={marketTypeSel}
+                onChange={(e) => setMarketTypeSel(e.target.value)}
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {BULK_TYPE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label} ({typeCounts[o.value] || 0})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-[11px] font-medium text-gray-600 mb-1">
+                Min Bet
+              </label>
+              <input
+                type="number"
+                value={minBet}
+                onChange={(e) => setMinBet(e.target.value)}
+                placeholder="—"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-medium text-gray-600 mb-1">
+                Max Bet
+              </label>
+              <input
+                type="number"
+                value={maxBet}
+                onChange={(e) => setMaxBet(e.target.value)}
+                placeholder="—"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-medium text-gray-600 mb-1">
+                Bet Delay (s)
+              </label>
+              <input
+                type="number"
+                value={betDelay}
+                onChange={(e) => setBetDelay(e.target.value)}
+                placeholder="—"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleApply}
+              disabled={
+                !hasValue || targetMarkets.length === 0 || bulkUpdate.isPending
+              }
+              className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1"
+            >
+              {bulkUpdate.isPending ? <Spinner size={14} /> : null}
+              Apply to {targetMarkets.length}
+            </button>
+          </div>
+          <p className="text-[11px] text-gray-500 mt-2">
+            Only the fields you fill are applied; blank fields are left
+            unchanged on each market. Values persist across live refreshes.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ═══════════════════════════════════════════════════════════
 //  MAIN PAGE
 // ═══════════════════════════════════════════════════════════
@@ -1948,6 +2132,12 @@ function MarketManagementContent() {
                 <EventSettingsPanel
                   eventId={activeEventId}
                   liveMarketCount={rawMarkets.length}
+                />
+
+                {/* Bulk apply min/max/delay to all markets of a type */}
+                <BulkSettingsPanel
+                  eventId={activeEventId}
+                  markets={rawMarkets}
                 />
 
                 {/* Filter pills (compact). The market-name search lives

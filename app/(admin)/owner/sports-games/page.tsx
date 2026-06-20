@@ -296,6 +296,28 @@ export default function SportsPage() {
           />
         </div>
 
+        {/* Casino — not a real sport; a shortcut into the casino-category
+            pinning panel where the owner curates the drop-header categories. */}
+        <button
+          onClick={() => router.push(`${panelPrefix}/casino-categories`)}
+          className="mb-4 flex w-full items-center justify-between gap-3 rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-left transition-all hover:border-yellow-400 hover:shadow-md"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-yellow-400 text-black">
+              🎰
+            </span>
+            <div>
+              <h3 className="font-semibold text-lg text-gray-800">Casino</h3>
+              <p className="text-gray-600 text-sm mt-0.5">
+                Pin casino categories to the site drop-header
+              </p>
+            </div>
+          </div>
+          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+
         {/* Sports List */}
         <div className="space-y-2">
           {filteredSports.map((sport, idx) => (

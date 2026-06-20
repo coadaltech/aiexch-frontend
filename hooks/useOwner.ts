@@ -906,6 +906,24 @@ export const useUpdateMarketSettings = () => {
   });
 };
 
+// Apply min/max bet + bet delay to every market of a chosen type for an event
+// in one request.
+export const useBulkUpdateMarketSettings = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ eventId, ...data }: any) =>
+      ownerApi.bulkUpdateMarketSettings(eventId, data),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ["market-settings"] });
+      const count = res?.data?.data?.count ?? 0;
+      toast.success(
+        `Applied settings to ${count} market${count !== 1 ? "s" : ""}`
+      );
+    },
+    onError: () => toast.error("Failed to apply bulk market settings"),
+  });
+};
+
 // Markets whose transactions were deleted AFTER the result was declared.
 // Used by the Redeclare sub-tab (badge count) and the Redeclare page.
 export const useRedeclareMarkets = (enabled = true) => {

@@ -100,7 +100,7 @@ export function NotificationBell() {
         aria-label="Notifications"
         className="relative h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center text-nav-text hover:text-white hover:bg-nav-btn/50 rounded-lg touch-manipulation transition-colors"
       >
-        <Bell className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
+        <Bell className="h-4 w-4 sm:h-[18px] sm:w-[18px] text-black" />
         {unread > 0 && (
           <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-red-600 rounded-full flex items-center justify-center text-[9px] sm:text-[10px] text-white font-bold leading-none">
             {unread > 99 ? "99+" : unread}

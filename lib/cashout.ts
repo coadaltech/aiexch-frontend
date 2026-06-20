@@ -96,34 +96,39 @@ interface Candidate {
 }
 
 /**
- * Compute the best placeable full cashout for a 2-runner Match Odds market.
+ * Compute the best placeable single-bet full cashout for an N-runner Match
+ * Odds market (2-way, or 3-way with The Draw).
+ *
+ * A single hedge bet moves its own runner by ±stake·(odds−1) and every OTHER
+ * runner by ∓stake — uniformly. So one bet can flatten the whole book only
+ * when all-but-one runner already share the same exposure level: you hedge the
+ * odd runner out, and the others (already equal) stay together. This is the
+ * normal shape after betting on one selection (the rest sit at −stake), so it
+ * covers 2-way markets and 3-way markets like Netherlands/Sweden/Draw where
+ * the two un-bet runners are equal. If three distinct exposure levels exist no
+ * single bet can flatten them, and no cashout is offered.
  */
 export function computeMatchOddsCashout(
   runners: RunnerPrice[],
   c: CashoutConstraints,
 ): CashoutResult {
-  if (runners.length !== 2) {
-    return { available: false, reason: "Cashout supports 2-runner Match Odds only" };
+  if (runners.length < 2) {
+    return { available: false, reason: "Need at least 2 runners" };
   }
 
   const exposure: Record<string, number> = {};
   for (const r of runners) exposure[r.selectionId] = r.exposure ?? 0;
 
-  const [a, b] = runners;
-  const Ea = exposure[a.selectionId];
-  const Eb = exposure[b.selectionId];
-
-  if (Ea === 0 && Eb === 0) {
+  const values = Object.values(exposure);
+  const hasPosition = values.some((v) => Math.abs(v) > 0.01);
+  if (!hasPosition) {
     return { available: false, reason: "No open position", currentExposure: exposure };
   }
-  if (Math.abs(Ea - Eb) < 0.01) {
+  if (Math.max(...values) - Math.min(...values) < 0.01) {
     return { available: false, reason: "Position already balanced", currentExposure: exposure };
   }
 
-  const high = Ea > Eb ? a : b; // higher exposure -> lay it down
-  const low = Ea > Eb ? b : a; // lower exposure -> back it up
-  const spread = Math.abs(Ea - Eb); // (Ehigh - Elow) > 0
-
+  const EPS = 0.01;
   const candidates: Candidate[] = [];
 
   const buildCandidate = (
@@ -131,10 +136,10 @@ export function computeMatchOddsCashout(
     side: "back" | "lay",
     price: number,
     availableSize: number,
+    spread: number,
   ): Candidate => {
-    // Stake that exactly flattens: spread / odds (same form for both sides).
-    const rawStake = spread / price;
-    const stake = round2(rawStake);
+    // Stake that flattens the odd runner against the (equal) others: spread/odds.
+    const stake = round2(spread / price);
     const bet: CashoutBet = { selectionId: runner.selectionId, side, odds: price, stake };
     const resultingExposure = applyHedge(exposure, runners, bet);
     const lockedValue = round2(Math.min(...Object.values(resultingExposure)));
@@ -163,17 +168,32 @@ export function computeMatchOddsCashout(
     return { bet, lockedValue, resultingExposure, availableSize, blocked };
   };
 
-  // Option 1: LAY the higher-exposure runner at its best lay price.
-  if (high.bestLay && high.bestLay.price > 1) {
-    candidates.push(buildCandidate(high, "lay", high.bestLay.price, high.bestLay.size));
-  }
-  // Option 2: BACK the lower-exposure runner at its best back price.
-  if (low.bestBack && low.bestBack.price > 1) {
-    candidates.push(buildCandidate(low, "back", low.bestBack.price, low.bestBack.size));
+  // Each runner is a candidate "odd one out" — valid only when every OTHER
+  // runner already shares a common exposure (so one bet can level the book).
+  for (const target of runners) {
+    const others = runners.filter((r) => r.selectionId !== target.selectionId);
+    const otherExps = others.map((r) => exposure[r.selectionId]);
+    if (Math.max(...otherExps) - Math.min(...otherExps) > EPS) continue; // others not equal
+    const common = otherExps[0];
+    const Etarget = exposure[target.selectionId];
+    const spread = Math.abs(Etarget - common);
+    if (spread < EPS) continue; // target already level with the rest — nothing to do
+
+    if (Etarget > common) {
+      // Lay the odd runner down to meet the others.
+      if (target.bestLay && target.bestLay.price > 1) {
+        candidates.push(buildCandidate(target, "lay", target.bestLay.price, target.bestLay.size, spread));
+      }
+    } else {
+      // Back the odd runner up to meet the others.
+      if (target.bestBack && target.bestBack.price > 1) {
+        candidates.push(buildCandidate(target, "back", target.bestBack.price, target.bestBack.size, spread));
+      }
+    }
   }
 
   if (candidates.length === 0) {
-    return { available: false, reason: "No price available to hedge", currentExposure: exposure };
+    return { available: false, reason: "No single-bet cashout available", currentExposure: exposure };
   }
 
   const placeable = candidates.filter((k) => k.blocked === null);

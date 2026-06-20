@@ -356,6 +356,14 @@ export const ownerApi = {
   toggleSportHighlight: (sportId: number | string, isHighlight: boolean) =>
     api.post(`/owner/sports-games/toggle-highlight/${sportId}`, { isHighlight }),
 
+  // Casino categories — owner pins lobby categories to the site drop-header.
+  // Returns the list of currently-pinned category keys.
+  getCasinoPinnedCategories: () =>
+    api.get<{ success: boolean; data: string[] }>("/owner/casino-categories"),
+  // Pin / unpin a single casino category (key from lib/casino-categories.ts).
+  toggleCasinoCategory: (key: string, pinned: boolean) =>
+    api.post("/owner/casino-categories/toggle", { key, pinned }),
+
   // Competitions (per-sport, role + whitelabel aware) — server-paginated
   getCompetitions: (
     sportId: string,
@@ -475,6 +483,20 @@ export const ownerApi = {
     api.put(`/owner/market-management/markets/${marketId}`, data),
   updateMarketNotice: (marketId: string, data: { notice: string; eventId?: string }) =>
     api.put(`/owner/market-management/markets/${marketId}/notice`, data),
+  bulkUpdateMarketSettings: (
+    eventId: string,
+    data: {
+      markets: Array<{
+        marketId: string;
+        marketName?: string;
+        marketType?: string;
+        bettingType?: string;
+      }>;
+      betDelay?: number;
+      minBet?: number;
+      maxBet?: number;
+    }
+  ) => api.put(`/owner/market-management/events/${eventId}/bulk-settings`, data),
   listCustomMarkets: (params?: { search?: string; status?: string; limit?: number; offset?: number }) => {
     const query = new URLSearchParams();
     if (params?.search) query.append("search", params.search);
@@ -614,7 +636,7 @@ export const ownerApi = {
   /** Create a delegated staff user under the caller. */
   createStaff: (data: {
     username: string;
-    email: string;
+    email?: string;
     password: string;
     firstName?: string;
     lastName?: string;
@@ -833,6 +855,8 @@ export interface QtechGamesResponse {
   cached?: boolean;
   totalCount: number;
   games: QtechLobbyGame[];
+  /** Opaque cursor for the next page; null/absent on the last page. */
+  nextCursor?: string | null;
 }
 
 export interface QtechLaunchResponse {
@@ -842,16 +866,19 @@ export interface QtechLaunchResponse {
 }
 
 export const qtechCasinoApi = {
-  /** Public — game catalogue fetched live from QT (cached server-side). */
+  /**
+   * Public — ONE page of the QT catalogue (cached server-side). Pass the
+   * previous response's `nextCursor` to load the following page; the lobby does
+   * this on scroll / category change. Each call is a single fast round-trip, so
+   * the default timeout is plenty.
+   */
   listGames: (params?: {
     providers?: string;
     currencies?: string;
     gameTypes?: string;
     size?: number;
-  }) =>
-    // The backend pages through QT's full ~13k-game catalogue on a cache miss,
-    // which can take well past the default 30s. Give this one call more room.
-    api.get<QtechGamesResponse>("/qtech-casino/games", { params, timeout: 90000 }),
+    cursor?: string | null;
+  }) => api.get<QtechGamesResponse>("/qtech-casino/games", { params }),
 
   /**
    * Authed — generates a real-money launch URL for the logged-in user.
@@ -1009,4 +1036,9 @@ export const sidebarApi = {
   recommendedEvents: () => api.get("/api/dashboard/sidebar/recommended-events"),
   pinnedEvents: () => api.get("/api/dashboard/sidebar/pinned-events"),
   pinnedCompetitions: () => api.get("/api/dashboard/sidebar/pinned-competitions"),
+  // Owner-pinned casino lobby categories surfaced in the top drop-header.
+  pinnedCasinoCategories: () =>
+    api.get<{ success: boolean; data: string[] }>(
+      "/api/dashboard/sidebar/pinned-casino-categories",
+    ),
 };

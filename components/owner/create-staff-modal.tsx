@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,8 +11,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, UserPlus } from "lucide-react";
+import { Check, Loader2, UserPlus, X } from "lucide-react";
 import { useCreateStaff } from "@/hooks/useStaff";
+import { useOwnerUsers } from "@/hooks/useOwner";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface Props {
@@ -36,17 +37,42 @@ export function CreateStaffModal({ open, onClose, onCreated }: Props) {
   const [form, setForm] = useState({ ...empty });
   const [error, setError] = useState<string | null>(null);
   const createMutation = useCreateStaff();
+  const { data: allUsers = [] } = useOwnerUsers();
+
+  // Real-time username availability check (debounced)
+  const [usernameStatus, setUsernameStatus] = useState<
+    "idle" | "checking" | "available" | "taken"
+  >("idle");
+
+  useEffect(() => {
+    const trimmed = form.username?.trim().toLowerCase() || "";
+    if (!trimmed || trimmed.length < 3) {
+      setUsernameStatus("idle");
+      return;
+    }
+    setUsernameStatus("checking");
+    const timer = setTimeout(() => {
+      const exists = allUsers.some(
+        (u: any) => u.username?.toLowerCase() === trimmed
+      );
+      setUsernameStatus(exists ? "taken" : "available");
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [form.username, allUsers]);
 
   const submit = async () => {
     setError(null);
-    if (form.username.length < 3 || form.password.length < 6 || !form.email.includes("@")) {
-      setError("Username (≥3), valid email, and password (≥6) are required");
+    if (form.username.length < 3 || form.password.length < 6 ) {
+      setError("Username (≥3) and password (≥6) are required");
+      return;
+    }
+    if (usernameStatus === "taken") {
+      setError("Username is already taken");
       return;
     }
     try {
       const res = await createMutation.mutateAsync({
         username: form.username.trim(),
-        email: form.email.trim(),
         password: form.password,
         firstName: form.firstName.trim() || undefined,
         lastName: form.lastName.trim() || undefined,
@@ -88,29 +114,59 @@ export function CreateStaffModal({ open, onClose, onCreated }: Props) {
             <Label htmlFor="staff-username" className="text-foreground">
               Username
             </Label>
-            <Input
-              id="staff-username"
-              value={form.username}
-              onChange={(e) => setForm({ ...form, username: e.target.value })}
-              placeholder="e.g. rahul_finance"
-              autoComplete="off"
-              className="mt-1"
-            />
+            <div className="relative mt-1">
+              <Input
+                id="staff-username"
+                value={form.username}
+                onChange={(e) =>
+                  // Usernames are stored lowercase so login is case-insensitive.
+                  setForm({ ...form, username: e.target.value.toLowerCase() })
+                }
+                placeholder="e.g. rahul_finance"
+                autoComplete="off"
+                className={
+                  usernameStatus === "taken"
+                    ? "border-red-500 pr-9"
+                    : usernameStatus === "available"
+                    ? "border-green-500 pr-9"
+                    : "pr-9"
+                }
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2">
+                {usernameStatus === "checking" && (
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                )}
+                {usernameStatus === "available" && (
+                  <Check className="h-4 w-4 text-green-500" />
+                )}
+                {usernameStatus === "taken" && (
+                  <X className="h-4 w-4 text-red-500" />
+                )}
+              </span>
+            </div>
+            {usernameStatus === "taken" && (
+              <p className="mt-1 text-xs text-red-500">
+                Username is already taken
+              </p>
+            )}
+            {usernameStatus === "available" && (
+              <p className="mt-1 text-xs text-green-500">Username is available</p>
+            )}
           </div>
-          <div>
-            <Label htmlFor="staff-email" className="text-foreground">
-              Email
-            </Label>
-            <Input
-              id="staff-email"
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              placeholder="rahul@company.com"
-              autoComplete="off"
-              className="mt-1"
-            />
-          </div>
+          {/* <div> */}
+          {/*   <Label htmlFor="staff-email" className="text-foreground"> */}
+          {/*     Email */}
+          {/*   </Label> */}
+          {/*   <Input */}
+          {/*     id="staff-email" */}
+          {/*     type="email" */}
+          {/*     value={form.email} */}
+          {/*     onChange={(e) => setForm({ ...form, email: e.target.value })} */}
+          {/*     placeholder="rahul@company.com" */}
+          {/*     autoComplete="off" */}
+          {/*     className="mt-1" */}
+          {/*   /> */}
+          {/* </div> */}
           <div>
             <Label htmlFor="staff-password" className="text-foreground">
               Initial password
@@ -163,7 +219,11 @@ export function CreateStaffModal({ open, onClose, onCreated }: Props) {
           </Button>
           <Button
             onClick={submit}
-            disabled={createMutation.isPending}
+            disabled={
+              createMutation.isPending ||
+              usernameStatus === "taken" ||
+              usernameStatus === "checking"
+            }
             className="bg-primary hover:bg-primary/90 text-primary-foreground"
           >
             {createMutation.isPending ? (

@@ -37,6 +37,7 @@ export function CasinoUserMenu() {
 
   return (
     <div ref={ref} className="relative shrink-0">
+      
       <button
         onClick={() => setOpen((v) => !v)}
         title="Menu"

@@ -38,6 +38,7 @@ import Dropheader from "./dropheader";
 import { isPanelPath } from "@/lib/panel-utils";
 import { SPORT_ROUTES } from "@/lib/sports-config";
 import { useSportsList, SPORTS_LIST_QUERY_KEY } from "@/hooks/useSportsList";
+import { CASINO_CATEGORIES, casinoCategoryPath } from "@/lib/casino-categories";
 
 // Sport link mapping derived from shared config
 const SPORT_LINK_MAPPING: Record<string, { basePath: string; eventTypeId: string }> =
@@ -184,6 +185,23 @@ export default function Header() {
   }, [queryClient]);
   useChannelWatcher("pinned-competitions", invalidatePinnedCompetitions);
 
+  // ── Owner-pinned casino categories surfaced in the drop-header ───────────
+  // Global (not whitelabel-scoped): the backend returns the pinned category
+  // keys; we map them to the shared catalogue for labels/links. Live-refreshed
+  // via the "casino-categories" channel when the owner toggles a pin.
+  const { data: pinnedCasinoCategories } = useQuery({
+    queryKey: ["header", "pinned-casino-categories"],
+    queryFn: async () => {
+      const { data } = await sidebarApi.pinnedCasinoCategories();
+      return Array.isArray(data?.data) ? data.data : [];
+    },
+    staleTime: 60_000,
+  });
+  const invalidatePinnedCasinoCategories = React.useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["header", "pinned-casino-categories"] });
+  }, [queryClient]);
+  useChannelWatcher("casino-categories", invalidatePinnedCasinoCategories);
+
   // Owner toggles (highlight/visible/live) broadcast on "sports-list"; refresh
   // the public sports list so the drop-header updates without a page reload.
   const invalidateSportsList = React.useCallback(() => {
@@ -221,6 +239,19 @@ export default function Header() {
     [pinnedCompetitions]
   );
 
+  // Pinned casino categories → drop-header tabs, rendered in catalogue order
+  // (we iterate the shared catalogue and keep only the pinned keys).
+  const pinnedCasinoMenu = useMemo(() => {
+    const pinnedSet = new Set(pinnedCasinoCategories ?? []);
+    if (pinnedSet.size === 0) return [];
+    return CASINO_CATEGORIES.filter((c) => pinnedSet.has(c.key)).map((c) => ({
+      label: c.label,
+      link: casinoCategoryPath(c.key),
+      // Renders with the highlighted "pinned" shimmer treatment in the header.
+      highlight: true,
+    }));
+  }, [pinnedCasinoCategories]);
+
   const leftMenu = useMemo(
     () => [
       { label: "Home", link: "/home" },
@@ -228,9 +259,10 @@ export default function Header() {
       ...pinnedCompetitionsMenu,
       ...sports,
       { label: "Casino", link: "/casino" },
+      ...pinnedCasinoMenu,
       { label: "Promotions", link: "/promotions" },
     ],
-    [sports, pinnedMenu, pinnedCompetitionsMenu]
+    [sports, pinnedMenu, pinnedCompetitionsMenu, pinnedCasinoMenu]
   );
 
   // Listen for custom event to open auth modal

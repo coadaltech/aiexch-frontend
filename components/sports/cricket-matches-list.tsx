@@ -169,6 +169,7 @@ function MatchRow({
 export function CricketMatchesList({
   sport = "cricket",
   eventTypeId = EVENT_TYPE_CRICKET,
+  seriesId,
   maxMatches,
   emptyText,
   showHeader = true,
@@ -176,6 +177,9 @@ export function CricketMatchesList({
 }: {
   sport?: string;
   eventTypeId?: string;
+  // When provided, only matches belonging to this series are shown — used by
+  // the series page to reuse this list scoped to a single series/tournament.
+  seriesId?: string;
   maxMatches?: number;
   emptyText?: string;
   showHeader?: boolean;
@@ -189,9 +193,12 @@ export function CricketMatchesList({
   const { data: liveMatches = [], isLoading: matchesLoading } =
     useMatchesList(eventTypeId);
 
-  // Cache keys scoped per event type so cricket/football/etc. don't collide.
-  const eventsCacheKey = `cml:events:v2:${eventTypeId}`;
-  const oddsCacheKey = `cml:odds:v2:${eventTypeId}`;
+  // Cache keys scoped per event type (and per series when scoped) so
+  // cricket/football/etc. — and a series view vs. the full sport list — don't
+  // collide.
+  const cacheScope = seriesId ? `${eventTypeId}:${seriesId}` : eventTypeId;
+  const eventsCacheKey = `cml:events:v2:${cacheScope}`;
+  const oddsCacheKey = `cml:odds:v2:${cacheScope}`;
 
   // Hydrate cached events/odds after mount (avoids SSR hydration mismatch).
   // First paint may be empty on the very first visit; second paint (same tick
@@ -227,16 +234,20 @@ export function CricketMatchesList({
   // asc), so no re-sort needed — but filtering must happen here because the
   // window is in IST which the DB doesn't know about.
   const filteredMatches: MatchListItem[] = useMemo(() => {
+    // Scope to a single series when the caller asks for it.
+    const scoped = seriesId
+      ? liveMatches.filter((m) => String(m.seriesId) === String(seriesId))
+      : liveMatches;
     if (!isPolitics) {
-      return liveMatches.filter((m) => {
+      return scoped.filter((m) => {
         if (!m.openDate) return true;
         const t = new Date(m.openDate).getTime();
         if (isNaN(t)) return true;
         return t >= startOfTodayIST && t < endOfWindowIST;
       });
     }
-    return liveMatches;
-  }, [liveMatches, startOfTodayIST, endOfWindowIST, isPolitics]);
+    return scoped;
+  }, [liveMatches, startOfTodayIST, endOfWindowIST, isPolitics, seriesId]);
 
   // Persist live events once they arrive so the next visit paints instantly.
   useEffect(() => {
