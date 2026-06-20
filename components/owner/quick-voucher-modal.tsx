@@ -61,11 +61,13 @@ export function QuickVoucherModal({
   onClose,
   user,
   type,
+  prefillAmount,
 }: {
   open: boolean;
   onClose: () => void;
   user: QuickUser | null;
   type: VoucherType;
+  prefillAmount?: string;
 }) {
   const config = TYPE_CONFIG[type];
   const createMutation = useCreateVoucher();
@@ -83,7 +85,18 @@ export function QuickVoucherModal({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!open) {
+    if (open) {
+      // On open, prefill the amount with the user's Client P/L (passed from the
+      // users table). Limit vouchers aren't P/L-driven, so they stay blank.
+      setFormData({
+        amount: type !== "limit" && prefillAmount ? prefillAmount : "",
+        method: "",
+        reference: "",
+        remarks: "",
+        status: "approved",
+      });
+      setError(null);
+    } else {
       setFormData({
         amount: "",
         method: "",
@@ -93,7 +106,7 @@ export function QuickVoucherModal({
       });
       setError(null);
     }
-  }, [open]);
+  }, [open, type, prefillAmount]);
 
   const validateForm = () => {
     if (!user?.id) return "No user selected";

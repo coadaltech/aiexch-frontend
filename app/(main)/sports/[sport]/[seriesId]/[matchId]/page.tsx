@@ -1108,6 +1108,7 @@ export default function MatchPage() {
           isLay: result.bet.side === "lay",
           priceIndex: 0,
           isRawOdds: false,
+          isCashout: true,
         };
         await executeBetPlacement(qb, String(result.bet.stake), String(result.bet.odds));
       } finally {
@@ -1269,6 +1270,7 @@ export default function MatchPage() {
             runners: allRunners,
             provider: market.provider,
             priceIndex: qb.priceIndex,
+            isCashout: qb.isCashout === true,
           });
           toast.success("Bet placed.");
         } catch (err: unknown) {

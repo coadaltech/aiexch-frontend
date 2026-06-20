@@ -25,6 +25,7 @@ import TransactionModal from "../modals/transaction-modal";
 import { ExposureUsageModal } from "../modals/exposure-usage-modal";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { NotificationBell } from "@/components/layout/notification-bell";
 import { useWhitelabelInfo } from "@/hooks/useAuth";
 import { useLedger } from "@/hooks/useUserQueries";
 import { formatBalance } from "@/lib/format-balance";
@@ -167,6 +168,22 @@ export default function Header() {
   }, [queryClient]);
   useChannelWatcher("pinned-events", invalidatePinned);
 
+  // ── Owner-pinned competitions surfaced in the drop-header ────────────────
+  // Same pattern as pinned events; the backend already drops competitions the
+  // current whitelabel disabled. Live-refreshed via the websocket channel.
+  const { data: pinnedCompetitions } = useQuery({
+    queryKey: ["header", "pinned-competitions"],
+    queryFn: async () => {
+      const { data } = await sidebarApi.pinnedCompetitions();
+      return Array.isArray(data?.data) ? data.data : [];
+    },
+    staleTime: 60_000,
+  });
+  const invalidatePinnedCompetitions = React.useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["header", "pinned-competitions"] });
+  }, [queryClient]);
+  useChannelWatcher("pinned-competitions", invalidatePinnedCompetitions);
+
   // Owner toggles (highlight/visible/live) broadcast on "sports-list"; refresh
   // the public sports list so the drop-header updates without a page reload.
   const invalidateSportsList = React.useCallback(() => {
@@ -189,15 +206,31 @@ export default function Header() {
     [pinnedEvents]
   );
 
+  const pinnedCompetitionsMenu = useMemo(
+    () =>
+      (pinnedCompetitions ?? []).map((comp: any) => {
+        const basePath =
+          SPORT_LINK_MAPPING[String(comp.sportId)]?.basePath || String(comp.sportId);
+        return {
+          label: comp.label || comp.pinLabel || comp.name,
+          link: `/sports/${basePath}/${comp.competitionId}`,
+          // Renders with the highlighted "pinned" treatment in the drop-header.
+          highlight: true,
+        };
+      }),
+    [pinnedCompetitions]
+  );
+
   const leftMenu = useMemo(
     () => [
       { label: "Home", link: "/home" },
       ...pinnedMenu,
+      ...pinnedCompetitionsMenu,
       ...sports,
       { label: "Casino", link: "/casino" },
       { label: "Promotions", link: "/promotions" },
     ],
-    [sports, pinnedMenu]
+    [sports, pinnedMenu, pinnedCompetitionsMenu]
   );
 
   // Listen for custom event to open auth modal
@@ -248,6 +281,9 @@ export default function Header() {
               {
                 isLoggedIn ? (
                   <>
+                    {/* Notification bell — per-user alerts (e.g. bet deleted) */}
+                    <NotificationBell />
+
                     {/* Gift Icon with Badge - Always visible */}
                     {/* <Button
                     variant="ghost"

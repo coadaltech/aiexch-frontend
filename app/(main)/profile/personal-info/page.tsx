@@ -62,6 +62,56 @@ export default function PersonalInfoScreen() {
     new: false,
     confirm: false,
   });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  const closePasswordModal = () => {
+    setShowPasswordModal(false);
+    setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    setShowPasswords({ current: false, new: false, confirm: false });
+  };
+
+  const handleChangePassword = async () => {
+    const current = passwordData.currentPassword.trim();
+    const next = passwordData.newPassword;
+    const confirm = passwordData.confirmPassword;
+
+    if (!current) {
+      toast.error("Please enter your current password");
+      return;
+    }
+    if (next.length < 6) {
+      toast.error("New password must be at least 6 characters");
+      return;
+    }
+    if (next !== confirm) {
+      toast.error("New passwords don't match");
+      return;
+    }
+    if (next === current) {
+      toast.error("New password must be different from the current one");
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      await authApi.changePassword({
+        currentPassword: current,
+        newPassword: next,
+      });
+      toast.success("Password changed successfully");
+      closePasswordModal();
+    } catch (error: any) {
+      const data = error?.response?.data;
+      const msg =
+        data?.message ||
+        data?.error ||
+        (Array.isArray(data?.errors) ? data.errors[0]?.message : null) ||
+        "Failed to change password";
+      toast.error(msg);
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
 
   // Update userData when profile data loads
   useEffect(() => {
@@ -367,7 +417,10 @@ export default function PersonalInfoScreen() {
       </div>
 
       {/* Change Password Modal */}
-      <Dialog open={showPasswordModal} onOpenChange={setShowPasswordModal}>
+      <Dialog
+        open={showPasswordModal}
+        onOpenChange={(open) => (open ? setShowPasswordModal(true) : closePasswordModal())}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Change Password</DialogTitle>
@@ -378,7 +431,7 @@ export default function PersonalInfoScreen() {
               <div className="relative">
                 <Input
                   id="current-password"
-                  className="bg-white"
+                  className="bg-white pr-10"
                   type={showPasswords.current ? "text" : "password"}
                   value={passwordData.currentPassword}
                   onChange={(e) =>
@@ -401,9 +454,9 @@ export default function PersonalInfoScreen() {
                   }
                 >
                   {showPasswords.current ? (
-                    <EyeOff className="h-4 w-4" />
+                    <EyeOff className="h-4 w-4 text-black" />
                   ) : (
-                    <Eye className="h-4 w-4" />
+                    <Eye className="h-4 w-4 text-black" />
                   )}
                 </Button>
               </div>
@@ -413,7 +466,7 @@ export default function PersonalInfoScreen() {
               <div className="relative">
                 <Input
                   id="new-password"
-                  className="bg-white"
+                  className="bg-white pr-10"
                   type={showPasswords.new ? "text" : "password"}
                   value={passwordData.newPassword}
                   onChange={(e) =>
@@ -436,9 +489,9 @@ export default function PersonalInfoScreen() {
                   }
                 >
                   {showPasswords.new ? (
-                    <EyeOff className="h-4 w-4" />
+                    <EyeOff className="h-4 w-4 text-black" />
                   ) : (
-                    <Eye className="h-4 w-4" />
+                    <Eye className="h-4 w-4 text-black" />
                   )}
                 </Button>
               </div>
@@ -448,7 +501,7 @@ export default function PersonalInfoScreen() {
               <div className="relative">
                 <Input
                   id="confirm-password"
-                  className="bg-white"
+                  className="bg-white pr-10"
                   type={showPasswords.confirm ? "text" : "password"}
                   value={passwordData.confirmPassword}
                   onChange={(e) =>
@@ -471,9 +524,9 @@ export default function PersonalInfoScreen() {
                   }
                 >
                   {showPasswords.confirm ? (
-                    <EyeOff className="h-4 w-4" />
+                    <EyeOff className="h-4 w-4 text-black" />
                   ) : (
-                    <Eye className="h-4 w-4" />
+                    <Eye className="h-4 w-4 text-black" />
                   )}
                 </Button>
               </div>
@@ -481,49 +534,16 @@ export default function PersonalInfoScreen() {
           </div>
           <div className="mt-6 flex gap-3">
             <Button
-              onClick={async () => {
-                if (passwordData.newPassword !== passwordData.confirmPassword) {
-                  toast.error("Passwords don't match");
-                  return;
-                }
-                if (passwordData.newPassword.length < 8) {
-                  toast.error("New password must be at least 8 characters");
-                  return;
-                }
-
-                try {
-                  await authApi.changePassword({
-                    currentPassword: passwordData.currentPassword,
-                    newPassword: passwordData.newPassword,
-                  });
-                  toast.success("Password changed successfully");
-                  setShowPasswordModal(false);
-                  setPasswordData({
-                    currentPassword: "",
-                    newPassword: "",
-                    confirmPassword: "",
-                  });
-                } catch (error: any) {
-                  const errorMessage =
-                    error.response?.data?.message ||
-                    "Failed to change password";
-                  toast.error(errorMessage);
-                }
-              }}
-              className="flex-1"
+              onClick={handleChangePassword}
+              disabled={isChangingPassword}
+              className="flex-1 bg-[var(--header-primary)] text-white hover:bg-[var(--header-primary)]/90"
             >
-              Update Password
+              {isChangingPassword ? "Updating…" : "Update Password"}
             </Button>
             <Button
               variant="outline"
-              onClick={() => {
-                setShowPasswordModal(false);
-                setPasswordData({
-                  currentPassword: "",
-                  newPassword: "",
-                  confirmPassword: "",
-                });
-              }}
+              onClick={closePasswordModal}
+              disabled={isChangingPassword}
             >
               Cancel
             </Button>

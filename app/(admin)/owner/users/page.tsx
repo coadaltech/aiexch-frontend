@@ -110,7 +110,11 @@ export default function UsersPage() {
   const debouncedSearch = useDebounce(searchTerm, 300).toLowerCase();
 
   const [voucherState, setVoucherState] = useState<
-    | { user: { id: string; username: string; email?: string | null }; type: "deposit" | "withdraw" | "limit" }
+    | {
+        user: { id: string; username: string; email?: string | null };
+        type: "deposit" | "withdraw" | "limit";
+        prefillAmount?: string;
+      }
     | null
   >(null);
   const [profileEditUser, setProfileEditUser] = useState<any | null>(null);
@@ -427,6 +431,9 @@ export default function UsersPage() {
                 const isLeafUser = String(u.role ?? "").toLowerCase() === "user";
 
                 const quickUser = { id: u.id, username: u.username, email: u.email };
+                // Prefill the deposit/withdraw amount with the user's Client P/L
+                // (absolute value — the amount field is positive-only).
+                const pnlPrefill = clientPnl !== 0 ? String(Math.abs(clientPnl)) : undefined;
 
                 return (
                   <tr
@@ -493,14 +500,14 @@ export default function UsersPage() {
                           <ActionBtn
                             letter="D"
                             title="Deposit voucher"
-                            onClick={() => setVoucherState({ user: quickUser, type: "deposit" })}
+                            onClick={() => setVoucherState({ user: quickUser, type: "deposit", prefillAmount: pnlPrefill })}
                           />
                         )}
                         {canWithdraw && (
                           <ActionBtn
                             letter="W"
                             title="Withdraw voucher"
-                            onClick={() => setVoucherState({ user: quickUser, type: "withdraw" })}
+                            onClick={() => setVoucherState({ user: quickUser, type: "withdraw", prefillAmount: pnlPrefill })}
                           />
                         )}
                         {canLimit && (
@@ -603,6 +610,9 @@ export default function UsersPage() {
           const bActive = u.betStatus     !== false && u.parentBetStatus     !== false;
           const isLeafUser = String(u.role ?? "").toLowerCase() === "user";
           const quickUser = { id: u.id, username: u.username, email: u.email };
+          // Prefill the deposit/withdraw amount with the user's Client P/L
+          // (absolute value — the amount field is positive-only).
+          const pnlPrefill = clientPnl !== 0 ? String(Math.abs(clientPnl)) : undefined;
           const hasAnyAction = canDeposit || canWithdraw || canLimit || canSetTxLimit || canEditUser || canToggleStatus;
 
           return (
@@ -650,10 +660,10 @@ export default function UsersPage() {
               {hasAnyAction && (
                 <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-gray-100">
                   {canDeposit && (
-                    <ActionBtn letter="D" title="Deposit voucher" onClick={() => setVoucherState({ user: quickUser, type: "deposit" })} />
+                    <ActionBtn letter="D" title="Deposit voucher" onClick={() => setVoucherState({ user: quickUser, type: "deposit", prefillAmount: pnlPrefill })} />
                   )}
                   {canWithdraw && (
-                    <ActionBtn letter="W" title="Withdraw voucher" onClick={() => setVoucherState({ user: quickUser, type: "withdraw" })} />
+                    <ActionBtn letter="W" title="Withdraw voucher" onClick={() => setVoucherState({ user: quickUser, type: "withdraw", prefillAmount: pnlPrefill })} />
                   )}
                   {canLimit && (
                     <ActionBtn letter="L" title="Limit voucher" onClick={() => setVoucherState({ user: quickUser, type: "limit" })} />
@@ -694,6 +704,7 @@ export default function UsersPage() {
         onClose={() => setVoucherState(null)}
         user={voucherState?.user ?? null}
         type={voucherState?.type ?? "deposit"}
+        prefillAmount={voucherState?.prefillAmount}
       />
 
       <TransactionLimitModal

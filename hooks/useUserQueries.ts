@@ -64,6 +64,16 @@ export const useBetDetails = (marketId: string | null, voucherId?: string | null
   });
 };
 
+export const useLoginLogs = (enabled = true) => {
+  return useQuery({
+    queryKey: ["login-logs"],
+    queryFn: () => userApi.getLoginLogs(),
+    select: (data) => (data.data?.data ?? []) as any[],
+    enabled,
+    staleTime: 60 * 1000,
+  });
+};
+
 export const useBetHistory = (params?: { result?: string; type?: string }) => {
   return useQuery({
     queryKey: ["betHistory", params],

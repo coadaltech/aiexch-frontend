@@ -33,6 +33,8 @@ export type QuickBetData = {
   matchId?: string;
   seriesId?: string;
   eventTypeId?: string;
+  // true when this placement is an auto-generated Cashout hedge.
+  isCashout?: boolean;
 };
 
 export function formatStakeLabel(value: number): string {

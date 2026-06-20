@@ -89,6 +89,12 @@ export default function DashboardContent() {
       description: "Customise your quick-stake buttons",
       href: "/profile/stake-settings",
     },
+    {
+      icon: History,
+      title: "Last Logins",
+      description: "View your recent sign-in activity",
+      href: "/profile/last-logins",
+    },
   ];
 
   return (
@@ -245,7 +251,7 @@ function MenuCard({
           className={`truncate text-sm font-semibold transition-colors sm:text-base ${
             isDanger
               ? "text-destructive"
-              : "text-gray-900 group-hover:text-[var(--header-text)]"
+              : "text-gray-900 "
           }`}
         >
           {title}
@@ -258,7 +264,7 @@ function MenuCard({
         className={`h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1 sm:h-5 sm:w-5 ${
           isDanger
             ? "text-destructive"
-            : "text-gray-400 group-hover:text-[var(--header-text)]"
+            : "text-gray-400"
         }`}
       />
     </button>

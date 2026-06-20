@@ -28,6 +28,7 @@ export interface PlaceBetParams {
   runners: BetRunner[];
   provider?: string;
   priceIndex?: number;
+  isCashout?: boolean;
 }
 
 export const useBetting = () => {

@@ -7,6 +7,7 @@ import {
   CreditCard,
   Shield,
   Settings,
+  Trash2,
   Award as MarkAsRead,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -14,7 +15,7 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/hooks/useUserQueries";
 import { userApi } from "@/lib/api";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { NotificationsSkeleton } from "@/components/skeletons/profile-skeletons";
 import { Notification } from "@/types";
 
@@ -26,13 +27,29 @@ export default function Notifications() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  const { data: notifications = [], isLoading } = useNotifications(user?.id);
+  // Global notifications (broadcast to everyone) …
+  const { data: globalNotifications = [], isLoading } = useNotifications(user?.id);
+  // … plus this user's TARGETED notifications (e.g. "your bet was deleted").
+  const { data: myData } = useQuery({
+    queryKey: ["my-notifications", user?.id],
+    queryFn: () => userApi.getMyNotifications().then((r) => r.data),
+    enabled: !!user?.id,
+  });
+
+  // Merge both sources, tagging each so "mark read" hits the right endpoint.
+  const notifications: any[] = [
+    ...globalNotifications.map((n: any) => ({ ...n, _source: "global" })),
+    ...((myData?.data as any[]) || []).map((n: any) => ({ ...n, _source: "user" })),
+  ];
 
   const markAsReadMutation = useMutation({
-    mutationFn: (notificationId: number) =>
-      userApi.markNotificationAsRead(user?.id!, notificationId),
+    mutationFn: (notification: any) =>
+      notification._source === "user"
+        ? userApi.markMyNotificationsRead([notification.id])
+        : userApi.markNotificationAsRead(user?.id!, notification.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["my-notifications", user?.id] });
     },
   });
 
@@ -41,20 +58,18 @@ export default function Notifications() {
   }
 
   const filteredNotifications = notifications
-    .filter((notification: Notification) => {
+    .filter((notification: any) => {
       if (filter === "all") return true;
       if (filter === "unread") return !notification.isRead;
       if (filter === "read") return notification.isRead;
       return true;
     })
     .sort(
-      (a: Notification, b: Notification) =>
+      (a: any, b: any) =>
         new Date(b.addedDate).getTime() - new Date(a.addedDate).getTime()
     );
 
-  const unreadCount = notifications.filter(
-    (n: Notification) => !n.isRead
-  ).length;
+  const unreadCount = notifications.filter((n: any) => !n.isRead).length;
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -68,6 +83,8 @@ export default function Notifications() {
         return <Settings className="h-5 w-5 text-slate-600" />;
       case "promotion":
         return <Bell className="h-5 w-5 text-violet-600" />;
+      case "bet_deleted":
+        return <Trash2 className="h-5 w-5 text-red-600" />;
       default:
         return <Bell className="h-5 w-5 text-gray-500" />;
     }
@@ -85,19 +102,26 @@ export default function Notifications() {
         return "bg-slate-100";
       case "promotion":
         return "bg-violet-50";
+      case "bet_deleted":
+        return "bg-red-50";
       default:
         return "bg-gray-100";
     }
   };
 
-  const markAsRead = (id: string) => {
-    markAsReadMutation.mutate(id);
+  const markAsRead = (notification: any) => {
+    markAsReadMutation.mutate(notification);
   };
 
   const markAllAsRead = () => {
-    notifications.forEach((notification: Notification) => {
-      if (!notification.isRead) {
-        markAsReadMutation.mutate(notification.id);
+    // Targeted notifications can be cleared in one call …
+    userApi.markMyNotificationsRead().then(() => {
+      queryClient.invalidateQueries({ queryKey: ["my-notifications", user?.id] });
+    });
+    // … global ones are marked one-by-one (per-notification read rows).
+    notifications.forEach((notification: any) => {
+      if (!notification.isRead && notification._source === "global") {
+        markAsReadMutation.mutate(notification);
       }
     });
   };
@@ -184,7 +208,7 @@ export default function Notifications() {
             <p className="text-sm text-gray-500 sm:text-base">No notifications found</p>
           </div>
         ) : (
-          filteredNotifications.map((notification: Notification) => (
+          filteredNotifications.map((notification: any) => (
             <div
               key={notification.id}
               className={`${CARD_CLS} p-3 transition-colors hover:bg-gray-50 sm:p-4`}
@@ -235,7 +259,7 @@ export default function Notifications() {
                     <div className="flex items-center gap-1">
                       {!notification.isRead && (
                         <Button
-                          onClick={() => markAsRead(notification.id)}
+                          onClick={() => markAsRead(notification)}
                           variant="ghost"
                           size="sm"
                           className="h-8 w-8 p-0 text-gray-500 hover:bg-gray-100 hover:text-gray-900"

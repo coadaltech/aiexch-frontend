@@ -14,6 +14,7 @@ type Channel =
   | "top-competitions"
   | "recommended-events"
   | "pinned-events"
+  | "pinned-competitions"
   // User-balance change. The payload carries `userId` so subscribers can
   // ignore changes not meant for them (channel is global, filter is client-
   // side — fan-out is tiny so this is fine).
@@ -21,7 +22,11 @@ type Channel =
   // Single-device session enforcement. Subscribing keeps the socket alive
   // while logged in; the server pushes `{ type: "force-logout", userId,
   // sessionToken }` here when the account logs in elsewhere.
-  | "session";
+  | "session"
+  // Per-user targeted alerts (e.g. "your bet was deleted"). The server pushes
+  // `{ type: "user-notifications-changed", userId, notification }`; the header
+  // bell filters by its own userId.
+  | "user-notifications";
 
 let ws: WebSocket | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;

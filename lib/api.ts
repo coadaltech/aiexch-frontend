@@ -375,6 +375,13 @@ export const ownerApi = {
   // Mark/unmark a competition as a sidebar "Top competition" (owner only)
   toggleTopCompetition: (competitionId: string | number, isTop: boolean) =>
     api.post(`/owner/sports-games/toggle-top-competition/${competitionId}`, { isTop }),
+  // Pin/unpin a competition to the site drop-header under a custom label (owner only)
+  pinCompetition: (
+    competitionId: string | number,
+    data: { isPinned: boolean; pinLabel?: string },
+  ) => api.post(`/owner/sports-games/pin-competition/${competitionId}`, data),
+  // Which competitions are currently pinned (owner panel state)
+  getPinnedCompetitions: () => api.get("/owner/sports-games/pinned-competitions"),
 
   // Events (per-competition) — server-paginated
   getCompetitionEvents: (
@@ -677,6 +684,11 @@ export const userApi = {
   markNotificationAsRead: (userId: number, notificationId: number) =>
     api.post("/profile/notifications/mark-read", { userId, notificationId }),
 
+  // Per-user targeted notifications (header bell)
+  getMyNotifications: () => api.get("/profile/my-notifications"),
+  markMyNotificationsRead: (ids?: string[]) =>
+    api.post("/profile/my-notifications/read", ids && ids.length ? { ids } : {}),
+
   // Promocodes
   getPromocodes: () => api.get("/profile/promocodes"),
   redeemPromocode: (code: string) =>
@@ -728,6 +740,12 @@ export const userApi = {
       `/profile/account-statement/bet-details?marketId=${encodeURIComponent(marketId)}` +
       (voucherId ? `&voucherId=${encodeURIComponent(voucherId)}` : ""),
     ),
+
+  // Login history
+  getLoginLogs: (params?: { limit?: number }) => {
+    const query = params?.limit ? `?limit=${params.limit}` : "";
+    return api.get(`/profile/login-logs${query}`);
+  },
 
   // Stake settings
   getStakeSettings: () => api.get("/profile/stake-settings"),
@@ -990,4 +1008,5 @@ export const sidebarApi = {
   topCompetitions: () => api.get("/api/dashboard/sidebar/top-competitions"),
   recommendedEvents: () => api.get("/api/dashboard/sidebar/recommended-events"),
   pinnedEvents: () => api.get("/api/dashboard/sidebar/pinned-events"),
+  pinnedCompetitions: () => api.get("/api/dashboard/sidebar/pinned-competitions"),
 };
