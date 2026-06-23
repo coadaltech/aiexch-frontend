@@ -849,7 +849,7 @@ th {
     }
   }
   .animate-fab-home-shine {
-    animation: fab-home-shine 3.6s ease-in-out infinite;
+    animation: fab-home-shine 2s ease-in-out infinite;
   }
 
   /* Delay utilities for staggered animations */

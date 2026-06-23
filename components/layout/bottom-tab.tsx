@@ -186,7 +186,7 @@ export default function BottomNavigation() {
             aria-label={homeItem.label}
             aria-current={homeActive ? "page" : undefined}
             style={{ borderRadius: "9999px" }}
-            className="absolute left-1/2 -top-6 -translate-x-1/2 flex h-14 w-14 items-center justify-center overflow-hidden bg-gradient-to-b from-[color-mix(in_srgb,var(--header-secondary)_78%,#fff)] to-[var(--header-secondary)] transition-transform duration-300 active:scale-95 animate-fab-home-glow"
+            className="absolute left-1/2 -top-6 -translate-x-1/2 flex h-18 w-18 items-center justify-center overflow-hidden bg-gradient-to-b from-[color-mix(in_srgb,var(--header-secondary)_78%,#fff)] to-[var(--header-secondary)] transition-transform duration-300 active:scale-95 animate-fab-home-glow"
           >
             {/* moving sheen sweep */}
             <span
