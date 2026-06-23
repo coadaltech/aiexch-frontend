@@ -654,8 +654,12 @@ export const ownerApi = {
     api.get(`/owner/matka/live-prediction/${shiftId}/agent-sale?nums=${nums}`),
   declareMatkaResult: (shiftId: string, result: number) =>
     api.post(`/owner/matka/live-prediction/${shiftId}/declare`, { result }),
-  getMatkaDeclaredHistory: (limit = 50) =>
-    api.get(`/owner/matka/live-prediction/declared-history?limit=${limit}`),
+  getMatkaDeclaredHistory: (limit = 50, shiftId?: string) =>
+    api.get(
+      `/owner/matka/live-prediction/declared-history?limit=${limit}${
+        shiftId ? `&shiftId=${encodeURIComponent(shiftId)}` : ""
+      }`
+    ),
 
   // Jambo Live Prediction (same shape as matka, numbers span 1..1000)
   getJamboLivePrediction: (shiftId: string) =>
@@ -672,8 +676,12 @@ export const ownerApi = {
     api.get(`/owner/jambo/live-prediction/${shiftId}/agent-sale?nums=${nums}`),
   declareJamboResult: (shiftId: string, result: number) =>
     api.post(`/owner/jambo/live-prediction/${shiftId}/declare`, { result }),
-  getJamboDeclaredHistory: (limit = 50) =>
-    api.get(`/owner/jambo/live-prediction/declared-history?limit=${limit}`),
+  getJamboDeclaredHistory: (limit = 50, shiftId?: string) =>
+    api.get(
+      `/owner/jambo/live-prediction/declared-history?limit=${limit}${
+        shiftId ? `&shiftId=${encodeURIComponent(shiftId)}` : ""
+      }`
+    ),
 
   // ── Staff Management ─────────────────────────────────────────────────────
   getPermissionsCatalog: () => api.get("/owner/permissions"),

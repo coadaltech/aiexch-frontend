@@ -4,6 +4,12 @@ import { COUNTRY_TIMEZONE } from "./country-timezone";
 const FALLBACK_TZ = "Asia/Kolkata";
 const TZ_STORAGE_KEY = "userTimezone";
 
+// Force day/month/year ordering (DD/MM/YYYY) for displayed dates. With
+// toLocaleDateString the day/month options only control zero-padding — the
+// ORDER is dictated by the locale, so a browser set to en-US would render
+// MM/DD/YYYY. en-GB guarantees the day-first order the app expects.
+const DATE_LOCALE = "en-GB";
+
 let runtimeTimezone: string | null = null;
 
 const detectBrowserTimezone = (): string => {
@@ -88,7 +94,7 @@ export const formatLocalDate = (
     year: "numeric",
   },
 ) =>
-  new Date(date).toLocaleDateString(getUserLocale(), {
+  new Date(date).toLocaleDateString(DATE_LOCALE, {
     timeZone: getUserTimezone(),
     ...options,
   });
@@ -117,7 +123,7 @@ export const formatLocalDateTime = (
     hour12: true,
   },
 ) =>
-  new Date(date).toLocaleString(getUserLocale(), {
+  new Date(date).toLocaleString(DATE_LOCALE, {
     timeZone: getUserTimezone(),
     ...options,
   });

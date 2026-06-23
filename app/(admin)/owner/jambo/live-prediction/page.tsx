@@ -146,7 +146,10 @@ export default function OwnerJamboLivePredictionPage() {
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [resultInput, setResultInput] = useState("");
   const declareMutation = useDeclareJamboResult();
-  const { data: declaredHistory = [] } = useJamboDeclaredHistory(50);
+  const { data: declaredHistory = [] } = useJamboDeclaredHistory(
+    50,
+    shiftId || null
+  );
 
   const jantri = useMainJantriCountdown(
     selectedShift?.shiftDate,

@@ -145,7 +145,10 @@ export default function OwnerLivePredictionPage() {
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [resultInput, setResultInput] = useState("");
   const declareMutation = useDeclareMatkaResult();
-  const { data: declaredHistory = [] } = useMatkaDeclaredHistory(50);
+  const { data: declaredHistory = [] } = useMatkaDeclaredHistory(
+    50,
+    shiftId || null
+  );
 
   const jantri = useMainJantriCountdown(
     selectedShift?.shiftDate,

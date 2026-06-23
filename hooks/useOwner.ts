@@ -1262,13 +1262,20 @@ export const useDeclareMatkaResult = () => {
   });
 };
 
-export const useMatkaDeclaredHistory = (limit = 50) => {
+export const useMatkaDeclaredHistory = (
+  limit = 50,
+  shiftId?: string | null
+) => {
   return useQuery({
-    queryKey: ["matka-declared-history", limit],
+    queryKey: ["matka-declared-history", limit, shiftId ?? null],
     queryFn: async () => {
-      const res = await ownerApi.getMatkaDeclaredHistory(limit);
+      const res = await ownerApi.getMatkaDeclaredHistory(
+        limit,
+        shiftId ?? undefined
+      );
       return (res.data?.data ?? []) as DeclaredHistoryRow[];
     },
+    enabled: !!shiftId,
     staleTime: 30 * 1000,
   });
 };
@@ -1388,13 +1395,20 @@ export const useDeclareJamboResult = () => {
   });
 };
 
-export const useJamboDeclaredHistory = (limit = 50) => {
+export const useJamboDeclaredHistory = (
+  limit = 50,
+  shiftId?: string | null
+) => {
   return useQuery({
-    queryKey: ["jambo-declared-history", limit],
+    queryKey: ["jambo-declared-history", limit, shiftId ?? null],
     queryFn: async () => {
-      const res = await ownerApi.getJamboDeclaredHistory(limit);
+      const res = await ownerApi.getJamboDeclaredHistory(
+        limit,
+        shiftId ?? undefined
+      );
       return (res.data?.data ?? []) as DeclaredHistoryRow[];
     },
+    enabled: !!shiftId,
     staleTime: 30 * 1000,
   });
 };
