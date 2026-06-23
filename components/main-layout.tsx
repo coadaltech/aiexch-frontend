@@ -1,7 +1,7 @@
 "use client";
 import { ReactNode, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useIsRestoring } from "@tanstack/react-query";
 import { SidebarProvider } from "./ui/sidebar";
 import Header from "./layout/header";
 import { AppSidebar } from "./layout/app-sidebar-new";
@@ -18,6 +18,12 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   const { data: whitelabelInfo, isLoading: whitelabelLoading } = useWhitelabelInfo();
   const { isLoggedIn } = useAuth();
   const queryClient = useQueryClient();
+  // True only during the brief window where the persisted query cache is being
+  // restored from localStorage on a fresh load. While restoring, queries are
+  // paused: `whitelabel-info` reads as "not loading" but has no data yet, which
+  // would otherwise look like "whitelabel not found" and bounce the user to
+  // /login on every refresh. Gate the redirect logic on this.
+  const isRestoring = useIsRestoring();
 
   // Own the BAL/EXP `ledger` WebSocket here — the one component that stays
   // mounted across every route change (exchange ↔ casino). Keeping it out of
@@ -48,7 +54,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   const hideHeader =
     (isUnifiedCasino || pathname?.startsWith("/casino-ace/play")) ?? false;
   const whitelabelNotFound =
-    !whitelabelLoading && whitelabelInfo?.whitelabelType == null;
+    !isRestoring && !whitelabelLoading && whitelabelInfo?.whitelabelType == null;
 
   // Warm the casino game caches in the background once the app is idle, so the
   // grid is already populated by the time the user opens the casino. No-ops
@@ -70,6 +76,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (isOwnerRoute || isAuthRoute) return;
+    if (isRestoring) return;
     if (whitelabelLoading) return;
     if (whitelabelNotFound) {
       router.replace("/login");
@@ -78,7 +85,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
     if (!isLoggedIn && isHomeOrRoot) {
       router.replace("/login");
     }
-  }, [isOwnerRoute, isAuthRoute, whitelabelLoading, whitelabelNotFound, isLoggedIn, isHomeOrRoot, router]);
+  }, [isOwnerRoute, isAuthRoute, isRestoring, whitelabelLoading, whitelabelNotFound, isLoggedIn, isHomeOrRoot, router]);
 
   if (isOwnerRoute || isAuthRoute) {
     return <>{children}</>;

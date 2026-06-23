@@ -290,7 +290,7 @@ function QuickAccessGrid() {
               href={item.href}
               className="group flex flex-col items-center justify-center gap-1.5 rounded-lg bg-white border border-gray-200 py-3 px-1 transition-all hover:border-[var(--header-primary)]/40 hover:shadow-sm"
             >
-              <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-gray-700 transition-colors group-hover:text-[var(--header-text)]" />
+              <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-gray-700 transition-colors " />
               <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wide text-center leading-tight text-gray-500 group-hover:text-gray-900">
                 {item.label}
               </span>
@@ -324,8 +324,8 @@ const Homepage = () => {
         {/* 6. Mode tabs + quick access grid — mobile only */}
       <div className="mt-4 space-y-3 lg:hidden">
         <ModeTabs />
-        <QuickAccessGrid />
       </div>
+        <QuickAccessGrid />
 
       {/* 3. Sport category pill tabs */}
       {/* <SportCategoryTabs /> */}
