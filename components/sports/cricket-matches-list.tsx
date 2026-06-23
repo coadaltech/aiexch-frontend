@@ -140,7 +140,7 @@ function MatchRowImpl({
         {(() => {
           const t = formatMatchTime(match.openDate);
           return (
-            <div className={`${TIME_COL} shrink-0 flex flex-col items-center justify-center text-center`}>
+            <div className={`${TIME_COL} shrink-0 flex flex-col items-center justify-center text-center mr-1`}>
               {match.inPlay ? (
                 <span className="bg-[#1f7a47] text-white px-1.5 py-1 rounded text-xs sm:text-xs font-bold leading-none">
                   In-Play

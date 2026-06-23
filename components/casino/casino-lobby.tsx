@@ -88,12 +88,23 @@ export default function CasinoLobby({ initialCat }: { initialCat?: string }) {
     return () => window.removeEventListener("popstate", sync);
   }, []);
 
-  // Landing on the bare /casino URL: there's no lobby, so redirect to the first
-  // category (e.g. /casino/category/roulette) without adding a history entry.
+  // Landing on the bare /casino URL, where there's no flat "lobby" level:
+  //  • Desktop keeps the header-nav lobby, so we open the first category
+  //    (e.g. /casino/category/roulette) and reflect it in the URL — without
+  //    adding a history entry.
+  //  • Mobile uses the two-level flow, so we stay on /casino and show the
+  //    category-card picker (activeCat "ALL"); tapping a card drills into its
+  //    games.
+  // A specific /casino/category/<key> URL is always honoured as-is on both.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (!/^\/casino\/category\//.test(window.location.pathname)) {
+    if (/^\/casino\/category\//.test(window.location.pathname)) return;
+    const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
+    if (isDesktop) {
+      setActiveCat(DEFAULT_CAT);
       window.history.replaceState(null, "", catToPath(DEFAULT_CAT));
+    } else {
+      setActiveCat("ALL");
     }
   }, []);
 
