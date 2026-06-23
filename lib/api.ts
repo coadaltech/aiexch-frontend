@@ -1,5 +1,26 @@
 import axios from "axios";
+import { createDpopProof, getDpopPublicJwk } from "./dpop";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+// Absolute URL for a request (used as the DPoP proof's `htu`). The backend
+// compares only the path, so query strings / proxy host differences are fine.
+function absoluteUrl(base: string, path: string): string {
+  try {
+    return new URL(path, base).toString();
+  } catch {
+    return `${base || ""}${path || ""}`;
+  }
+}
+
+// Build a DPoP proof header for a request, swallowing any failure (the backend
+// will 401 if the token is bound and the proof is missing — never throw here).
+async function dpopHeader(method: string, url: string): Promise<Record<string, string>> {
+  try {
+    return { DPoP: await createDpopProof(method, url) };
+  } catch {
+    return {};
+  }
+}
 
 // ── First-party cookie helpers ────────────────────────────────────────────────
 // Set on the frontend's own domain so Safari accepts them as first-party.
@@ -40,9 +61,10 @@ export async function proactiveRefresh(): Promise<boolean> {
   const storedRefreshToken = getAuthCookie("refreshToken");
   if (!storedRefreshToken) return false;
   try {
+    const headers = await dpopHeader("POST", `${API_BASE_URL}/auth/refresh`);
     const response = await axios
       .create({ baseURL: API_BASE_URL, withCredentials: true })
-      .post("/auth/refresh", { refreshToken: storedRefreshToken });
+      .post("/auth/refresh", { refreshToken: storedRefreshToken }, { headers });
     if (response.data.success && response.data.accessToken) {
       storeTokens(response.data.accessToken, response.data.refreshToken);
       return true;
@@ -64,14 +86,20 @@ export const api = axios.create({
   },
 });
 
-// Attach domain header + Authorization header on every request
-api.interceptors.request.use((config) => {
+// Attach domain header + Authorization header + DPoP proof on every request
+api.interceptors.request.use(async (config) => {
   if (typeof window !== "undefined") {
     config.headers["x-whitelabel-domain"] =
       process.env.NEXT_PUBLIC_WHITELABEL_DOMAIN || window.location.host;
     const token = getAuthCookie("accessToken");
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
+      // A DPoP-bound token requires a fresh proof for THIS request. We sign one
+      // with the browser-held private key; a stolen token can't produce it.
+      const url = absoluteUrl(config.baseURL || API_BASE_URL, config.url || "");
+      const method = (config.method || "get").toUpperCase();
+      const proof = await dpopHeader(method, url);
+      if (proof.DPoP) config.headers["DPoP"] = proof.DPoP;
     }
   }
   return config;
@@ -105,9 +133,14 @@ api.interceptors.response.use(
 
       try {
         const storedRefreshToken = getAuthCookie("refreshToken");
+        const refreshHeaders = await dpopHeader("POST", `${API_BASE_URL}/auth/refresh`);
         const refreshResponse = await axios
           .create({ baseURL: API_BASE_URL, withCredentials: true })
-          .post("/auth/refresh", storedRefreshToken ? { refreshToken: storedRefreshToken } : undefined);
+          .post(
+            "/auth/refresh",
+            storedRefreshToken ? { refreshToken: storedRefreshToken } : undefined,
+            { headers: refreshHeaders },
+          );
 
         if (refreshResponse.data.success) {
           // storeTokens is called automatically by the response interceptor above
@@ -189,7 +222,20 @@ export const uploadFile = (file: File, type?: string, oldImageUrl?: string) => {
 };
 
 export const authApi = {
-  login: (data: LoginRequest) => api.post<AuthResponse>("/auth/login", data),
+  login: async (data: LoginRequest) => {
+    // Send our DPoP public key so the server binds the issued tokens to it.
+    // If key generation fails for any reason, fall back to an unbound login.
+    let dpopPublicKey: JsonWebKey | undefined;
+    try {
+      dpopPublicKey = await getDpopPublicJwk();
+    } catch {
+      dpopPublicKey = undefined;
+    }
+    return api.post<AuthResponse>(
+      "/auth/login",
+      dpopPublicKey ? { ...data, dpopPublicKey } : data,
+    );
+  },
   register: (data: RegisterRequest) =>
     api.post<AuthResponse>("/auth/register", data),
   sendOTP: (data: { email: string; type?: string }) =>

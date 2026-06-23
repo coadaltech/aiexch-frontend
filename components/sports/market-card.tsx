@@ -288,7 +288,6 @@ export function MarketCard(props: MarketCardProps) {
     setQuickBetStake,
     isPlacing,
     betDelayRemaining,
-    cancelBetDelay,
     handleQuickBetClose,
     handleQuickBetPlace,
     liveQuickBetOdds,
@@ -344,7 +343,6 @@ export function MarketCard(props: MarketCardProps) {
         onPlaceBet={handleQuickBetPlace}
         isLoading={isPlacing}
         betDelayRemaining={betDelayRemaining}
-        onCancelDelay={cancelBetDelay}
         stakeButtons={customStakes}
         currentOdds={liveQuickBetOdds}
         currentRun={liveQuickBetRun}

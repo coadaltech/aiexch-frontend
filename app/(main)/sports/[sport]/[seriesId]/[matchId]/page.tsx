@@ -2522,7 +2522,6 @@ export default function MatchPage() {
           onPlaceBet={handleQuickBetPlace}
           isLoading={isPlacing}
           betDelayRemaining={betDelayRemaining}
-          onCancelDelay={cancelBetDelay}
           stakeButtons={customStakes}
           currentOdds={liveQuickBetOdds}
           currentRun={liveQuickBetRun}
