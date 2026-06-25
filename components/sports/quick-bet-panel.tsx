@@ -6,8 +6,10 @@
 // across both.
 
 import { useEffect, useRef } from "react";
+import { ChevronUp, ChevronDown, Trash2, Pencil } from "lucide-react";
 import { DEFAULT_STAKES } from "@/hooks/useUserQueries";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSiteTheme } from "@/contexts/ThemeContext";
 
 export type RunnerSummary = {
   id: string;
@@ -98,6 +100,7 @@ export function QuickBetPanel({
   currentRun?: string;
 }) {
   const { user: currentUser } = useAuth();
+  const { theme } = useSiteTheme();
   const { market, runner, odds } = data;
   // Fancy/LINE markets: keep the displayed odds frozen at click time. The
   // parent closes the panel when the live line changes, so showing updated
@@ -203,6 +206,266 @@ export function QuickBetPanel({
 
   const tintRunnerBg = data.isLay ? "bg-lay" : "bg-back";
   const tintListBg = data.isLay ? "bg-lay" : "bg-back";
+
+  // ── TomExch theme layout — the reference "Bet Slip" panel (Bet For / Odds /
+  // Stake / Profit-or-Liability table, single-row quick stakes, Clear All /
+  // Submit). Reuses ALL the same state/handlers, so placement is identical. ──────
+  if (theme === "tomexch") {
+    const betTypeLabel =
+      data.bettingType === "LINE"
+        ? "Fancy"
+        : data.bettingType?.toUpperCase() === "BOOKMAKER"
+          ? "Bookmaker"
+          : "Odds";
+    const fmtStake = (v: number) => {
+      if (v >= 10000000) return `${v / 10000000}Cr`;
+      if (v >= 100000) return `${v / 100000}L`.replace(".0L", "L");
+      if (v >= 1000) return `${v / 1000}K`.replace(".0K", "K");
+      return String(v);
+    };
+    const rowTint = data.isLay ? "bg-[#f7d2dd]" : "bg-[#d2e4f6]";
+    return (
+      <div className="w-full overflow-hidden bg-white text-slate-800">
+        {/* Bet Slip header */}
+        <div className="flex items-center justify-between border-b-2 border-[#1ba9c9] bg-slate-50 px-3 py-2">
+          <span className="text-[15px] font-bold text-slate-700">Bet Slip</span>
+          <span className="flex items-center gap-2 text-[15px] font-semibold text-slate-600">
+            
+            {/* <span className="inline-flex h-6 w-14 items-center rounded-full bg-slate-300 px-1">
+              <span className="h-4 w-4 rounded-full bg-slate-800" />
+              <span className="ml-1 text-[11px] font-bold text-slate-600">OFF</span>
+            </span> */}
+          </span>
+        </div>
+
+        {isDelaying && (
+          <div className="mx-3 mt-2 flex items-center justify-between gap-2 rounded border border-amber-200 bg-amber-50 px-3 py-2">
+            <span className="flex items-center gap-2 truncate text-sm font-medium text-amber-700">
+              <span className="inline-block h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-amber-400 border-t-transparent" />
+              Placing in {betDelayRemaining}s...
+            </span>
+            <button type="button" onClick={onCancelDelay} className="shrink-0 rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-700">
+              Cancel
+            </button>
+          </div>
+        )}
+
+        {/* Single Bet - <type> */}
+        <div className="py-2 text-center text-[15px] font-semibold text-slate-700">
+          Single Bet - <span className="font-bold text-[#1ba9c9]">{betTypeLabel}</span>
+        </div>
+
+        {/* Customize Stake Buttons */}
+        <div className="flex justify-end px-3 pb-2">
+          {/* <button
+            type="button"
+            className="flex items-center gap-1.5 rounded bg-[#2f8fd0] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#2a82bf]"
+          >
+            Customize Stake Buttons <Pencil className="h-3.5 w-3.5" />
+          </button> */}
+        </div>
+
+        {/* Column headers */}
+        <div className="grid grid-cols-[1fr_7rem_5.5rem_4.5rem] items-center gap-2 bg-slate-200 px-3 py-2 text-[13px] font-bold text-slate-700">
+          <span>(Bet For)</span>
+          <span className="text-center">Odds</span>
+          <span className="text-center">Stake</span>
+          <span className="text-center leading-tight">Profit or Liability</span>
+        </div>
+
+        {/* Runner row */}
+        <div className={`grid grid-cols-[1fr_7rem_5.5rem_4.5rem] items-center gap-2 px-3 py-2 ${rowTint}`}>
+          <div className="flex min-w-0 items-center gap-2">
+            <button type="button" onClick={onClose} aria-label="Remove">
+              <Trash2 className="h-5 w-5 text-red-500 hover:text-red-600" />
+            </button>
+            <span className="font-bold leading-tight text-slate-800">{runnerName}</span>
+          </div>
+          {/* Odds with steppers (market-driven, read-only) */}
+          <div className="flex h-9 items-stretch overflow-hidden rounded border border-slate-400 bg-white">
+            <span className="flex w-7 items-center justify-center border-r border-slate-300 text-lg font-bold text-slate-600">−</span>
+            <input readOnly value={displayOdds} className="w-full bg-transparent text-center text-sm font-bold text-slate-500 outline-none" />
+            <span className="flex w-7 items-center justify-center border-l border-slate-300 text-lg font-bold text-slate-600">+</span>
+          </div>
+          {/* Stake */}
+          <input
+            ref={stakeInputRef}
+            type="number"
+            inputMode="numeric"
+            value={stake}
+            disabled={isDelaying}
+            placeholder="stake"
+            onChange={(e) => handleStake(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); if (canPlace) onPlaceBet(stake, rawOdds); } }}
+            className={`h-9 rounded border bg-white text-center text-sm font-semibold text-slate-800 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none ${
+              stakeError ? "border-red-400" : "border-slate-400"
+            }`}
+          />
+          {/* Profit or Liability */}
+          <span className="text-center text-sm font-bold text-red-600">{formatProfit(profit)}</span>
+        </div>
+        {stakeError && (
+          <div className="px-3 pt-1 text-right text-[11px] font-medium text-danger">{stakeError}</div>
+        )}
+
+        {/* Quick stakes — single row */}
+        <div className="grid grid-cols-4 gap-1.5 px-3 py-2 sm:grid-cols-8">
+          {resolvedStakes.slice(0, 8).map((btn) => (
+            <button
+              key={btn.value}
+              type="button"
+              disabled={isDelaying}
+              onClick={() => setStakeClamped((parseFloat(stake) || 0) + btn.value)}
+              className="rounded border border-slate-300 bg-white py-2 text-[13px] font-bold text-slate-800 transition-colors hover:bg-slate-100 disabled:opacity-50"
+            >
+              {fmtStake(btn.value)}
+            </button>
+          ))}
+        </div>
+
+        {/* Clear All | Submit */}
+        <div className="flex items-center justify-between px-3 pb-3">
+          <button
+            type="button"
+            onClick={() => onStakeChange("")}
+            className="rounded border border-slate-300 bg-white px-4 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            Clear All
+          </button>
+          <button
+            type="button"
+            onClick={() => onPlaceBet(stake, rawOdds)}
+            disabled={!canPlace}
+            className="flex items-center gap-1.5 rounded border border-slate-300 bg-white px-5 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isLoading ? "Placing..." : isDelaying ? `${betDelayRemaining}s…` : "Submit"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Diamond theme layout — the reference "Place Bet" panel (Odds/Stake/Profit
+  // columns, +1k…+75k quick stakes, Edit / Reset / Submit). Reuses ALL the same
+  // state and handlers above, so bet placement behaviour is identical. ──────────
+  if (theme === "diamond") {
+    const runnerTint = data.isLay ? "bg-[var(--lay)]" : "bg-[var(--back)]";
+    return (
+      <div className="w-full overflow-hidden bg-white">
+        {isDelaying && (
+          <div className="mx-3 mt-2 flex items-center justify-between gap-2 rounded border border-amber-200 bg-amber-50 px-3 py-2 shadow-sm">
+            <span className="flex items-center gap-2 truncate text-sm font-medium text-amber-700">
+              <span className="inline-block h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-amber-400 border-t-transparent" />
+              Placing in {betDelayRemaining}s...
+            </span>
+            <button type="button" onClick={onCancelDelay} className="shrink-0 rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-700 hover:bg-amber-200">
+              Cancel
+            </button>
+          </div>
+        )}
+
+        {/* Column headers */}
+        <div className="grid grid-cols-[1fr_5.5rem_5.5rem_auto] items-center gap-2 px-3 pt-2 text-[13px] font-semibold text-slate-600">
+          <span>(Bet for)</span>
+          <span className="text-center">Odds</span>
+          <span className="text-center">Stake</span>
+          <span className="text-right">Profit</span>
+        </div>
+
+        {/* Runner row */}
+        <div className={`mt-1 grid grid-cols-[1fr_5.5rem_5.5rem_auto] items-center gap-2 px-3 py-2 ${runnerTint}`}>
+          <span className="truncate font-bold text-slate-900" title={`${runnerName} - ${marketName}`}>
+            {runnerName}
+          </span>
+          {/* Odds (market-driven, read-only) with a decorative stepper */}
+          <div className="flex h-9 items-stretch overflow-hidden rounded border border-slate-300 bg-white">
+            <input readOnly value={displayOdds} className="w-full bg-transparent text-center text-sm font-bold text-slate-900 outline-none" />
+            <div className="flex flex-col border-l border-slate-300 text-slate-500">
+              <span className="flex flex-1 items-center px-1"><ChevronUp className="h-3 w-3" /></span>
+              <span className="flex flex-1 items-center border-t border-slate-300 px-1"><ChevronDown className="h-3 w-3" /></span>
+            </div>
+          </div>
+          {/* Stake */}
+          <input
+            ref={stakeInputRef}
+            type="number"
+            inputMode="numeric"
+            value={stake}
+            disabled={isDelaying}
+            onChange={(e) => handleStake(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") { e.preventDefault(); if (canPlace) onPlaceBet(stake, rawOdds); }
+            }}
+            className={`h-9 rounded border bg-white text-center text-sm font-bold text-slate-900 outline-none focus:ring-1 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${
+              stakeError ? "border-red-400 focus:ring-red-400" : "border-slate-300 focus:ring-sky-500"
+            }`}
+          />
+          {/* Profit */}
+          <span className="text-right text-sm font-bold text-slate-900">{formatProfit(profit)}</span>
+        </div>
+        {stakeError && (
+          <div className="px-3 pt-1 text-right text-[11px] font-medium text-danger">{stakeError}</div>
+        )}
+
+        {/* Quick stakes: +1k … +75k, then clear */}
+        <div className="grid grid-cols-5 gap-1.5 px-3 py-2">
+          {resolvedStakes.slice(0, 8).map((btn) => (
+            <button
+              key={btn.value}
+              type="button"
+              disabled={isDelaying}
+              onClick={() => setStakeClamped((parseFloat(stake) || 0) + btn.value)}
+              className="rounded bg-slate-200 py-2 text-[13px] font-bold text-slate-800 transition-colors hover:bg-slate-300 disabled:opacity-50"
+            >
+              {formatStakeBtn(btn.value)}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => onStakeChange("")}
+            className="text-[13px] font-semibold text-sky-700 underline underline-offset-2 hover:text-sky-900"
+          >
+            clear
+          </button>
+        </div>
+
+        {/* Edit | Reset | Submit */}
+        <div className="grid grid-cols-3 gap-2 px-3 pb-3">
+          <button
+            type="button"
+            onClick={() => stakeInputRef.current?.focus()}
+            className="rounded bg-teal-700 py-2.5 text-sm font-semibold text-white hover:bg-teal-800"
+          >
+            Edit
+          </button>
+          <button
+            type="button"
+            onClick={() => onStakeChange("")}
+            className="rounded bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-700"
+          >
+            Reset
+          </button>
+          <button
+            type="button"
+            onClick={() => onPlaceBet(stake, rawOdds)}
+            disabled={!canPlace}
+            className="flex items-center justify-center gap-1.5 rounded bg-green-700 py-2.5 text-sm font-semibold text-white hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isLoading ? (
+              <>
+                <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                <span className="truncate">Placing...</span>
+              </>
+            ) : isDelaying ? (
+              <span className="truncate">{betDelayRemaining}s…</span>
+            ) : (
+              "Submit"
+            )}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-full overflow-hidden bg-white">

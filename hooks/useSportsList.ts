@@ -1,6 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
 import axios from "axios";
 import { getSportDisplayName } from "@/lib/sports-config";
+import { useChannelWatcher } from "./useChannelWatcher";
 
 export interface PublicSport {
   id: string;
@@ -43,6 +45,23 @@ export const useSportsList = () =>
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
   });
+
+/**
+ * Same as useSportsList but live: refetches the shared list whenever the owner
+ * toggles a sport (active / live / highlight / order) on the admin panel — the
+ * backend broadcasts on the "sports-list" channel. Use this for themed navbars
+ * and sidebars so they stay in sync with the owner panel without a reload,
+ * exactly like the Default theme's header already does.
+ */
+export const useLiveSportsList = () => {
+  const queryClient = useQueryClient();
+  const query = useSportsList();
+  const invalidate = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: SPORTS_LIST_QUERY_KEY });
+  }, [queryClient]);
+  useChannelWatcher("sports-list", invalidate);
+  return query;
+};
 
 export const findSportLiveStatus = (
   sports: PublicSport[] | undefined,

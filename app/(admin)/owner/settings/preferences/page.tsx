@@ -56,6 +56,7 @@ export default function PreferencesPage() {
   const updateSettings = useUpdateSettings();
 
   const [siteName, setSiteName] = useState("");
+  const [homeNotice, setHomeNotice] = useState("");
   const [logo, setLogo] = useState("");
   const [favicon, setFavicon] = useState("");
   const [authImage, setAuthImage] = useState("");
@@ -69,6 +70,7 @@ export default function PreferencesPage() {
   useEffect(() => {
     if (settings) {
       setSiteName(settings.siteName || "");
+      setHomeNotice(settings.homeNotice || "");
       setLogo(settings.logo || "");
       setFavicon(settings.favicon || "");
       setAuthImage(settings.authImage || "");
@@ -131,6 +133,7 @@ export default function PreferencesPage() {
   const handleSaveChanges = async () => {
     const formData = {
       siteName,
+      homeNotice,
       theme: JSON.stringify(theme),
       ...(selectedFiles.logo && { logo: selectedFiles.logo }),
       ...(selectedFiles.favicon && { favicon: selectedFiles.favicon }),
@@ -246,6 +249,23 @@ export default function PreferencesPage() {
                     className="bg-input border mt-2"
                     placeholder="Enter site name"
                   />
+                </div>
+
+                <div>
+                  <Label className="text-muted-foreground">
+                    Home Notice (scrolling ticker)
+                  </Label>
+                  <textarea
+                    value={homeNotice}
+                    onChange={(e) => setHomeNotice(e.target.value)}
+                    rows={5}
+                    className="bg-input border mt-2 w-full rounded-md px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+                    placeholder={"One notice per line, e.g.\n🎯 Welcome to our exchange\n⚡ Min bet ₹100 | Max ₹5,00,000\n💰 Instant withdrawals"}
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Shown as the scrolling marquee on the home page. One notice per line.
+                    Leave empty to use the built-in defaults.
+                  </p>
                 </div>
 
                 <div>

@@ -20,9 +20,19 @@ import { AlertCircle } from "lucide-react";
 import {
   GeneralTab,
   ThemeTab,
+  LayoutThemeTab,
   PermissionsTab,
   PreviewTab,
 } from "./whitelabel";
+import { THEMES, DEFAULT_THEME_KEY } from "@/themes/registry";
+
+/** Default per-white-label layout config (sidebar/banner + layout themes). */
+const getDefaultLayout = () => ({
+  sidebarType: "sidebar-1",
+  bannerType: "banner-1",
+  activeTheme: DEFAULT_THEME_KEY,
+  enabledThemes: THEMES.map((t) => t.key),
+});
 
 interface WhitelabelPageProps {
   whitelabel?: Whitelabel;
@@ -152,6 +162,7 @@ export function WhitelabelPage({
       whatsapp: "",
     },
     theme: getDefaultTheme(),
+    layout: getDefaultLayout(),
     permissions: {
       casino: true,
       sports: true,
@@ -173,10 +184,17 @@ export function WhitelabelPage({
           ...defaults,
           ...(whitelabel.theme || {}),
         },
+        // Merge layout defaults so older white labels (missing the layout-theme
+        // keys) still get a valid default + enabled list.
+        layout: {
+          ...getDefaultLayout(),
+          ...(whitelabel.layout || {}),
+        },
       });
       setCompletedTabs([
         "general",
         "theme",
+        "layout-theme",
         "permissions",
         "preview",
       ]);
@@ -187,6 +205,7 @@ export function WhitelabelPage({
     if (tab === "general")
       return !!(formData.name && formData.domain && formData.userId);
     if (tab === "theme") return true;
+    if (tab === "layout-theme") return true;
     if (tab === "permissions") return true;
     if (tab === "preview") return true;
     return false;
@@ -358,9 +377,10 @@ export function WhitelabelPage({
             onValueChange={handleTabChange}
             className="w-full"
           >
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="general">General</TabsTrigger>
               <TabsTrigger value="theme">Theme</TabsTrigger>
+              <TabsTrigger value="layout-theme">Layout Theme</TabsTrigger>
               <TabsTrigger value="permissions">Permissions</TabsTrigger>
               <TabsTrigger value="preview">Preview</TabsTrigger>
             </TabsList>
@@ -376,6 +396,10 @@ export function WhitelabelPage({
                 applyTemplate={applyTemplate}
                 applyThemeForTesting={applyThemeForTesting}
               />
+            </TabsContent>
+
+            <TabsContent value="layout-theme" className="mt-6">
+              <LayoutThemeTab formData={formData} setFormData={setFormData} />
             </TabsContent>
 
             <TabsContent value="permissions" className="mt-6">

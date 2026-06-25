@@ -1,0 +1,259 @@
+/* ============================================================================
+   BETFAIR THEME — the classic Betfair Exchange skin
+   ----------------------------------------------------------------------------
+   A faithful re-skin of the Betfair Exchange layout: a golden-yellow top bar,
+   a dark navy navigation bar, a grey left "My Markets / Sports" rail with blue
+   text links, and the signature blue(back)/pink(lay) odds grid on a light grey
+   canvas. Pure presentation — every rule is scoped to `html[data-theme="betfair"]`
+   (palette tokens) or `[data-theme-shell="betfair"]` (chrome), so the Default
+   theme, markets, odds, content and APIs are untouched.
+
+   The platform is design-token driven, so re-mapping the tokens re-skins the
+   odds/badges/borders automatically; the targeted rules below recolour the
+   specific chrome (top bar = gold, nav = navy, section bars = navy).
+   ========================================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
+/* ── 1. Palette tokens ─────────────────────────────────────────────────────── */
+html[data-theme="betfair"] {
+  color-scheme: light;
+
+  /* NOTE: !important because the white-label custom theme is injected as INLINE
+     styles on <html> (ThemeScript), which would otherwise beat a normal
+     stylesheet token. !important lets the Betfair palette win. The --bf-* helpers
+     below stay normal so ThemeColorApplier can still override per white label. */
+
+  /* Surfaces */
+  --background: var(--bf-bg, #e4e6e9) !important;
+  --foreground: #1f2937 !important;
+  --card: #ffffff !important;
+  --card-foreground: #1f2937 !important;
+  --popover: #ffffff !important;
+  --popover-foreground: #1f2937 !important;
+  --dropdown-bg: #ffffff !important;
+
+  /* Brand — gold chrome / navy ink */
+  --primary: #f2a900 !important;
+  --primary-foreground: #1f2937 !important;
+  --secondary: #1e2530 !important;
+  --secondary-foreground: #ffffff !important;
+  --accent: #1763ad !important;
+  --accent-foreground: #ffffff !important;
+  --ring: #1763ad !important;
+  --muted: #eceef1 !important;
+  --muted-foreground: #64748b !important;
+
+  /* Lines & inputs */
+  --border: #cfd2d6 !important;
+  --input: #cfd2d6 !important;
+
+  /* Back / Lay odds — the Betfair blue & pink (overridable) */
+  --back: var(--bf-back, #a6d8ff) !important;
+  --back-hover: var(--bf-back, #93ceff) !important;
+  --back-deep: var(--bf-back, #8ccaff) !important;
+  --back-disabled: #e7eef4 !important;
+  --lay: var(--bf-lay, #f9c9d4) !important;
+  --lay-hover: var(--bf-lay, #f6b8c6) !important;
+  --lay-deep: var(--bf-lay, #f6b8c6) !important;
+  --lay-disabled: #f5e6ea !important;
+  --back-row: #eef7ff !important;
+  --lay-row: #fff2f5 !important;
+
+  /* Header / nav chrome */
+  --header-primary: #1e2530 !important;
+  --header-secondary: #1e2530 !important;
+  --header-text: #ffffff !important;
+  --header-bg: #f2a900 !important;
+  --nav-dark: #1e2530 !important;
+  --nav-surface: #1e2530 !important;
+  --nav-btn: #2a3340 !important;
+  --nav-text: #ffffff !important;
+  --nav-text-secondary: #ffffff !important;
+  --nav-text-muted: #c7ccd3 !important;
+  --nav-active: #ffb80c !important;
+  --nav-highlight: #ffb80c !important;
+
+  /* Bottom tab bar is the navy nav colour, so the active tab must be the gold
+     highlight (header-primary/secondary are both navy here). */
+  --bottom-nav-active: #ffb80c !important;
+
+  /* Sidebar — grey rail, dark headers, blue links */
+  --sidebar: #d9dadd !important;
+  --sidebar-foreground: #1763ad !important;
+  --sidebar-primary: #1e2530 !important;
+  --sidebar-primary-foreground: #ffffff !important;
+  --sidebar-accent: #eceef1 !important;
+  --sidebar-accent-foreground: #1f2937 !important;
+  --sidebar-border: #cfd2d6 !important;
+  --sidebar-ring: #1763ad !important;
+  --sidebar-panel: #d9dadd !important;
+  --sidebar-gradient-from: #d9dadd !important;
+  --sidebar-gradient-to: #d9dadd !important;
+
+  /* Tables */
+  --sports-header: #1e2530 !important;
+  --table-header: #1e2530 !important;
+
+  /* Content area */
+  --content-bg: #ffffff !important;
+  --content-bg-light: #e4e6e9 !important;
+  --content-bg-hover: #f1f5f9 !important;
+  --content-bg-inset: #e4e6e9 !important;
+  --content-border: #cfd2d6 !important;
+  --content-border-light: #e2e8f0 !important;
+  --content-border-medium: #cbd5e1 !important;
+  --content-text: #475569 !important;
+  --content-text-muted: #64748b !important;
+
+  /* Status */
+  --live: #2e9e5b !important;
+  --live-text: #2e9e5b !important;
+  --success: #2e9e5b !important;
+  --error: #e25563 !important;
+  --danger: #e25563 !important;
+  --danger-hover: #ef7884 !important;
+  --warning-bg: #f2a900 !important;
+  --warning-text: #7a5600 !important;
+  --info: #1763ad !important;
+  --info-light: #a6d8ff !important;
+
+  /* Charts (back/lay fallbacks) */
+  --chart-1: #1763ad !important;
+  --chart-2: #f9c9d4 !important;
+  --chart-3: #a6d8ff !important;
+  --chart-4: #1763ad !important;
+  --chart-5: #2e9e5b !important;
+
+  /* Badges */
+  --badge-odds: #1763ad !important;
+  --badge-bookmaker: #2e9e5b !important;
+  --badge-fancy: #8a7b20 !important;
+  --section-title: #1e2530 !important;
+
+  /* Shape — Betfair is fully FLAT (no rounded corners). Force radius to 0. */
+  --radius: 0 !important;
+  --button-curve: 0 !important;
+
+  /* ── Editable signature colours (overridable per white label) ────────────── */
+  --bf-head: #f2a900;        /* golden top header bar  */
+  --bf-nav: #1e2530;         /* dark navy nav bar      */
+  --bf-sidebar: #d9dadd;     /* grey markets rail      */
+  --bf-link: #1763ad;        /* blue sidebar links     */
+  --bf-back: #a6d8ff;        /* back odds (blue)       */
+  --bf-lay: #f9c9d4;         /* lay odds (pink)        */
+  --bf-bg: #e4e6e9;          /* page background        */
+
+  /* Derived helpers */
+  --bf-head-dark: #d9930a;
+  --bf-nav-hover: #2a3340;
+}
+
+/* ── 2. Base typography ────────────────────────────────────────────────────── */
+[data-theme-shell="betfair"],
+[data-theme-shell="betfair"] button,
+[data-theme-shell="betfair"] input,
+[data-theme-shell="betfair"] select {
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+[data-theme-shell="betfair"] a,
+[data-theme-shell="betfair"] button {
+  transition: background-color 0.15s ease, color 0.15s ease,
+    border-color 0.15s ease, filter 0.15s ease;
+}
+
+/* App canvas + main content surface */
+[data-theme-shell="betfair"].bf-root {
+  background: var(--background);
+}
+[data-theme-shell="betfair"] .bf-main {
+  background: var(--card);
+}
+
+/* Neutralise legacy grey (#efefef) panels into the Betfair surface. */
+[data-theme-shell="betfair"] [class*="efefef"] {
+  background-color: var(--background) !important;
+}
+
+/* ── 3. Section bars inside the page → dark navy (match/bet-slip headers) ─────
+   The match-detail markets (MATCH_ODDS / Bookmaker / Fancy headers, the match
+   title bar) and the bet-slip headers render their bars with bg/gradient of
+   --header-primary. Betfair draws these as dark navy bars. */
+[data-theme-shell="betfair"] .bf-main [class*="bg-[var(--header-primary)]"],
+[data-theme-shell="betfair"] .bf-main [class*="from-[var(--header-primary)]"] {
+  background-color: var(--bf-nav) !important;
+  background-image: none !important;
+}
+
+/* ── 4. Flatten everything — Betfair has NO rounded corners. Circles
+   (rounded-full: spinners, avatars, ball indicators) are preserved. ──────────── */
+[data-theme-shell="betfair"] .bf-main [class*="rounded"]:not([class*="rounded-full"]) {
+  border-radius: 0 !important;
+}
+
+/* ── 5. Clean market table & rows ──────────────────────────────────────────── */
+[data-theme-shell="betfair"] .bf-main [class*="rounded-xl"][class*="overflow-hidden"]:not([class*="rounded-full"]) {
+  border-radius: 0 !important;
+  border: 1px solid var(--border);
+}
+[data-theme-shell="betfair"] .bf-main [class*="hover:bg-gray-50"]:hover {
+  background: #eef7ff !important;
+}
+
+/* ── 6. Odds grid — flat, filled, touching (the Betfair look) ─────────────────
+   Fill every level so the grid reads as a solid blue/pink block with square,
+   flush cells. */
+[data-theme-shell="betfair"] [class*="from-back"],
+[data-theme-shell="betfair"] [class*="from-lay"] {
+  border-radius: 0 !important;
+  background-image: none !important;
+  font-weight: 700;
+}
+[data-theme-shell="betfair"] [class*="from-back"] {
+  background-color: var(--bf-back) !important;
+}
+[data-theme-shell="betfair"] [class*="from-lay"] {
+  background-color: var(--bf-lay) !important;
+}
+[data-theme-shell="betfair"] [class*="border-back"]:not([class*="from-"]) {
+  background-color: color-mix(in srgb, var(--bf-back) 60%, #ffffff) !important;
+  border-color: rgba(15, 23, 42, 0.06) !important;
+  border-radius: 0 !important;
+}
+[data-theme-shell="betfair"] [class*="border-lay"]:not([class*="from-"]) {
+  background-color: color-mix(in srgb, var(--bf-lay) 60%, #ffffff) !important;
+  border-color: rgba(15, 23, 42, 0.06) !important;
+  border-radius: 0 !important;
+}
+[data-theme-shell="betfair"] [class*="from-back"]:hover,
+[data-theme-shell="betfair"] [class*="from-lay"]:hover {
+  filter: brightness(0.96);
+}
+
+/* ── 7. Rounded-but-tight buttons (keep small radius off — Betfair is square) ── */
+[data-theme-shell="betfair"] button[class*="rounded-lg"],
+[data-theme-shell="betfair"] button[class*="rounded-md"] {
+  border-radius: 0.15rem;
+}
+
+/* ── 8. Slim scrollbars ────────────────────────────────────────────────────── */
+[data-theme-shell="betfair"] *::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+[data-theme-shell="betfair"] *::-webkit-scrollbar-thumb {
+  background: #b9bec5;
+  border-radius: 9999px;
+}
+[data-theme-shell="betfair"] *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ── 9. Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  [data-theme-shell="betfair"] .bf-main {
+    border-radius: 0 !important;
+    border-left: 0;
+    border-right: 0;
+  }
+}

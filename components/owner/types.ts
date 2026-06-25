@@ -206,6 +206,12 @@ export interface Whitelabel {
   layout?: {
     sidebarType: string;
     bannerType: string;
+    /** Default LAYOUT theme key served to this white label's visitors. */
+    activeTheme?: string;
+    /** Layout theme keys this white label's users may switch between. */
+    enabledThemes?: string[];
+    /** Per-theme colour overrides: { diamond: { header: "#...", ... }, ... }. */
+    themeColors?: Record<string, Record<string, string>>;
   };
   config?: {
     dbName: string;

@@ -1,8 +1,9 @@
 "use client";
 
-import { Bell } from "lucide-react";
+import { useSettings } from "@/hooks/usePublic";
 
-const NOTICES = [
+/** Built-in fallback notices, used until an admin sets a custom home notice. */
+const DEFAULT_NOTICES = [
   "🎯 Welcome to AIEXCH — India's Premier Betting Exchange",
   "⚡ Minimum bet ₹100 | Maximum bet ₹5,00,000",
   "🏏 Live Cricket odds updated every second",
@@ -12,18 +13,26 @@ const NOTICES = [
   "🎁 New users get exclusive welcome bonus — Check Promotions",
 ];
 
-/** Scrolling notice marquee. Shared by the main layout and the casino pages. */
+/**
+ * Scrolling notice marquee. Shared by the main layout and the casino pages.
+ * The text is admin-editable: it comes from `settings.homeNotice` (set in
+ * Admin → Settings → Preferences), one notice per line. Falls back to the
+ * built-in defaults when no custom notice is configured.
+ */
 export function NoticeTickerBar() {
-  const text = NOTICES.join("   •••   ");
+  const { data: settings } = useSettings();
+
+  const custom = String(settings?.homeNotice ?? "").trim();
+  const items = custom
+    ? custom
+        .split("\n")
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : DEFAULT_NOTICES;
+  const text = items.join("   •••   ");
+
   return (
     <div className="flex items-center  bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-secondary)] border-b border-[#1e4088]/60 h-8 overflow-hidden">
-      {/* Label */}
-      {/* <div className="flex items-center gap-1.5 text-black bg-[#ede105] px-3 h-full shrink-0 z-10">
-        <Bell className="h-3 w-3 text-black" />
-        <span className="text-black text-[11px] font-bold tracking-wide whitespace-nowrap">
-          NOTICE
-        </span>
-      </div> */}
       {/* Scrolling text */}
       <div className="flex-1 overflow-hidden relative">
         <div className="ticker-track flex whitespace-nowrap">

@@ -1,0 +1,234 @@
+/* ============================================================================
+   TOMEXCH THEME — a clean navy-and-blue exchange skin
+   ----------------------------------------------------------------------------
+   A faithful re-skin of the TomExch reference: a navy→blue gradient top bar with
+   a centred welcome line, a white icon nav, a light left rail with blue gradient
+   section headers, and blue(back)/pink(lay) odds rows under dark section bars.
+   Pure presentation — every rule is scoped to `html[data-theme="tomexch"]`
+   (palette tokens) or `[data-theme-shell="tomexch"]` (chrome), so the Default
+   theme, markets, odds, content and APIs are untouched.
+   ========================================================================== */
+
+/* ── 1. Palette tokens ─────────────────────────────────────────────────────── */
+html[data-theme="tomexch"] {
+  color-scheme: light;
+
+  /* NOTE: !important because the white-label custom theme is injected as INLINE
+     styles on <html>; !important lets the TomExch palette win. The --tx-* helpers
+     below stay normal so ThemeColorApplier can still override per white label. */
+
+  /* Surfaces */
+  --background: var(--tx-bg, #eef1f4) !important;
+  --foreground: #1f2937 !important;
+  --card: #ffffff !important;
+  --card-foreground: #1f2937 !important;
+  --popover: #ffffff !important;
+  --popover-foreground: #1f2937 !important;
+  --dropdown-bg: #ffffff !important;
+
+  /* Brand — navy chrome / blue accents */
+  --primary: #16306b !important;
+  --primary-foreground: #ffffff !important;
+  --secondary: #2f6bb0 !important;
+  --secondary-foreground: #ffffff !important;
+  --accent: #2c6fbf !important;
+  --accent-foreground: #ffffff !important;
+  --ring: #2c6fbf !important;
+  --muted: #eceef1 !important;
+  --muted-foreground: #64748b !important;
+
+  /* Lines & inputs */
+  --border: #d4d8de !important;
+  --input: #d4d8de !important;
+
+  /* Back / Lay odds — TomExch blue & pink (overridable) */
+  --back: var(--tx-back, #72bbef) !important;
+  --back-hover: var(--tx-back, #5fb0ea) !important;
+  --back-deep: var(--tx-back, #57abe8) !important;
+  --back-disabled: #dfeefb !important;
+  --lay: var(--tx-lay, #f9a8ba) !important;
+  --lay-hover: var(--tx-lay, #f796ab) !important;
+  --lay-deep: var(--tx-lay, #f796ab) !important;
+  --lay-disabled: #fbe3e9 !important;
+  --back-row: #eaf4fd !important;
+  --lay-row: #fdeef2 !important;
+
+  /* Header / nav chrome */
+  --header-primary: #16306b !important;
+  --header-secondary: #2f6bb0 !important;
+  --header-text: #ffffff !important;
+  --header-bg: var(--tx-header-bg) !important;
+  --nav-dark: #16306b !important;
+  --nav-surface: #ffffff !important;
+  --nav-btn: #e9eef5 !important;
+  --nav-text: #1f2937 !important;
+  --nav-text-secondary: #1f2937 !important;
+  --nav-text-muted: #64748b !important;
+  --nav-active: #2c6fbf !important;
+  --nav-highlight: #2c6fbf !important;
+
+  /* Bottom tab active colour (navy bar → blue active) */
+  --bottom-nav-active: #72bbef !important;
+
+  /* Sidebar — light rail, blue gradient headers, dark text */
+  --sidebar: #f2f4f7 !important;
+  --sidebar-foreground: #1f2937 !important;
+  --sidebar-primary: #16306b !important;
+  --sidebar-primary-foreground: #ffffff !important;
+  --sidebar-accent: #e9eef5 !important;
+  --sidebar-accent-foreground: #1f2937 !important;
+  --sidebar-border: #d4d8de !important;
+  --sidebar-ring: #2c6fbf !important;
+  --sidebar-panel: #f2f4f7 !important;
+  --sidebar-gradient-from: #f2f4f7 !important;
+  --sidebar-gradient-to: #f2f4f7 !important;
+
+  /* Tables */
+  --sports-header: #3a3f47 !important;
+  --table-header: #3a3f47 !important;
+
+  /* Content area */
+  --content-bg: #ffffff !important;
+  --content-bg-light: #eef1f4 !important;
+  --content-bg-hover: #f1f5f9 !important;
+  --content-bg-inset: #eef1f4 !important;
+  --content-border: #d4d8de !important;
+  --content-border-light: #e2e8f0 !important;
+  --content-border-medium: #cbd5e1 !important;
+  --content-text: #475569 !important;
+  --content-text-muted: #64748b !important;
+
+  /* Status */
+  --live: #16a34a !important;
+  --live-text: #16a34a !important;
+  --success: #16a34a !important;
+  --error: #dc2626 !important;
+  --danger: #dc2626 !important;
+  --danger-hover: #ef4444 !important;
+  --warning-bg: #f59e0b !important;
+  --warning-text: #7a5600 !important;
+  --info: #2c6fbf !important;
+  --info-light: #a6d8ff !important;
+
+  /* Badges */
+  --badge-odds: #2c6fbf !important;
+  --badge-bookmaker: #16a34a !important;
+  --badge-fancy: #8a7b20 !important;
+  --section-title: #16306b !important;
+
+  /* ── Editable signature colours (overridable per white label) ────────────── */
+  --tx-header-from: #142969;   /* header gradient colour 1 (navy) */
+  --tx-header-to: #84c2f1;     /* header gradient colour 2 (blue) */
+  /* Composed top-bar (header) background — a 2-colour gradient by default. When
+     the white label picks "Solid" header style, ThemeColorApplier rewrites this
+     var to a single flat colour; otherwise it stays this gradient. */
+  --tx-header-bg: linear-gradient(90deg, var(--tx-header-from) 50.05%, var(--tx-header-to) 99%);
+  --tx-sidebar-head: #4f93d9;  /* sidebar section header blue   */
+  --tx-sidebar-head-active: #2f6bb0; /* selected section blue   */
+  --tx-section: #3a3f47;       /* dark sport section bar        */
+  --tx-link: #1f5fb0;          /* blue match links              */
+  --tx-back: #5ca7e0;          /* back odds (blue)              */
+  --tx-lay: #f3a6c8;           /* lay odds (pink)               */
+  --tx-bg: #eef1f4;            /* page background               */
+
+  /* Subtle top-down gradients for the odds buttons (the reference look). */
+  --tx-back-grad: linear-gradient(180deg, #6fb1e7 0%, #559fda 100%);
+  --tx-lay-grad: linear-gradient(180deg, #f6b1d1 0%, #ef9bc0 100%);
+
+  /* Shared accent gradient — used by the nav bar and the sidebar section
+     ("main") buttons so both share one signature look. */
+  --tx-accent-gradient: linear-gradient(90deg, #142969 50.05%, #84c2f1 99%);
+}
+
+/* ── 2. Base interactions ──────────────────────────────────────────────────────
+   TomExch inherits the platform's default font (Roboto) — no font-family override
+   here, so it matches the Default theme. */
+[data-theme-shell="tomexch"] a,
+[data-theme-shell="tomexch"] button {
+  transition: background-color 0.15s ease, color 0.15s ease,
+    border-color 0.15s ease, filter 0.15s ease;
+}
+
+/* App canvas + main content surface */
+[data-theme-shell="tomexch"].tx-root {
+  background: var(--background);
+}
+[data-theme-shell="tomexch"] .tx-main {
+  background: var(--tx-bg);
+}
+
+/* Neutralise legacy grey (#efefef) panels into the TomExch surface. */
+[data-theme-shell="tomexch"] [class*="efefef"] {
+  background-color: var(--background) !important;
+}
+
+/* Left rail (sidebar) is square — section headers and sport/casino rows have no
+   rounded corners, matching the reference rail. Scoped to the <aside> so the
+   match-page odds cells (in .tx-main) keep their rounding. */
+[data-theme-shell="tomexch"] aside [class*="rounded"]:not([class*="rounded-full"]) {
+  border-radius: 0 !important;
+}
+
+/* Section bars inside the page → navy (match/bet-slip headers). */
+[data-theme-shell="tomexch"] .tx-main [class*="bg-[var(--header-primary)]"],
+[data-theme-shell="tomexch"] .tx-main [class*="from-[var(--header-primary)]"] {
+  background-color: var(--header-primary) !important;
+  background-image: none !important;
+}
+
+/* ── 2b. Match-detail page odds grid (Match Odds / Line / Fancy) ───────────────
+   The reference draws the best back/lay as a solid blue/pink cell and the deeper
+   price levels as a lighter tint of the same colour — all with rounded corners.
+   The platform renders the best cell as a gradient (`from-back`/`from-lay`) and
+   the deeper cells as white + a coloured border (`border-back`/`border-lay`), so
+   recolour both here. Tokens stay the same (`--tx-back`/`--tx-lay`), the rounding
+   the component already applies is left intact (unlike Diamond, which flattens). */
+[data-theme-shell="tomexch"] .tx-main [class*="from-back"],
+[data-theme-shell="tomexch"] .tx-main [class*="from-lay"] {
+  background-image: none !important;
+  font-weight: 700;
+}
+[data-theme-shell="tomexch"] .tx-main [class*="from-back"] {
+  background-color: var(--tx-back) !important;
+}
+[data-theme-shell="tomexch"] .tx-main [class*="from-lay"] {
+  background-color: var(--tx-lay) !important;
+}
+[data-theme-shell="tomexch"] .tx-main [class*="border-back"]:not([class*="from-"]) {
+  background-color: color-mix(in srgb, var(--tx-back) 42%, #ffffff) !important;
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+[data-theme-shell="tomexch"] .tx-main [class*="border-lay"]:not([class*="from-"]) {
+  background-color: color-mix(in srgb, var(--tx-lay) 42%, #ffffff) !important;
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+[data-theme-shell="tomexch"] .tx-main [class*="from-back"]:hover,
+[data-theme-shell="tomexch"] .tx-main [class*="from-lay"]:hover {
+  filter: brightness(0.96);
+}
+
+/* ── 3. Slim scrollbars ────────────────────────────────────────────────────── */
+[data-theme-shell="tomexch"] *::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+[data-theme-shell="tomexch"] *::-webkit-scrollbar-thumb {
+  background: #b9bec5;
+  border-radius: 9999px;
+}
+[data-theme-shell="tomexch"] *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ── 4. Live-name blink (match strip) ──────────────────────────────────────── */
+@keyframes txBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+/* ── 5. Header welcome marquee — seamless right-to-left scroll. Two copies of
+   the text sit side by side; translating by -50% loops without a visible seam. */
+@keyframes txMarquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}

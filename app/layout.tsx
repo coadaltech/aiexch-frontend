@@ -2,6 +2,12 @@ import type React from "react";
 import type { Metadata } from "next";
 import { Roboto, Roboto_Condensed } from "next/font/google";
 import "./globals.css";
+// Diamond theme re-skin — fully scoped to [data-theme="diamond"], inert otherwise.
+import "@/themes/diamond/diamond.css";
+// Betfair theme re-skin — fully scoped to [data-theme="betfair"], inert otherwise.
+import "@/themes/betfair/betfair.css";
+// TomExch theme re-skin — fully scoped to [data-theme="tomexch"], inert otherwise.
+import "@/themes/tomexch/tomexch.css";
 import BottomNavigation from "@/components/layout/bottom-tab";
 import MainLayout from "@/components/main-layout";
 import { PopupDisplay } from "@/components/popups/popup-display";
@@ -15,6 +21,9 @@ import { Toaster } from "sonner";
 import { MaintenanceWrapper } from "@/components/maintenance/maintenance-wrapper";
 import { MetadataLoader } from "@/components/metadata-loader";
 import { ThemeScript } from "@/components/theme-script";
+import { ThemeInitScript } from "@/components/theme/theme-init-script";
+import { ThemeProvider } from "@/contexts/ThemeContext";
+import { ThemeColorApplier } from "@/components/theme/theme-color-applier";
 import NextTopLoader from "nextjs-toploader";
 
 const roboto = Roboto({
@@ -46,6 +55,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
+        <ThemeInitScript />
         <ThemeScript />
       </head>
       <body
@@ -70,6 +80,8 @@ export default function RootLayout({
         <MetadataLoader />
         <QueryProvider>
           {/* <UseSportsSeries> */}
+          <ThemeProvider>
+          <ThemeColorApplier />
           <AuthProvider>
             <PermissionProvider>
               <BetSlipProvider>
@@ -87,6 +99,7 @@ export default function RootLayout({
               </BetSlipProvider>
             </PermissionProvider>
           </AuthProvider>
+          </ThemeProvider>
           {/* </UseSportsSeries> */}
         </QueryProvider>
       </body>

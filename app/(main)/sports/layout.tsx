@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { BetSlip } from "@/components/sports/bet-slip";
+import { useSiteTheme } from "@/contexts/ThemeContext";
 
 export default function SportsLayout({
   children,
@@ -9,6 +10,7 @@ export default function SportsLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const { theme } = useSiteTheme();
 
   // Show bet slip only on match pages: /sports/{sport}/{seriesId}/{matchId}
   const segments = pathname.split("/").filter(Boolean);
@@ -17,7 +19,7 @@ export default function SportsLayout({
 
   return (
     <div className="h-full w-full">
-      <div className="flex w-full h-full gap-2">
+      <div className={`flex w-full h-full ${theme === "tomexch" ? "gap-0" : "gap-2"}`}>
         <div className="h-full w-full lg:flex-1 min-w-0 overflow-y-auto overflow-x-hidden">
           {children}
         </div>

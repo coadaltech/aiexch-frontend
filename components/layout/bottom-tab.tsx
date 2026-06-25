@@ -130,7 +130,7 @@ export default function BottomNavigation() {
                 flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-300 min-w-0 flex-1
                 ${
                   isActive
-                    ? "text-[var(--header-secondary)]"
+                    ? "text-[var(--bottom-nav-active)]"
                     : "text-[color-mix(in_srgb,var(--header-text)_70%,transparent)] hover:text-[var(--header-text)]"
                 }
               `}

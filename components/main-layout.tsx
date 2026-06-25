@@ -2,15 +2,12 @@
 import { ReactNode, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { SidebarProvider } from "./ui/sidebar";
-import Header from "./layout/header";
-import { AppSidebar } from "./layout/app-sidebar-new";
 import { useWhitelabelInfo } from "@/hooks/useAuth";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLedgerLiveSync } from "@/hooks/useLedgerLiveSync";
 import { prefetchCasinoGames } from "@/hooks/useCasinoGames";
 import { isPanelPath } from "@/lib/panel-utils";
-import { NoticeTickerBar } from "./layout/notice-ticker-bar";
+import { ThemedShell } from "./theme/themed-shell";
 
 export default function MainLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -87,51 +84,18 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   if (whitelabelNotFound || (!isLoggedIn && isHomeOrRoot)) {
     return null;
   }
+
+  // The visual chrome (header/sidebar/nav arrangement) is delegated to the
+  // active theme's shell. All logic above — auth redirects, the ledger
+  // websocket, casino prefetch and route detection — stays here, theme-agnostic,
+  // so switching themes never touches business behaviour.
   return (
-    <SidebarProvider>
-      <div style={{ height: 'var(--vh-full)' }} className="overflow-hidden bg-gray-200 w-full flex flex-col">
-        {/* Fixed Header - always visible at top, except on the unified casino
-            which provides its own header bar. */}
-        {!hideHeader && <Header />}
-
-        {/* Main Content Area - only this part scrolls; header and (on mobile) bottom tab stay fixed.
-            Casino pages hide the dropheader, so they only need to clear the ~3.5rem top bar
-            (no md:mt-30) — otherwise an empty grey gap appears. They're also flush (no padding).
-            When the header itself is hidden, no top offset is needed. */}
-        <div
-          className={`flex flex-1 min-h-0 ${
-            hideHeader
-              ? "max-h-[var(--vh-full)]"
-              : isCasinoRoute
-                ? "mt-14 max-h-[calc(var(--vh-full)-3.5rem)]"
-                : "mt-10 md:mt-30 max-h-[calc(var(--vh-full)-3.5rem)] md:max-h-[calc(var(--vh-full)-7.5rem)] md:gap-2 md:p-2"
-          }`}
-        >
-          {/* Sidebar - Starts below header. Hidden on casino (full-width). */}
-          {!isCasinoRoute && <AppSidebar />}
-
-          {/* Main Content - scrollable area; pb for mobile so content clears fixed bottom tab */}
-          <main
-            className={`min-h-0 flex-1 w-full overflow-y-auto overflow-x-hidden transition-all duration-300 ${
-              isCasinoRoute ? "" : "pb-20 lg:pb-0 bg-[#efefef] md:rounded-xl"
-            } ${isHomeOrRoot ? "scrollbar-hide" : ""}`}
-            id="main-content"
-          >
-            {children}
-            {/* 1. Notice ticker */}
-          </main>
-        </div>
-      {/* The QTech casino renders its own ticker at the top (under its custom
-          header), so skip the global bottom one there to avoid a duplicate.
-          On the home page the ticker moves above the banners on mobile, so the
-          global bottom bar is hidden there below lg (desktop keeps it). */}
-      {!hideHeader && (
-        <div className={isHomeOrRoot ? "hidden lg:block" : ""}>
-          <NoticeTickerBar />
-        </div>
-      )}
-
-      </div>
-    </SidebarProvider>
+    <ThemedShell
+      hideHeader={hideHeader}
+      isCasinoRoute={isCasinoRoute}
+      isHomeOrRoot={isHomeOrRoot}
+    >
+      {children}
+    </ThemedShell>
   );
 }

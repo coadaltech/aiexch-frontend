@@ -20,7 +20,7 @@ const FOOTER_COLS = [
       { label: "Casino App",             href: "/casino" },
       { label: "About us",               href: "" },
       { label: "Terms and Conditions",   href: "/terms" },
-      { label: "Affiliate Program",      href: "" },
+      // { label: "Affiliate Program",      href: "" },
       { label: "Cookie Policy",          href: "/privacy" },
       { label: "Contacts",               href: "/live-support" },
     ],

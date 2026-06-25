@@ -190,6 +190,12 @@ th {
   --header-secondary: #84c2f1;
   --header-text: #ffffff;
 
+  /* Active-item colour for the mobile bottom tab bar. Defaults to the header
+     accent; themes whose primary/secondary collide (e.g. Betfair's navy bar +
+     navy accent, which would render the active tab invisible) override this so
+     the active tab stays legible. */
+  --bottom-nav-active: var(--header-secondary);
+
   --header-bg: linear-gradient(
     90deg,
     var(--header-primary) 0%,
@@ -918,3 +924,16 @@ th {
   --y: translateX(calc(100% + var(--offset-right, 16px)));
   opacity: 0;
 }
+
+/* ── Multi-theme layout hooks ─────────────────────────────────────────────────
+   The active layout theme is reflected on <html data-theme="…"> by the
+   ThemeProvider (and pre-paint by ThemeInitScript). These selectors let each
+   theme tune presentation WITHOUT touching shared components — the extension
+   point for future themes. The color-customization CSS variables (set by the
+   admin Preferences page / ThemeScript) still apply on top, unchanged. */
+html[data-theme="betfair"] {
+  --theme-accent: #ffb80c;
+}
+/* The Diamond theme's full re-skin lives in themes/diamond/diamond.css (imported
+   in app/layout.tsx). Each future theme can do the same: ship a scoped
+   `themes/<key>/<key>.css` and import it once — no shared component changes. */

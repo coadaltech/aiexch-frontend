@@ -9,6 +9,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useBetting, useMyBets, useMarketExposure, useFancyMarketExposure, useFancyExposureChart } from "@/hooks/useBetting";
 import { useLiveMatch } from "@/hooks/useLiveMatch";
 import { useSeries } from "@/hooks/useSportsApi";
+import { useSiteTheme } from "@/contexts/ThemeContext";
+import { TomexchMarkets } from "@/themes/tomexch/exchange";
 import { useStakeSettings, useLedger, DEFAULT_STAKES } from "@/hooks/useUserQueries";
 import { sportsApi } from "@/lib/api";
 import { getSportConfig } from "@/lib/sports-config";
@@ -36,6 +38,7 @@ type QuickBetHostProps = React.ComponentProps<typeof QuickBetPanel>;
 // or as a centered modal on smaller screens. Single source of the panel for the
 // whole page — replaces the old inline renders that sat below each market.
 function QuickBetHost(props: QuickBetHostProps) {
+  const { theme } = useSiteTheme();
   const [mounted, setMounted] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
   const [slot, setSlot] = useState<HTMLElement | null>(null);
@@ -70,19 +73,21 @@ function QuickBetHost(props: QuickBetHostProps) {
 
   if (!mounted) return null;
 
-  const headerBar = (
-    <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)]">
-      <span className="text-sm font-semibold">Place Bet</span>
-      <button
-        type="button"
-        onClick={props.onClose}
-        aria-label="Close"
-        className="text-lg leading-none px-1 hover:opacity-80"
-      >
-        &times;
-      </button>
-    </div>
-  );
+  // TomExch's panel renders its own "Bet Slip" header, so skip this one there.
+  const headerBar =
+    theme === "tomexch" ? null : (
+      <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-[var(--header-primary)] to-[var(--header-secondary)] text-[var(--header-text)]">
+        <span className="text-sm font-semibold">Place Bet</span>
+        <button
+          type="button"
+          onClick={props.onClose}
+          aria-label="Close"
+          className="text-lg leading-none px-1 hover:opacity-80"
+        >
+          &times;
+        </button>
+      </div>
+    );
 
   if (isDesktop) {
     if (!slot) return null;
@@ -382,6 +387,7 @@ const RunnerNameCell = memo(
 
 
 export default function MatchPage() {
+  const { theme } = useSiteTheme();
   const params = useParams();
   const sport = params.sport as string;
   const seriesId = params.seriesId as string;
@@ -1719,7 +1725,7 @@ export default function MatchPage() {
 
   return (
     <RunnerNameContext.Provider value={runnerNameCtx}>
-    <div className="tahoma-scope px-2 bg-[#efefef] sm:px-3 py-2 w-full max-w-full min-w-0 min-h-full overflow-x-hidden">
+    <div className={`tahoma-scope ${theme === "tomexch" ? "px-1 py-1" : "px-2 sm:px-3 py-2"} bg-[#efefef] w-full max-w-full min-w-0 min-h-full overflow-x-hidden`}>
       {/* Match header */}
       {(matchInfo || series || matchFromSeries) && (() => {
         const matchOddsMarket = visibleMarkets.find((m: any) => m.marketType === "MATCH_ODDS" || m.marketType === "WINNING_ODDS");
@@ -1791,6 +1797,16 @@ export default function MatchPage() {
         </div>
       )}
 
+      {theme === "tomexch" ? (
+        <TomexchMarkets
+          markets={visibleMarkets}
+          marketExposureMap={marketExposureMap}
+          fancyExposureMap={fancyExposureMap}
+          previewExposure={previewExposure}
+          onBack={handleBackClick}
+          onLay={handleLayClick}
+        />
+      ) : (
       <div className="space-y-1">
         {/* ── Standard markets (match odds, bookmaker, team-binary) ── */}
         {visibleMarkets
@@ -2464,6 +2480,7 @@ export default function MatchPage() {
             }
           })}
       </div>
+      )}
 
       {/* Fancy Exposure Chart Modal */}
       {exposureChartMarket && (

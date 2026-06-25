@@ -5,6 +5,9 @@ import HomePromotionsSection from "@/components/home-promotions-section";
 import DynamicHomeSections from "@/components/dynamic-home-sections";
 import Footer from "../../components/layout/footer";
 import { CricketMatchesList } from "@/components/sports/cricket-matches-list";
+import { useSiteTheme } from "@/contexts/ThemeContext";
+import { DiamondExchange } from "@/themes/diamond/exchange/diamond-exchange";
+import { TomexchExchange } from "@/themes/tomexch/exchange/tomexch-exchange";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, Suspense } from "react";
@@ -304,6 +307,12 @@ function QuickAccessGrid() {
 
 /* ─── Main homepage ─── */
 const Homepage = () => {
+  // Diamond theme renders a dedicated exchange view (reference layout). The
+  // Default theme keeps the original homepage below, unchanged.
+  const { theme } = useSiteTheme();
+  if (theme === "diamond") return <DiamondExchange />;
+  if (theme === "tomexch") return <TomexchExchange />;
+
   return (
     <div className="w-full min-w-0 bg-[#efefef] min-h-full mb-[-15px]">
       <Suspense fallback={null}>

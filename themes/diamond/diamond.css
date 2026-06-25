@@ -1,0 +1,323 @@
+/* ============================================================================
+   DIAMOND THEME — classic blue/olive exchange skin
+   ----------------------------------------------------------------------------
+   A faithful re-skin of the reference exchange layout: a flat sky-blue top bar,
+   an olive/gold navigation bar, blue section-header sidebar, and a clean
+   blue(back)/pink(lay) odds table. Pure presentation — every rule is scoped to
+   `html[data-theme="diamond"]` (palette tokens) or `[data-theme-shell="diamond"]`
+   (chrome), so the Default theme, markets, odds, content and APIs are untouched.
+
+   The platform is design-token driven, so re-mapping the tokens re-skins the
+   odds/badges/borders automatically; the targeted rules below recolour the
+   specific chrome (top bar = blue, nav = olive, sidebar headers = blue).
+   ========================================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
+/* ── 1. Palette tokens ─────────────────────────────────────────────────────── */
+html[data-theme="diamond"] {
+  color-scheme: light;
+
+  /* NOTE: these are marked !important because the white-label custom theme is
+     injected as INLINE styles on <html> (ThemeScript), which would otherwise
+     beat a normal stylesheet token. !important lets the Diamond palette win, so
+     the content/markets/bet-slip render in Diamond colours — not the white
+     label's (dark) default-theme colours. The --dx-* helpers below stay normal
+     so ThemeColorApplier can still override them per white label. */
+
+  /* Surfaces */
+  --background: var(--dx-bg, #f4f6f8) !important;
+  --foreground: #1f2937 !important;
+  --card: #ffffff !important;
+  --card-foreground: #1f2937 !important;
+  --popover: #ffffff !important;
+  --popover-foreground: #1f2937 !important;
+  --dropdown-bg: #ffffff !important;
+
+  /* Brand — sky blue chrome / navy text */
+  --primary: #3f9bd7 !important;
+  --primary-foreground: #ffffff !important;
+  --secondary: #0f172a !important;
+  --secondary-foreground: #ffffff !important;
+  --accent: #3f9bd7 !important;
+  --accent-foreground: #ffffff !important;
+  --ring: #3f9bd7 !important;
+  --muted: #eef1f4 !important;
+  --muted-foreground: #64748b !important;
+
+  /* Lines & inputs */
+  --border: #d8dee5 !important;
+  --input: #d8dee5 !important;
+
+  /* Back / Lay odds — the reference blue & pink (overridable) */
+  --back: var(--dx-back, #bce6ff) !important;
+  --back-hover: var(--dx-back, #a9ddff) !important;
+  --back-deep: var(--dx-back, #a4daff) !important;
+  --back-disabled: #e7eef4 !important;
+  --lay: var(--dx-lay, #ffd1dc) !important;
+  --lay-hover: var(--dx-lay, #ffc1d0) !important;
+  --lay-deep: var(--dx-lay, #ffc1d0) !important;
+  --lay-disabled: #f5e6ea !important;
+  --back-row: #eef8ff !important;
+  --lay-row: #fff3f6 !important;
+
+  /* Header / nav chrome */
+  --header-primary: #3f9bd7 !important;
+  --header-secondary: #3f9bd7 !important;
+  --header-text: #ffffff !important;
+  --header-bg: #3f9bd7 !important;
+  --nav-dark: #3f9bd7 !important;
+  --nav-surface: #3f9bd7 !important;
+  --nav-btn: #2f86c2 !important;
+  --nav-text: #ffffff !important;
+  --nav-text-secondary: #ffffff !important;
+  --nav-text-muted: #e2effa !important;
+  --nav-active: #ffffff !important;
+  --nav-highlight: #ffe08a !important;
+
+  /* Sidebar — blue section headers, white item rows */
+  --sidebar: #ffffff !important;
+  --sidebar-foreground: #334155 !important;
+  --sidebar-primary: #3f9bd7 !important;
+  --sidebar-primary-foreground: #ffffff !important;
+  --sidebar-accent: #eef1f4 !important;
+  --sidebar-accent-foreground: #1f2937 !important;
+  --sidebar-border: #d8dee5 !important;
+  --sidebar-ring: #3f9bd7 !important;
+  --sidebar-panel: #ffffff !important;
+  --sidebar-gradient-from: #ffffff !important;
+  --sidebar-gradient-to: #ffffff !important;
+
+  /* Tables */
+  --sports-header: #3f9bd7 !important;
+  --table-header: #3f9bd7 !important;
+
+  /* Content area */
+  --content-bg: #ffffff !important;
+  --content-bg-light: #f4f6f8 !important;
+  --content-bg-hover: #f1f5f9 !important;
+  --content-bg-inset: #f4f6f8 !important;
+  --content-border: #d8dee5 !important;
+  --content-border-light: #e2e8f0 !important;
+  --content-border-medium: #cbd5e1 !important;
+  --content-text: #475569 !important;
+  --content-text-muted: #64748b !important;
+
+  /* Status */
+  --live: #2e9e5b !important;
+  --live-text: #2e9e5b !important;
+  --success: #2e9e5b !important;
+  --error: #e25563 !important;
+  --danger: #e25563 !important;
+  --danger-hover: #ef7884 !important;
+  --warning-bg: #d8a72a !important;
+  --warning-text: #8a6a12 !important;
+  --info: #3f9bd7 !important;
+  --info-light: #9fd0f0 !important;
+
+  /* Charts (back/lay fallbacks) */
+  --chart-1: #3f9bd7 !important;
+  --chart-2: #ffc1d0 !important;
+  --chart-3: #a4daff !important;
+  --chart-4: #3f9bd7 !important;
+  --chart-5: #2e9e5b !important;
+
+  /* Badges */
+  --badge-odds: #3f9bd7 !important;
+  --badge-bookmaker: #2e9e5b !important;
+  --badge-fancy: #8a7b20 !important;
+  --section-title: #3f9bd7 !important;
+
+  /* Shape — the reference is fully FLAT (no rounded corners anywhere). Force
+     radius to 0 (!important beats the white-label radius injected by ThemeScript). */
+  --radius: 0 !important;
+  --button-curve: 0 !important;
+
+  /* ── Editable signature colours (overridable per white label) ──────────────
+     These defaults are the reference look; ThemeColorApplier overrides the same
+     vars from the white label's layout.themeColors.diamond config at runtime. */
+  --dx-header: #3f8fd0;         /* top header bar blue   */
+  --dx-nav: #8a7c1c;            /* olive/gold nav bar    */
+  --dx-sidebar-head: #3f8fd0;  /* blue sidebar headers  */
+  --dx-back: #bce6ff;          /* back odds (blue)      */
+  --dx-lay: #ffd1dc;           /* lay odds (pink)       */
+  --dx-bg: #f4f6f8;            /* page background       */
+  --dx-casino-label: #138b7a;  /* casino tile name bar  */
+
+  /* Derived helpers */
+  --dx-nav-active: #6f6316;
+  --dx-blue: var(--dx-header);
+  --dx-blue-dark: #2f7ab8;
+}
+
+/* ── 2. Base typography ────────────────────────────────────────────────────── */
+[data-theme-shell="diamond"],
+[data-theme-shell="diamond"] button,
+[data-theme-shell="diamond"] input,
+[data-theme-shell="diamond"] select {
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+[data-theme-shell="diamond"] a,
+[data-theme-shell="diamond"] button {
+  transition: background-color 0.15s ease, color 0.15s ease,
+    border-color 0.15s ease, filter 0.15s ease;
+}
+
+/* App canvas + main content surface */
+[data-theme-shell="diamond"].dx-root {
+  background: var(--background);
+}
+[data-theme-shell="diamond"] .dx-main {
+  background: var(--card);
+}
+
+/* Neutralise legacy grey (#efefef) panels into the light Diamond surface. */
+[data-theme-shell="diamond"] [class*="efefef"] {
+  background-color: var(--background) !important;
+}
+
+/* ── 3. Flat sky-blue top bar ──────────────────────────────────────────────── */
+[data-theme-shell="diamond"] header {
+  background: var(--dx-blue) !important;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.18);
+  border-bottom: 0;
+}
+/* Top-bar text reads white on blue (logo is an image, unaffected). */
+[data-theme-shell="diamond"] header .text-black {
+  color: #ffffff !important;
+}
+/* Balance / exposure pills: a darker blue so they stand out on the blue bar. */
+[data-theme-shell="diamond"] header button[class*="bg-[var(--header-primary)]"] {
+  background: var(--dx-blue-dark) !important;
+}
+
+/* ── 4. Olive / gold navigation bar (Dropheader) ───────────────────────────── */
+/* Within the header, only the Dropheader nav uses the --header-primary gradient
+   classes — recolour just that bar to the reference olive. */
+[data-theme-shell="diamond"] header [class*="from-[var(--header-primary)]"] {
+  background: var(--dx-nav) !important;
+  border-color: rgba(0, 0, 0, 0.15) !important;
+}
+/* Nav tabs: flat, square-topped, gold-underline on the active item. */
+[data-theme-shell="diamond"] header button[class*="rounded-t-lg"] {
+  border-radius: 0 !important;
+}
+[data-theme-shell="diamond"] header button[class*="rounded-t-lg"]:hover {
+  background: rgba(0, 0, 0, 0.12);
+}
+[data-theme-shell="diamond"]
+  header
+  button[class*="rounded-t-lg"][class*="border-[var(--header-secondary)]"] {
+  background: var(--dx-nav-active);
+  border-bottom-color: #ffe08a !important;
+}
+
+/* ── 5. Sidebar — blue section headers, white rows ─────────────────────────── */
+[data-theme-shell="diamond"] [data-sidebar="sidebar"],
+[data-theme-shell="diamond"] [data-slot="sidebar"] {
+  background: var(--sidebar) !important;
+  border: 1px solid var(--border);
+}
+/* Collapsible group headers → solid blue bars (they use the gradient classes). */
+[data-theme-shell="diamond"] [data-sidebar] [class*="from-[var(--header-primary)]"],
+[data-theme-shell="diamond"] [data-slot="sidebar"] [class*="from-[var(--header-primary)]"] {
+  background: var(--dx-blue) !important;
+  border-radius: 0.25rem;
+}
+
+/* ── 5b. In-page section bars → olive (the betting/match-detail page) ─────────
+   The match-detail markets (MATCH_ODDS / Bookmaker / Fancy headers, the match
+   title bar) and the bet-slip ("Place Bet" / "My Bet" / "Matched Bet" headers
+   and table) render their section bars with bg/gradient of --header-primary.
+   The reference draws these OLIVE, so recolour just the BARS here (the token
+   itself stays blue, so blue accents/borders elsewhere are unaffected). The
+   sidebar rule above is more specific, so it keeps its blue. */
+[data-theme-shell="diamond"] .dx-main [class*="bg-[var(--header-primary)]"],
+[data-theme-shell="diamond"] .dx-main [class*="from-[var(--header-primary)]"] {
+  background-color: var(--dx-nav) !important;
+  background-image: none !important;
+}
+
+/* ── 5c. Flatten everything — the reference has NO rounded corners. Square every
+   element across the whole Diamond shell (chrome + sidebar + content + bet-slip).
+   Circles (ball indicators, spinners, avatars — `rounded-full`) are preserved.
+   The floating theme switcher lives OUTSIDE the shell, so it keeps its pill. ──── */
+[data-theme-shell="diamond"] [class*="rounded"]:not([class*="rounded-full"]) {
+  border-radius: 0 !important;
+}
+
+/* ── 6. Clean market table & rows ──────────────────────────────────────────── */
+[data-theme-shell="diamond"] .dx-main [class*="rounded-xl"][class*="overflow-hidden"]:not([class*="rounded-full"]) {
+  border-radius: 0 !important;
+  border: 1px solid var(--border);
+}
+[data-theme-shell="diamond"] .dx-main [class*="hover:bg-gray-50"]:hover {
+  background: #f3f8fc !important;
+}
+
+/* ── 7. Odds grid — flat, filled, touching (the reference look) ──────────────
+   The match-detail page draws the best back/lay as a filled gradient cell and
+   the deeper levels as white cells with a coloured border. The reference fills
+   EVERY level so the grid reads as a solid blue/pink block with square, flush
+   cells. Recolour + flatten both here. */
+[data-theme-shell="diamond"] [class*="from-back"],
+[data-theme-shell="diamond"] [class*="from-lay"] {
+  border-radius: 0 !important;
+  background-image: none !important;
+  font-weight: 700;
+}
+[data-theme-shell="diamond"] [class*="from-back"] {
+  background-color: var(--dx-back) !important;
+}
+[data-theme-shell="diamond"] [class*="from-lay"] {
+  background-color: var(--dx-lay) !important;
+}
+/* Deeper (white + coloured-border) cells → fill with a lighter tint, squared. */
+[data-theme-shell="diamond"] [class*="border-back"]:not([class*="from-"]) {
+  background-color: color-mix(in srgb, var(--dx-back) 60%, #ffffff) !important;
+  border-color: rgba(15, 23, 42, 0.06) !important;
+  border-radius: 0 !important;
+}
+[data-theme-shell="diamond"] [class*="border-lay"]:not([class*="from-"]) {
+  background-color: color-mix(in srgb, var(--dx-lay) 60%, #ffffff) !important;
+  border-color: rgba(15, 23, 42, 0.06) !important;
+  border-radius: 0 !important;
+}
+[data-theme-shell="diamond"] [class*="from-back"]:hover,
+[data-theme-shell="diamond"] [class*="from-lay"]:hover {
+  filter: brightness(0.96);
+}
+
+/* ── 8. Rounded-but-tight buttons ──────────────────────────────────────────── */
+[data-theme-shell="diamond"] button[class*="rounded-lg"],
+[data-theme-shell="diamond"] button[class*="rounded-md"] {
+  border-radius: 0.35rem;
+}
+
+/* ── 9. Slim scrollbars ────────────────────────────────────────────────────── */
+[data-theme-shell="diamond"] *::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+[data-theme-shell="diamond"] *::-webkit-scrollbar-thumb {
+  background: #b9c4cf;
+  border-radius: 9999px;
+}
+[data-theme-shell="diamond"] *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ── 10. Responsive ────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  [data-theme-shell="diamond"] .dx-main {
+    border-radius: 0 !important;
+    border-left: 0;
+    border-right: 0;
+  }
+}
+
+/* Live match-strip text blinks (fast, deep) to signal in-play events. */
+@keyframes dxBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.12; }
+}

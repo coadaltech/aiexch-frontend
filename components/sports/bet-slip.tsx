@@ -4,11 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { X } from "lucide-react";
 import { useMyBets } from "@/hooks/useBetting";
+import { useSiteTheme } from "@/contexts/ThemeContext";
 
 export function BetSlip({ matchId, allBetsOnly = false }: { matchId: string; allBetsOnly?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"match" | "all">(allBetsOnly ? "all" : "match");
   const [averageBets, setAverageBets] = useState(false);
+  // TomExch "My Bets" market-type filter tabs.
+  const [betTab, setBetTab] = useState<"ALL" | "EXCHANGE" | "BOOKMAKER" | "FANCY">("ALL");
+  const { theme } = useSiteTheme();
   const { data: currentBetsData } = useMyBets("all");
 
   const allBets = (currentBetsData?.data || []).filter(
@@ -169,15 +173,171 @@ export function BetSlip({ matchId, allBetsOnly = false }: { matchId: string; all
       </div>
 
       {/* Desktop: Right Panel */}
-      <div className="hidden bg-[#efefef] lg:block h-full w-full z-40 p-2">
-        <div className="h-full flex flex-col">
-          <TabBar />
-          <AverageToggle />
-          <div className="flex-1 z flex flex-col min-h-0 overflow-hidden">
-            <BetsTable />
+      {theme === "diamond" ? (
+        /* Diamond — the reference "My Bet" panel: olive header, light column
+           header, blue/pink matched-bet rows. Same data (this match's bets). */
+        <div className="hidden h-full w-full flex-col bg-white lg:flex">
+          <div className="bg-[var(--dx-nav)] px-3 py-2.5 text-base font-bold text-white">
+            My Bet
+          </div>
+          {matchBets.length === 0 ? (
+            <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
+              <div className="mb-3 animate-bounce text-4xl">🎯</div>
+              <p className="mb-1 text-base font-medium text-gray-600">No bet found</p>
+              <span className="text-xs text-gray-400">
+                Bets placed on this match will show up here.
+              </span>
+            </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto scrollbar-hide">
+              <table className="w-full table-fixed border-collapse text-base">
+                <thead className="sticky top-0 z-10">
+                  <tr className="bg-[#f3f3f3] font-bold text-slate-700">
+                    <th className="px-3 py-2.5 text-left">Matched Bet</th>
+                    <th className="w-16 px-1 py-2.5 text-center">Odds</th>
+                    <th className="w-20 px-3 py-2.5 text-right">Stake</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {matchBets.map((bet: any) => (
+                    <CurrentBetTableRow key={bet.id} bet={bet} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      ) : theme === "tomexch" ? (
+        (() => {
+          const byTab = (bets: any[]) =>
+            betTab === "ALL"
+              ? bets
+              : bets.filter((b: any) => {
+                  const mt = String(b.marketType ?? "").toLowerCase();
+                  if (betTab === "BOOKMAKER") return mt === "bookmaker";
+                  if (betTab === "FANCY") return mt === "fancy" || mt === "line";
+                  return mt !== "bookmaker" && mt !== "fancy" && mt !== "line";
+                });
+          const tabBets = byTab(matchBets);
+          const unmatched = tabBets.filter((b: any) => b.status === "pending");
+          const matched = tabBets.filter((b: any) => b.status === "matched");
+          const TABS = ["ALL", "EXCHANGE", "BOOKMAKER", "FANCY"] as const;
+          const Rows = ({ bets }: { bets: any[] }) =>
+            bets.length === 0 ? (
+              <tr>
+                <td colSpan={3} className="px-3 py-3 text-center text-xs text-slate-400">
+                  No bets
+                </td>
+              </tr>
+            ) : (
+              bets.map((bet: any) => {
+                const isLay = bet.betType === 1 || bet.betType === "lay";
+                return (
+                  <tr key={bet.id} className={isLay ? "bg-[#f7d2dd]" : "bg-[#d2e4f6]"}>
+                    <td className="border-b border-white px-3 py-2 text-left text-sm font-semibold text-slate-800">
+                      {bet.selectionName || bet.marketName || "Bet"}
+                    </td>
+                    <td className="border-b border-white px-2 py-2 text-center text-sm text-slate-800">
+                      {bet.odds ?? "-"}
+                    </td>
+                    <td className="border-b border-white px-3 py-2 text-right text-sm text-slate-800">
+                      {bet.stake != null ? Number(bet.stake).toFixed(0) : "-"}
+                    </td>
+                  </tr>
+                );
+              })
+            );
+          return (
+            <div className="hidden h-full w-full flex-col bg-white lg:flex">
+              {/* My Bets header */}
+              <div className="flex items-center justify-between border-b-2 border-[#1ba9c9] px-3 py-2.5">
+                <span className="text-lg font-bold text-slate-800">My Bets</span>
+                <span className="text-[#2f8fd0]">↻</span>
+              </div>
+              {/* Filter tabs */}
+              <div className="flex gap-2 px-3 py-2">
+                {TABS.map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setBetTab(t)}
+                    className={`flex-1 rounded px-2 py-1.5 text-[13px] font-bold transition-colors ${
+                      betTab === t
+                        ? "bg-[#2f8fd0] text-white"
+                        : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+              <div className="flex-1 overflow-y-auto scrollbar-hide px-2 pb-3">
+                {/* Unmatched */}
+                <div className="mb-1 flex items-center justify-between bg-slate-100 px-2 py-2">
+                  <span className="text-sm font-bold text-slate-700">Unmatched Bets</span>
+                  {unmatched.length > 0 && (
+                    <button className="rounded bg-red-500 px-3 py-1 text-xs font-bold text-white hover:bg-red-600">
+                      Cancel All
+                    </button>
+                  )}
+                </div>
+                <table className="w-full table-fixed border-collapse">
+                  <thead>
+                    <tr className="text-sm font-bold text-slate-800">
+                      <th className="px-3 py-1.5 text-left">Runner Name</th>
+                      <th className="px-2 py-1.5 text-center">Bet Price</th>
+                      <th className="px-3 py-1.5 text-right">Bet Size</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <Rows bets={unmatched} />
+                  </tbody>
+                </table>
+
+                {/* Average toggle */}
+                <div className="flex items-center justify-end gap-2 py-2">
+                  <span className="text-sm font-semibold text-slate-600">Average Bets?</span>
+                  <button
+                    type="button"
+                    onClick={() => setAverageBets((v) => !v)}
+                    className={`inline-flex h-6 w-14 items-center rounded-full px-1 ${averageBets ? "bg-[#2f8fd0]" : "bg-slate-200"}`}
+                  >
+                    <span className={`h-4 w-4 rounded-full bg-[#2f8fd0] ${averageBets ? "ml-auto" : ""}`} />
+                    <span className="px-1 text-[11px] font-bold text-slate-500">{averageBets ? "ON" : "OFF"}</span>
+                  </button>
+                </div>
+
+                {/* Matched */}
+                <div className="mb-1 bg-slate-100 px-2 py-2 text-sm font-bold text-slate-700">
+                  Matched Bets
+                </div>
+                <table className="w-full table-fixed border-collapse">
+                  <thead>
+                    <tr className="text-sm font-bold text-slate-800">
+                      <th className="px-3 py-1.5 text-left">Runner Name</th>
+                      <th className="px-2 py-1.5 text-center">Bet Price</th>
+                      <th className="px-3 py-1.5 text-right">Bet Size</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <Rows bets={averageBets ? combineBets(matched) : matched} />
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        })()
+      ) : (
+        <div className="hidden bg-[#efefef] lg:block h-full w-full z-40 p-2">
+          <div className="h-full flex flex-col">
+            <TabBar />
+            <AverageToggle />
+            <div className="flex-1 z flex flex-col min-h-0 overflow-hidden">
+              <BetsTable />
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 interface Banner {
@@ -20,6 +21,8 @@ interface BannerCarouselProps {
   height?: string;
   autoPlay?: boolean;
   interval?: number;
+  /** Show circular prev/next arrow buttons on the sides (off by default). */
+  showArrows?: boolean;
 }
 
 export function BannerCarousel({
@@ -28,6 +31,7 @@ export function BannerCarousel({
   height = "h-[200px] md:h-[300px]",
   autoPlay = true,
   interval = 5000,
+  showArrows = false,
 }: BannerCarouselProps) {
   const items: Banner[] = banners || slides || [];
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -156,6 +160,29 @@ export function BannerCarousel({
           );
         })}
       </div>
+
+      {showArrows && items.length > 1 && (
+        <>
+          <button
+            type="button"
+            aria-label="Previous banner"
+            onClick={() =>
+              scrollToIndex((currentSlide - 1 + items.length) % items.length)
+            }
+            className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white transition-colors hover:bg-black/60"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            aria-label="Next banner"
+            onClick={() => scrollToIndex((currentSlide + 1) % items.length)}
+            className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white transition-colors hover:bg-black/60"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        </>
+      )}
 
       {items.length > 1 && (
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 z-10 pointer-events-auto">

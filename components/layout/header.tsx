@@ -26,6 +26,7 @@ import { ExposureUsageModal } from "../modals/exposure-usage-modal";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { NotificationBell } from "@/components/layout/notification-bell";
+import { ThemeSwitcher } from "@/components/theme/theme-switcher";
 import { useWhitelabelInfo } from "@/hooks/useAuth";
 import { useLedger } from "@/hooks/useUserQueries";
 import { formatBalance } from "@/lib/format-balance";
@@ -328,6 +329,9 @@ export default function Header() {
                       1
                     </span>
                   </Button> */}
+
+                    {/* Theme switcher — placed just before Add Funds. */}
+                    <ThemeSwitcher variant="header" />
 
                     {/* Add Funds Button - Hidden on very small screens, B2C only */}
                     {isB2C && (

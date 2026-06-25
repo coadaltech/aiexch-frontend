@@ -49,7 +49,9 @@ import {
   getSportDisplayName,
   SPORTS_WITHOUT_DATE_FILTER,
 } from "@/lib/sports-config";
-
+import { OUR_MARKET_EVENT_TYPE_IDS } from "@/lib/our-market";
+// NEW THEME ACCORDING TO DIMOND AND BETFAIR  ACCORDING TO THE NAME AND DETAILS 
+// GIVE ME THE TEST ID AND ROLE BACK FOME
 // Sport link mapping derived from shared config
 const SPORT_LINK_MAPPING: Record<string, { basePath: string; eventTypeId: string }> =
   Object.fromEntries(
@@ -649,6 +651,16 @@ export function AppSidebar() {
   const isOwnerRoute = isPanelPath(pathname);
   const isSportsPage = pathname.startsWith("/sports");
 
+  // Split the sports list: the in-house verticals (Matka, Lottery, Jambo, …)
+  // render in their own "Our Market" section across every theme; everything else
+  // stays under "Sports". SportItem is reused so Matka keeps its accordion.
+  const displaySports = sports.filter(
+    (s) => !OUR_MARKET_EVENT_TYPE_IDS.has(String(s.eventTypeId))
+  );
+  const marketSports = sports.filter((s) =>
+    OUR_MARKET_EVENT_TYPE_IDS.has(String(s.eventTypeId))
+  );
+
   useEffect(() => {
     const fetchSportsList = async () => {
       try {
@@ -821,10 +833,25 @@ export function AppSidebar() {
                 </div>
 
                 <div className="space-y-0">
-                  {sports.map((sport) => (
+                  {displaySports.map((sport) => (
                     <SportItem key={sport.eventTypeId} sport={sport} pathname={pathname} rounded={false} />
                   ))}
                 </div>
+
+                {marketSports.length > 0 && (
+                  <div className="mt-3">
+                    <div className="mb-1 px-1">
+                      <span className="text-[10px] font-bold text-[#1a3578] uppercase tracking-widest">
+                        Our Market
+                      </span>
+                    </div>
+                    <div className="space-y-0">
+                      {marketSports.map((sport) => (
+                        <SportItem key={sport.eventTypeId} sport={sport} pathname={pathname} rounded={false} />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               /* ── Non-sport pages ── */
@@ -866,11 +893,27 @@ export function AppSidebar() {
                     <h3 className="text-xs font-bold text-[#1a3578] uppercase tracking-wider">Sports</h3>
                   </div>
                   <div className="space-y-0.5">
-                    {sports.map((sport) => (
+                    {displaySports.map((sport) => (
                       <SportItem key={sport.eventTypeId} sport={sport} pathname={pathname} rounded={true} />
                     ))}
                   </div>
                 </div>
+
+                {/* Our Market section — in-house verticals (Matka, Lottery, …) */}
+                {marketSports.length > 0 && (
+                  <div className="mb-4">
+                    <div className="mb-2 px-2">
+                      <h3 className="text-xs font-bold text-[#1a3578] uppercase tracking-wider">
+                        Our Market
+                      </h3>
+                    </div>
+                    <div className="space-y-0.5">
+                      {marketSports.map((sport) => (
+                        <SportItem key={sport.eventTypeId} sport={sport} pathname={pathname} rounded={true} />
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Remaining groups */}
                 <div className="space-y-1">
