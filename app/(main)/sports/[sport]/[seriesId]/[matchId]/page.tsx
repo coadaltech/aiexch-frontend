@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useRef, useCallback, memo, createContext, useContext } from "react";
 import { createPortal } from "react-dom";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useBetSlip } from "@/contexts/BetSlipContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -381,11 +381,25 @@ const RunnerNameCell = memo(
 );
 
 
+// Keyed by matchId so navigating from one match to another always gives the
+// inner page a clean mount — no stale refs (pageStatus / lastGoodMarkets /
+// hasEverHadMarkets) leaking from the previous match. The client-side odds
+// cache makes that remount paint instantly (cached markets) or show the
+// skeleton (first visit), so a remount never costs the user a loading spinner.
 export default function MatchPage() {
+  const { matchId } = useParams();
+  return <MatchPageInner key={String(matchId)} />;
+}
+
+function MatchPageInner() {
   const params = useParams();
   const sport = params.sport as string;
   const seriesId = params.seriesId as string;
   const matchId = params.matchId as string;
+  // Racing: a meeting (event) holds many race markets. `?market=<id>` scopes the
+  // page to the single clicked race so it shows just that race's runners.
+  const searchParams = useSearchParams();
+  const focusMarketId = searchParams.get("market");
   const { addToBetSlip } = useBetSlip();
   const [quickBet, setQuickBet] = useState<QuickBetData | null>(null);
   const [quickBetStake, setQuickBetStake] = useState("");
@@ -631,6 +645,20 @@ export default function MatchPage() {
     marketsRef.current = markets;
   }, [markets]);
 
+  // Cache the latest market list per match so RE-OPENING this match (e.g. the
+  // user toggling between two matches) paints instantly from cache — the seed
+  // at mount (`cachedOdds`) reads exactly this key, starting pageStatus at
+  // "success" with no WebSocket round-trip. The odds are a few seconds old
+  // until the live feed refreshes them, which is fine: bet placement separately
+  // guards staleness, and the user sees market names + odds immediately instead
+  // of a spinner. Entries without an active reader are GC'd after react-query's
+  // default gcTime (5 min).
+  useEffect(() => {
+    if (markets.length > 0) {
+      queryClient.setQueryData(["match-odds-list", matchId], markets);
+    }
+  }, [markets, matchId, queryClient]);
+
   // Live clock: derived from the WS message timestamp (updates on every tick,
   // not just when data changes, so the user can see the connection is alive)
   const lastMarketUpdate = wsLastUpdate ? new Date(wsLastUpdate) : null;
@@ -849,11 +877,26 @@ export default function MatchPage() {
     return { marketId: String(marketId), runners: map };
   }, [quickBet, quickBetStake, marketExposureMap, liveQuickBetOdds]);
 
-  // Filter out admin-disabled/hidden markets for user-facing view
-  const visibleMarkets = useMemo(
-    () => markets.filter((m: any) => !m.adminDisabled && !m.adminHidden),
-    [markets]
-  );
+  // Filter out admin-disabled/hidden markets for user-facing view. When a race
+  // is focused (?market=<id>), scope to just that market (racing: one race of a
+  // meeting). Fall back to all markets if that id isn't present yet (still loading).
+  const visibleMarkets = useMemo(() => {
+    // Hide markets with no liquidity (no back/lay anywhere) — an OPEN market with
+    // empty prices (e.g. an illiquid "1st Innings Runs") shouldn't render an empty
+    // grid. Suspended markets still show (so the user sees the suspended state).
+    const hasLiquidity = (m: any) =>
+      m.status === "SUSPENDED" ||
+      !!m.sportingEvent ||
+      (m.runners || []).some(
+        (r: any) => (r.back?.length ?? 0) > 0 || (r.lay?.length ?? 0) > 0,
+      );
+    const base = markets.filter(
+      (m: any) => !m.adminDisabled && !m.adminHidden && hasLiquidity(m),
+    );
+    if (!focusMarketId) return base;
+    const scoped = base.filter((m: any) => String(m.marketId) === String(focusMarketId));
+    return scoped.length > 0 ? scoped : base;
+  }, [markets, focusMarketId]);
 
   // Data the runner-name cells consume, memoized so it stays a stable reference
   // on pure price ticks (quickBet/exposure unchanged) — that's what lets the
@@ -931,8 +974,20 @@ export default function MatchPage() {
       return;
     }
 
-    // Data sources still loading (WS connecting) — keep showing loading
-    if (!isConnected && (status === "connecting" || status === "disconnected")) {
+    // Data sources still loading. Two cases keep us in the loading state:
+    //  1. The WS hasn't connected yet (connecting / disconnected), or
+    //  2. The WS has connected but hasn't delivered its first message yet.
+    // Opening the socket does NOT mean data has arrived — the first live-update
+    // can lag a few seconds behind the connection. Falling through to "no-data"
+    // in that gap is exactly what made the page flash "No Active Markets" and
+    // then "Event Ended" for a moment before the markets finally appeared.
+    // Stay on the loading spinner until the WS actually delivers a message
+    // (wsLastUpdate set) or the safety timeout elapses.
+    const awaitingFirstUpdate = isConnected && wsLastUpdate == null;
+    if (
+      awaitingFirstUpdate ||
+      (!isConnected && (status === "connecting" || status === "disconnected"))
+    ) {
       setPageStatus("connecting");
       const timeout = setTimeout(() => {
         setPageStatus((prev) => (prev === "connecting" ? "no-data" : prev));
@@ -940,11 +995,13 @@ export default function MatchPage() {
       return () => clearTimeout(timeout);
     }
 
-    // WS connected but genuinely no markets
+    // WS connected AND has delivered at least one update, but there are
+    // genuinely no markets — only now is it correct to show the empty / ended
+    // state.
     if (isConnected && visibleMarkets.length === 0) {
       setPageStatus("no-data");
     }
-  }, [status, isConnected, markets, visibleMarkets.length, initialLoading]);
+  }, [status, isConnected, markets, visibleMarkets.length, initialLoading, wsLastUpdate]);
 
   const handleQuickBetClose = () => {
     cancelBetDelay();
@@ -1607,7 +1664,7 @@ export default function MatchPage() {
     );
   }
 
-  if (pageStatus === "connecting" || pageStatus === "connected") {
+   if (pageStatus === "connecting" || pageStatus === "connected") {
     return (
       <div className="px-3 py-2">
         <div className="rounded-xl bg-gradient-to-b from-[var(--header-primary)] to-[var(--header-primary)] border border-[#1e4088]/40 flex items-center justify-center py-16">
@@ -1694,6 +1751,20 @@ export default function MatchPage() {
     if (runners.length === 2) return 'team-binary';
     // 3+ runners, no lay → multi-grid
     return 'multi-grid';
+  };
+
+  // For Betfair markets with many runners (e.g. "1st Innings Runs" ~55 "X or more"
+  // selections), most have no liquidity — show only the runners that actually have
+  // a back or lay price. Small markets are returned unchanged.
+  const visibleRunnersFor = (market: any): any[] => {
+    const rs: any[] = market.runners || [];
+    if (String(market.provider).toUpperCase() === "BETFAIR" && rs.length > 6) {
+      const withPrice = rs.filter(
+        (r: any) => (r.back?.length ?? 0) > 0 || (r.lay?.length ?? 0) > 0,
+      );
+      return withPrice.length > 0 ? withPrice : rs;
+    }
+    return rs;
   };
 
   const backLayOverlay = (market: any) => {
@@ -1793,13 +1864,37 @@ export default function MatchPage() {
 
       <div className="space-y-1">
         {/* ── Standard markets (match odds, bookmaker, team-binary) ── */}
-        {visibleMarkets
-          .filter((market: any) => {
-            if (market.bettingType === "LINE") return false;
-            const l = detectMarketLayout(market);
-            return l === "standard" || l === "team-binary";
-          })
-          .map((market: any) => {
+        {/* Old-provider sessions (LINE, single-level) go to the compact fancy
+            section below; Betfair LINE markets carry a full 3-back/3-lay ladder, so
+            render them here in the standard layout like regular odds. */}
+        {(() => {
+          const __sorted = visibleMarkets
+            .filter((market: any) => {
+              const isSessionLine =
+                market.bettingType === "LINE" &&
+                String(market.provider).toUpperCase() !== "BETFAIR";
+              if (isSessionLine) return false;
+              // Betfair line/fancy markets render in their own compact section below.
+              if (market.isLineMarket) return false;
+              const l = detectMarketLayout(market);
+              return l === "standard" || l === "team-binary";
+            })
+            // Sorted (not random): match odds first, then other odds, then the
+            // Betfair line markets last — they get grouped under a "Betfair Fancy"
+            // banner (inserted below), sitting just above the old-provider fancy.
+            .sort((a: any, b: any) => {
+              const rank = (m: any) => {
+                const t = String(m.marketType || "").toUpperCase();
+                if (t === "MATCH_ODDS" || t === "WINNING_ODDS") return 0;
+                return m.isLineMarket ? 2 : 1;
+              };
+              const r = rank(a) - rank(b);
+              if (r !== 0) return r;
+              const sp = (a.sortPriority ?? 0) - (b.sortPriority ?? 0);
+              if (sp !== 0) return sp;
+              return String(a.marketName || "").localeCompare(String(b.marketName || ""));
+            });
+          const __cards: any[] = __sorted.map((market: any) => {
             const layout = detectMarketLayout(market);
             const isMarketSusp = market.status === "SUSPENDED" || !!market.sportingEvent;
             const minBet = market.marketCondition?.minBet ?? "-";
@@ -1858,7 +1953,7 @@ export default function MatchPage() {
                   </div>
                 </div>
                 <div className="divide-y divide-gray-100">
-                  {market.runners.map((runner: any) => {
+                  {visibleRunnersFor(market).map((runner: any) => {
                     const isRunnerSuspended = runner.status === "SUSPENDED" || runner.status === "REMOVED" || market.status === "SUSPENDED" || !!market.sportingEvent;
                     return (
                     <div
@@ -2164,7 +2259,7 @@ export default function MatchPage() {
             // ── MULTI-GRID layout (Man of Match, Wicket Method, Most Fours, etc.) ──
             // [name | odds] pairs in a responsive grid: 1 col on mobile, 2 cols sm, up to 3 cols md
             {
-              const runners: any[] = market.runners || [];
+              const runners: any[] = visibleRunnersFor(market);
               const cols = Math.min(runners.length, 3);
               const mdColsClass = cols === 1 ? "md:grid-cols-1" : cols === 2 ? "md:grid-cols-2" : "md:grid-cols-3";
               return (
@@ -2195,10 +2290,99 @@ export default function MatchPage() {
                 </div>
               );
             }
-          })}
+          });
+          return __cards;
+        })()}
 
-        {visibleMarkets.some((m) => m.bettingType === "LINE") && (() => {
-          const fancyMarkets = visibleMarkets.filter((m: any) => m.bettingType === "LINE");
+        {/* ── BETFAIR FANCY: compact one-row-per-market (name + back/lay ladder) ── */}
+        {visibleMarkets.some((m: any) => m.isLineMarket) && (
+          <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+            <div className="px-3 py-2 bg-[var(--header-primary)] text-[var(--header-text)] text-sm font-bold uppercase tracking-wide">
+              Betfair Fancy
+            </div>
+            <div className="divide-y divide-gray-100">
+              {visibleMarkets
+                .filter((m: any) => m.isLineMarket)
+                .sort((a: any, b: any) => {
+                  const sp = (a.sortPriority ?? 0) - (b.sortPriority ?? 0);
+                  if (sp !== 0) return sp;
+                  return String(a.marketName || "").localeCompare(String(b.marketName || ""));
+                })
+                .map((market: any) => {
+                  const runner = market.runners?.[0];
+                  const isMarketSusp = market.status === "SUSPENDED" || !!market.sportingEvent;
+                  const isRunnerSusp = isMarketSusp || runner?.status === "SUSPENDED" || runner?.status === "REMOVED";
+                  return (
+                    <div key={market.marketId} className="px-2 sm:px-3 py-1.5 grid grid-cols-[1fr_auto] gap-1 sm:gap-2 items-center bg-white hover:bg-gray-50/80 transition-colors relative">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <PinMarketButton parent={pinParent} market={market} />
+                        <span className="font-semibold text-gray-900 text-sm sm:text-base truncate">{market.marketName}</span>
+                      </div>
+                      <div className="flex justify-end items-center gap-1">
+                        {/* Back: 3 levels, best on the right */}
+                        <div className="flex items-center gap-1">
+                          {(() => {
+                            if (!runner || isRunnerSusp) {
+                              return Array(3).fill(null).map((_, i) => (
+                                <button key={`bf-back-s-${i}`} className={`${oddsBtnClass} bg-back-disabled w-16 sm:w-20 ${i !== 2 ? "hidden sm:flex" : ""}`} disabled><span className={oddsPriceClass}>-</span><span className={oddsSizeClass}>-</span></button>
+                              ));
+                            }
+                            const backItems = runner.back || [];
+                            const positions = Array(3).fill(null);
+                            backItems.forEach((item: any, idx: number) => { if (idx < 3) positions[2 - idx] = item; });
+                            return positions.map((item, posIdx) => item ? (
+                              <button key={`bf-back-${posIdx}`} onClick={() => handleBackClick(market, runner, toDecimalfancyOdds(item.price, market.provider), String(item.line ?? item.price ?? ""), 2 - posIdx)}
+                                className={`${oddsBtnClass} transition-all w-16 sm:w-20 ${posIdx === 2 ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back shadow-sm" : "bg-white hover:bg-back/30 border border-back/50 hidden sm:flex"}`}>
+                                <span className={oddsPriceClass}>{formatOddsPrice(item.price)}</span><span className={oddsSizeClass}>{formatAmount(item.size)}</span>
+                              </button>
+                            ) : (
+                              <button key={`bf-back-e-${posIdx}`} className={`${oddsBtnClass} bg-back-disabled w-16 sm:w-20 ${posIdx !== 2 ? "hidden sm:flex" : ""}`} disabled><span className={oddsPriceClass}>-</span><span className={oddsSizeClass}>-</span></button>
+                            ));
+                          })()}
+                        </div>
+                        {/* Lay: 3 levels, best on the left */}
+                        <div className="flex items-center gap-1">
+                          {(() => {
+                            if (!runner || isRunnerSusp) {
+                              return Array(3).fill(null).map((_, i) => (
+                                <button key={`bf-lay-s-${i}`} className={`${oddsBtnClass} bg-lay-disabled w-16 sm:w-20 ${i !== 0 ? "hidden sm:flex" : ""}`} disabled><span className={oddsPriceClass}>-</span><span className={oddsSizeClass}>-</span></button>
+                              ));
+                            }
+                            const layItems = runner.lay || [];
+                            return Array(3).fill(null).map((_, layIdx) => {
+                              const item = layItems[layIdx];
+                              return item ? (
+                                <button key={`bf-lay-${layIdx}`} onClick={() => handleLayClick(market, runner, toDecimalfancyOdds(item.price, market.provider), String(item.line ?? item.price ?? ""), layIdx)}
+                                  className={`${oddsBtnClass} transition-all w-16 sm:w-20 ${layIdx === 0 ? "bg-gradient-to-b from-lay to-lay-deep hover:from-lay-hover hover:to-lay shadow-sm" : "bg-white hover:bg-lay/30 border border-lay/50 hidden sm:flex"}`}>
+                                  <span className={oddsPriceClass}>{formatOddsPrice(item.price)}</span><span className={oddsSizeClass}>{formatAmount(item.size)}</span>
+                                </button>
+                              ) : (
+                                <button key={`bf-lay-e-${layIdx}`} className={`${oddsBtnClass} bg-lay-disabled w-16 sm:w-20 ${layIdx !== 0 ? "hidden sm:flex" : ""}`} disabled><span className={oddsPriceClass}>-</span><span className={oddsSizeClass}>-</span></button>
+                              );
+                            });
+                          })()}
+                        </div>
+                        {backLayOverlay(market)}
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+        )}
+
+        {visibleMarkets.some((m) => m.bettingType === "LINE" && String(m.provider).toUpperCase() !== "BETFAIR") && (() => {
+          // Compact fancy section = old-provider single-level sessions only.
+          // Betfair LINE markets (3-level ladder) render in the standard section.
+          const fancyMarkets = visibleMarkets
+            .filter(
+              (m: any) => m.bettingType === "LINE" && String(m.provider).toUpperCase() !== "BETFAIR",
+            )
+            .sort((a: any, b: any) => {
+              const sp = (a.sortPriority ?? 0) - (b.sortPriority ?? 0);
+              if (sp !== 0) return sp;
+              return String(a.marketName || "").localeCompare(String(b.marketName || ""));
+            });
           const half = Math.ceil(fancyMarkets.length / 2);
           const columns = [fancyMarkets.slice(0, half), fancyMarkets.slice(half)];
 
@@ -2235,9 +2419,14 @@ export default function MatchPage() {
                           {isRunnerSuspended ? (
                             <button className={`${oddsBtnClass} bg-back-disabled w-16 sm:w-20`} disabled><span className={oddsPriceClass}>0</span><span className={oddsSizeClass}>0</span></button>
                           ) : runner.lay?.length > 0 ? (
-                            runner.lay.map((layItem: any, layIdx: number) => (
+                            // Compact fancy layout has a single NO column — only ever
+                            // render the best level (providers may send a depth ladder).
+                            runner.lay.slice(0, 1).map((layItem: any, layIdx: number) => (
                               <button key={layIdx} onClick={() => handleLayClick(market, runner, toDecimalfancyOdds(layItem.price, market.provider), String(layItem.line ?? ""), layIdx)} className={`${oddsBtnClass} bg-gradient-to-b from-lay to-lay-deep hover:from-lay-hover hover:to-lay shadow-sm transition-all w-16 sm:w-20`}>
-                                <span className={oddsPriceClass}>{layItem.line}</span><span className={oddsSizeClass}>{formatAmount(layItem.price)}</span>
+                                {/* Session markets show the run `line`; Betfair LINE markets
+                                    have no line — show the back/lay price + size instead. */}
+                                <span className={oddsPriceClass}>{layItem.line ?? formatOddsPrice(layItem.price)}</span>
+                                <span className={oddsSizeClass}>{formatAmount(layItem.line != null ? layItem.price : layItem.size)}</span>
                               </button>
                             ))
                           ) : (
@@ -2248,9 +2437,14 @@ export default function MatchPage() {
                           {isRunnerSuspended ? (
                             <button className={`${oddsBtnClass} bg-back-disabled w-16 sm:w-20`} disabled><span className={oddsPriceClass}>0</span><span className={oddsSizeClass}>0</span></button>
                           ) : runner.back?.length > 0 ? (
-                            runner.back.map((backItem: any, backIdx: number) => (
+                            // Compact fancy layout has a single YES column — only ever
+                            // render the best level (providers may send a depth ladder).
+                            runner.back.slice(0, 1).map((backItem: any, backIdx: number) => (
                               <button key={backIdx} onClick={() => handleBackClick(market, runner, toDecimalfancyOdds(backItem.price, market.provider), String(backItem.line ?? ""), backIdx)} className={`${oddsBtnClass} transition-all w-16 sm:w-20 ${backIdx === 0 ? "bg-gradient-to-b from-back to-back-deep hover:from-back-hover hover:to-back shadow-sm" : "bg-white hover:bg-back/30 border border-back/50"}`}>
-                                <span className={oddsPriceClass}>{backItem.line}</span><span className={oddsSizeClass}>{formatAmount(backItem.price)}</span>
+                                {/* Session markets show the run `line`; Betfair LINE markets
+                                    have no line — show the back/lay price + size instead. */}
+                                <span className={oddsPriceClass}>{backItem.line ?? formatOddsPrice(backItem.price)}</span>
+                                <span className={oddsSizeClass}>{formatAmount(backItem.line != null ? backItem.price : backItem.size)}</span>
                               </button>
                             ))
                           ) : (
@@ -2294,7 +2488,13 @@ export default function MatchPage() {
         {/* ── ADV markets (binary, odd-even, lottery, multi-grid) ── */}
         {visibleMarkets
           .filter((market: any) => {
-            if (market.bettingType === "LINE") return false;
+            // Only old-provider single-level sessions are excluded here (they
+            // render in the compact fancy section); Betfair LINE stays.
+            if (
+              market.bettingType === "LINE" &&
+              String(market.provider).toUpperCase() !== "BETFAIR"
+            )
+              return false;
             const l = detectMarketLayout(market);
             return l !== "standard" && l !== "team-binary";
           })
@@ -2431,7 +2631,7 @@ export default function MatchPage() {
 
             // multi-grid (fallthrough): responsive grid 1/2/3 cols
             {
-              const runners: any[] = market.runners || [];
+              const runners: any[] = visibleRunnersFor(market);
               const cols = Math.min(runners.length, 3);
               const mdColsClass = cols === 1 ? "md:grid-cols-1" : cols === 2 ? "md:grid-cols-2" : "md:grid-cols-3";
               return (

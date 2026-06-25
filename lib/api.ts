@@ -964,6 +964,9 @@ export const sportsApi = {
   getSeries: (eventTypeId: string) => api.get(`/api/sports/getAllSeries/${eventTypeId}`),
   getMatchesList: (eventTypeId: string) =>
     api.get(`/api/sports/matches-list/${eventTypeId}`),
+  // Racing (Horse 7 / Greyhound 4339): meetings grouped by country -> venue.
+  getRacing: (eventTypeId: string) =>
+    api.get(`/api/sports/racing/${eventTypeId}`),
   getMatches: (eventTypeId: string, competitionId: string) =>
     api.get(`/sports/matches/${eventTypeId}/${competitionId}`),
   getMarkets: (eventTypeId: string, eventId: string) =>

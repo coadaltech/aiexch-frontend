@@ -62,6 +62,9 @@ const SPORT_LINK_MAPPING: Record<string, { basePath: string; eventTypeId: string
 // Special sports that have dedicated pages instead of a competitions drill-down
 // Key = sport_id as string, value = the path to navigate to on click
 const SPECIAL_SPORT_HREFS: Record<string, string> = {
+  // Racing has no competition layer — open the racing page (events) directly.
+  "7": "/sports/horse-racing",
+  "4339": "/sports/greyhound-racing",
   "1001": "/matka",
   "1002": "/lotry",
   "1003": "/skil-games",
@@ -184,13 +187,14 @@ function SportAccordionItem({
 
       {expanded && (
         <div className="ml-3 border-l border-gray-200 pl-2">
-          {isLoading ? (
-            <div className="flex items-center gap-2 px-3 py-2 text-xs text-gray-500">
-              <Loader2 className="h-3 w-3 animate-spin" />
-              Loading...
-            </div>
-          ) : seriesData.length === 0 ? (
-            <div className="px-3 py-2 text-xs text-gray-400">No matches available</div>
+          {seriesData.length === 0 ? (
+            // While the first fetch is in flight, render nothing — no spinner and
+            // no premature "No matches" flash. react-query caches the series for
+            // 5 min (placeholderData keeps the last list), so re-expanding a sport
+            // is instant. Only show the empty state once the fetch has settled.
+            isLoading ? null : (
+              <div className="px-3 py-2 text-xs text-gray-400">No matches available</div>
+            )
           ) : (
             seriesData.map((series: Series) => {
               const isSeriesExpanded = expandedSeries.includes(series.id);

@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+} from "@tanstack/react-query";
 import { ownerApi, uploadFile, api } from "@/lib/api";
 import { toast } from "sonner";
 import { normalizeRole, normalizeMembership } from "@/types/enums";
@@ -820,6 +825,10 @@ export const useCompetitionEvents = (
         .getCompetitionEvents(competitionId!, params)
         .then((res) => res.data),
     enabled: !!competitionId,
+    // Keep the previous page/search results on screen while the next request is
+    // in flight, and serve cached data instantly on revisit — no loading flash.
+    staleTime: 60_000,
+    placeholderData: keepPreviousData,
   });
 };
 

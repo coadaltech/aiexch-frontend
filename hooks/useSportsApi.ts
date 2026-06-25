@@ -66,6 +66,39 @@ export const useMatchesList = (eventTypeId: string | null, enabled = true) => {
   });
 };
 
+// Racing meetings grouped by country -> venue (Horse 7 / Greyhound 4339).
+export type RacingRace = {
+  marketId: string;
+  name: string;
+  raceTime: string | null;
+};
+export type RacingMeeting = {
+  eventId: number;
+  name: string;
+  venue: string | null;
+  countryCode: string | null;
+  timezone: string | null;
+  openDate: string | null;
+  marketCount: number;
+  races: RacingRace[];
+};
+export type RacingCountry = { countryCode: string; meetings: RacingMeeting[] };
+
+export const useRacing = (eventTypeId: string | null, enabled = true) => {
+  return useQuery({
+    queryKey: ["racing", eventTypeId],
+    queryFn: async () => {
+      const res = await sportsApi.getRacing(eventTypeId!);
+      return (res.data?.data ?? []) as RacingCountry[];
+    },
+    enabled: enabled && !!eventTypeId,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
+    placeholderData: (prev: RacingCountry[] | undefined) => prev,
+  });
+};
+
 // Matches
 export const useMatches = (
   eventTypeId: string,

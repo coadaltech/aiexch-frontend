@@ -8,6 +8,7 @@ import { AppSidebar } from "./layout/app-sidebar-new";
 import { useWhitelabelInfo } from "@/hooks/useAuth";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLedgerLiveSync } from "@/hooks/useLedgerLiveSync";
+import { useSportsLiveSync } from "@/hooks/useSportsLiveSync";
 import { prefetchCasinoGames } from "@/hooks/useCasinoGames";
 import { isPanelPath } from "@/lib/panel-utils";
 import { NoticeTickerBar } from "./layout/notice-ticker-bar";
@@ -30,6 +31,9 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   // Header/CasinoWallet (which mount/unmount per route) means the socket never
   // churns, so the post-bet balance/exposure push lands instantly with no poll.
   useLedgerLiveSync();
+  // Owner toggles on competitions/events push `series-changed`; refetch the
+  // affected sport's series/matches/racing instantly (no manual refresh).
+  useSportsLiveSync();
 
   const isOwnerRoute = isPanelPath(pathname);
   const isAuthRoute =

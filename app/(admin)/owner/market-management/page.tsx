@@ -1234,6 +1234,17 @@ function FancyMarketRow({ market }: { market: any }) {
 
   const layItems = runner.lay || [];
   const backItems = runner.back || [];
+  // Old-provider sessions are single-level "LINE" (NO/YES). Betfair fancy markets
+  // are ODDS with a 3-level back/lay ladder — render exactly 3 cells each, padding
+  // the missing ones with empty cells (like the odds layout).
+  // Both old sessions and Betfair fancy are bettingType "LINE". Distinguish by the
+  // isLineMarket flag: Betfair fancy → 3-level back/lay ladder showing price/size;
+  // old sessions → single NO/YES showing the run line.
+  const isBetfairFancy = !!market.isLineMarket;
+  const isSession = !isBetfairFancy;
+  // PriceCell shows the run "line" for LINE; for Betfair fancy we want price/size,
+  // so feed it a non-LINE bettingType.
+  const cellBt = isBetfairFancy ? "ODDS" : market.bettingType || "LINE";
 
   // Inline edit mode for custom market odds
   const startEditing = () => {
@@ -1379,40 +1390,50 @@ function FancyMarketRow({ market }: { market: any }) {
           </p>
         </div>
 
-        {/* NO + YES cells (matches the Fancy column widths in the header) */}
+        {/* Price cells. Sessions (LINE): NO(lay) then YES(back). Betfair fancy
+            (ODDS): like the odds layout — BACK on the left, LAY on the right. */}
         <div className="relative flex items-center gap-1 sm:gap-2 min-h-[2.25rem]">
-          <div className="flex gap-1">
-            {layItems.length > 0 ? (
-              layItems.map((item: any, idx: number) => (
-                <PriceCell
-                  key={`no-${idx}`}
-                  price={item?.price}
-                  line={item?.line}
-                  type="lay"
-                  bettingType="LINE"
-                  emphasis={idx === 0 ? "best" : "depth"}
-                />
-              ))
-            ) : (
-              <PriceCell type="lay" bettingType="LINE" />
-            )}
-          </div>
-          <div className="flex gap-1">
-            {backItems.length > 0 ? (
-              backItems.map((item: any, idx: number) => (
-                <PriceCell
-                  key={`yes-${idx}`}
-                  price={item?.price}
-                  line={item?.line}
-                  type="back"
-                  bettingType="LINE"
-                  emphasis={idx === 0 ? "best" : "depth"}
-                />
-              ))
-            ) : (
-              <PriceCell type="back" bettingType="LINE" />
-            )}
-          </div>
+          {(() => {
+            const layGroup = (
+              <div key="lay" className="flex gap-1">
+                {isSession ? (
+                  layItems.length > 0 ? (
+                    layItems.map((item: any, idx: number) => (
+                      <PriceCell key={`no-${idx}`} price={item?.price} size={item?.size} line={item?.line} type="lay" bettingType={cellBt} emphasis={idx === 0 ? "best" : "depth"} />
+                    ))
+                  ) : (
+                    <PriceCell type="lay" bettingType={cellBt} />
+                  )
+                ) : (
+                  // Betfair fancy: 3 lay levels, best on the LEFT (adjacent to back).
+                  Array(3).fill(null).map((_, idx) => {
+                    const item = layItems[idx];
+                    return <PriceCell key={`lay-${idx}`} price={item?.price} size={item?.size} type="lay" bettingType={cellBt} emphasis={idx === 0 ? "best" : "depth"} />;
+                  })
+                )}
+              </div>
+            );
+            const backGroup = (
+              <div key="back" className="flex gap-1">
+                {isSession ? (
+                  backItems.length > 0 ? (
+                    backItems.map((item: any, idx: number) => (
+                      <PriceCell key={`yes-${idx}`} price={item?.price} size={item?.size} line={item?.line} type="back" bettingType={cellBt} emphasis={idx === 0 ? "best" : "depth"} />
+                    ))
+                  ) : (
+                    <PriceCell type="back" bettingType={cellBt} />
+                  )
+                ) : (
+                  // Betfair fancy: 3 back levels, best on the RIGHT (adjacent to lay).
+                  Array(3).fill(null).map((_, posIdx) => {
+                    const item = backItems[2 - posIdx];
+                    return <PriceCell key={`back-${posIdx}`} price={item?.price} size={item?.size} type="back" bettingType={cellBt} emphasis={posIdx === 2 ? "best" : "depth"} />;
+                  })
+                )}
+              </div>
+            );
+            return isSession ? [layGroup, backGroup] : [backGroup, layGroup];
+          })()}
           {(isSuspended || runner.status === "SUSPENDED") && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 bg-white/70 backdrop-blur-[1px]">
               <span className="text-red-600 font-bold text-xs bg-red-50 px-2 py-0.5 rounded-full border border-red-200/50 shadow-sm">
@@ -1559,6 +1580,46 @@ function FancyGroupCard({ markets }: { markets: any[] }) {
       {markets.map((m) => (
         <FancyMarketRow key={m.marketId} market={m} />
       ))}
+    </div>
+  );
+}
+
+// ─── Betfair Fancy group ───
+// Groups all Betfair line/fancy markets (Overs/Runs Line) into ONE component
+// under a single "Betfair Fancy" header — mirrors the match-id page. Each market
+// keeps its full owner controls via MarketCard.
+function BetfairFancyGroupCard({ markets }: { markets: any[] }) {
+  if (markets.length === 0) return null;
+  return (
+    <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+      <div className="grid grid-cols-[1fr_auto_auto] gap-2 px-2 sm:px-3 py-1.5 border-b border-[#1e4088]/40 bg-[var(--header-primary)] items-center">
+        <h3 className="font-bold text-white text-sm sm:text-base truncate leading-tight">
+          Betfair Fancy ({markets.length})
+        </h3>
+        <div className="flex items-center gap-1 sm:gap-2">
+          <div className="w-16 sm:w-20 text-center font-bold uppercase bg-back text-black text-xs sm:text-sm py-0.5 rounded">
+            Back
+          </div>
+          <div className="w-16 sm:w-20 text-center font-bold uppercase bg-lay text-black text-xs sm:text-sm py-0.5 rounded">
+            Lay
+          </div>
+        </div>
+        <span className="text-white/60 text-[10px] sm:text-[11px] uppercase tracking-wide whitespace-nowrap font-semibold">
+          Controls
+        </span>
+      </div>
+      {/* One-liner rows with active/visible/suspend toggles + settings, like the
+          normal fancy. FancyMarketRow shows price+size for ODDS-typed markets.
+          Sorted like the match page (sortPriority then name). */}
+      {[...markets]
+        .sort((a, b) => {
+          const sp = (a.sortPriority ?? 0) - (b.sortPriority ?? 0);
+          if (sp !== 0) return sp;
+          return String(a.marketName || "").localeCompare(String(b.marketName || ""));
+        })
+        .map((m) => (
+          <FancyMarketRow key={m.marketId} market={m} />
+        ))}
     </div>
   );
 }
@@ -2191,21 +2252,51 @@ function MarketManagementContent() {
                       : "Connecting to live feed..."}
                   </div>
                 ) : (() => {
-                    const standardMarkets = markets.filter(
-                      (m: any) => m.bettingType !== "LINE"
+                    // Same grouping/order as the user-facing match page:
+                    //   1. ODDS markets (match odds, bookmaker, tie) — top
+                    //   2. Betfair fancy (isLineMarket: Overs/Runs Line) — grouped
+                    //   3. Old-provider fancy (LINE sessions) — FancyGroupCard
+                    //   4. Many-runner Betfair markets (e.g. "1st Innings Runs") — bottom
+                    const isMany = (m: any) =>
+                      String(m.provider).toUpperCase() === "BETFAIR" &&
+                      (m.runners?.length ?? 0) > 6;
+                    const oddsMarkets = markets
+                      .filter(
+                        (m: any) => m.bettingType !== "LINE" && !m.isLineMarket && !isMany(m)
+                      )
+                      // Match odds first, then the rest by sortPriority/name.
+                      .sort((a: any, b: any) => {
+                        const rank = (m: any) => {
+                          const t = String(m.marketType || "").toUpperCase();
+                          return t === "MATCH_ODDS" || t === "WINNING_ODDS" ? 0 : 1;
+                        };
+                        const r = rank(a) - rank(b);
+                        if (r !== 0) return r;
+                        const sp = (a.sortPriority ?? 0) - (b.sortPriority ?? 0);
+                        if (sp !== 0) return sp;
+                        return String(a.marketName || "").localeCompare(String(b.marketName || ""));
+                      });
+                    const betfairFancyMarkets = markets.filter(
+                      (m: any) => m.isLineMarket && !isMany(m)
                     );
-                    const fancyMarkets = markets.filter(
-                      (m: any) => m.bettingType === "LINE"
+                    const oldFancyMarkets = markets.filter(
+                      (m: any) => m.bettingType === "LINE" && !m.isLineMarket
                     );
+                    const manyRunnerMarkets = markets.filter(isMany);
+                    const wrap = (market: any) => ({
+                      ...market,
+                      eventId: market.eventId ?? activeEventId,
+                    });
                     return (
                       <div className="space-y-1.5">
-                        {standardMarkets.map((market: any) => (
-                          <MarketCard
-                            key={market.marketId}
-                            market={{ ...market, eventId: market.eventId ?? activeEventId }}
-                          />
+                        {oddsMarkets.map((market: any) => (
+                          <MarketCard key={market.marketId} market={wrap(market)} />
                         ))}
-                        <FancyGroupCard markets={fancyMarkets} />
+                        <BetfairFancyGroupCard markets={betfairFancyMarkets.map(wrap)} />
+                        <FancyGroupCard markets={oldFancyMarkets} />
+                        {manyRunnerMarkets.map((market: any) => (
+                          <MarketCard key={market.marketId} market={wrap(market)} />
+                        ))}
                       </div>
                     );
                   })()}

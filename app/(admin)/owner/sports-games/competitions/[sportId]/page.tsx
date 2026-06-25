@@ -23,6 +23,16 @@ interface Competition {
 
 const PAGE_SIZE = 50;
 
+// Module-scoped cache keyed by sport+page+search so re-entering a competitions
+// list shows the last data instantly while a background fetch refreshes it —
+// no loading spinner on revisit.
+const competitionsCache = new Map<
+  string,
+  { competitions: Competition[]; sportName: string; totalCount: number }
+>();
+const cacheKey = (sportId: string, page: number, search: string) =>
+  `${sportId}|${page}|${search}`;
+
 export default function CompetitionsPage() {
   const params = useParams();
   const router = useRouter();
@@ -35,13 +45,17 @@ export default function CompetitionsPage() {
   // Super/Master/Agent = read-only
   const canEdit = isOwner || isAdmin;
 
-  const [competitions, setCompetitions] = useState<Competition[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  // Seed from the module cache (page 0, no search) so a revisit paints instantly.
+  const seeded = competitionsCache.get(cacheKey(sportId, 0, ""));
+  const [competitions, setCompetitions] = useState<Competition[]>(
+    seeded?.competitions ?? [],
+  );
+  const [totalCount, setTotalCount] = useState(seeded?.totalCount ?? 0);
+  const [loading, setLoading] = useState(!seeded);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(0);
-  const [sportName, setSportName] = useState("");
+  const [sportName, setSportName] = useState(seeded?.sportName ?? "");
   // pendingChanges holds per-id desired state when it differs from the
   // server's current value. Persists across page/search changes so admins
   // can edit competitions on multiple pages before clicking Save.
@@ -129,9 +143,20 @@ export default function CompetitionsPage() {
   }, [search]);
 
   useEffect(() => {
+    const key = cacheKey(sportId, page, debouncedSearch);
     const fetchCompetitions = async () => {
       try {
-        setLoading(true);
+        // If this exact view is cached, show it immediately (no spinner) and
+        // refresh in the background; otherwise show the loading state.
+        const cached = competitionsCache.get(key);
+        if (cached) {
+          setCompetitions(cached.competitions);
+          setSportName(cached.sportName);
+          setTotalCount(cached.totalCount);
+          setLoading(false);
+        } else {
+          setLoading(true);
+        }
         const { data } = await ownerApi.getCompetitions(sportId, {
           limit: PAGE_SIZE,
           offset: page * PAGE_SIZE,
@@ -139,6 +164,8 @@ export default function CompetitionsPage() {
         });
 
         let competitionsData: Competition[] = [];
+        let nextSportName = "";
+        let nextTotalCount = 0;
         if (data.success && Array.isArray(data.data)) {
           competitionsData = data.data.map((comp: any) => ({
             id: String(comp.competition_id || comp.id),
@@ -149,11 +176,18 @@ export default function CompetitionsPage() {
             isTop: comp.is_top_competition ?? comp.isTop ?? false,
             whitelabelActive: comp.whitelabelActive ?? true,
           }));
-          setSportName(data.sportName || "");
-          setTotalCount(Number(data.totalCount ?? competitionsData.length));
+          nextSportName = data.sportName || "";
+          nextTotalCount = Number(data.totalCount ?? competitionsData.length);
+          setSportName(nextSportName);
+          setTotalCount(nextTotalCount);
         }
 
         setCompetitions(competitionsData);
+        competitionsCache.set(key, {
+          competitions: competitionsData,
+          sportName: nextSportName,
+          totalCount: nextTotalCount,
+        });
       } catch (error) {
         console.error("Error fetching competitions:", error);
       } finally {
@@ -314,17 +348,6 @@ export default function CompetitionsPage() {
       router.push(`${panelPrefix}/sports-games`);
     }
   };
-
-  if (loading && competitions.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading competitions...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
