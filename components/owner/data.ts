@@ -33,6 +33,7 @@ import {
   UserCog,
   Trash2,
   RotateCcw,
+  Rabbit,
 } from "lucide-react";
 
 /**
@@ -87,6 +88,7 @@ export function getNavigation(prefix: string): NavItem[] {
       icon: Trophy,
       subItems: [
         { name: "Sports Games", href: `${prefix}/sports-games`, icon: Trophy, requires: ["sports.view"] },
+        { name: "Racing", href: `${prefix}/sports-games/racing`, icon: Rabbit, requires: ["sports.view"] },
         { name: "Fetch Competitions", href: `${prefix}/fetch-competitions`, icon: RefreshCw, requires: ["sports.fetch_competitions"] },
         { name: "Custom Markets", href: `${prefix}/custom-markets`, icon: Wrench, requires: ["custom_markets.view"] },
       ],

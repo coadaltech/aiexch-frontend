@@ -891,6 +891,55 @@ export const useUpdateEventSettings = () => {
   });
 };
 
+// Racing admin browser (Horse 7 / Greyhound 4339): country → meeting → races
+// with each race's WIN-market admin settings. Polls on the same 60s cadence as
+// the racing sync so finished races drop and new ones appear.
+export type RacingAdminRace = {
+  marketId: string;
+  name: string;
+  raceTime: string | null;
+  settings: {
+    isActive: boolean;
+    isVisible: boolean;
+    suspended: boolean;
+    betLock: boolean;
+    betDelay: number | null;
+    minBet: number | null;
+    maxBet: number | null;
+    maxProfit: number | null;
+    notice: string | null;
+  } | null;
+};
+export type RacingAdminMeeting = {
+  eventId: number;
+  name: string;
+  venue: string | null;
+  countryCode: string | null;
+  timezone: string | null;
+  openDate: string | null;
+  marketCount: number;
+  isActive: boolean;
+  races: RacingAdminRace[];
+};
+export type RacingAdminCountry = {
+  countryCode: string;
+  meetings: RacingAdminMeeting[];
+};
+
+export const useRacingAdmin = (eventTypeId: string | null) => {
+  return useQuery({
+    queryKey: ["racing-admin", eventTypeId],
+    queryFn: () =>
+      ownerApi
+        .getRacingAdmin(eventTypeId!)
+        .then((res) => (res.data?.data ?? []) as RacingAdminCountry[]),
+    enabled: !!eventTypeId,
+    staleTime: 60 * 1000,
+    refetchInterval: 60 * 1000,
+    placeholderData: (prev: RacingAdminCountry[] | undefined) => prev,
+  });
+};
+
 export const useMarketsByEvent = (eventId: string | null) => {
   return useQuery({
     queryKey: ["market-settings", eventId],

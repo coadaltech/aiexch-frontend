@@ -255,6 +255,7 @@ export default function Header() {
   const leftMenu = useMemo(
     () => [
       { label: "Home", link: "/home" },
+      { label: "In-Play", link: "/inplay" },
       ...pinnedMenu,
       ...pinnedCompetitionsMenu,
       ...sports,

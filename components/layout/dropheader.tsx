@@ -128,8 +128,14 @@ export default function Dropheader({ leftMenu, rightMenu }: HeaderProps) {
                 className={cn(`group relative px-3 sm:px-4 py-1.5 sm:py-2 text-xs md:text-[17px] font-medium transition-all duration-150 flex items-center gap-1 touch-manipulation flex-shrink-0 cursor-pointer border-b-2 rounded-t-lg ${active
                   ? "text-[var(--header-text)] border-[var(--header-secondary)]"
                   : "text-[var(--header-text)] border-transparent hover:text-[var(--header-text)] hover:border-[color-mix(in_srgb,var(--header-text)_30%,transparent)]"
-                  }`, item.label == "Cricket" && "text-[#9dd0f5] border-[var(--header-secondary)]/60", item.label == "Sports" && "", (item.label == "Sports" && active) && "text-[var(--header-secondary)] border-[var(--header-secondary)]", (item.label == "Cricket" && active) && "text-[#9dd0f5] border-[#9dd0f5]")}
+                  }`, item.label == "Cricket" && "text-[#9dd0f5] border-[var(--header-secondary)]/60", item.label == "Sports" && "", (item.label == "Sports" && active) && "text-[var(--header-secondary)] border-[var(--header-secondary)]", (item.label == "Cricket" && active) && "text-[#9dd0f5] border-[#9dd0f5]", item.label == "In-Play" && "text-[#3ddc84] font-semibold", (item.label == "In-Play" && active) && "border-[#3ddc84]")}
               >
+                {item.label == "In-Play" && (
+                  <span className="relative flex h-2 w-2 mr-0.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#3ddc84] opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-[#3ddc84]" />
+                  </span>
+                )}
                 <span className="whitespace-nowrap">{item.label}</span>
                 {/* <ChevronDown className="h-3 w-3 sm:h-3.5 sm:w-3.5 opacity-70 group-hover:opacity-100 transition-opacity flex-shrink-0" /> */}
               </button>

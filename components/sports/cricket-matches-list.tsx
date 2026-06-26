@@ -3,7 +3,11 @@
 import { memo, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { fromZonedTime } from "date-fns-tz";
-import { useMatchesList, type MatchListItem } from "@/hooks/useSportsApi";
+import {
+  useMatchesList,
+  useMatchListSnapshot,
+  type MatchListItem,
+} from "@/hooks/useSportsApi";
 import { useLiveMultimarket } from "@/hooks/useLiveMultimarket";
 import { formatLocal, getUserTimezone } from "@/lib/date-utils";
 
@@ -256,6 +260,8 @@ export function CricketMatchesList({
   maxMatches,
   emptyText,
   showHeader = true,
+  inPlayOnly = false,
+  onHasContent,
   wrapper,
 }: {
   sport?: string;
@@ -266,20 +272,82 @@ export function CricketMatchesList({
   maxMatches?: number;
   emptyText?: string;
   showHeader?: boolean;
+  // When true, only live (in-play) matches are shown and the date-window filter
+  // is bypassed — used by the /inplay page. Multi-day in-play events (e.g. Test
+  // cricket that started yesterday) stay visible because we filter on the live
+  // flag, not the open date.
+  inPlayOnly?: boolean;
+  // Fired (in an effect) whenever this list's visibility changes — true once it
+  // has at least one priced row to show, false otherwise. Lets a parent page
+  // know whether any section rendered so it can show an empty state. Pass a
+  // stable (memoized) callback so it doesn't re-fire every render.
+  onHasContent?: (hasContent: boolean) => void;
   // When provided, the list renders its visible content inside `wrapper(...)`.
   // If there are no visible matches the entire section (wrapper + content) is
   // omitted — used on the homepage so sport sections with zero matches are
   // hidden completely rather than rendering empty chrome.
   wrapper?: (content: React.ReactNode) => React.ReactNode;
 }) {
-  // Flat list from the SQL function (structural data only — no odds).
+  // Flat list from the SQL function (structural data only — no odds). This is
+  // the per-user / whitelabel-aware AUTHORITY for membership + betCount.
   const { data: liveMatches = [], isLoading: matchesLoading } =
     useMatchesList(eventTypeId);
+
+  // Combined events + default-market odds, served from one shared notepad file.
+  // Seeding events AND odds from this single fetch is what makes the whole list
+  // paint at once — no per-row reveal as odds stream in one event at a time.
+  const { data: snapshot } = useMatchListSnapshot(eventTypeId);
+
+  // Per-user betCount lookup, applied over the (global) snapshot events.
+  const betCountById = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const e of liveMatches) m.set(String(e.id), e.betCount ?? 0);
+    return m;
+  }, [liveMatches]);
+
+  // Membership authority: the set of event ids the per-user list returned. Used
+  // to keep whitelabel-hidden events out of the (global) snapshot once that list
+  // has loaded. Before it loads we trust the snapshot so the cold paint isn't
+  // gated on the authenticated fetch.
+  const liveIds = useMemo(
+    () => new Set(liveMatches.map((m) => String(m.id))),
+    [liveMatches]
+  );
+
+  // Events to render: snapshot when available (instant, full batch), enriched
+  // with per-user betCount and — once the authoritative list has loaded —
+  // intersected with it so hidden events never leak. Falls back to the per-user
+  // list itself until the snapshot arrives.
+  const baseMatches: MatchListItem[] = useMemo(() => {
+    // No snapshot (not yet loaded, or a sport with no snapshot file) → fall back
+    // to the per-user list so behaviour is unchanged for those.
+    if (!snapshot || snapshot.length === 0) return liveMatches;
+    const events = snapshot.map(({ market, ...m }) => m as MatchListItem);
+    const scoped =
+      liveMatches.length > 0
+        ? events.filter((e) => liveIds.has(String(e.id)))
+        : events;
+    return scoped.map((e) => {
+      const bc = betCountById.get(String(e.id)) ?? 0;
+      return bc !== e.betCount ? { ...e, betCount: bc } : e;
+    });
+  }, [snapshot, liveMatches, liveIds, betCountById]);
+
+  // Odds map straight from the snapshot, keyed by marketId — folded into the
+  // sticky odds store below so every row has prices on the first paint.
+  const snapshotOddsMap = useMemo(() => {
+    const o: Record<string, any> = {};
+    for (const s of snapshot ?? []) {
+      if (s.defaultMarketId && s.market) o[s.defaultMarketId] = s.market;
+    }
+    return o;
+  }, [snapshot]);
 
   // Cache keys scoped per event type (and per series when scoped) so
   // cricket/football/etc. — and a series view vs. the full sport list — don't
   // collide.
-  const cacheScope = seriesId ? `${eventTypeId}:${seriesId}` : eventTypeId;
+  const cacheScope =
+    `${eventTypeId}${seriesId ? `:${seriesId}` : ""}${inPlayOnly ? ":inplay" : ""}`;
   const eventsCacheKey = `cml:events:v2:${cacheScope}`;
   const oddsCacheKey = `cml:odds:v2:${cacheScope}`;
 
@@ -319,8 +387,13 @@ export function CricketMatchesList({
   const filteredMatches: MatchListItem[] = useMemo(() => {
     // Scope to a single series when the caller asks for it.
     const scoped = seriesId
-      ? liveMatches.filter((m) => String(m.seriesId) === String(seriesId))
-      : liveMatches;
+      ? baseMatches.filter((m) => String(m.seriesId) === String(seriesId))
+      : baseMatches;
+    // In-play page: only live matches, and ignore the date window entirely so
+    // long-running live events (multi-day Tests, etc.) are never dropped.
+    if (inPlayOnly) {
+      return scoped.filter((m) => m.inPlay);
+    }
     if (!isPolitics) {
       return scoped.filter((m) => {
         if (!m.openDate) return true;
@@ -330,7 +403,7 @@ export function CricketMatchesList({
       });
     }
     return scoped;
-  }, [liveMatches, startOfTodayIST, endOfWindowIST, isPolitics, seriesId]);
+  }, [baseMatches, startOfTodayIST, endOfWindowIST, isPolitics, seriesId, inPlayOnly]);
 
   // Stable event list. Instead of swapping in a brand-new array on every fetch
   // (which gives every match a new object identity and churns the whole list),
@@ -419,6 +492,26 @@ export function CricketMatchesList({
     });
   }, [cachedOddsMap]);
 
+  // Fold the shared server snapshot's odds into the store — this is what makes
+  // the list appear all at once: on first paint every market gets prices from a
+  // single fetch instead of trickling in per-event over the WS. Fill-when-absent
+  // (same as the cache seed) so the live WS feed still owns ongoing updates and
+  // a 30s snapshot refetch never overwrites fresher live prices (no flicker);
+  // newly in-play markets not yet in the store still get seeded here.
+  useEffect(() => {
+    setOddsStore((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const [marketId, market] of Object.entries(snapshotOddsMap)) {
+        if (!next[marketId] && hasUsablePrices(market)) {
+          next[marketId] = market;
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [snapshotOddsMap]);
+
   // Fold live frames into the store, but only when they carry real prices and
   // the market's object actually changed. The WS hook preserves object identity
   // for markets that didn't tick, so the `!== prev` guard means a tick for one
@@ -458,6 +551,13 @@ export function CricketMatchesList({
   );
 
   const hasAnythingToShow = visibleMatches.length > 0;
+
+  // Report visibility upward (in an effect, never during render) so a parent
+  // page — e.g. /inplay — can tell whether any section rendered and show its
+  // own empty state when every sport is quiet.
+  useEffect(() => {
+    onHasContent?.(hasAnythingToShow);
+  }, [hasAnythingToShow, onHasContent]);
 
   // Homepage mode: caller passes a `wrapper`. The section appears once at least
   // one match in it has real odds, and stays put thereafter — we never paint a

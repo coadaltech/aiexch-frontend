@@ -467,9 +467,25 @@ function MatchPageInner() {
   const refetchMatchDetails = useCallback(
     async (opts?: { silent?: boolean }) => {
       try {
+        const t0 = typeof performance !== "undefined" ? performance.now() : Date.now();
         const res: any = await sportsApi.getMatchDetails(eventTypeId, matchId);
-        const data = res?.data || res;
-        if (data) setInitialData(data);
+        // The endpoint returns { success, data: { matchOdds, bookmakers, ... } }.
+        // axios wraps that in res.data, so the actual detail object is
+        // res.data.data. Reading res.data (the wrapper) left initialData.matchOdds
+        // undefined — which is why the REST snapshot never painted and the page
+        // waited on the WebSocket every time. Unwrap to the inner object, but
+        // tolerate an already-unwrapped shape too.
+        const body = res?.data ?? res;
+        const detail = body?.data ?? body;
+        const ms = Math.round(
+          (typeof performance !== "undefined" ? performance.now() : Date.now()) - t0,
+        );
+        const n = Array.isArray(detail?.matchOdds) ? detail.matchOdds.length : 0;
+        // Temporary diagnostic: how long the REST snapshot took + how many
+        // markets it returned. If this is small (e.g. 30ms / 6 markets) the data
+        // is here fast and any remaining delay is render/WS, not the fetch.
+        console.log(`[match] REST snapshot: ${n} markets in ${ms}ms`);
+        if (detail?.matchOdds) setInitialData(detail);
         lastRestFetchAt.current = Date.now();
       } catch {
         if (!opts?.silent) {
@@ -588,6 +604,18 @@ function MatchPageInner() {
   // Merge all market sources: WebSocket > REST full > fast odds > cached odds
   const lastGoodMarkets = useRef<any[]>(cachedOdds && cachedOdds.length > 0 ? cachedOdds : []);
 
+  // Latch: true once the WebSocket has delivered REAL markets at least once. The
+  // notepad snapshot is for the FIRST paint only — after live data arrives we
+  // must never fall back to it, or a momentarily-empty WS frame would flip the
+  // page notepad → live → notepad (the flicker). lastGoodMarkets bridges those
+  // empty frames with the last live data instead.
+  const wsHasDeliveredRef = useRef(false);
+  useEffect(() => {
+    if (wsMarkets.length > 0 || wsBookmakers.length > 0 || wsSessions.length > 0) {
+      wsHasDeliveredRef.current = true;
+    }
+  }, [wsMarkets, wsBookmakers, wsSessions]);
+
   const markets = useMemo(() => {
     const hasWsData = wsMarkets.length > 0 || wsBookmakers.length > 0 || wsSessions.length > 0;
 
@@ -599,6 +627,10 @@ function MatchPageInner() {
       matchOdds = wsMarkets;
       bookmakerMarkets = normalizeBookmakers(wsBookmakers);
       sessionMarkets = normalizeSessions(wsSessions);
+    } else if (wsHasDeliveredRef.current) {
+      // Live feed is active but this tick is momentarily empty — hold the last
+      // live markets. Do NOT revert to the notepad snapshot (that's the flicker).
+      return lastGoodMarkets.current;
     } else if (initialData) {
       matchOdds = initialData.matchOdds || [];
       bookmakerMarkets = normalizeBookmakers(initialData.bookmakers || []);
@@ -1664,18 +1696,18 @@ function MatchPageInner() {
     );
   }
 
-   if (pageStatus === "connecting" || pageStatus === "connected") {
-    return (
-      <div className="px-3 py-2">
-        <div className="rounded-xl bg-gradient-to-b from-[var(--header-primary)] to-[var(--header-primary)] border border-[#1e4088]/40 flex items-center justify-center py-16">
-          <div className="text-center">
-            <div className="w-12 h-12 mx-auto border-4 border-[#1e4088] border-t-[var(--header-secondary)] rounded-full animate-spin mb-3"></div>
-            <p className="text-[var(--header-text)]/70 text-sm">Loading match data...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  //  if (pageStatus === "connecting" || pageStatus === "connected") {
+  //   return (
+  //     <div className="px-3 py-2">
+  //       <div className="rounded-xl bg-gradient-to-b from-[var(--header-primary)] to-[var(--header-primary)] border border-[#1e4088]/40 flex items-center justify-center py-16">
+  //         <div className="text-center">
+  //           <div className="w-12 h-12 mx-auto border-4 border-[#1e4088] border-t-[var(--header-secondary)] rounded-full animate-spin mb-3"></div>
+  //           <p className="text-[var(--header-text)]/70 text-sm">Loading match data...</p>
+  //         </div>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   if (pageStatus === "no-data") {
     const eventDate = matchFromSeries?.openDate || matchInfo?.startTime;

@@ -541,8 +541,17 @@ export const ownerApi = {
       betDelay?: number;
       minBet?: number;
       maxBet?: number;
+      maxProfit?: number;
+      isActive?: boolean;
+      isVisible?: boolean;
+      suspended?: boolean;
+      betLock?: boolean;
     }
   ) => api.put(`/owner/market-management/events/${eventId}/bulk-settings`, data),
+  // Racing admin browser: meetings/races (Horse 7 / Greyhound 4339) enriched
+  // with each race's WIN-market admin settings.
+  getRacingAdmin: (eventTypeId: string) =>
+    api.get(`/owner/market-management/racing/${eventTypeId}`),
   listCustomMarkets: (params?: { search?: string; status?: string; limit?: number; offset?: number }) => {
     const query = new URLSearchParams();
     if (params?.search) query.append("search", params.search);
@@ -964,6 +973,10 @@ export const sportsApi = {
   getSeries: (eventTypeId: string) => api.get(`/api/sports/getAllSeries/${eventTypeId}`),
   getMatchesList: (eventTypeId: string) =>
     api.get(`/api/sports/matches-list/${eventTypeId}`),
+  // Combined events + default-market odds snapshot (shared notepad file) so the
+  // match list can paint every row at once instead of one-by-one.
+  getMatchListSnapshot: (eventTypeId: string) =>
+    api.get(`/api/sports/matchlist-snapshot/${eventTypeId}`),
   // Racing (Horse 7 / Greyhound 4339): meetings grouped by country -> venue.
   getRacing: (eventTypeId: string) =>
     api.get(`/api/sports/racing/${eventTypeId}`),

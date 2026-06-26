@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRacing, type RacingMeeting, type RacingRace } from "@/hooks/useSportsApi";
+import { sportsApi } from "@/lib/api";
 
 // Mirror of the backend synthetic competition id (9e9 base + sportId).
 const RACING_COMP_BASE = 9_000_000_000;
@@ -48,8 +50,32 @@ export function RacingList({
   emptyText?: string;
 }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: countries = [], isLoading } = useRacing(eventTypeId);
   const compId = RACING_COMP_BASE + Number(eventTypeId);
+
+  // Prefetch a race's markets on intent (hover / touch) and seed the same cache
+  // key the match page reads at mount (["match-odds-list", eventId]). With the
+  // backend now serving its warm snapshot, this returns in <200ms, so by the
+  // time the click navigates the match page paints instantly from cache — no
+  // loading spinner, no flash. Skips if already seeded.
+  const prefetchRace = (eventId: number) => {
+    const key = ["match-odds-list", String(eventId)];
+    if (queryClient.getQueryData(key)) return;
+    sportsApi
+      .getMatchDetails(eventTypeId, String(eventId))
+      .then((res: any) => {
+        // Endpoint shape is { success, data: { matchOdds } }, wrapped again by
+        // axios in res.data — so the markets are at res.data.data.matchOdds.
+        const odds = res?.data?.data?.matchOdds ?? res?.data?.matchOdds;
+        if (Array.isArray(odds) && odds.length > 0) {
+          queryClient.setQueryData(key, odds);
+        }
+      })
+      .catch(() => {
+        /* best-effort prefetch */
+      });
+  };
 
   // Client-fetched data — render a stable "loading" shell on the server and the
   // first client render so hydration matches, then show data after mount.
@@ -107,16 +133,19 @@ export function RacingList({
             })}
           </div>
 
-          {/* Venue rows */}
+          {/* Venue rows — only meetings that still have races (a finished
+              meeting drops out of the feed, so it never renders here). */}
           <div className="divide-y divide-gray-100">
-            {(current?.meetings ?? []).map((m) => {
+            {(current?.meetings ?? [])
+              .filter((m) => (m.races ?? []).length > 0)
+              .map((m) => {
               const races = m.races ?? [];
               return (
               <div
                 key={m.eventId}
                 className="flex items-start gap-3 px-3 sm:px-4 py-3"
               >
-                <span className="w-32 sm:w-44 flex-shrink-0 pt-1 font-medium text-gray-800 truncate">
+                <span className="w-32 sm:w-44 flex-shrink-0  font-medium text-gray-800 truncate">
                   {m.venue || m.name}
                 </span>
                 <div className="flex flex-wrap gap-2">
@@ -129,8 +158,11 @@ export function RacingList({
                       <button
                         key={race.marketId}
                         onClick={() => openRace(m, race)}
+                        onPointerEnter={() => prefetchRace(m.eventId)}
+                        onTouchStart={() => prefetchRace(m.eventId)}
+                        onFocus={() => prefetchRace(m.eventId)}
                         title={race.name}
-                        className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:border-[#1a3578] hover:text-[#1a3578] hover:bg-[#1a3578]/5 transition-colors"
+                        className="rounded-none border border-gray-200 bg-gray-200 px-3  text-sm font-medium text-gray-700 shadow-sm hover:border-[#1a3578] hover:text-[#1a3578] hover:bg-[#1a3578]/5 transition-colors"
                       >
                         {fmtTime(race.raceTime)}
                       </button>
