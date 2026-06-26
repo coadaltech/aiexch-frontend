@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronUp, ChevronDown, ChevronLeft } from "lucide-react";
-import { useLiveSportsList } from "@/hooks/useSportsList";
+import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { useLiveSportsList, type PublicSport } from "@/hooks/useSportsList";
 import { usePinnedCasinoCategories } from "@/hooks/usePinnedCasinoCategories";
 import { OUR_MARKET_EVENT_TYPE_IDS } from "@/lib/our-market";
-import { sportHref } from "@/lib/sports-nav";
+import { sportHref, sportDrillsDown } from "@/lib/sports-nav";
+import { useSportDrilldown } from "@/hooks/useSportDrilldown";
 
 /** Collapsible grey section, like the reference "My Markets" / "Sports" rail. */
 function Section({
@@ -45,6 +46,95 @@ function Section({
   );
 }
 
+/** Expandable sport row — opens a competition → match dropdown styled as the
+ *  Betfair blue text links. Mirrors the Default theme's accordion. */
+function BetfairSportItem({ sport }: { sport: PublicSport }) {
+  const {
+    expanded,
+    toggle,
+    isLoading,
+    series,
+    openSeries,
+    toggleSeries,
+    competitionHref,
+    matchHref,
+  } = useSportDrilldown(sport);
+
+  const linkCls =
+    "text-[13px] font-semibold text-[var(--bf-link)] transition-colors hover:bg-[#cdced1] hover:underline";
+
+  return (
+    <div className="border-b border-black/10">
+      <button
+        type="button"
+        onClick={toggle}
+        className={`flex w-full items-center justify-between px-3 py-1.5 text-left ${linkCls}`}
+      >
+        <span className="truncate">{sport.name}</span>
+        {expanded ? (
+          <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+        ) : (
+          <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+        )}
+      </button>
+
+      {expanded && (
+        <div className="bg-[#dfe0e2]">
+          {series.length === 0 ? (
+            isLoading ? null : (
+              <div className="py-1.5 pl-6 pr-3 text-[12px] text-slate-500">
+                No competitions available
+              </div>
+            )
+          ) : (
+            series.map((s) => {
+              const isOpen = openSeries.includes(s.id);
+              const href = competitionHref(s.id);
+              return (
+                <div key={s.id}>
+                  <div className="flex items-center border-b border-black/10">
+                    <Link
+                      href={href}
+                      className={`flex-1 truncate py-1.5 pl-6 pr-2 ${linkCls}`}
+                    >
+                      {s.name}
+                    </Link>
+                    {s.matches.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => toggleSeries(s.id)}
+                        className="px-2 py-1.5 text-slate-600"
+                        aria-label="Toggle matches"
+                      >
+                        {isOpen ? (
+                          <ChevronDown className="h-3 w-3" />
+                        ) : (
+                          <ChevronRight className="h-3 w-3" />
+                        )}
+                      </button>
+                    )}
+                  </div>
+                  {isOpen &&
+                    s.matches.map((m) => (
+                      <Link
+                        key={m.id}
+                        href={matchHref(s.id, m.id)}
+                        title={m.name}
+                        className={`block truncate border-b border-black/10 py-1.5 pl-9 pr-2 text-[12px] ${linkCls}`}
+                      >
+                        {m.team2 ? `${m.team1} v ${m.team2}` : m.name}
+                      </Link>
+                    ))}
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /**
  * Betfair left "Sports" rail — a grey rail with a "Hide menu" strip and dark
  * section headers with the lists rendered as blue text links. Every section is
@@ -74,15 +164,19 @@ export function BetfairSidebar() {
       </div>
 
       <Section title="Sports" dark>
-        {sports.map((s) => (
-          <Link
-            key={s.id}
-            href={sportHref(s)}
-            className="block border-b border-black/10 px-3 py-1.5 text-[13px] font-semibold text-[var(--bf-link)] transition-colors hover:bg-[#cdced1] hover:underline"
-          >
-            {s.name}
-          </Link>
-        ))}
+        {sports.map((s) =>
+          sportDrillsDown(s) ? (
+            <BetfairSportItem key={s.id} sport={s} />
+          ) : (
+            <Link
+              key={s.id}
+              href={sportHref(s)}
+              className="block border-b border-black/10 px-3 py-1.5 text-[13px] font-semibold text-[var(--bf-link)] transition-colors hover:bg-[#cdced1] hover:underline"
+            >
+              {s.name}
+            </Link>
+          ),
+        )}
       </Section>
 
       {marketSports.length > 0 && (

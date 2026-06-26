@@ -23,14 +23,18 @@ interface Sport {
   sort_order: number;
 }
 
+// Module-scoped cache so re-entering this page shows the last-fetched sports
+// list instantly (the catalogue is small and rarely changes) while a fresh
+// fetch refreshes it in the background — no loading spinner on revisit.
+let sportsCache: Sport[] | null = null;
+
 export default function SportsPage() {
   const router = useRouter();
   const panelPrefix = usePanelPrefix();
   const { has } = usePermissions();
   const canToggleSport = has("sports.toggle");
   const [search, setSearch] = useState("");
-  const [sports, setSports] = useState<Sport[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [sports, setSports] = useState<Sport[]>(() => sportsCache ?? []);
   const [saving, setSaving] = useState(false);
   const [togglingId, setTogglingId] = useState<number | null>(null);
   const [togglingLiveId, setTogglingLiveId] = useState<number | null>(null);
@@ -69,11 +73,10 @@ export default function SportsPage() {
           isHighlight: s.isHighlight ?? s.is_highlight ?? false,
         }));
         // Already sorted by sort_order from backend; ensure stable display
+        sportsCache = list;
         setSports(list);
       } catch (error) {
         console.error("Error:", error);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -242,19 +245,6 @@ export default function SportsPage() {
       setSaving(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-white p-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-4"></div>
-            <p className="text-gray-600">Loading sports...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-white p-4">

@@ -17,13 +17,14 @@ export function BetfairNav() {
   const pathname = usePathname();
   const { data: sports = [] } = useLiveSportsList();
 
-  const items = [
+  const items: { label: string; href: string; live?: boolean }[] = [
     { label: "Home", href: "/" },
+    { label: "In Play", href: "/inplay", live: true },
     ...sports.map((s) => ({ label: s.name, href: sportHref(s) })),
   ];
 
   return (
-    <nav className="fixed inset-x-0 top-[4.75rem] z-40 bg-[var(--bf-nav)]">
+    <nav className="fixed inset-x-0 top-11 z-40 bg-[var(--bf-nav)]">
       <div className="flex items-stretch">
         <div className="flex flex-1 items-stretch overflow-x-auto scrollbar-hide">
           {items.map((item) => {
@@ -35,10 +36,13 @@ export function BetfairNav() {
               <Link
                 key={`${item.href}-${item.label}`}
                 href={item.href}
-                className={`flex shrink-0 items-center whitespace-nowrap border-b-2 px-3 py-2.5 text-[13px] font-bold text-white transition-colors hover:bg-[var(--bf-nav-hover)] ${
+                className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2.5 text-[13px] font-bold text-white transition-colors hover:bg-[var(--bf-nav-hover)] ${
                   active ? "border-[var(--nav-highlight)]" : "border-transparent"
                 }`}
               >
+                {item.live && (
+                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                )}
                 {item.label}
               </Link>
             );

@@ -6,5 +6,6 @@ export { TomexchQuickAccess } from "./tomexch-quick-access";
 export { TomexchRacingStrip } from "./tomexch-racing-strip";
 export { TomexchMarketSection } from "./tomexch-market-table";
 export { TomexchExchange } from "./tomexch-exchange";
+export { TomexchInPlay } from "./tomexch-inplay";
 export { TomexchMarkets } from "./tomexch-markets";
 export { TomexchFooter } from "./tomexch-footer";

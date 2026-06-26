@@ -59,10 +59,79 @@ export const useMatchesList = (eventTypeId: string | null, enabled = true) => {
       return (res.data?.data ?? []) as MatchListItem[];
     },
     enabled: enabled && !!eventTypeId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 1000,
     gcTime: 30 * 60 * 1000,
-    refetchInterval: 5 * 60 * 1000,
+    // Membership authority for the snapshot-seeded lists: refresh every 60s so a
+    // newly in-play match appears (and a finished one drops) promptly, and the
+    // per-user betCount stays current. Odds/instant paint come from the shared
+    // snapshot + WS, so this stays a light, cacheable call.
+    refetchInterval: 60 * 1000,
     placeholderData: (prev: MatchListItem[] | undefined) => prev,
+  });
+};
+
+// Combined events + default-market odds snapshot for a sport, served from a
+// shared server-side notepad file. The match list seeds events AND odds from
+// this in a single fetch so the whole list paints at once (no one-by-one row
+// reveal as odds stream in). Live odds still arrive over /ws/markets on top.
+export interface MatchListSnapshotItem extends MatchListItem {
+  /** The default market's current odds (runners[].back/lay are [{price,size}]). */
+  market: any | null;
+}
+
+export const useMatchListSnapshot = (
+  eventTypeId: string | null,
+  enabled = true,
+) => {
+  return useQuery({
+    queryKey: ["matchlist-snapshot", eventTypeId],
+    queryFn: async () => {
+      const res = await sportsApi.getMatchListSnapshot(eventTypeId!);
+      return (res.data?.data ?? []) as MatchListSnapshotItem[];
+    },
+    enabled: enabled && !!eventTypeId,
+    // The file is a shared, cheap read and only seeds the initial paint +
+    // membership (WS streams live odds afterwards). Refetch every 30s so new
+    // in-play events appear and finished ones drop without per-user load.
+    staleTime: 15 * 1000,
+    gcTime: 30 * 60 * 1000,
+    refetchInterval: 30 * 1000,
+    placeholderData: (prev: MatchListSnapshotItem[] | undefined) => prev,
+  });
+};
+
+// Racing meetings grouped by country -> venue (Horse 7 / Greyhound 4339).
+export type RacingRace = {
+  marketId: string;
+  name: string;
+  raceTime: string | null;
+};
+export type RacingMeeting = {
+  eventId: number;
+  name: string;
+  venue: string | null;
+  countryCode: string | null;
+  timezone: string | null;
+  openDate: string | null;
+  marketCount: number;
+  races: RacingRace[];
+};
+export type RacingCountry = { countryCode: string; meetings: RacingMeeting[] };
+
+export const useRacing = (eventTypeId: string | null, enabled = true) => {
+  return useQuery({
+    queryKey: ["racing", eventTypeId],
+    queryFn: async () => {
+      const res = await sportsApi.getRacing(eventTypeId!);
+      return (res.data?.data ?? []) as RacingCountry[];
+    },
+    enabled: enabled && !!eventTypeId,
+    // Racing is time-sensitive — the backend refreshes meetings/races every
+    // minute, so poll at the same cadence to add new races and drop finished ones.
+    staleTime: 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    refetchInterval: 60 * 1000,
+    placeholderData: (prev: RacingCountry[] | undefined) => prev,
   });
 };
 

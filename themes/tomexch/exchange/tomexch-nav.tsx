@@ -75,7 +75,7 @@ export function TomexchNav() {
         </Link>
 
         {/* In Play — blinking live dot */}
-        <Link href="/sports/all" className={itemClass(isActive("/sports/all"))}>
+        <Link href="/inplay" className={itemClass(isActive("/inplay"))}>
           <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-[txBlink_0.7s_ease-in-out_infinite]" />
           In Play
         </Link>

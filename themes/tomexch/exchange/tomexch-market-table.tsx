@@ -200,6 +200,8 @@ export function TomexchMarketSection({
   eventTypeId,
   seeAllHref,
   maxMatches = 4,
+  inPlayOnly = false,
+  onHasContent,
 }: {
   title: string;
   icon: LucideIcon;
@@ -207,11 +209,18 @@ export function TomexchMarketSection({
   eventTypeId: string;
   seeAllHref: string;
   maxMatches?: number;
+  /** Show only matches currently in play (used by the In-Play page). */
+  inPlayOnly?: boolean;
+  /** Reports whether this section has any visible rows (for an outer empty state). */
+  onHasContent?: (has: boolean) => void;
 }) {
   const { data: liveMatches = [] } = useMatchesList(eventTypeId);
 
-  const eventsCacheKey = `tx:events:v1:${eventTypeId}`;
-  const oddsCacheKey = `tx:odds:v1:${eventTypeId}`;
+  // Keep a separate cache namespace for the in-play view so its reduced event
+  // set never overwrites the full home-page list (same key would clash).
+  const suffix = inPlayOnly ? ":inplay" : "";
+  const eventsCacheKey = `tx:events:v1:${eventTypeId}${suffix}`;
+  const oddsCacheKey = `tx:odds:v1:${eventTypeId}${suffix}`;
 
   const [cachedEvents, setCachedEvents] = useState<MatchListItem[] | null>(null);
   const [cachedOddsMap, setCachedOddsMap] = useState<Record<string, any>>({});
@@ -238,8 +247,8 @@ export function TomexchMarketSection({
           if (isNaN(t)) return true;
           return t >= startMs && t < endMs;
         });
-    return base;
-  }, [liveMatches, startMs, endMs, isPolitics]);
+    return inPlayOnly ? base.filter((m) => m.inPlay) : base;
+  }, [liveMatches, startMs, endMs, isPolitics, inPlayOnly]);
 
   useEffect(() => {
     if (filteredMatches.length > 0) writeCache(eventsCacheKey, filteredMatches);
@@ -287,6 +296,10 @@ export function TomexchMarketSection({
   const visibleMatches = (
     matchesWithPrices.length > 0 ? matchesWithPrices : oddsCandidates
   ).slice(0, maxMatches);
+
+  useEffect(() => {
+    onHasContent?.(visibleMatches.length > 0);
+  }, [visibleMatches.length, onHasContent]);
 
   if (visibleMatches.length === 0) return null;
 

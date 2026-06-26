@@ -5,7 +5,11 @@ import Link from "next/link";
 import { ChevronLeft, Clock } from "lucide-react";
 import { getSportConfig, isValidSportSlug } from "@/lib/sports-config";
 import { CricketMatchesList } from "@/components/sports/cricket-matches-list";
+import { RacingList } from "@/components/sports/racing-list";
 import { useSportsList, findSportLiveStatus } from "@/hooks/useSportsList";
+
+// Racing sports have no competition layer — render the racing layout instead.
+const RACING_EVENT_TYPE_IDS = ["7", "4339"]; // Horse Racing, Greyhound Racing
 
 export default function SportPage({
   params,
@@ -37,6 +41,22 @@ export default function SportPage({
   // matches list isn't hidden behind a flash of "Coming Soon".
   const liveStatus = findSportLiveStatus(sportsListData, config.eventTypeId);
   const isComingSoon = liveStatus === false;
+
+  // Racing (Horse/Greyhound) has its own layout: no competition drill-down and
+  // no poster banner — a clean country-tabs → venue → race-times table.
+  const isRacing = RACING_EVENT_TYPE_IDS.includes(config.eventTypeId);
+  if (isRacing && !isComingSoon) {
+    return (
+      <div className="bg-gray-50 min-h-full w-full p-3">
+        <RacingList
+          sport={sport}
+          title={config.title}
+          eventTypeId={config.eventTypeId}
+          emptyText={config.emptyText}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gray-50 min-h-full w-full">

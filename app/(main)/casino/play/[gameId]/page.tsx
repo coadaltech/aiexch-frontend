@@ -25,6 +25,7 @@ export default function QtechPlayPage({
 }) {
   const { gameId: rawId } = use(params);
   const gameId = decodeURIComponent(rawId);
+  console.log("[QTechPlayPage] gameId:", gameId);
   const router = useRouter();
   const iframeRef = useRef<HTMLIFrameElement>(null);
 

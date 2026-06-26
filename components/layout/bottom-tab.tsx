@@ -94,60 +94,115 @@ export default function BottomNavigation() {
     (item) => item.id !== "profile" || isLoggedIn,
   );
 
+  // Home is rendered as the lifted center FAB; the rest flank it left/right.
+  const homeItem = visibleNavItems.find((item) => item.id === "home")!;
+  const sideItems = visibleNavItems.filter((item) => item.id !== "home");
+  const half = Math.ceil(sideItems.length / 2);
+  const leftItems = sideItems.slice(0, half);
+  const rightItems = sideItems.slice(half);
+
+  const isItemActive = (link?: string) =>
+    link === "/"
+      ? pathname === "/" || pathname === "/home"
+      : !!pathname &&
+        !!link &&
+        (pathname === link || pathname.startsWith(link + "/"));
+
+  const go = (item: { id: string; link?: string }) => {
+    setActiveTab(item.id);
+    if (item.link) router.push(item.link);
+  };
+
+  const renderTab = (item: { id: string; label: string; icon: any; link?: string }) => {
+    const Icon = item.icon;
+    const isActive = isItemActive(item.link);
+    return (
+      <button
+        key={item.id}
+        onClick={() => go(item)}
+        aria-current={isActive ? "page" : undefined}
+        className={`group relative flex flex-1 flex-col items-center justify-center gap-1 py-1.5 transition-colors duration-300 ${
+          isActive
+            ? "text-[var(--bottom-nav-active)]"
+            : "text-[color-mix(in_srgb,var(--header-text)_62%,transparent)] active:text-[var(--header-text)]"
+        }`}
+      >
+        {/* active pill behind the icon */}
+        <span
+          className={`absolute -top-0.5 h-1.5 w-1.5 rounded-full bg-[var(--header-secondary)] transition-all duration-300 ${
+            isActive ? "opacity-100 scale-100" : "opacity-0 scale-0"
+          }`}
+        />
+        <span
+          className={`flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-300 ${
+            isActive
+              ? "bg-[color-mix(in_srgb,var(--header-secondary)_18%,transparent)] -translate-y-0.5"
+              : "bg-transparent"
+          }`}
+        >
+          <Icon size={20} className="stroke-[2.2]" />
+        </span>
+        <span className="text-[10px] font-medium leading-none tracking-wide truncate max-w-full">
+          {item.label}
+        </span>
+      </button>
+    );
+  };
+
+  const homeActive = isItemActive(homeItem.link);
+  const HomeIcon = homeItem.icon;
+
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 w-full z-40 bg-[var(--header-primary)] border-t border-[color-mix(in_srgb,var(--header-text)_15%,transparent)] lg:hidden body-modal-open:hidden">
-        <div className="flex items-center justify-around  px-2 py-2">
-          {visibleNavItems.map((item) => {
-            const Icon = item.icon;
-            const isActive =
-              item.link === "/"
-                ? pathname === "/" || pathname === "/home"
-                : !!pathname && (pathname === item.link || pathname.startsWith(item.link + "/"));
+      <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden body-modal-open:hidden">
+        {/* The bar itself */}
+        <div
+          className="relative flex items-stretch justify-around px-2 pt-2 border-t border-[color-mix(in_srgb,var(--header-text)_14%,transparent)] bg-gradient-to-b from-[color-mix(in_srgb,var(--header-primary)_92%,#000)] to-[var(--header-primary)] shadow-[0_-6px_24px_-8px_rgba(0,0,0,0.5)]"
+          style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
+        >
+          {leftItems.map(renderTab)}
 
-            return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  setActiveTab(item.id);
-                  if (item.link) {
-                    router.push(item.link);
-                  }
+          {/* Center slot — reserves space for the floating Home button + label */}
+          <div className="relative flex w-16 shrink-0 flex-col items-center justify-end">
+            <span
+              className={`pb-1.5 text-[10px] font-medium leading-none tracking-wide transition-colors duration-300 ${
+                homeActive
+                  ? "text-[var(--header-secondary)]"
+                  : "text-[color-mix(in_srgb,var(--header-text)_62%,transparent)]"
+              }`}
+            >
+              {homeItem.label}
+            </span>
+          </div>
 
-                  if (item.id === "deposit") {
-                    if (isLoggedIn) {
-                      setIsTransactionModalOpen(true);
-                    } else {
-                      router.push("/");
-                    }
-                  }
+          {rightItems.map(renderTab)}
 
-                  if (item.id === "bets") {
-                    setIsBetsModalOpen(true);
-                  }
-                }}
-                className={`
-                flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-300 min-w-0 flex-1
-                ${
-                  isActive
-                    ? "text-[var(--bottom-nav-active)]"
-                    : "text-[color-mix(in_srgb,var(--header-text)_70%,transparent)] hover:text-[var(--header-text)]"
-                }
-              `}
-              >
-                <div
-                  className={`p-1.5 rounded-lg transition-all duration-300 ${
-                    isActive ? "scale-110" : ""
-                  }`}
-                >
-                  <Icon size={18} className="stroke-2" />
-                </div>
-                <span className="text-xs font-medium mt-1 transition-all duration-300 truncate">
-                  {item.label}
-                </span>
-              </button>
-            );
-          })}
+          {/* Floating, half-lifted Home button — shining glossy circle.
+              borderRadius is set inline to beat the global unlayered
+              `button { border-radius: 0.5rem }` rule (globals.css) that would
+              otherwise square off the corners. */}
+          <button
+            onClick={() => go(homeItem)}
+            aria-label={homeItem.label}
+            aria-current={homeActive ? "page" : undefined}
+            style={{ borderRadius: "9999px" }}
+            className="absolute left-1/2 -top-6 -translate-x-1/2 flex h-18 w-18 items-center justify-center overflow-hidden bg-gradient-to-b from-[color-mix(in_srgb,var(--header-secondary)_78%,#fff)] to-[var(--header-secondary)] transition-transform duration-300 active:scale-95 animate-fab-home-glow"
+          >
+            {/* moving sheen sweep */}
+            <span
+              aria-hidden
+              className="animate-fab-home-shine pointer-events-none absolute -top-1/4 left-0 h-[150%] w-7 bg-gradient-to-r from-transparent via-white/70 to-transparent"
+            />
+            {/* soft top gloss */}
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-x-2.5 top-1.5 h-1/3 rounded-full bg-white/35 blur-[1.5px]"
+            />
+            <HomeIcon
+              size={26}
+              className="relative stroke-[2.4] text-[var(--header-primary)]"
+            />
+          </button>
         </div>
       </div>
 

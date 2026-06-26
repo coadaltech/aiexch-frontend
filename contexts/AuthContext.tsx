@@ -21,7 +21,8 @@ export const DEMO_BALANCE = "5000";
 export interface User {
   id: string;
   username: string;
-  email: string;
+  /** Optional — accounts can be created without an email. */
+  email?: string | null;
   membership: string;
   balance: string;
   isDemo?: boolean;
@@ -369,7 +370,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const login = (userData: User) => {
-    if (!userData?.id || !userData?.email) {
+    // `id` is the only required identity field. Email is optional now that
+    // accounts can be created without one — gating login on it would force
+    // emailless users straight back to /login (silent logout).
+    if (!userData?.id) {
       console.error("Invalid user data provided to login");
       return;
     }

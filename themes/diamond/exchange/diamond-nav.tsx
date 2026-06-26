@@ -16,8 +16,9 @@ export function DiamondNav() {
   const pathname = usePathname();
   const { data: sports = [] } = useLiveSportsList();
 
-  const items = [
+  const items: { label: string; href: string; live?: boolean }[] = [
     { label: "HOME", href: "/" },
+    { label: "IN PLAY", href: "/inplay", live: true },
     ...sports.map((s) => ({ label: s.name.toUpperCase(), href: sportHref(s) })),
   ];
 
@@ -37,6 +38,9 @@ export function DiamondNav() {
                 active ? "bg-black/15" : ""
               }`}
             >
+              {item.live && (
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              )}
               {item.label}
             </Link>
           );

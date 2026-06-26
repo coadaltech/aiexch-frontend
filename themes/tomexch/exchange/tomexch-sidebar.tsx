@@ -4,9 +4,10 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
-import { useLiveSportsList } from "@/hooks/useSportsList";
+import { useLiveSportsList, type PublicSport } from "@/hooks/useSportsList";
 import { usePinnedCasinoCategories } from "@/hooks/usePinnedCasinoCategories";
-import { sportHref } from "@/lib/sports-nav";
+import { sportHref, sportDrillsDown } from "@/lib/sports-nav";
+import { useSportDrilldown } from "@/hooks/useSportDrilldown";
 import { sportEmoji } from "./sport-emoji";
 
 /** Filled triangle chevrons matching the reference rail (▼ closed, ◀ open). */
@@ -89,6 +90,94 @@ function Row({
   );
 }
 
+/** Expandable sport row — opens a competition → match dropdown styled to match
+ *  the TomExch light rows. Mirrors the Default theme's accordion. */
+function TomexchSportItem({ sport }: { sport: PublicSport }) {
+  const {
+    expanded,
+    toggle,
+    isLoading,
+    series,
+    openSeries,
+    toggleSeries,
+    competitionHref,
+    matchHref,
+  } = useSportDrilldown(sport);
+  const emoji = sportEmoji(sport.name);
+
+  return (
+    <div className="border-b border-slate-200 last:border-b-0">
+      <button
+        type="button"
+        onClick={toggle}
+        className="flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-[14px] text-[#444] transition-colors hover:bg-slate-50"
+      >
+        <span className="w-5 shrink-0 text-center text-[16px] leading-none">{emoji}</span>
+        <span className="flex-1 truncate">{sport.name}</span>
+        {expanded ? (
+          <TriangleLeft className="shrink-0 text-[#444]" />
+        ) : (
+          <TriangleDown className="shrink-0 text-[#444]" />
+        )}
+      </button>
+
+      {expanded && (
+        <div className="bg-slate-50">
+          {series.length === 0 ? (
+            isLoading ? null : (
+              <div className="py-1.5 pl-10 pr-3 text-[13px] text-slate-400">
+                No competitions available
+              </div>
+            )
+          ) : (
+            series.map((s) => {
+              const isOpen = openSeries.includes(s.id);
+              const href = competitionHref(s.id);
+              return (
+                <div key={s.id}>
+                  <div className="flex items-center border-b border-slate-200">
+                    <Link
+                      href={href}
+                      className="flex-1 truncate py-1.5 pl-10 pr-2 text-[13px] font-medium text-[#444] hover:underline"
+                    >
+                      {s.name}
+                    </Link>
+                    {s.matches.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => toggleSeries(s.id)}
+                        className="px-2.5 py-1.5 text-[#444]"
+                        aria-label="Toggle matches"
+                      >
+                        {isOpen ? (
+                          <TriangleLeft className="shrink-0" />
+                        ) : (
+                          <TriangleDown className="shrink-0" />
+                        )}
+                      </button>
+                    )}
+                  </div>
+                  {isOpen &&
+                    s.matches.map((m) => (
+                      <Link
+                        key={m.id}
+                        href={matchHref(s.id, m.id)}
+                        title={m.name}
+                        className="block truncate border-b border-slate-200 py-1.5 pl-[3.25rem] pr-2 text-[12px] text-slate-600 hover:bg-slate-100"
+                      >
+                        {m.team2 ? `${m.team1} v ${m.team2}` : m.name}
+                      </Link>
+                    ))}
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /**
  * TomExch left rail — a light sidebar with a market search, blue gradient section
  * headers and sport rows. Every list is admin-driven (no hardcoding): "Popular
@@ -135,9 +224,13 @@ export function TomexchSidebar() {
 
       {popularSports.length > 0 && (
         <Section title="Popular Sports" emoji="🔥">
-          {popularSports.map((s) => (
-            <Row key={s.id} label={s.name} emoji={sportEmoji(s.name)} href={sportHref(s)} />
-          ))}
+          {popularSports.map((s) =>
+            sportDrillsDown(s) ? (
+              <TomexchSportItem key={s.id} sport={s} />
+            ) : (
+              <Row key={s.id} label={s.name} emoji={sportEmoji(s.name)} href={sportHref(s)} />
+            ),
+          )}
         </Section>
       )}
 
@@ -152,9 +245,13 @@ export function TomexchSidebar() {
         {filteredSports.length === 0 ? (
           <div className="px-3 py-3 text-[14px] rounded-none text-slate-400">No sports found.</div>
         ) : (
-          filteredSports.map((s) => (
-            <Row key={s.id} label={s.name} emoji={sportEmoji(s.name)} href={sportHref(s)} />
-          ))
+          filteredSports.map((s) =>
+            sportDrillsDown(s) ? (
+              <TomexchSportItem key={s.id} sport={s} />
+            ) : (
+              <Row key={s.id} label={s.name} emoji={sportEmoji(s.name)} href={sportHref(s)} />
+            ),
+          )
         )}
       </Section>
     </aside>

@@ -47,12 +47,12 @@ export function BetfairShell({
         <BetfairHeader />
         <BetfairNav />
 
-        {/* Offset for the fixed header (4.75rem) + navy nav (~2.5rem). */}
+        {/* Offset for the fixed header (h-11 = 2.75rem) + navy nav (~2.5rem). */}
         <div
           className="flex min-h-0 flex-1"
           style={{
-            marginTop: "7.25rem",
-            maxHeight: "calc(var(--vh-full) - 7.25rem)",
+            marginTop: "5.25rem",
+            maxHeight: "calc(var(--vh-full) - 5.25rem)",
           }}
         >
           {!isCasinoRoute && <BetfairSidebar />}

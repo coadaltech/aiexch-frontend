@@ -1,5 +1,26 @@
 import axios from "axios";
+import { createDpopProof, getDpopPublicJwk } from "./dpop";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+// Absolute URL for a request (used as the DPoP proof's `htu`). The backend
+// compares only the path, so query strings / proxy host differences are fine.
+function absoluteUrl(base: string, path: string): string {
+  try {
+    return new URL(path, base).toString();
+  } catch {
+    return `${base || ""}${path || ""}`;
+  }
+}
+
+// Build a DPoP proof header for a request, swallowing any failure (the backend
+// will 401 if the token is bound and the proof is missing — never throw here).
+async function dpopHeader(method: string, url: string): Promise<Record<string, string>> {
+  try {
+    return { DPoP: await createDpopProof(method, url) };
+  } catch {
+    return {};
+  }
+}
 
 // ── First-party cookie helpers ────────────────────────────────────────────────
 // Set on the frontend's own domain so Safari accepts them as first-party.
@@ -40,9 +61,10 @@ export async function proactiveRefresh(): Promise<boolean> {
   const storedRefreshToken = getAuthCookie("refreshToken");
   if (!storedRefreshToken) return false;
   try {
+    const headers = await dpopHeader("POST", `${API_BASE_URL}/auth/refresh`);
     const response = await axios
       .create({ baseURL: API_BASE_URL, withCredentials: true })
-      .post("/auth/refresh", { refreshToken: storedRefreshToken });
+      .post("/auth/refresh", { refreshToken: storedRefreshToken }, { headers });
     if (response.data.success && response.data.accessToken) {
       storeTokens(response.data.accessToken, response.data.refreshToken);
       return true;
@@ -64,14 +86,20 @@ export const api = axios.create({
   },
 });
 
-// Attach domain header + Authorization header on every request
-api.interceptors.request.use((config) => {
+// Attach domain header + Authorization header + DPoP proof on every request
+api.interceptors.request.use(async (config) => {
   if (typeof window !== "undefined") {
     config.headers["x-whitelabel-domain"] =
       process.env.NEXT_PUBLIC_WHITELABEL_DOMAIN || window.location.host;
     const token = getAuthCookie("accessToken");
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
+      // A DPoP-bound token requires a fresh proof for THIS request. We sign one
+      // with the browser-held private key; a stolen token can't produce it.
+      const url = absoluteUrl(config.baseURL || API_BASE_URL, config.url || "");
+      const method = (config.method || "get").toUpperCase();
+      const proof = await dpopHeader(method, url);
+      if (proof.DPoP) config.headers["DPoP"] = proof.DPoP;
     }
   }
   return config;
@@ -105,9 +133,14 @@ api.interceptors.response.use(
 
       try {
         const storedRefreshToken = getAuthCookie("refreshToken");
+        const refreshHeaders = await dpopHeader("POST", `${API_BASE_URL}/auth/refresh`);
         const refreshResponse = await axios
           .create({ baseURL: API_BASE_URL, withCredentials: true })
-          .post("/auth/refresh", storedRefreshToken ? { refreshToken: storedRefreshToken } : undefined);
+          .post(
+            "/auth/refresh",
+            storedRefreshToken ? { refreshToken: storedRefreshToken } : undefined,
+            { headers: refreshHeaders },
+          );
 
         if (refreshResponse.data.success) {
           // storeTokens is called automatically by the response interceptor above
@@ -189,7 +222,20 @@ export const uploadFile = (file: File, type?: string, oldImageUrl?: string) => {
 };
 
 export const authApi = {
-  login: (data: LoginRequest) => api.post<AuthResponse>("/auth/login", data),
+  login: async (data: LoginRequest) => {
+    // Send our DPoP public key so the server binds the issued tokens to it.
+    // If key generation fails for any reason, fall back to an unbound login.
+    let dpopPublicKey: JsonWebKey | undefined;
+    try {
+      dpopPublicKey = await getDpopPublicJwk();
+    } catch {
+      dpopPublicKey = undefined;
+    }
+    return api.post<AuthResponse>(
+      "/auth/login",
+      dpopPublicKey ? { ...data, dpopPublicKey } : data,
+    );
+  },
   register: (data: RegisterRequest) =>
     api.post<AuthResponse>("/auth/register", data),
   sendOTP: (data: { email: string; type?: string }) =>
@@ -495,8 +541,17 @@ export const ownerApi = {
       betDelay?: number;
       minBet?: number;
       maxBet?: number;
+      maxProfit?: number;
+      isActive?: boolean;
+      isVisible?: boolean;
+      suspended?: boolean;
+      betLock?: boolean;
     }
   ) => api.put(`/owner/market-management/events/${eventId}/bulk-settings`, data),
+  // Racing admin browser: meetings/races (Horse 7 / Greyhound 4339) enriched
+  // with each race's WIN-market admin settings.
+  getRacingAdmin: (eventTypeId: string) =>
+    api.get(`/owner/market-management/racing/${eventTypeId}`),
   listCustomMarkets: (params?: { search?: string; status?: string; limit?: number; offset?: number }) => {
     const query = new URLSearchParams();
     if (params?.search) query.append("search", params.search);
@@ -608,8 +663,12 @@ export const ownerApi = {
     api.get(`/owner/matka/live-prediction/${shiftId}/agent-sale?nums=${nums}`),
   declareMatkaResult: (shiftId: string, result: number) =>
     api.post(`/owner/matka/live-prediction/${shiftId}/declare`, { result }),
-  getMatkaDeclaredHistory: (limit = 50) =>
-    api.get(`/owner/matka/live-prediction/declared-history?limit=${limit}`),
+  getMatkaDeclaredHistory: (limit = 50, shiftId?: string) =>
+    api.get(
+      `/owner/matka/live-prediction/declared-history?limit=${limit}${
+        shiftId ? `&shiftId=${encodeURIComponent(shiftId)}` : ""
+      }`
+    ),
 
   // Jambo Live Prediction (same shape as matka, numbers span 1..1000)
   getJamboLivePrediction: (shiftId: string) =>
@@ -626,8 +685,12 @@ export const ownerApi = {
     api.get(`/owner/jambo/live-prediction/${shiftId}/agent-sale?nums=${nums}`),
   declareJamboResult: (shiftId: string, result: number) =>
     api.post(`/owner/jambo/live-prediction/${shiftId}/declare`, { result }),
-  getJamboDeclaredHistory: (limit = 50) =>
-    api.get(`/owner/jambo/live-prediction/declared-history?limit=${limit}`),
+  getJamboDeclaredHistory: (limit = 50, shiftId?: string) =>
+    api.get(
+      `/owner/jambo/live-prediction/declared-history?limit=${limit}${
+        shiftId ? `&shiftId=${encodeURIComponent(shiftId)}` : ""
+      }`
+    ),
 
   // ── Staff Management ─────────────────────────────────────────────────────
   getPermissionsCatalog: () => api.get("/owner/permissions"),
@@ -910,6 +973,13 @@ export const sportsApi = {
   getSeries: (eventTypeId: string) => api.get(`/api/sports/getAllSeries/${eventTypeId}`),
   getMatchesList: (eventTypeId: string) =>
     api.get(`/api/sports/matches-list/${eventTypeId}`),
+  // Combined events + default-market odds snapshot (shared notepad file) so the
+  // match list can paint every row at once instead of one-by-one.
+  getMatchListSnapshot: (eventTypeId: string) =>
+    api.get(`/api/sports/matchlist-snapshot/${eventTypeId}`),
+  // Racing (Horse 7 / Greyhound 4339): meetings grouped by country -> venue.
+  getRacing: (eventTypeId: string) =>
+    api.get(`/api/sports/racing/${eventTypeId}`),
   getMatches: (eventTypeId: string, competitionId: string) =>
     api.get(`/sports/matches/${eventTypeId}/${competitionId}`),
   getMarkets: (eventTypeId: string, eventId: string) =>

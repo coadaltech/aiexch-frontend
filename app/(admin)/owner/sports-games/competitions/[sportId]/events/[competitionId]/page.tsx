@@ -274,17 +274,6 @@ export default function EventsPage() {
     router.push(`${panelPrefix}/sports-games/competitions/${sportId}`);
   };
 
-  if (loading && eventsData.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading events...</p>
-        </div>
-      </div>
-    );
-  }
-
   const competitionName = response?.competitionName || "Competition";
 
   return (

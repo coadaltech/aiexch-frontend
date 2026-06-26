@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+} from "@tanstack/react-query";
 import { ownerApi, uploadFile, api } from "@/lib/api";
 import { toast } from "sonner";
 import { normalizeRole, normalizeMembership } from "@/types/enums";
@@ -820,6 +825,10 @@ export const useCompetitionEvents = (
         .getCompetitionEvents(competitionId!, params)
         .then((res) => res.data),
     enabled: !!competitionId,
+    // Keep the previous page/search results on screen while the next request is
+    // in flight, and serve cached data instantly on revisit — no loading flash.
+    staleTime: 60_000,
+    placeholderData: keepPreviousData,
   });
 };
 
@@ -879,6 +888,55 @@ export const useUpdateEventSettings = () => {
       toast.success("Event settings updated");
     },
     onError: () => toast.error("Failed to update event settings"),
+  });
+};
+
+// Racing admin browser (Horse 7 / Greyhound 4339): country → meeting → races
+// with each race's WIN-market admin settings. Polls on the same 60s cadence as
+// the racing sync so finished races drop and new ones appear.
+export type RacingAdminRace = {
+  marketId: string;
+  name: string;
+  raceTime: string | null;
+  settings: {
+    isActive: boolean;
+    isVisible: boolean;
+    suspended: boolean;
+    betLock: boolean;
+    betDelay: number | null;
+    minBet: number | null;
+    maxBet: number | null;
+    maxProfit: number | null;
+    notice: string | null;
+  } | null;
+};
+export type RacingAdminMeeting = {
+  eventId: number;
+  name: string;
+  venue: string | null;
+  countryCode: string | null;
+  timezone: string | null;
+  openDate: string | null;
+  marketCount: number;
+  isActive: boolean;
+  races: RacingAdminRace[];
+};
+export type RacingAdminCountry = {
+  countryCode: string;
+  meetings: RacingAdminMeeting[];
+};
+
+export const useRacingAdmin = (eventTypeId: string | null) => {
+  return useQuery({
+    queryKey: ["racing-admin", eventTypeId],
+    queryFn: () =>
+      ownerApi
+        .getRacingAdmin(eventTypeId!)
+        .then((res) => (res.data?.data ?? []) as RacingAdminCountry[]),
+    enabled: !!eventTypeId,
+    staleTime: 60 * 1000,
+    refetchInterval: 60 * 1000,
+    placeholderData: (prev: RacingAdminCountry[] | undefined) => prev,
   });
 };
 
@@ -1262,13 +1320,20 @@ export const useDeclareMatkaResult = () => {
   });
 };
 
-export const useMatkaDeclaredHistory = (limit = 50) => {
+export const useMatkaDeclaredHistory = (
+  limit = 50,
+  shiftId?: string | null
+) => {
   return useQuery({
-    queryKey: ["matka-declared-history", limit],
+    queryKey: ["matka-declared-history", limit, shiftId ?? null],
     queryFn: async () => {
-      const res = await ownerApi.getMatkaDeclaredHistory(limit);
+      const res = await ownerApi.getMatkaDeclaredHistory(
+        limit,
+        shiftId ?? undefined
+      );
       return (res.data?.data ?? []) as DeclaredHistoryRow[];
     },
+    enabled: !!shiftId,
     staleTime: 30 * 1000,
   });
 };
@@ -1388,13 +1453,20 @@ export const useDeclareJamboResult = () => {
   });
 };
 
-export const useJamboDeclaredHistory = (limit = 50) => {
+export const useJamboDeclaredHistory = (
+  limit = 50,
+  shiftId?: string | null
+) => {
   return useQuery({
-    queryKey: ["jambo-declared-history", limit],
+    queryKey: ["jambo-declared-history", limit, shiftId ?? null],
     queryFn: async () => {
-      const res = await ownerApi.getJamboDeclaredHistory(limit);
+      const res = await ownerApi.getJamboDeclaredHistory(
+        limit,
+        shiftId ?? undefined
+      );
       return (res.data?.data ?? []) as DeclaredHistoryRow[];
     },
+    enabled: !!shiftId,
     staleTime: 30 * 1000,
   });
 };

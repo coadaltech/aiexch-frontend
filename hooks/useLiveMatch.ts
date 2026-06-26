@@ -129,6 +129,20 @@ export function useLiveMatch(
     };
   }, [eventId, eventTypeId]);
 
+  // When the watched event changes (user navigates from one match to another
+  // without a full page remount), clear the previous match's data immediately.
+  // Otherwise the old odds linger in state until the new socket delivers its
+  // first message — flashing the wrong match's markets — and lastUpdate stays
+  // non-null so the page's "first update arrived" gate would skip the loading
+  // state and show stale data.
+  useEffect(() => {
+    setMatchOdds([]);
+    setBookmakers([]);
+    setSessions([]);
+    setScore(null);
+    setLastUpdate(null);
+  }, [eventId, eventTypeId]);
+
   // Manually force an immediate reconnect (used by visibility/online handlers).
   const forceReconnect = useCallback(() => {
     if (reconnectTimer.current) {

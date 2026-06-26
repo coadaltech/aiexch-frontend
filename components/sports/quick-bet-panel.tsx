@@ -82,7 +82,6 @@ export function QuickBetPanel({
   onPlaceBet,
   isLoading,
   betDelayRemaining,
-  onCancelDelay,
   stakeButtons,
   currentOdds,
   currentRun,
@@ -94,7 +93,6 @@ export function QuickBetPanel({
   onPlaceBet: (stake: string, odds: string) => void;
   isLoading?: boolean;
   betDelayRemaining?: number;
-  onCancelDelay?: () => void;
   stakeButtons?: { label: string; value: number }[];
   currentOdds?: string;
   currentRun?: string;
@@ -244,9 +242,6 @@ export function QuickBetPanel({
               <span className="inline-block h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-amber-400 border-t-transparent" />
               Placing in {betDelayRemaining}s...
             </span>
-            <button type="button" onClick={onCancelDelay} className="shrink-0 rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-700">
-              Cancel
-            </button>
           </div>
         )}
 
@@ -358,9 +353,6 @@ export function QuickBetPanel({
               <span className="inline-block h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-amber-400 border-t-transparent" />
               Placing in {betDelayRemaining}s...
             </span>
-            <button type="button" onClick={onCancelDelay} className="shrink-0 rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-700 hover:bg-amber-200">
-              Cancel
-            </button>
           </div>
         )}
 
@@ -470,20 +462,11 @@ export function QuickBetPanel({
   return (
     <div className="w-full max-w-full overflow-hidden bg-white">
       {isDelaying && (
-        <div className="mx-3 mt-2 px-2 sm:px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between gap-2 shadow-sm">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin inline-block shrink-0" />
-            <span className="text-xs sm:text-sm font-medium text-amber-700 truncate">
-              Placing in {betDelayRemaining}s...
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={onCancelDelay}
-            className="px-2 py-0.5 text-xs bg-amber-100 hover:bg-amber-200 text-amber-700 rounded transition-colors shrink-0"
-          >
-            Cancel
-          </button>
+        <div className="mx-3 mt-2 px-2 sm:px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2 shadow-sm">
+          <span className="w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin inline-block shrink-0" />
+          <span className="text-xs sm:text-sm font-medium text-amber-700 truncate">
+            Placing in {betDelayRemaining}s...
+          </span>
         </div>
       )}
 
@@ -579,9 +562,9 @@ export function QuickBetPanel({
         </button>
         <button
           type="button"
-          onClick={isDelaying ? onCancelDelay : onClose}
-          disabled={isLoading}
-          className="flex-1 sm:flex-none min-w-[96px] px-4 py-2 text-sm font-semibold rounded text-white bg-danger-strong hover:bg-danger-strong/90 disabled:opacity-50"
+          onClick={onClose}
+          disabled={isLoading || isDelaying}
+          className="flex-1 sm:flex-none min-w-[96px] px-4 py-2 text-sm font-semibold rounded text-white bg-danger-strong hover:bg-danger-strong/90 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Cancel
         </button>

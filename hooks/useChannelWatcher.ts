@@ -11,6 +11,10 @@ import { useEffect } from "react";
 
 type Channel =
   | "sports-list"
+  // A sport's competitions/events visibility changed (owner toggled a competition
+  // or event active). Payload carries `eventTypeId`; clients refetch that sport's
+  // series/matches. Channel is global, clients filter/refetch in onMessage.
+  | "series-changed"
   | "top-competitions"
   | "recommended-events"
   | "pinned-events"
