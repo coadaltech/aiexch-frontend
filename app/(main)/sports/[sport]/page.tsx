@@ -3,13 +3,10 @@
 import { use } from "react";
 import Link from "next/link";
 import { ChevronLeft, Clock } from "lucide-react";
-import { getSportConfig, isValidSportSlug } from "@/lib/sports-config";
 import { CricketMatchesList } from "@/components/sports/cricket-matches-list";
 import { RacingList } from "@/components/sports/racing-list";
 import { useSportsList, findSportLiveStatus } from "@/hooks/useSportsList";
-
-// Racing sports have no competition layer — render the racing layout instead.
-const RACING_EVENT_TYPE_IDS = ["7", "4339"]; // Horse Racing, Greyhound Racing
+import { useResolvedSport } from "@/hooks/useResolvedSport";
 
 export default function SportPage({
   params,
@@ -17,10 +14,20 @@ export default function SportPage({
   params: Promise<{ sport: string }>;
 }) {
   const { sport } = use(params);
-  const config = getSportConfig(sport);
+  const resolved = useResolvedSport(sport);
   const { data: sportsListData } = useSportsList();
 
-  if (!config || !isValidSportSlug(sport)) {
+  // Still resolving the sports list — show a spinner instead of flashing the
+  // "not found" card for a sport that's actually valid.
+  if (resolved.status === "loading") {
+    return (
+      <div className="bg-gray-50 min-h-full flex items-center justify-center p-8">
+        <div className="h-8 w-8 rounded-full border-2 border-[var(--header-primary)] border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  if (resolved.status === "unknown" || !resolved.eventTypeId) {
     return (
       <div className="bg-gray-50 min-h-full flex items-center justify-center p-8">
         <div className="bg-white border border-red-200 rounded-xl p-8 text-center max-w-sm">
@@ -36,23 +43,24 @@ export default function SportPage({
     );
   }
 
+  const eventTypeId = resolved.eventTypeId;
+
   // Direct-URL safety net: only force coming-soon when we have data and it
   // explicitly says is_live=false. While loading, default to live so the
   // matches list isn't hidden behind a flash of "Coming Soon".
-  const liveStatus = findSportLiveStatus(sportsListData, config.eventTypeId);
+  const liveStatus = findSportLiveStatus(sportsListData, eventTypeId);
   const isComingSoon = liveStatus === false;
 
   // Racing (Horse/Greyhound) has its own layout: no competition drill-down and
   // no poster banner — a clean country-tabs → venue → race-times table.
-  const isRacing = RACING_EVENT_TYPE_IDS.includes(config.eventTypeId);
-  if (isRacing && !isComingSoon) {
+  if (resolved.isRacing && !isComingSoon) {
     return (
       <div className="bg-gray-50 min-h-full w-full p-3">
         <RacingList
           sport={sport}
-          title={config.title}
-          eventTypeId={config.eventTypeId}
-          emptyText={config.emptyText}
+          title={resolved.title}
+          eventTypeId={eventTypeId}
+          emptyText={resolved.emptyText}
         />
       </div>
     );
@@ -60,13 +68,18 @@ export default function SportPage({
 
   return (
     <div className="bg-gray-50 min-h-full w-full">
-      {/* Sport Poster Banner */}
+      {/* Sport Poster Banner — static sports have a poster image; dynamically
+          added provider sports fall back to a gradient header. */}
       <div className="relative w-full h-36 sm:h-48 overflow-hidden">
-        <img
-          src={config.poster}
-          alt={config.title}
-          className="w-full h-full object-cover"
-        />
+        {resolved.poster ? (
+          <img
+            src={resolved.poster}
+            alt={resolved.title}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-[var(--header-primary)] via-[var(--header-primary)] to-[var(--header-secondary)]" />
+        )}
         <div className="absolute top-3 left-3">
           <Link
             href="/sports"
@@ -77,7 +90,7 @@ export default function SportPage({
         </div>
         <div className="absolute bottom-0 left-0 right-0 px-4 pb-4">
           <h1 className="text-2xl sm:text-3xl font-bold text-white font-condensed tracking-wide">
-            {config.title.toUpperCase()}
+            {resolved.title.toUpperCase()}
           </h1>
         </div>
       </div>
@@ -96,7 +109,7 @@ export default function SportPage({
                 Coming Soon
               </span>
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 font-condensed tracking-wide">
-                {config.title} is on its way
+                {resolved.title} is on its way
               </h2>
               <p className="text-gray-600 text-sm sm:text-base mt-2 max-w-md">
                 We&apos;re getting things ready behind the scenes. Check back
@@ -121,8 +134,8 @@ export default function SportPage({
             <div className="px-3 pb-3 pt-2">
               <CricketMatchesList
                 sport={sport}
-                eventTypeId={config.eventTypeId}
-                emptyText={config.emptyText}
+                eventTypeId={eventTypeId}
+                emptyText={resolved.emptyText}
               />
             </div>
           </div>

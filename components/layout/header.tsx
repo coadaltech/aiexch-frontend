@@ -262,7 +262,6 @@ export default function Header() {
       ...sports,
       { label: "Casino", link: "/casino" },
       ...pinnedCasinoMenu,
-      { label: "Promotions", link: "/promotions" },
     ],
     [sports, pinnedMenu, pinnedCompetitionsMenu, pinnedCasinoMenu]
   );

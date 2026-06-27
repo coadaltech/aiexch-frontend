@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Series } from "@/components/sports/types";
 import { useSeries } from "@/hooks/useSportsApi";
-import { getSportConfig, isValidSportSlug } from "@/lib/sports-config";
+import { useResolvedSport } from "@/hooks/useResolvedSport";
 import { CricketMatchesList } from "@/components/sports/cricket-matches-list";
 
 function SportPoster({
@@ -15,17 +15,21 @@ function SportPoster({
   sport,
   children,
 }: {
-  config: { poster: string; title: string };
+  config: { poster: string | null; title: string };
   sport: string;
   children?: React.ReactNode;
 }) {
   return (
     <div className="relative w-full h-36 sm:h-48 overflow-hidden">
-      <img
-        src={config.poster}
-        alt={config.title}
-        className="w-full h-full object-cover"
-      />
+      {config.poster ? (
+        <img
+          src={config.poster}
+          alt={config.title}
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        <div className="w-full h-full bg-gradient-to-br from-[var(--header-primary)] via-[var(--header-primary)] to-[var(--header-secondary)]" />
+      )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
       <div className="absolute top-3 left-3">
         <Link
@@ -46,9 +50,33 @@ export default function SeriesMatchesPage({
   params: Promise<{ sport: string; seriesId: string }>;
 }) {
   const { sport, seriesId } = use(params);
-  const config = getSportConfig(sport);
+  const resolved = useResolvedSport(sport);
 
-  if (!config || !isValidSportSlug(sport)) {
+  // Only need the series name here (matches + odds come from CricketMatchesList),
+  // so don't background-poll the whole sport catalogue. Hook order is fixed —
+  // call it unconditionally (null eventTypeId disables the query) and branch
+  // on the resolution status below.
+  const { data: seriesData = [], isLoading: loading } = useSeries(
+    resolved.eventTypeId,
+    resolved.status === "known" || resolved.status === "dynamic",
+    { poll: false }
+  );
+
+  // Must run before any conditional return — `resolved.status` flips
+  // loading→dynamic across renders, so hook order has to stay constant.
+  const series = useMemo(() => {
+    return seriesData.find((s: Series) => String(s.id) === String(seriesId));
+  }, [seriesData, seriesId]);
+
+  if (resolved.status === "loading") {
+    return (
+      <Card className="p-8 flex items-center justify-center">
+        <div className="h-8 w-8 rounded-full border-2 border-[var(--header-primary)] border-t-transparent animate-spin" />
+      </Card>
+    );
+  }
+
+  if (resolved.status === "unknown" || !resolved.eventTypeId) {
     return (
       <Card className="p-8 text-center">
         <p className="text-destructive font-semibold">Sport not found</p>
@@ -61,17 +89,12 @@ export default function SeriesMatchesPage({
     );
   }
 
-  // Only need the series name here (matches + odds come from CricketMatchesList),
-  // so don't background-poll the whole sport catalogue.
-  const { data: seriesData = [], isLoading: loading } = useSeries(
-    config.eventTypeId,
-    true,
-    { poll: false }
-  );
-
-  const series = useMemo(() => {
-    return seriesData.find((s: Series) => String(s.id) === String(seriesId));
-  }, [seriesData, seriesId]);
+  const config = {
+    poster: resolved.poster,
+    title: resolved.title,
+    eventTypeId: resolved.eventTypeId,
+    emptyText: resolved.emptyText,
+  };
 
   return (
     <div className="bg-gray-50 min-h-full w-full pb-10">

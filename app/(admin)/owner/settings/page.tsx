@@ -5,8 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Wrench, Save, Settings, Palette, ChevronRight } from "lucide-react";
+import {
+  Wrench,
+  Save,
+  Settings,
+  Palette,
+  ChevronRight,
+  Percent,
+} from "lucide-react";
 import Link from "next/link";
 import { usePanelPrefix } from "@/hooks/usePanelPrefix";
 import { useSettings, useUpdateSettings } from "@/hooks/useOwner";
@@ -22,11 +30,13 @@ export default function SettingsPage() {
   const [maintenanceMessage, setMaintenanceMessage] = useState(
     "We are currently performing scheduled maintenance. Please check back soon."
   );
+  const [commissionPercentage, setCommissionPercentage] = useState("0");
 
   useEffect(() => {
     if (settings) {
       setMaintenanceMode(settings.maintenanceMode || false);
       setMaintenanceMessage(settings.maintenanceMessage || "");
+      setCommissionPercentage(String(settings.commissionPercentage ?? "0"));
     }
   }, [settings]);
 
@@ -34,6 +44,7 @@ export default function SettingsPage() {
     updateSettings.mutate({
       maintenanceMode,
       maintenanceMessage,
+      commissionPercentage,
     });
   };
 
@@ -144,6 +155,47 @@ export default function SettingsPage() {
               />
             </div>
           )}
+
+          <Can perm="settings.edit_global">
+            <Button
+              onClick={handleUpdateSetting}
+              className="bg-primary text-primary-foreground"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              Save Settings
+            </Button>
+          </Can>
+        </CardContent>
+      </Card>
+
+      {/* Commission Section */}
+      <Card className="bg-card border">
+        <CardHeader>
+          <CardTitle className="text-foreground flex items-center gap-2">
+            <Percent className="h-5 w-5" />
+            Commission
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label className="text-foreground">Commission Percentage</Label>
+            <p className="text-sm text-muted-foreground">
+              Global commission cut from user bets across all whitelabels
+            </p>
+            <div className="relative mt-2 max-w-xs">
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                step="0.01"
+                value={commissionPercentage}
+                onChange={(e) => setCommissionPercentage(e.target.value)}
+                className="bg-input border pr-9"
+                placeholder="0.00"
+              />
+              <Percent className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            </div>
+          </div>
 
           <Can perm="settings.edit_global">
             <Button

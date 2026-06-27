@@ -13,7 +13,7 @@ import { useSiteTheme } from "@/contexts/ThemeContext";
 import { TomexchMarkets } from "@/themes/tomexch/exchange";
 import { useStakeSettings, useLedger, DEFAULT_STAKES } from "@/hooks/useUserQueries";
 import { sportsApi } from "@/lib/api";
-import { getSportConfig } from "@/lib/sports-config";
+import { useResolvedSport } from "@/hooks/useResolvedSport";
 import { formatLocalDateTime, formatLocalTime } from "@/lib/date-utils";
 import { addDemoBets } from "@/lib/demo-bets";
 import type { DemoBet } from "@/lib/demo-bets";
@@ -437,11 +437,23 @@ function MatchPageInner() {
   const [exposureChartMarket, setExposureChartMarket] = useState<{ marketId: string; name: string } | null>(null);
   const { data: exposureChartData, isLoading: isExposureChartLoading } = useFancyExposureChart(exposureChartMarket?.marketId ?? null);
 
-  const config = getSportConfig(sport);
-  const eventTypeId = config?.eventTypeId ?? "4";
+  // Resolve the sport from either a static slug OR (for provider sports added
+  // by the owner) its eventTypeId — so basketball/etc. don't fall back to
+  // cricket. `config` is a back-compat shim for the reads further down.
+  const resolved = useResolvedSport(sport);
+  const eventTypeId =
+    resolved.eventTypeId ?? (/^\d+$/.test(sport) ? sport : "4");
+  const config = resolved.eventTypeId
+    ? {
+        eventTypeId: resolved.eventTypeId,
+        // Known sports keep their slug (so "cricket" → "Cricket"); dynamic
+        // provider sports use their display name instead of the numeric id.
+        basePath: resolved.status === "dynamic" ? resolved.title : sport,
+      }
+    : null;
   // Only need the static series/match names here — don't background-poll the
   // whole sport's series catalogue every 5 min while viewing a single match.
-  const { data: seriesData = [] } = useSeries(config?.eventTypeId ?? null, true, { poll: false });
+  const { data: seriesData = [] } = useSeries(resolved.eventTypeId ?? null, true, { poll: false });
   const { data: customStakes } = useStakeSettings(!!user && !user.isDemo);
 
   // When the backend declares/voids a result for a market on this event, refetch

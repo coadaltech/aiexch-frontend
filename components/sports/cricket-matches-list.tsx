@@ -20,8 +20,10 @@ const ODDS_COL = "w-[4.75rem] sm:w-32 md:w-40";
 // Width of the leading status/time column.
 const TIME_COL = "w-14 sm:w-28 md:w-32";
 
-// Date window: today + next 2 days (3-day window) in the user's local timezone.
-const DATE_WINDOW_DAYS = 3;
+// Date window: today + next 6 days (7-day window) in the user's local timezone.
+// Kept ≤ the backend snapshot's forward window (WINDOW_AHEAD_MS) so every event
+// inside this window actually exists in the snapshot file the list reads from.
+const DATE_WINDOW_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 // localStorage-backed cache so the list paints instantly on repeat visits.

@@ -3,6 +3,8 @@
  * Single source of truth for sport slug → eventTypeId and display labels.
  */
 
+import { Baskervville } from "next/font/google";
+
 export const SPORT_ROUTES = {
   cricket: {
     basePath: "cricket",
@@ -91,6 +93,7 @@ export const SPORT_SLUGS: SportSlug[] = [
   "horse-racing",
   "greyhound-racing",
   "politics"
+  
 ];
 
 export function getSportConfig(sport: string): (typeof SPORT_ROUTES)[SportSlug] | null {
